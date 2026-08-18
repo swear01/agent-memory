@@ -1,0 +1,10 @@
+.DS_Store
+.qmd/
+qmd/
+.cache/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.tmp
+*.swp
