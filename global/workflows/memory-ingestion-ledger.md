@@ -51,6 +51,12 @@ Run: `20260818-codex-b001`
 | Codex / transfer_MAC | blocked-secret | Embedded handover contained non-placeholder credential material; no note was written and the staged copy was removed. |
 | Codex / playground | blocked-private-data | Authenticated browser research contained private identities, listings, and cookie/CSRF context; no note was written and the staged copy was removed. |
 
+# Pi batch B001
+
+Run: `20260818-pi-b001`
+
+Three old Pi sessions were selected for processing, but all were blocked before subagent analysis because deterministic redaction could not prove that named token/private-context text was fully removed. No Pi raw or redacted content was imported. Revisit only with a stronger sanitizer and an explicit security review.
+
 # Snapshot pilot
 
 A quiescent QMD 2.8.3 SQLite baseline with 13 documents and 13 vectors was created on the idle GPU host Athena and copied to the NFS fleet, Zeus, and Oracle. Each target ran local `qmd update`; all reported 13 documents and 13 vectors, and Oracle's CPU-only structured semantic query retrieved the copied memory. Target database checksums changed after local metadata/path synchronization, which is expected. No index, model, WAL, or SHM files were committed to Git.
