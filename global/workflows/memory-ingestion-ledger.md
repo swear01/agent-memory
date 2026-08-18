@@ -63,6 +63,12 @@ Run: `20260818-opencode-b001`
 
 Two closed OpenCode sessions were exported through a read-only SQLite query and redacted before analysis. `tools/opencode/config-discovery.md` was written as active; `tools/opencode/zed-acp-routing.md` remains `needs-review` because restart and ACP history recovery were not tested.
 
+# Antigravity batch B001
+
+Run: `20260818-agy-b001`
+
+Four closed Antigravity transcript files were selected, but all were blocked before subagent analysis because named token/private-context text could not be proven fully removed. No Antigravity raw or redacted content was imported.
+
 # Snapshot pilot
 
 A quiescent QMD 2.8.3 SQLite baseline with 13 documents and 13 vectors was created on the idle GPU host Athena and copied to the NFS fleet, Zeus, and Oracle. Each target ran local `qmd update`; all reported 13 documents and 13 vectors, and Oracle's CPU-only structured semantic query retrieved the copied memory. Target database checksums changed after local metadata/path synchronization, which is expected. No index, model, WAL, or SHM files were committed to Git.
