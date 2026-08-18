@@ -32,12 +32,6 @@ Run: `20260818-pilot`
 | HAPI export pilot | extracted | `projects/transfer_MAC/skillshare.md` written; legacy target-overlap warning remains documented. |
 | HAPI documentation pilot | extracted | `machines/hapi-fleet/runtime-isolation.md`, `tools/hapi/supervisor-safe-operations.md`, and `projects/hapi-fork-maintenance.md` written. |
 
-# Processing policy
-
-Process closed/stable sessions first. Redact credentials, auth state, encrypted reasoning, private keys, cookies, and machine-specific secrets before any model or subagent reads the source. Treat active sessions as metadata-only until they become stable.
-
-A source is not complete merely because it was discovered or parsed. Record extraction, review, Markdown write, QMD verification, Git commit, and Git push as separate checkpoints. Keep unverified or conflicting candidates as `needs-review` instead of presenting them as active facts.
-
 # Codex batch B001
 
 Run: `20260818-codex-b001`
@@ -56,6 +50,18 @@ Run: `20260818-codex-b001`
 Run: `20260818-pi-b001`
 
 Three old Pi sessions were selected for processing, but all were blocked before subagent analysis because deterministic redaction could not prove that named token/private-context text was fully removed. No Pi raw or redacted content was imported. Revisit only with a stronger sanitizer and an explicit security review.
+
+# Claude batch B001
+
+Run: `20260818-claude-b001`
+
+Two closed project sessions were redacted and analyzed; both contained only generic runtime metadata or transient OAuth expiry with no durable project lesson. No Claude note was written.
+
+# OpenCode batch B001
+
+Run: `20260818-opencode-b001`
+
+Two closed OpenCode sessions were exported through a read-only SQLite query and redacted before analysis. `tools/opencode/config-discovery.md` was written as active; `tools/opencode/zed-acp-routing.md` remains `needs-review` because restart and ACP history recovery were not tested.
 
 # Snapshot pilot
 
