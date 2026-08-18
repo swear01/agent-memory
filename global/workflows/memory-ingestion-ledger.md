@@ -38,6 +38,10 @@ Process closed/stable sessions first. Redact credentials, auth state, encrypted 
 
 A source is not complete merely because it was discovered or parsed. Record extraction, review, Markdown write, QMD verification, Git commit, and Git push as separate checkpoints. Keep unverified or conflicting candidates as `needs-review` instead of presenting them as active facts.
 
+# Snapshot pilot
+
+A quiescent QMD 2.8.3 SQLite baseline with 13 documents and 13 vectors was created on the idle GPU host Athena and copied to the NFS fleet, Zeus, and Oracle. Each target ran local `qmd update`; all reported 13 documents and 13 vectors, and Oracle's CPU-only structured semantic query retrieved the copied memory. Target database checksums changed after local metadata/path synchronization, which is expected. No index, model, WAL, or SHM files were committed to Git.
+
 # Next batches
 
 1. Closed Codex sessions, grouped by project and machine.
