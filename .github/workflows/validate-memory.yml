@@ -1,0 +1,83 @@
+name: Validate memory
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tracked memory
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          files = subprocess.check_output(["git", "ls-files", "-z"]).decode().split("\0")[:-1]
+          errors = []
+
+          forbidden_names = re.compile(
+              r"(^|/)(?:\.env(?:\.|$)|.*\.(?:sqlite|sqlite-wal|sqlite-shm|db|db-wal|db-shm)|qmd/|\.qmd/)$",
+              re.I,
+          )
+          secret_patterns = [
+              re.compile(r"(?i)\b(?:gh" + r"[pousr]_" + r"|github_pat_)[A-Za-z0-9_-]{10,}"),
+              re.compile(r"-----BEGIN [^-]*PRIVATE KEY-----"),
+              re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+              re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
+              re.compile(r"\bsk-" + r"[A-Za-z0-9_-]{20,}\b"),
+              re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"),
+              re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{12,}"),
+              re.compile(
+                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!<redacted|\$\{?)[^\s,;`]+"
+              ),
+              re.compile(r"/" + r"Users/[^\s`<>]+"),
+              re.compile(r"/" + r"home/[^\s`<>]+"),
+              re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
+          ]
+
+          for name in files:
+              if forbidden_names.search(name):
+                  errors.append((name, "forbidden tracked artifact"))
+                  continue
+              path = Path(name)
+              text = path.read_text(encoding="utf-8")
+              if path.suffix == ".md" and name not in {"README.md", "machines/README.md", "projects/README.md"}:
+                  if not text.startswith("---\n") or "\n---\n" not in text:
+                      errors.append((name, "invalid frontmatter"))
+              for pattern in secret_patterns:
+                  if pattern.search(text):
+                      errors.append((name, "secret/private-data pattern"))
+                      break
+
+          history = subprocess.check_output(["git", "log", "--all", "-p", "--format="], text=True)
+          for pattern in secret_patterns:
+              if pattern.search(history):
+                  errors.append(("git-history", "secret/private-data pattern"))
+                  break
+
+          emails = subprocess.check_output(["git", "log", "--all", "--format=%ae"], text=True).splitlines()
+          personal_email = re.compile(r"(?i)@(gmail|googlemail|yahoo|hotmail|outlook)\.")
+          if any(personal_email.search(email) for email in emails):
+              errors.append(("git-history", "personal email in commit metadata"))
+
+          if errors:
+              for name, reason in errors:
+                  print(f"{name}: {reason}")
+              sys.exit(1)
+          print(f"validated {len(files)} tracked files and full Git history")
+          PY
