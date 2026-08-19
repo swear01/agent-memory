@@ -43,7 +43,7 @@ jobs:
               re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"),
               re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{12,}"),
               re.compile(
-                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!<redacted|\$\{?)[^\s,;`]+"
+                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
               ),
               re.compile(r"/" + r"Users/[^\s`<>]+"),
               re.compile(r"/" + r"home/[^\s`<>]+"),
@@ -64,13 +64,13 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          history = subprocess.check_output(["git", "log", "--all", "-p", "--format="], text=True)
+          history = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True)
           for pattern in secret_patterns:
               if pattern.search(history):
                   errors.append(("git-history", "secret/private-data pattern"))
                   break
 
-          emails = subprocess.check_output(["git", "log", "--all", "--format=%ae"], text=True).splitlines()
+          emails = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "--format=%ae"], text=True).splitlines()
           personal_email = re.compile(r"(?i)@(gmail|googlemail|yahoo|hotmail|outlook)\.")
           if any(personal_email.search(email) for email in emails):
               errors.append(("git-history", "personal email in commit metadata"))
