@@ -4,9 +4,9 @@ scope: projects/hapi-fork-maintenance
 project: hapi
 status: active
 confidence: high
-evidence: Repeated audited rebuilds, rehearsal gates, force-with-lease rewrite, and explicit issue/fix/PR permission boundaries.
+evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-08-18
+updated: 2026-08-19
 tags:
   - hapi
   - fork
@@ -14,12 +14,9 @@ tags:
   - release
   - permissions
 source_refs:
-  - pilot-hapi-gist:hapi-gist.md:22-27
-  - pilot-hapi-gist:hapi-gist.md:364-372
-  - pilot-hapi-gist:hapi-gist.md:529-556
-  - pilot-hapi-gist:hapi-gist.md:590-626
-generated_by: openai-codex/gpt-5.6-luna
+  - public-release:hapi-fork-maintenance
 redaction: passed
+generated_by: openai-codex/gpt-5.6-luna
 ---
 
 # Rebuild policy
@@ -38,10 +35,8 @@ A rehearsal proving tree equality, tests, or artifacts does not authorize public
 - explicit operator approval
 - `--force-with-lease` using the captured old branch SHA
 
-Keep private tokens, signing material, runner environments, and fleet configuration out of the patch series and upstream.
+Keep tokens, signing material, runner environments, and deployment configuration out of the patch series and upstream.
 
 # Contribution boundary
 
 Searching issues, reproducing problems, and creating an issue are separate from implementing a fix and publishing a PR. Approval to implement a fix does not imply approval to publish it.
-
-Fleet, Cloudflare, supervisor, host-path, and token configuration remains private distribution data.
