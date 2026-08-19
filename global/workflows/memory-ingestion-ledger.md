@@ -28,6 +28,7 @@ Track which source batches have been examined, summarized, committed, skipped, o
 | Authenticated/private-context sources | blocked | Sources containing credentials, authenticated browser state, private identities, or private listings were not imported. |
 | Runtime-only sessions | skipped | Generic startup metadata and transient authentication failures produced no durable note. |
 | OpenCode configuration batch | extracted | Configuration discovery was written as active; ACP recovery remains `needs-review` because runtime recovery was not verified. |
+| Mazu closed-session pilot | reviewed, no durable lesson | Three archived sessions were fetched through the namespace-scoped paginated API. The first redaction pass was blocked by auth/runtime markers; strict redaction retained 108 of 110 records, skipped 2, and passed independent security/provenance review. Topic extraction found no verified durable lesson; no transcript content was committed. |
 | Additional transcript batch | blocked | Named-token or private-context text could not be proven fully removed, so no transcript content was imported. |
 
 # Source handling policy
