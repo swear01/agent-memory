@@ -16,6 +16,8 @@ tags:
 source_refs:
   - public-release:supervisor-safe-operations
   - hapi-live:swairM5-session-recovery-2026-08-20
+  - hapi:hub/src/web/routes/sessions.ts
+  - hapi:hub/src/store/sessions.ts
 redaction: passed
 generated_by: openai-codex/gpt-5.6-luna
 ---
@@ -62,6 +64,15 @@ For the Mac display name `swairM5`, treat an inactive session with `metadata.lif
 4. Check the exact process through `hapi runner list` and `hostPid`; do not infer active work from the database row alone.
 
 `active=true` confirms a live session connection, not an actively generating turn; `thinking=false` means the agent is currently idle or waiting. A resumed session can run, emit agent messages, and later archive, so report those states separately. Keep the recovery namespace-scoped and retain no raw transcript or token in memory.
+
+# Session lifecycle and group actions
+
+`active=false` is not the same as archived. A row with
+`metadata.lifecycleState=running` and `active=false` is a split-brain cleanup
+candidate, not permission to revive it. Archive operations should be
+idempotent for already-archived rows, and every session must be formally
+archived before a group deletion. Apply unsupported-resume guards before an
+active-session handoff.
 
 # Platform checks
 
