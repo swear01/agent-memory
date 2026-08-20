@@ -37,10 +37,16 @@ never passed to topic extraction or committed.
 
 # Pilot outcome
 
-The pilot reviewed three archived sessions and 110 message records. Strict
-record-aware redaction retained 108 records and skipped 2. Independent security
-and provenance gates passed, including complete source-index mapping for retained
-and skipped records.
+The original v9 pilot reviewed three archived sessions: Codex (105 records),
+Claude (1), and Cursor (4). Strict record-aware redaction retained 108 records
+and skipped 2. Independent security and provenance gates passed, including
+complete source-index mapping for retained and skipped records.
+
+A bounded v10 recheck reviewed one closed session from each of the same three
+agent tools: Codex (1,191 records), Claude (37), and Cursor (1,011). It retained
+2,234 of 2,239 records and passed coverage, security, and provenance review. Its
+only topic matched the existing skillshare memory rather than adding a new
+lesson.
 
 Topic extraction found no verified transcript-derived durable lesson. Therefore
 no transcript content was committed. This note records the durable ingestion

@@ -5,7 +5,7 @@ status: active
 confidence: high
 evidence: Read-only source inventory and redacted pilot runs completed.
 created: 2026-08-18
-updated: 2026-08-19
+updated: 2026-08-20
 tags:
   - shared-memory
   - ingestion
@@ -29,6 +29,8 @@ Track which source batches have been examined, summarized, committed, skipped, o
 | Runtime-only sessions | skipped | Generic startup metadata and transient authentication failures produced no durable note. |
 | OpenCode configuration batch | extracted | Configuration discovery was written as active; ACP recovery remains `needs-review` because runtime recovery was not verified. |
 | Mazu closed-session pilot | reviewed, no durable lesson | Three archived sessions were fetched through the namespace-scoped paginated API. The first redaction pass was blocked by auth/runtime markers; strict redaction retained 108 of 110 records, skipped 2, and passed independent security/provenance review. Topic extraction found no verified durable lesson; no transcript content was committed. |
+| Mazu bounded closed-session recheck | reviewed, no new lesson | One closed Codex, Claude, and Cursor session was rechecked: 2,239 records, 2,234 retained, 5 skipped. Coverage, security, and provenance passed; the result matched the existing skillshare note. A larger selection was deferred after read-only API/tunnel instability, with no raw payload retained. |
+| Seven-machine redacted worker pass | candidates held | Six machine-scoped workers reviewed redacted scalar-only shards. Mac and Oracle returned candidate topics for parent verification; Cthulhu, Valkyrie, Zeus, and Athena produced no safely verifiable canonical lesson. NFS duplicate views and transient metadata were excluded. See issue #9 for per-machine decisions. |
 | Additional transcript batch | blocked | Named-token or private-context text could not be proven fully removed, so no transcript content was imported. |
 
 # Source handling policy
