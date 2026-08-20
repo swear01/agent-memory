@@ -49,3 +49,7 @@ QMD memory is a reminder, not an event hook. The durable source of truth for
 synchronization is the base template plus `managed-repos.txt`; future agents
 should search this memory and follow the agent-rules skill when changing the
 template.
+
+`agents_rule init --force` only creates or replaces the managed block. If an
+existing `AGENTS.md` has an older unmanaged copy of the rule outside that block,
+replace the stale wording separately; otherwise Pi still reads both versions.
