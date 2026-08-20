@@ -33,4 +33,6 @@ For the WirePulling AB logic puzzle, a gate-visual redesign must preserve:
 
 The scene builder may change generated gate panels, sockets, labels, and explanatory text while keeping the evaluator contract unchanged. The targeted EditMode suite passed 42/42 after regeneration.
 
+Wire tracks must use the symbol's opaque sprite bounds rather than transparent texture margins or magic coordinates. Input tracks terminate at the visible left edge, the junction sits on that edge, and the output track begins at the visible right edge. `AbLogicGateWireTrackTests` covers the binary AND/OR prefabs and the unary NOT prefab.
+
 This validates logic and static generation only. Unity MCP reported no registered Editor instance, so Play Mode, runtime Console, and final visual behavior still require fresh verification.
