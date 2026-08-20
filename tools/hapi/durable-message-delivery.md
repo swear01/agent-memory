@@ -20,6 +20,8 @@ source_refs:
   - hapi:web/src/components/AssistantChat/HappyComposer.sendError.test.tsx
   - hapi:web/src/hooks/mutations/useSendMessage.test.tsx
   - hapi:hub/src/sync/messageService.test.ts
+  - hapi:hub/src/store/messages.test.ts
+  - hapi:shared/src/apiTypes.ts
   - hapi:cli/src/utils/MessageQueue2.test.ts
 redaction: passed
 generated_by: openai-codex/gpt-5.6-luna
@@ -42,6 +44,11 @@ Soft-steer and cancel races need epoch/turn guards and explicit reservation
 ownership. Consume a reservation at dispatch, restore it only on a confirmed
 failure, and make restart/reconnect outcomes idempotent. A late acknowledgement
 must not overwrite newer turn state.
+
+Scheduled sends have an admission boundary: they require a local message ID
+for acknowledgement and must reject attachments before queueing. Cancellation
+is idempotent; a late acknowledgement or failed steer must not restore a
+message that was already cancelled.
 
 Treat these as one delivery contract: voice draft recovery, queued-message
 settlement, and soft-steer restart handling are different surfaces of the same
