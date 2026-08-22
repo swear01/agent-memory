@@ -23,6 +23,14 @@ tags:
 - 其他支援的 GPU 主機規劃使用 CUDA 13.x；確切 minor version 要等各主機的 NVIDIA driver、GPU、container 與 workload 相容性盤點後決定。
 - Zeus 的舊 CUDA、PPA/repository、PyPy（實際元件待盤點）與其他 legacy items 必須逐項盤點、逐項清理，不可未審查就 bulk delete。
 
+# CUDA 版本判斷（2026-08-22）
+
+- NVIDIA 官方目前最新 CUDA Toolkit 是 `13.3 Update 1`；CUDA 13.x 支援 Turing 及更新架構，Pascal 的最後 Toolkit 支援線是 CUDA 12.x。
+- 目前不應直接把全機升到 CUDA 13.x。先以 CUDA `12.9` 作為 Ada 與 Pascal 的共同穩定目標，完成 NVIDIA driver、Ubuntu 與 workload 驗證後，再決定是否切換。
+- 若最終升到 Ubuntu `26.04.1`，非 Zeus 的 Ada 主機再以 CUDA `13.3 Update 1` 為候選目標，並配合完整支援所需的 NVIDIA driver `610.43.02` 以上；R580 只能走 CUDA 13.x minor compatibility，不能當作完整 CUDA 13.3 基線。
+- Zeus 必須保留 CUDA `12.9`。CUDA 12.9 官方驗證的 Ubuntu 版本目前是 22.04/24.04，未列 26.04；建議 Zeus 的 Ubuntu 停在 24.04，除非明確接受 26.04 上非官方驗證的 CUDA 12.9 組合。
+- Mazu 的 NVIDIA driver 缺失與 Athena 的 freeze 都是 CUDA/Ubuntu 變更的 hard blocker。
+
 # 升級策略
 
 - Valkyrie 先完成現場 EZ Flash 3 與 post-flash verification。
