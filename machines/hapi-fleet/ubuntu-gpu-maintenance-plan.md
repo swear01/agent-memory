@@ -47,7 +47,7 @@ tags:
 
 # 升級策略
 
-- Valkyrie 先完成現場 EZ Flash 3 與 post-flash verification。
+- Valkyrie 的現場 EZ Flash 3 與 post-flash verification 已完成。
 - Ubuntu 22.04 主機依序走 `22.04 → 24.04`；Athena 從 `24.04 → 26.04.1`，其他主機待 24.04 穩定後再依序升到 `26.04.1`。
 - 等待 Ubuntu 26.04.1 正式支援升級窗口；不使用 `do-release-upgrade -d`。
 - 維護採一台主機、一次變更；每一步完成 workload、HAPI session、SSH、NFS、GPU、container 與 runner 驗證後才進下一步。
