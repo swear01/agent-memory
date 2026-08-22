@@ -7,7 +7,7 @@ status: active
 confidence: high
 evidence: Successful target sync, nested-skill naming fix, explicit migration precedence, and separate MCP workflow; legacy overlap remains a verification caveat.
 created: 2026-08-18
-updated: 2026-08-18
+updated: 2026-08-22
 tags:
   - skillshare
   - skills
@@ -56,3 +56,11 @@ skillshare handles skills only. MCP remains in the canonical MCP configuration a
 Review external and plugin-managed skill candidates before importing them. A skillshare behavioral-risk audit is not the same as a credential scan: run both, and do not copy machine-local configuration containing secrets into the skill source.
 
 The pilot still showed legacy target-overlap warnings; do not claim ownership is clean until `skillshare doctor` confirms that legacy writers no longer manage skill targets.
+
+# Gemini CLI scope correction and Antigravity restoration
+
+On 2026-08-22, a cleanup that was intended for Gemini CLI was corrected so Antigravity/AGY remained managed. The shared-skills source was restored and fleet verification confirmed `agy 1.1.18`, the `antigravity` target at `~/.gemini/skills`, six active skillshare targets, and no sync drift. The target-overlap warning is expected for this multi-runtime layout.
+
+`AGENTS.md` is not a Skillshare skill: the canonical file remains under the agent configuration source, and `GEMINI.md`, Codex, Claude, OpenCode, and Pi instruction files are targeted links to it. Do not interpret `GEMINI.md` or the Antigravity target as Gemini CLI residue. The four shared MCP servers remain separate from Skillshare and are rendered from the canonical MCP manifest.
+
+HAPI AGY session rows and transcripts are independent of local AGY authentication state. Restoring HAPI history does not restore local login credentials; after reinstalling or rebuilding Antigravity, AGY may require a fresh login. An operator intentionally closing an AGY process does not mean its preserved HAPI session data was deleted.
