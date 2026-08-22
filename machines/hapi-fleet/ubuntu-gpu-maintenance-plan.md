@@ -31,6 +31,23 @@ tags:
 - Zeus 必須保留 CUDA `12.9`。CUDA 12.9 官方驗證的 Ubuntu 版本目前是 22.04/24.04，未列 26.04；建議 Zeus 的 Ubuntu 停在 24.04，除非明確接受 26.04 上非官方驗證的 CUDA 12.9 組合。
 - Mazu 的 NVIDIA driver 缺失與 Athena 的 freeze 都是 CUDA/Ubuntu 變更的 hard blocker。
 
+# Athena freeze 現況複查（2026-08-22 17:17）
+
+- Athena 目前不是 live freeze 狀態：SSH 可用、目前 boot 自 `16:13:19` 已運行約 `1:03`，`nvidia-smi` 正常，RTX 4090 約 `37°C`、閒置。
+- 本次 current boot 與上一個異常 boot 都沒有新的 `NVRM Xid`、GPU 掉線、PCIe AER、MCE、watchdog、OOM、NVMe I/O 或 ext4 failure 證據。
+- 但是相同的 GPU ACPI `PEG1.PEGP._DSM` / `AE_ALREADY_EXISTS` 錯誤仍在本次 boot 重現；上一個 boot 仍符合 hard freeze/manual reset 的歷史證據。
+- 判定：Athena 現在沒有正在 freeze，但 freeze 根因尚未證明解決，仍是 Ubuntu/NVIDIA/CUDA 變更的 hard blocker；HAPI hub/tunnel/stray-runner 錯誤另行處理，不作為 freeze 根因。
+
+# NVIDIA driver 與 CUDA 12.9 版本政策（2026-08-22）
+
+- CUDA `12.9 Update 1` 的 Linux 完整 Toolkit driver 最低為 `R575.57.08`；本計畫以 Ubuntu 套件的 R580 系列作為共同 driver 目標，不把 driver 版本誤稱為 CUDA 版本。
+- `mazu`：目前 kernel NVIDIA driver 不可用；先修復 DKMS，目標 R580+。
+- `cthulhu`：目前 R535.309.01；使用 CUDA 12.9 前升至 R580+。
+- `athena`：目前 R580.173.02，已符合 CUDA 12.9，暫不改動。
+- `valkyrie`：目前 R595.84，可向後支援 CUDA 12.9，不為了「統一數字」降版。
+- `zeus`：目前 R535.309.01；保留 Pascal，使用 CUDA 12.9 前目標 R580+。
+- CUDA Toolkit/runtime/container workload 預設全部鎖在 `12.9`；本次只更新文件與狀態，尚未開始任何遠端升級或 driver 變更。
+
 # Valkyrie BIOS 與 CUDA 現況（2026-08-22）
 
 - Valkyrie 的 ASUS `PRIME Z790-A WIFI` 已完成 EZ Flash 3，讀取 DMI 確認 BIOS `1836`、日期 `04/16/2026`；因此 Cthulhu、Mazu、Athena、Valkyrie 的 BIOS 維護均已完成。Zeus 的 Supermicro BIOS 依明確決策維持不變。
