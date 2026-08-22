@@ -70,3 +70,4 @@ tags:
 - 維護採本機 Mac LAN 的五台平行 wave；同一 stage 可同時執行，但必須由單一 coordinator 管理、每個 stage 設 barrier，收齊五台 workload、HAPI session、SSH、NFS、GPU、container 與 runner 驗證後才進下一 stage。不得讓兩個代理同時操作同一主機。
 - 不改變既有 HAPI runner ownership；active SQLite/WAL state 留在 host-local `/var/tmp`，不可同步回 NFS。
 - Project execution runbook is `docs/r580-cuda12.9-upgrade-plan.md`; the next-agent copy/paste prompt is `docs/r580-cuda12.9-agent-handoff-prompt.md`. The next agent must begin with five-host Stage A read-only preflight and wait for approval before mutation.
+- Release-upgrade recovery and local-vs-centralized authentication evidence are maintained in `ubuntu-upgrade-recovery-runbook.md`.
