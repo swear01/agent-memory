@@ -65,7 +65,7 @@ tags:
 # 升級策略
 
 - Valkyrie 的現場 EZ Flash 3 與 post-flash verification 已完成。
-- Ubuntu 22.04 主機依序走 `22.04 → 24.04`；Athena 從 `24.04 → 26.04.1`，其他主機待 24.04 穩定後再依序升到 `26.04.1`。
+- Ubuntu 22.04 主機可在完整 preflight、barrier 與現場 recovery 條件具備時採平行 wave 走 `22.04 → 24.04`；Athena 從 `24.04 → 26.04.1`，其他主機待 24.04 穩定並完成獨立 gate 後再採另一個平行 wave 升到 `26.04.1`。
 - 等待 Ubuntu 26.04.1 正式支援升級窗口；不使用 `do-release-upgrade -d`。
-- 維護採一台主機、一次變更；每一步完成 workload、HAPI session、SSH、NFS、GPU、container 與 runner 驗證後才進下一步。
+- 維護採本機 Mac LAN 的五台平行 wave；同一 stage 可同時執行，但必須由單一 coordinator 管理、每個 stage 設 barrier，收齊五台 workload、HAPI session、SSH、NFS、GPU、container 與 runner 驗證後才進下一 stage。不得讓兩個代理同時操作同一主機。
 - 不改變既有 HAPI runner ownership；active SQLite/WAL state 留在 host-local `/var/tmp`，不可同步回 NFS。
