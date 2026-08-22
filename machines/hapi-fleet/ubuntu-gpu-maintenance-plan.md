@@ -18,7 +18,7 @@ tags:
 
 - Zeus 使用老舊 Supermicro `X10DAI`，BIOS `2.0`（2016）；使用者明確決定不更新 BIOS。
 - Mazu 在 Ubuntu release upgrade 前必須先修好缺失的 NVIDIA kernel module/DKMS；只安裝 userspace NVIDIA 套件不足以修復目前的 `nvidia-smi` 問題。
-- Athena 在 BIOS `1836` 後出現的 hard freeze 原因尚未完全確認；完成穩定性診斷前不進行 Ubuntu release upgrade。
+- Athena 在 BIOS `1836` 後出現的 hard freeze 原因尚未完全確認；使用者接受將 Athena 納入 R580 + CUDA 12.9 維護，但若再次 freeze 立即停止後續 fleet 變更。Ubuntu release upgrade 仍是另一個獨立變更，需在當時重新確認。
 - Zeus 的 GTX 1080 Ti 是 Pascal `sm_61`，必須保留 CUDA `12.9`；CUDA 13.x 不可套用到 Zeus。
 - 全部 GPU 主機的 CUDA Toolkit/runtime/container 版本預設鎖在 CUDA `12.9`；只有未來有明確 workload 或 Ubuntu 原生支援需求，且完成 NVIDIA driver、OS 與 workload 驗證後，才例外考慮 CUDA `13.3 Update 1`，不因理論上的 performance 提升而直接升級。
 - Zeus 的舊 CUDA、PPA/repository、PyPy（實際元件待盤點）與其他 legacy items 必須逐項盤點、逐項清理，不可未審查就 bulk delete。
@@ -29,14 +29,14 @@ tags:
 - 目前不應直接把全機升到 CUDA 13.x。先以 CUDA `12.9` 作為 Ada 與 Pascal 的共同穩定目標，完成 NVIDIA driver、Ubuntu 與 workload 驗證後，再決定是否切換。
 - 若最終升到 Ubuntu `26.04.1`，CUDA `12.9` 仍是目前預設版本，但其官方原生驗證清單未列 26.04；需要原生 Toolkit 支援時才另行評估 CUDA `13.3 Update 1` 與 NVIDIA driver `610.43.02` 以上。R580 只能走 CUDA 13.x minor compatibility，不能當作完整 CUDA 13.3 基線。
 - Zeus 必須保留 CUDA `12.9`。CUDA 12.9 官方驗證的 Ubuntu 版本目前是 22.04/24.04，未列 26.04；建議 Zeus 的 Ubuntu 停在 24.04，除非明確接受 26.04 上非官方驗證的 CUDA 12.9 組合。
-- Mazu 的 NVIDIA driver 缺失與 Athena 的 freeze 都是 CUDA/Ubuntu 變更的 hard blocker。
+- Mazu 的 NVIDIA driver 缺失仍是 hard blocker。Athena 目前不是 live freeze，且使用者已接受 R580 + CUDA 12.9 的風險；freeze recurrence 仍是立即停止條件。
 
 # Athena freeze 現況複查（2026-08-22 17:17）
 
 - Athena 目前不是 live freeze 狀態：SSH 可用、目前 boot 自 `16:13:19` 已運行約 `1:03`，`nvidia-smi` 正常，RTX 4090 約 `37°C`、閒置。
 - 本次 current boot 與上一個異常 boot 都沒有新的 `NVRM Xid`、GPU 掉線、PCIe AER、MCE、watchdog、OOM、NVMe I/O 或 ext4 failure 證據。
 - 但是相同的 GPU ACPI `PEG1.PEGP._DSM` / `AE_ALREADY_EXISTS` 錯誤仍在本次 boot 重現；上一個 boot 仍符合 hard freeze/manual reset 的歷史證據。
-- 判定：Athena 現在沒有正在 freeze，但 freeze 根因尚未證明解決，仍是 Ubuntu/NVIDIA/CUDA 變更的 hard blocker；HAPI hub/tunnel/stray-runner 錯誤另行處理，不作為 freeze 根因。
+- 判定：Athena 現在沒有正在 freeze，freeze 根因仍未證明解決；依使用者風險接受決定，可納入 R580 + CUDA 12.9 維護，但再次 freeze 就停止後續變更。HAPI hub/tunnel/stray-runner 錯誤另行處理，不作為 freeze 根因。
 
 # NVIDIA driver 與 CUDA 12.9 版本政策（2026-08-22）
 
