@@ -48,7 +48,11 @@ tags:
 - 五台 Ubuntu main archive 統一為官方登記的 `https://mirror.twds.com.tw/ubuntu/`；Docker source 與 Ubuntu security source 亦保持一致。每台 `apt-get update` 與 `apt-get -s full-upgrade` 均通過，沒有待安裝或移除套件。
 - 五台共同安裝的 1,635 個 APT 套件逐包比對後版本漂移為 0；各機因角色不同，安裝套件總集合不要求完全相同。
 - 五台共同的 system administration baseline 為 `ethtool`、`openssh-server`、`lsof`、`dmsetup`、`lm-sensors`、`smartmontools`、`pciutils`、`dnsutils`、`tcpdump`、`rsync`、`sysstat`、`curl`、`wget`、`unzip`、`zip`；2026-08-24 由 `swear02` 逐台 live 查核，15 項全部存在且版本完全一致，`dpkg --audit=0`、`apt-get check` 通過。
-- HAPI、Codex、Claude Code、OpenCode、Cursor Agent、agy、Node、uv 與 user-local JDK 屬於個人／HAPI runner 使用者環境，不是 system-wide 必裝基線。Zeus 唯一的 system-level AI CLI 痕跡 `/usr/local/bin/opencode` 已移除；`swear02` 仍由 `~/.local/bin/opencode` 使用相同 user-local binary。
+- live Sheet「每台必裝」共有 53 項；明確排除 EDA 項 GTKWave 後，其餘 52 項已完成 system-wide 同步。主要版本為 GCC/G++ 12.5/13.4/14.3/15.2（default 15）、Clang 22.1.8、CMake 4.4.2、Python 3.14.4、Rust/cargo 1.93.1、uv 0.12.5、Miniconda/conda 26.5.3、Node 24.19.0/npm 11.17.0、OpenJDK 25.0.3（21.0.11 留池）、Maven 3.9.16、Docker 29.7.2/Compose 5.5.0/Buildx 0.36.1、Neovim 0.12.4。
+- 69 行 system package/manual-tool manifest 在五台完全相同，SHA-256 `bd3d7a2d6f0ad0c97e3bae61dac6a81a94c1b31497e70fe8c1980fd38a48db51`；五台均通過 `dpkg --audit`、`apt-get check` 與 0-action `apt-get -s full-upgrade`。
+- `/srv/shared` 在五台均指向同一 NFS backend `<shared-home>/.dvlab-shared`；目前只放計畫內的 Miniconda installer 與 shared package cache，Conda base 不自動啟用，env 仍建本機。NFS 的 numeric GID 1076 在 Cthulhu 解析成 `cursorpro`、其他主機解析成 `swear02`，不可在修正 group mapping 前用 group name 變更該樹 ownership。
+- HAPI、Codex、Claude Code、OpenCode、Cursor Agent 與 agy 屬於個人／HAPI runner 使用者環境，不是 system-wide 套件。runner-user 登入 PATH 可繼續使用個人 Node 24.15.0、uv 0.11.19 與 JDK 21；clean system PATH 則解析到本輪統一版本。Zeus 唯一的 system-level AI CLI 痕跡 `/usr/local/bin/opencode` 已移除；`swear02` 仍由 `~/.local/bin/opencode` 使用相同 user-local binary。
+- 五台 HAPI runner MainPID 在本輪全程未變且持續等於 state PID；未重啟 runner。舊 CMake/Neovim paths 與 alternatives 狀態已可復原地移至 `/var/backups/codex-system-tools/full-baseline-20260824/`。Zeus 舊 GCC alternatives 把 `g++` 設為 slave，現已把五台統一為 GCC master 加 `g++`/`gcov` slaves。
 
 # Valkyrie BIOS 與 CUDA 現況
 
