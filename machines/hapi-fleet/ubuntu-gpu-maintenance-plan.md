@@ -47,8 +47,8 @@ tags:
 
 - 五台 Ubuntu main archive 統一為官方登記的 `https://mirror.twds.com.tw/ubuntu/`；Docker source 與 Ubuntu security source 亦保持一致。每台 `apt-get update` 與 `apt-get -s full-upgrade` 均通過，沒有待安裝或移除套件。
 - 五台共同安裝的 1,635 個 APT 套件逐包比對後版本漂移為 0；各機因角色不同，安裝套件總集合不要求完全相同。
-- 五台 agentic CLI 基準：HAPI `0.29.0.1`、Codex `0.145.0`、Claude Code `2.1.220`、OpenCode `1.18.9`、Cursor Agent `2026.08.11-e8db854`、agy `1.1.18`。
-- 五台 Node.js / npm 統一為 `24.15.0` / `11.12.1`；Pi 為 `0.84.2`。Zeus 已補上 `uv 0.11.19` 與 Eclipse Adoptium JDK `21.0.10`，runner PATH / `JAVA_HOME` 已更新。
+- 五台共同的 system administration baseline 為 `ethtool`、`openssh-server`、`lsof`、`dmsetup`、`lm-sensors`、`smartmontools`、`pciutils`、`dnsutils`、`tcpdump`、`rsync`、`sysstat`、`curl`、`wget`、`unzip`、`zip`；2026-08-24 由 `swear02` 逐台 live 查核，15 項全部存在且版本完全一致，`dpkg --audit=0`、`apt-get check` 通過。
+- HAPI、Codex、Claude Code、OpenCode、Cursor Agent、agy、Node、uv 與 user-local JDK 屬於個人／HAPI runner 使用者環境，不是 system-wide 必裝基線。Zeus 唯一的 system-level AI CLI 痕跡 `/usr/local/bin/opencode` 已移除；`swear02` 仍由 `~/.local/bin/opencode` 使用相同 user-local binary。
 
 # Valkyrie BIOS 與 CUDA 現況
 
