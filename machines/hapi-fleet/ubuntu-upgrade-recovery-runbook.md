@@ -74,3 +74,29 @@ BMC/PDU 的下一步驗證。
   三台 `dpkg --audit` 均無輸出；但 `systemctl is-system-running` 分別為 Valkyrie
   `degraded`、Athena `starting`、Cthulhu `starting`，因此只證明本地登入與套件
   audit gate，尚未證明所有服務健康。
+
+# 2026-08-23 Zeus kernel 7.0 最終恢復
+
+- Zeus 掛載 Gaia 的 NFS `<remote-home>`，同時又從 Zeus 匯出相同 `<remote-home>`，使
+  `nfs-server-generator` 產生 `home.mount` 與 `nfs-server.service` ordering cycle。
+  已停用 Zeus 的 `<remote-home>` re-export 與 `nfs-server.service`；Zeus 保留 NIS master，
+  不再充當這份 `<remote-home>` 的 NFS server。
+- `<remote-home>` 的 `x-systemd.automount` 會被 `systemd-resolved`、`systemd-timesyncd` 的
+  mount namespace 提前觸發，網路尚未 ready 時造成 90 秒 timeout 與
+  `226/NAMESPACE`。移除 automount 後改由 `_netdev,auto,nofail` 正常掛載。
+- 未接線的 `enp5s0` 使 `systemd-networkd-wait-online` 額外等待約 120 秒；Netplan
+  只將該介面設為 `optional: true`，保留原 IP 設定。最終 kernel
+  `7.0.0-30-generic` 開機為 58.283 秒，wait-online 4.540 秒，failed units 與
+  `dpkg --audit` 均為空。
+- 最終重開後已實測本機 Zeus 帳號、中央 `swear02` SSH、公鑰、Gaia NFS `<remote-home>`、
+  `ypserv`、`ypbind`、`yppasswdd`、DNS、NTP 與 HAPI runner。HAPI runner PID 與
+  `/var/tmp/hapi-zeus/runner.state.json` 一致，版本 `0.29.0.1`，hub heartbeat 正常。
+- SSH 由 enabled `ssh.socket` 持久啟動；`ssh.service` 顯示 disabled 不能單獨判成
+  SSH 未持久啟用。NIS 三項服務均 enabled。`yppasswdd` 會在密碼更新後執行
+  `pwupdate` 重建 passwd/shadow maps；新增、刪除帳號或群組仍需在 master 執行
+  `make -C /var/yp`，目前沒有 cron、timer 或 path watcher 自動完成這一步。
+- 先前交接只規劃 SSSD 的 2–7 天離線憑證快取，沒有實際部署。Zeus 沒有 SSSD
+  套件、服務或設定；Mazu、Valkyrie、Athena 只有 `libpam-sss`，沒有 SSSD daemon
+  或 `/etc/sssd/sssd.conf`，NSS 仍使用 NIS。SSSD 可用 proxy 包裝 legacy NSS/PAM，
+  但不能把未驗證的 proxy 設計當成 LDAP/AD/IPA 等原生 provider 的離線備援；
+  不得把規劃文字當成已完成部署。
