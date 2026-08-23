@@ -101,8 +101,8 @@ BMC/PDU 的下一步驗證。
 
 # 2026-08-23 NIS client 的 SSSD 七天離線快取
 
-- Zeus 保持唯一 NIS master，不安裝 SSSD。Valkyrie、Mazu、Cthulhu 使用 Ubuntu
-  26.04 / SSSD `2.12.0`，Athena 使用 Ubuntu 24.04 / SSSD `2.9.4`；四台 client
+- Zeus 保持唯一 NIS master，不安裝 SSSD。2026-08-23 最終 live readback 顯示
+  Valkyrie、Mazu、Cthulhu、Athena 都使用 Ubuntu 26.04 / SSSD `2.12.0`；四台 client
   都已部署 proxy domain，`id_provider = proxy`、`proxy_lib_name = nis`、
   `auth_provider = proxy`、`cache_credentials = true`。
 - 正式值為 `offline_credentials_expiration = 7`、`cached_auth_timeout = 604800`、
@@ -127,11 +127,29 @@ BMC/PDU 的下一步驗證。
   passwd map 的敏感欄位。
 - 故障注入時不要反覆 stop/start ypbind。NIS 不可達期間的 RPC 查詢會讓大量 512–1023
   保留來源埠進入 TCP `TIME_WAIT`，此時 ypbind 的 `bindresvport()` 會回報
-  `Address already in use`。讓查詢安靜並等待 TIME_WAIT 釋放，或在確認無工作負載後
-  reboot；反覆 start 只會延長恢復。
+  `Address already in use`。2026-08-23 Mazu 實測的無重開機恢復流程是：停止 SSSD
+  與 nscd 讓認證流量安靜，等待約 60 秒，然後只啟動一次 ypbind；確認 `ypwhich`
+  回到 Zeus 後再依序啟動 nscd 與 SSSD。反覆 start 只會延長恢復；若仍無法安靜，
+  才在確認無工作負載後 reboot。
 - 最終四台 SSSD/ypbind/SSH active、Zeus ypserv/ypbind/rpcbind/SSH active，五台 HAPI
   runner 都是 `0.29.0.1`、systemd MainPID 等於各自 runner state PID、沒有活動
   `--started-by runner` session，`dpkg --audit` 與 client failed-unit 清單均無輸出。
-- 四台的 `/etc/apparmor.d/force-complain/usr.sbin.sssd` 都在部署前已存在，因此 SSSD
-  現在仍是 AppArmor complain mode；這是尚未處理的 hardening 項目，不可誤報為
-  enforcing。
+- `sssd-common 2.12.0-1ubuntu5.2` 的 package `preinst` 會在首次安裝時主動建立
+  `/etc/apparmor.d/force-complain/usr.sbin.sssd`，所以 complain 不是部署誤操作：該模式
+  允許原本會被拒絕的操作並記錄 audit，功能通常不受影響，但沒有 AppArmor 強制隔離。
+- DVLab 的 NIS proxy 使用情境在 complain audit 中確認 packaged profile 缺少 SSSD PID
+  檔、PAM stack、`/etc/login.defs` 與網卡 type。四台已用 packaged profile 預留的
+  `/etc/apparmor.d/local/usr.sbin.sssd` 加入以下最小規則，沒有直接修改 package conffile：
+
+  ```text
+  /{,var/}run/sssd/sssd.pid rw,
+  /etc/pam.d/{sssd-shadowutils,other,common-auth,common-account,common-password,common-session} r,
+  /etc/login.defs r,
+  /sys/devices/**/net/*/type r,
+  ```
+
+- Mazu 先做 canary，再逐台部署 Cthulhu、Athena、Valkyrie。四台現在都移除
+  `force-complain` symlink，live label 是 `/usr/sbin/sssd (enforce)`；profile compile、
+  SSSD restart、集中 NIS 密碼、本機管理密碼、已 warm 的集中公鑰、Mazu 七天離線快取、
+  delayed AppArmor denial、failed units、`dpkg --audit` 與 HAPI supervisor ownership
+  全部通過。測試 NIS canary、四台 cache 與 NAS 測試 home 都已清除。
