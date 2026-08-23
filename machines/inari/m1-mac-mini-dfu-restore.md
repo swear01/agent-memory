@@ -13,6 +13,8 @@ tags:
   - dfu
   - apple-configurator
   - restore
+  - nfs
+  - autofs
 source_refs:
   - Apple Support 108900
   - Apple Support 120694
@@ -23,6 +25,26 @@ source_refs:
 - 目標機是 M1 Mac mini；主機是 M5 MacBook Air，當時為 macOS `26.5.2` 與 Apple Configurator `2.20`。
 - 最終透過真正的 USB DFU 完成抹除與重裝。使用的 restore image 是 `UniversalMac_26.6.2_25G83_Restore.ipsw`；目標機成功重新啟動到 macOS 26 設定流程，主機與本機帳號命名為 `inari`。
 - 維護紀錄只保存帳號名稱，不保存或重述任何密碼。
+
+# Gaia NFS 整體 `<remote-home>` 掛載
+
+- Inari 使用 macOS 內建 autofs 的 `-static` map，把整個 `192.168.1.200:/volume1/nfs-home` 掛到 `<remote-home>`；不要使用 `auto_home` wildcard 只掛 `<home>`。
+- `/etc/auto_master` 保留預設的 `/- -static`，停用原本的 `<remote-home> auto_home` 項目；`/etc/fstab` 使用：
+
+  ```fstab
+  192.168.1.200:/volume1/nfs-home <remote-home> nfs rw,hard,intr,resvport,vers=4 0 0
+  ```
+
+- 套用前必須先正常卸載 `/System/Volumes/Data/<remote-home>/<entry>` 的子 NFS 掛載與 `/System/Volumes/Data/<remote-home>` 的舊 `auto_home` autofs 掛載，再執行 `sudo automount -vc`。Finder 若正開著 `<remote-home>`，要先關閉或重新啟動 Finder，否則子掛載會保持忙碌。
+- `mount` 輸出的來源可能含空格，例如 `map auto_home on ...`，不可假設掛載點永遠是固定欄位；應找出文字 `on` 後面的欄位。
+- 2026-08-23 即時驗證結果：
+
+  ```text
+  map -static on /System/Volumes/Data/<remote-home> (autofs, automounted, nobrowse)
+  192.168.1.200:/volume1/nfs-home on /System/Volumes/Data/<remote-home> (nfs, nodev, nosuid, automounted, nobrowse)
+  ```
+
+  本機帳號 `inari` 可在 Finder 以 `Command-Shift-G` 開啟 `<remote-home>`，列出 Gaia NFS 根目錄並讀取 `<home>`。寫入權限仍由 NFS 上的 UID/GID 與 mode 決定。
 
 # 根因與判斷證據
 
