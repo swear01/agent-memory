@@ -67,3 +67,10 @@ BMC/PDU 的下一步驗證。
   的直接證據，可解釋中央帳號驗證失敗；NFS `<remote-home>` 仍需獨立驗證，不得由此推定。
 - 本地救援帳號及其密碼由私有 DVLab HackMD 管理。記憶只保留帳號路徑的存在與
   驗證結論，不保存或重述密碼。
+- 使用 HackMD 管理的主機本地帳號重新做密碼 SSH 驗證後，Valkyrie、Athena、
+  Cthulhu 三台皆成功登入，`id -un` 分別與主機名一致。現場版本為：Valkyrie
+  Ubuntu `26.04` / kernel `7.0.0-30-generic`；Athena Ubuntu `24.04.4` / kernel
+  `6.8.0-106-generic`；Cthulhu Ubuntu `24.04.4` / kernel `6.8.0-138-generic`。
+  三台 `dpkg --audit` 均無輸出；但 `systemctl is-system-running` 分別為 Valkyrie
+  `degraded`、Athena `starting`、Cthulhu `starting`，因此只證明本地登入與套件
+  audit gate，尚未證明所有服務健康。
