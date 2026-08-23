@@ -10,6 +10,7 @@ tags:
   - ubuntu
   - release-upgrade
   - ssh
+  - sssd
   - nis
   - nfs
   - recovery
@@ -95,8 +96,42 @@ BMC/PDU 的下一步驗證。
   SSH 未持久啟用。NIS 三項服務均 enabled。`yppasswdd` 會在密碼更新後執行
   `pwupdate` 重建 passwd/shadow maps；新增、刪除帳號或群組仍需在 master 執行
   `make -C /var/yp`，目前沒有 cron、timer 或 path watcher 自動完成這一步。
-- 先前交接只規劃 SSSD 的 2–7 天離線憑證快取，沒有實際部署。Zeus 沒有 SSSD
-  套件、服務或設定；Mazu、Valkyrie、Athena 只有 `libpam-sss`，沒有 SSSD daemon
-  或 `/etc/sssd/sssd.conf`，NSS 仍使用 NIS。SSSD 可用 proxy 包裝 legacy NSS/PAM，
-  但不能把未驗證的 proxy 設計當成 LDAP/AD/IPA 等原生 provider 的離線備援；
-  不得把規劃文字當成已完成部署。
+- 先前交接只規劃 SSSD 的 2–7 天離線憑證快取，當時確實尚未部署；以下新章節
+  記錄後續實際部署與驗證結果，不得再把這段舊盤點當成目前狀態。
+
+# 2026-08-23 NIS client 的 SSSD 七天離線快取
+
+- Zeus 保持唯一 NIS master，不安裝 SSSD。Valkyrie、Mazu、Cthulhu 使用 Ubuntu
+  26.04 / SSSD `2.12.0`，Athena 使用 Ubuntu 24.04 / SSSD `2.9.4`；四台 client
+  都已部署 proxy domain，`id_provider = proxy`、`proxy_lib_name = nis`、
+  `auth_provider = proxy`、`cache_credentials = true`。
+- 正式值為 `offline_credentials_expiration = 7`、`cached_auth_timeout = 604800`、
+  `offline_failed_login_attempts = 5`、`offline_failed_login_delay = 5`。NSS 的
+  passwd/group 順序是 `files systemd nis sss`，並停用 nscd 的 passwd/group cache。
+- PAM 必須讓 `pam_sss` 同時在 auth 與 account 的 Primary block、位於
+  `pam_deny` 前面，本機帳號再由 `pam_unix` fallback。SSSD 不加入 password stack，
+  `chpass_provider = none`；NIS 密碼變更仍走既有 yppasswd 流程。Athena 原本手動的
+  `pam_mkhomedir.so skel=/etc/skel umask=022` 已改用語意相同的系統 mkhomedir profile。
+- SSSD proxy/NIS 在 ypbind 中斷時會從 PAM proxy 得到 `PAM_AUTH_ERR`，不會自然進入
+  offline password path；`cached_auth_timeout` 是使七天快取可用的必要設定。它的
+  安全語意是：最後一次成功線上驗證後七天內，即使主機目前在線，也會先接受正確的
+  cached password；若 NIS 端剛改密碼，舊 cached password 最長仍可能被接受七天。
+  需要立即撤銷時，必須在各 client 執行 `sss_cache -u <user>`。
+- 實測流程為：臨時 NIS canary 在線密碼登入建立 cache，停止單一 client 的 ypbind，
+  再驗證集中密碼、本機管理帳號、已 warm identity 的集中公鑰與錯誤密碼拒絕；四台
+  均通過，且 reboot 後 cache 仍可登入。臨時帳號已從 Zeus 刪除、`make -C /var/yp`
+  已重建 maps，四台 client 的 canary cache 也已清除。
+- 公鑰登入本身不保證 SSSD identity 已 warm。要支援 NIS 離線時的公鑰登入，帳號必須
+  已有 SSSD identity cache；可在線執行 `getent -s sss passwd <user>` 驗證並建立，
+  然後用 `sssctl user-show <user>` 確認，不可用普通 `getent passwd`，避免輸出 NIS
+  passwd map 的敏感欄位。
+- 故障注入時不要反覆 stop/start ypbind。NIS 不可達期間的 RPC 查詢會讓大量 512–1023
+  保留來源埠進入 TCP `TIME_WAIT`，此時 ypbind 的 `bindresvport()` 會回報
+  `Address already in use`。讓查詢安靜並等待 TIME_WAIT 釋放，或在確認無工作負載後
+  reboot；反覆 start 只會延長恢復。
+- 最終四台 SSSD/ypbind/SSH active、Zeus ypserv/ypbind/rpcbind/SSH active，五台 HAPI
+  runner 都是 `0.29.0.1`、systemd MainPID 等於各自 runner state PID、沒有活動
+  `--started-by runner` session，`dpkg --audit` 與 client failed-unit 清單均無輸出。
+- 四台的 `/etc/apparmor.d/force-complain/usr.sbin.sssd` 都在部署前已存在，因此 SSSD
+  現在仍是 AppArmor complain mode；這是尚未處理的 hardening 項目，不可誤報為
+  enforcing。
