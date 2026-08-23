@@ -15,9 +15,13 @@ tags:
   - restore
   - nfs
   - autofs
+  - nis
+  - opendirectory
 source_refs:
   - Apple Support 108900
   - Apple Support 120694
+  - Apple Directory Utility User Guide for macOS 26
+  - Apple Open Directory Plug-in Programming Guide (retired)
 ---
 
 # 結果
@@ -45,6 +49,14 @@ source_refs:
   ```
 
   本機帳號 `inari` 可在 Finder 以 `Command-Shift-G` 開啟 `<remote-home>`，列出 Gaia NFS 根目錄並讀取 `<home>`。寫入權限仍由 NFS 上的 UID/GID 與 mode 決定。
+
+# macOS 26.6.2 的 NIS 邊界
+
+- Inari 的 Directory Utility「服務」頁面實際只列出 `Active Directory` 與 `LDAPv3`；Apple 現行 macOS 26 Directory Utility 文件也只說明這兩種連線。
+- 系統映像仍帶有已簽署的 `NIS.daplug` 與 `BSD.daplug`，而且 bundle metadata 是用 macOS 26.6.1 SDK 建置；這只能證明舊的設定 UI bundle 仍被打包，不能證明 NIS identity/authentication runtime 可用。
+- 實機沒有 `ypbind`、`ypwhich`、`ypcat`、`ypmatch`、`yppasswd` 等客戶端命令，`odutil show nodenames` 也沒有 `/NIS`；`/System/Library/OpenDirectory/Modules` 沒有 NIS module。
+- Apple 已把舊 DirectoryService plug-in 架構標示為 deprecated／retired。基於現行公開介面與實機元件，macOS 26.6.2 沒有可安全採用的受支援 NIS 登入設定路徑；不要因為看到 `.daplug` 就嘗試呼叫私有 custom call。
+- 這不等同於證明任何私有或第三方實作都絕對不可能。Inari 目前採本機帳號搭配完整 `<remote-home>` NFS；若日後必須集中驗證，再另外評估 LDAP 或建立 UID/GID 相符的本機帳號，不把未驗證的隱藏 NIS 路徑當正式方案。
 
 # 根因與判斷證據
 
