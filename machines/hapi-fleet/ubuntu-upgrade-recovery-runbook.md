@@ -53,3 +53,17 @@ tags:
 plane 是不同 gate。只有 post-reboot 的全部必要 gate 都通過，才把該台標成完成。
 任何尚未在主機端 log 證明的根因都必須標為 hypothesis，並保留獨立 console/LAN/
 BMC/PDU 的下一步驗證。
+
+# 2026-08-23 Mazu 與 Zeus 現場恢復證據
+
+- Mazu 從 GRUB recovery root 完成 `dpkg --configure -a`；之後 `dpkg --audit`
+  無輸出、`apt-get check` exit `0`，並完成 `update-initramfs -u -k all`、
+  `update-grub` 與 reboot。重開後 LAN `192.168.1.207` ping 及 TCP/22 可達，
+  但 hub port `3006` 無回應，公開 HAPI 仍為 HTTP `530`。因此 OS package recovery
+  有強證據，但 HAPI/NIS/NFS/GPU 等 post-reboot gate 尚未全部通過。
+- Zeus 的 `140.112.171.138` ping、TCP/22、RPC/111 均可達，證明主機與 sshd 已
+  上線；但 `rpcinfo -p 140.112.171.138` 只列出 RPC program `100000` (`rpcbind`)，
+  未列出 NIS `ypserv` program `100004`。這是 NIS master 服務尚未向 rpcbind 註冊
+  的直接證據，可解釋中央帳號驗證失敗；NFS `<remote-home>` 仍需獨立驗證，不得由此推定。
+- 本地救援帳號及其密碼由私有 DVLab HackMD 管理。記憶只保留帳號路徑的存在與
+  驗證結論，不保存或重述密碼。
