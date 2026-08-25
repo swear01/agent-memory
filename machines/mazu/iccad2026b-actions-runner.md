@@ -25,6 +25,5 @@ generated_by: openai-codex/gpt-5.6-sol
 - The image must provide PyYAML plus rustup, stable Rust, rustfmt, and clippy. Rust lives under `/opt/rustup` and `/opt/cargo`, with `/opt/cargo/bin` on `PATH`.
 - Current image tag (2026-08-25): `iccad2026b-actions-runner:2.336.0-jammy-rustup`.
 - Persistent volumes: `mazu-iccad2026b-config-v2:/runner-config` and `mazu-iccad2026b-work:/_work`.
-- Rollback container retained after the Rust update: `mazu-iccad2026b-pre-rustup-20260825`.
 - Replacing a reusable runner can briefly yield `A session for this runner already exists`; wait for the old GitHub session to expire and verify the new listener logs `Listening for Jobs` before rerunning queued checks.
 - Verified on PR 167: Rust toolchain install, `cargo fmt`, `cargo clippy`, and `cargo test` all passed on job `97825964168`.
