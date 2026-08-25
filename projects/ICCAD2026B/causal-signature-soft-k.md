@@ -100,3 +100,30 @@ oracle 低於 `1/4` 就 promotion。
 test/class/bin identity group scale 在 sparse regime 乘 `0.25`，不計算 K ratio；
 PR166 已把這三組 identity features 預設關閉，所以目前 default distance 不存在
 可學習的 identity scaling curve。
+
+# 2026-08-26 離線 support curve
+
+將 high-K 補償限制成一個參數，避免學 profile-specific 曲線：
+
+```text
+K_hint < 16:  target_k = K_hint
+K_hint >= 16: r = min(1, (N / K_hint) / support)
+              target_k = max(2, round(N / support))
+```
+
+Vichuang strict native-scanner 重跑仍只有 14/20 可用；六個失敗與前次完全相同，
+沒有用 non-strict fallback 或補值。七個 high-K profiles 的全資料最佳為
+`support=26`；leave-one-family-out fit 分別為 `33/24/27/26`，取中位數後的研究
+候選為 `support=27`。它在四個 sparse profiles 輸出 `K4/K4/K8/K4`，兩個
+N300/K16 dense profiles 輸出 K11，N1000/K32 保持 K32；所有 K8 保持 exact。
+
+14-profile macro（profile 等權）：
+
+- production sparse 1/3：BA/TPR/TNR `0.698691/0.622975/0.774407`
+- sparse 1/4：`0.701891/0.635132/0.768649`
+- support=27 curve：`0.707722/0.652507/0.762938`
+
+curve 對 production 1/3 為 BA `+0.009031`、TPR `+0.029532`、TNR
+`-0.011469`。但 high-K family-blocked CV BA 只有 `0.713228`；exact、1/3、1/4
+在同列分別為 `0.714417/0.710434/0.717950`。所以這條曲線只證明同資料的潛力，
+尚未勝過 fixed 1/4 的 family holdout，不可 promotion 到 production。
