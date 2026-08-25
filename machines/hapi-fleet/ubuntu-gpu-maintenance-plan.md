@@ -5,7 +5,7 @@ project: hapi
 status: active
 confidence: high
 created: 2026-08-22
-updated: 2026-08-24
+updated: 2026-08-25
 tags:
   - ubuntu
   - nvidia
@@ -18,7 +18,7 @@ tags:
 
 - Zeus 使用老舊 Supermicro `X10DAI`，BIOS `2.0`（2016）；使用者明確決定不更新 BIOS。
 - 五台實驗室主機已完成 Ubuntu `26.04 LTS` 升級，kernel 統一為 `7.0.0-30-generic`；NVIDIA driver 統一為 `580.173.02`。
-- Athena 在 BIOS `1836` 後出現的 hard freeze 原因尚未完全確認；若再次 freeze，立即停止後續 fleet 變更並重新調查。
+- Athena 在 BIOS `1836` 後仍有反覆 kernel panic／自動重開機；原因尚未完全確認，且 BIOS、microcode 與 Intel Default Settings 均已處理，不可再把它們列為尚未嘗試的修復。
 - Zeus 的 GTX 1080 Ti 是 Pascal `sm_61`，必須保留 CUDA `12.9`；CUDA 13.x 不可套用到 Zeus。
 - Mazu、Cthulhu、Athena、Valkyrie 統一使用 CUDA Toolkit `13.3 Update 1`；Zeus 單獨維持 CUDA `12.9` 相容線。
 - Zeus 的 CUDA `12.9` Toolkit 尚未安裝；目前只有 R580 driver。不可把 `nvidia-smi` 顯示的 CUDA capability 當成已安裝 Toolkit。
@@ -36,6 +36,14 @@ tags:
 - 本次 current boot 與上一個異常 boot 都沒有新的 `NVRM Xid`、GPU 掉線、PCIe AER、MCE、watchdog、OOM、NVMe I/O 或 ext4 failure 證據。
 - 但是相同的 GPU ACPI `PEG1.PEGP._DSM` / `AE_ALREADY_EXISTS` 錯誤仍在本次 boot 重現；上一個 boot 仍符合 hard freeze/manual reset 的歷史證據。
 - 判定：Athena 現在沒有正在 freeze，freeze 根因仍未證明解決；依使用者風險接受決定，可納入 R580 + CUDA 12.9 維護，但再次 freeze 就停止後續變更。HAPI hub/tunnel/stray-runner 錯誤另行處理，不作為 freeze 根因。
+
+# Athena 反覆 kernel panic 現況（2026-08-25）
+
+- `2026-08-25 19:52:28 +08:00` 的重開機不是排程或正常 shutdown，而是 `SCHED_SOFTIRQ`／idle scheduler 路徑中的 kernel panic；command line 的 `oops=panic panic=10` 使主機約十秒後自動重開。trace 涉及 `swapper/1`、`_nohz_idle_balance` 與 `sched_balance_update_blocked_averages`，並出現從 NX-protected page 取指的 fatal exception。
+- pstore 另有 `2026-08-12` 一次與 `2026-08-18` 三次相似 panic，時間不固定；當次沒有 reboot timer、cron/at、OOM、NVIDIA Xid、thermal critical 或 MCE 證據，且系統約 97% idle。
+- Athena 是 Core i9-13900K、ASUS PRIME Z790-A WIFI、BIOS `1836`、microcode `0x133`；使用者確認已關閉主機板超規設定並選用 Intel Default Settings。`0x133` 已高於 Intel 目前要求的 `0x12F`，但 panic 仍會發生。
+- 同 kernel 的其他 fleet 主機沒有同類 panic；其中 Valkyrie 與 Athena 的 CPU、主機板、BIOS、microcode 和記憶體配置高度相同而未重現。因此證據偏向 Athena 單機 CPU／RAM／主機板或未捕捉的 kernel 問題，不能把 Intel Vmin Shift 或 Linux scheduler bug 任一方寫成已確診根因。
+- 使用者決定先暫停此案。若日後重啟調查，先做離線 MemTest86；再用 CPU 交叉交換或保固換貨隔離 CPU，硬體測試通過後才投入 kdump 擷取完整 vmcore。不要重複建議更新 BIOS、microcode 或套用 Intel Default Settings。
 
 # NVIDIA driver 與 CUDA 版本現況（2026-08-24）
 
