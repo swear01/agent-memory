@@ -42,3 +42,31 @@ holdout macro BA `+0.006618`，但四個 K8 profiles 退步，worst `-0.063244`�
 
 後續應分開處理兩件事：causal core 可同時用於 exact/soft；dense high-K 是否從
 exact 放寬，需另做 K-range/selector promotion，不能由 causal signature 順便決定。
+
+# 參數化 K policy 修正
+
+不可把 set4 的 K6/K8 寫成固定 K。應以 `r = K_output / K_hint` 表示，並沿用現有
+`N/K < 8` 定義，分別調整 sparse 與 non-sparse high-K：
+
+```text
+K < 16:                 r_low = 1
+K >= 16 and N/K < 8:    r = r_sparse
+K >= 16 and N/K >= 8:   r = r_dense
+K_initial = round(r * K_hint)
+```
+
+比例必須在 causal-core post-processing 後，以未加權 macro BA 直接選擇；不設 TPR、
+TNR、worst-case 或「維持 exact-K」的額外 gate。現有 GMM pseudo-BA 不參與這個
+選擇，因為它在 set4/formal 都錯誤偏好最小候選 K。
+
+目前 strict 可跑 evidence 的初值：
+
+- sparse PRgen：`r_sparse=1/4`。N48/K16 為 K4、BA `0.675000`；N57/K19
+  為 K5、BA `0.649123`，均高於其他測試比例。
+- non-sparse N300/K16：set4 與舊 formal 的 causal-core macro BA 在
+  `r_dense=3/8` 最高，分別為 `0.841080`、`0.843183`，macro `0.842132`；
+  `r=1/2` macro `0.840800`，`r=1` macro `0.797693`。
+
+這些是初值，不是已 promotion 常數。完整 20-set 當前 strict 重跑被
+`benchmark_set_10` 的 `ValueError: first Mismatch block has no parseable Ibex/Spike pair`
+擋住；不得改成 non-strict 或跳過該 profile 來宣稱完整最佳比例。
