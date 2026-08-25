@@ -36,4 +36,8 @@ for a large shared rollout directory.
 On cthulhu, a direct Codex 0.149.0 YOLO exec safely reclaimed the expired lease,
 expanded the state DB from 82 to 953 thread rows, marked the backfill complete,
 and returned `OK`. `codex doctor --json` separately confirmed the installation,
-auth, network, database integrity, and host-local `sqlite_home` were healthy.
+auth, network, database integrity, and host-local `sqlite_home` were healthy. A
+new runner-spawned HAPI Codex YOLO session then started normally and returned
+`OK`. The concurrent `stale arg0 temp dirs` cleanup warning also appeared during
+the successful run, so it was not the crash cause; do not clean shared temp
+state while other agents are active.
