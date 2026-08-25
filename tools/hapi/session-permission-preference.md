@@ -26,3 +26,8 @@ authorize destructive actions.
 
 After creation, verify the recorded session permission mode together with the
 agent, model, machine, workspace, and ready state.
+
+For fleet deployment, independently stored Skillshare sources may remain on a
+clean detached merge commit after `skillshare pull`. Verify that the published
+`origin/main` commit is an ancestor and that the actual target contains the
+rule; exact per-host HEAD equality is not a valid gate.
