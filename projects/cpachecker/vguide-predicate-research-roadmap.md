@@ -35,7 +35,8 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
 - #152：提供 deterministic/source-grounded inductiveness obligations；加 irrelevant-obligation control。
 - #153：用 bounded refinement feedback 做 incremental lemma completion；和等 call/token budget 的
   one-shot 對照。
-- #154：獨立修復 `ant all-checks` 對已刪 ECJ prefs 的依賴，不得跳過 ECJ gate。
+- #154：已由 PR #156 修復並保留 strict ECJ gate；build/fleet 驗證分層見
+  `build-verification.md`。
 
 # 實驗邊界
 
