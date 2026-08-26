@@ -10,15 +10,14 @@ updated: 2026-08-26
 # 現況
 
 Rust 是唯一正式 submission runtime；Python `src/` 是 reference／research 路徑。
-截至 `main` merge commit `1f21af4f`（PR `#172`），Rust 不是 Python current default
-的等價實作，而是落後一個主要演算法版本：Python large-N CLARA 已用 bounded fused
-structural distance 計算 `sample × sample` 與分塊 `N × medoids`，Rust large-N CLARA
-仍只用 feature-vector cosine。
+Issue `#174` 已由 PR `#176` 在 merge commit `ffc275c2` 完成。Rust 已同步 Python
+production defaults，包括 identity calibration、RV32M／trace semantics、counter
+cosine、fixed-scale normalization 與 large-N CLARA clustering。Python-only、
+default-off research features 仍可不同。
 
-Source-level 稽核的設定面差距為：Python/Rust feature flags `64/19`、group scales
-`37/15`、distance parameters `57/10`。這些數字包含 default-off research features，
-不能解讀成 BA 百分比；真正的 production blocker 是 default-active 語意、權重與
-large-N distance path 已分叉。
+Vichuang chunk 驗證結果：set5／set6／set7_2 的 Python、Rust partition 完全一致；
+set9 pair agreement `99.9758%`、ARI `0.997295`，BA 分別為 `0.790744`／`0.791862`。
+20-profile projected mean BA 為 Python `0.699376`、Rust `0.699432`，差 `0.000056`。
 
 # 長期規則
 
@@ -34,17 +33,15 @@ large-N distance path 已分叉。
 
 # 追蹤與驗收
 
-GitHub issue `#174` 追蹤 Rust 對齊 Python current defaults。範圍包含：同步有效
-defaults、default-relevant parser/feature semantics、Rust rectangular fused-distance
-API、bounded CLARA、soft-K／K upper bound／strict capacity behavior，以及新的
-Rust/Python default-parity CI gate。
+GitHub issue `#174` 已完成 Rust 對齊 Python current defaults；PR `#176` 的 CI、
+nightly VI profiles、Rust checks 與 GitHub review 均通過後合併。
 
 Issue `#174` 刻意不要求一次移植所有 default-zero research features；Drain、char
 ngram、完整 selective LLM refine／merge 等需要各自的 evidence-backed promotion。
 
-# 容易誤判的驗證
+# 驗證要求
 
-`scripts/verify_submission.sh` 只 gate Rust binary 的 ABI、determinism、Case coverage
-與 public BA floor，明確不要求與 `python -m src` partition isomorphism。
-`scripts/verify_native_equivalence.py` 比較的是 Python native trace extraction 與舊
-Python cache，也不是 Rust/Python parity。兩者都不能證明 Rust 已追上 Python。
+不得只用小型 synthetic dataset 判定 parity；必須涵蓋 Vichuang chunk profiles，
+包含 N=1000 CLARA 與 skewed counter histograms。比較 partition、BA、pair agreement／
+ARI，以及 feature／distance numerical delta；production-default 變更須同步更新
+Rust、Python、active docs 與 parity gate。
