@@ -3,7 +3,7 @@ title: CPAchecker VGuide provider routing
 project: cpachecker
 tags: [vguide, deepseek, muse, gateway]
 status: active
-updated: 2026-08-20
+updated: 2026-08-26
 ---
 
 # VGuide provider routing
@@ -21,6 +21,11 @@ updated: 2026-08-20
   `VGUIDE_LLM_PROVIDER=meta`，使用 `MODEL_API_KEY`，預設模型
   `muse-spark-1.2`、預設 endpoint `https://api.meta.ai/v1/chat/completions`，固定
   `reasoning_effort=minimal`。
+- swear01 NFS hosts 的既有 Meta credential 在
+  `~/.config/hapi-runner/meta.env`，變數名是 `META_API_KEY`。Production Java
+  transport 需要通用名稱，因此只在 launch process 內做
+  `MODEL_API_KEY="$META_API_KEY"` 映射；不要把 key 值複製到 repo、artifact、
+  issue 或 shell command output。該檔案權限應維持 `0600`。
 - 判讀實驗時同時查 `run_meta.json` 的 `llm_provider`、`model`、
   `llm_api_url`，以及 Java log 的 `VGuide LLM provider/model`；不要只憑 port
   或環境中的 key 推測 provider。
