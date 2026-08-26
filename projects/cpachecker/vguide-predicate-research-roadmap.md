@@ -44,6 +44,13 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
   held-out generation 成功或失敗；只證明不能把 empty-arm 的未受干預 trajectory 當成
   intervention arm 的靜態 location schedule。若續做，必須另開並預註冊能依當下 trace
   決定合法 head 的 reference gate，不能在 #158 內手改 head 或加 draw。
+- #162 semantic-capacity follow-up：在最新 main `4da075b682` 直接把完整 proper-ancestor
+  `variable<6` family 以 location-specific initial precision 載入，排除 trajectory scheduling
+  干擾。`nested_5` 精確載入 10 個 local predicates、`nested_6` 載入 15 個；兩者 exit 0
+  跑到 300 CPU-s 仍為 `UNKNOWN`。因此這兩題對「只有 inherited guards」是
+  consumer-capacity-negative，依 prereg 在 adaptive replay 與 live Muse 前停止（external
+  responses 0）。後續若要測 cue 泛化，須先找另一個 source-matched consumer-positive case，
+  或另開並預註冊包含 exit equalities 等不同 predicate theory；不能回填 #162。
 - #150：location-complete placement；先用 remove-head 證明每個 head 都是 consumer-positive。
 - #151：從 coupled updates 生成 affine conservation relation；先過 G2 consumer gate。
 - #152：提供 deterministic/source-grounded inductiveness obligations；加 irrelevant-obligation control。

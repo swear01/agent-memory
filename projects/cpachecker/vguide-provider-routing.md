@@ -26,3 +26,6 @@ updated: 2026-08-26
 - 判讀實驗時同時查 `run_meta.json` 的 `llm_provider`、`model`、
   `llm_api_url`，以及 Java log 的 `VGuide LLM provider/model`；不要只憑 port
   或環境中的 key 推測 provider。
+- CPU/load process snapshot 只保存 PID、CPU、user、command name；不要保存 process
+  arguments 或 environment，因為其他服務可能把 API key 放在 command line，造成 artifact
+  洩漏。
