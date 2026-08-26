@@ -52,6 +52,29 @@ com.microsoft.z3.Native.INTERNALsolverCheck` crash。`hs_err` 的頂層 native f
   也跑完 3880 configuration cases、無 JVM crash；其普通 failures 只因診斷 container
   未提供 VGuide provider credential，與 Z3 無關。
 
+網路上的精確對應證據：
+
+- OpenJDK [JDK-8379560](https://bugs.openjdk.org/browse/JDK-8379560) 是 unresolved 的
+  21.0.10 Linux bug，native frames 與本案相同：`libstdc++.so.6+0xdfc31`、
+  `std::codecvt<char16_t, char, __mbstate_t>::do_in+0x4e`、
+  `std::ostream::_M_insert<unsigned long>+0x92`。原始 workload 是 VLCJ，不是 Z3，故此
+  crash signature 不專屬於 solver。
+- Microsoft OpenJDK [issue #670](https://github.com/microsoft/openjdk/issues/670) 的維護者在
+  Microsoft Build、Temurin、Corretto、Zulu 21.0.10 都重現，Ubuntu 套件的 OpenJDK 則
+  正常，並據此建立 JDK-8379560。該 issue 後來因 Compose 1.10.2 消除原 workload 的
+  crash 而關閉，不代表 JDK bug 已修復。
+- JetBrains [CMP-9994](https://youtrack.jetbrains.com/issue/CMP-9994) 的最小 reproducer
+  只在 native code 執行 `std::cout << (unsigned long)42`，仍可進入錯誤的
+  `codecvt<char16_t>`；它支持 process-global C++ locale/facet state interaction，而非
+  Z3 formula 或輸入內容損壞。
+- OpenJDK build 文件說 `--with-stdc++lib` 預設採 static linking。ELF `DT_NEEDED`
+  本機比對也顯示 Temurin JDK libraries 不依賴動態 `libstdc++.so.6`，Ubuntu OpenJDK 的
+  `libjvm.so` 等 libraries 則與 Z3 一樣動態依賴 system libstdc++。因此目前最符合全部
+  證據的機制是：static libstdc++ 的 JDK 與 dynamic libstdc++ 的 JNI library 同處一個
+  process，造成兩套 C++ locale/facet global state 或 symbol interposition；facet identity
+  錯配後，整數 ostream 路徑取到 `codecvt<char16_t>` 並 null-dereference。這仍是推論，
+  JDK-8379560 尚未確認最終 root cause。
+
 本機需要完整 native configuration gate 時，顯式使用：
 
 ```bash
@@ -60,6 +83,6 @@ env JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
   ant -q configuration-checks
 ```
 
-精確責任歸屬仍是「Temurin 21.0.10 與此 Z3 JNI workload 的 runtime interaction」；
-沒有同 host 的 Temurin 21.0.11 artifact，尚不能區分 vendor 差異與 21.0.10→21.0.11
-patch-level 修復，也不能排除 Z3 undefined behavior 只在特定 JVM memory layout 被觸發。
+目前可確定的 workaround 是使用 Ubuntu packaged OpenJDK；不要把它誤寫成「Z3 4.15.4
+太舊」或「Ubuntu 21.0.11 已修好」。沒有同 host 的 Temurin 21.0.11 artifact，不能把
+vendor/packaging 與 21.0.10→21.0.11 patch level 完全拆開；而 JDK-8379560 仍 unresolved。
