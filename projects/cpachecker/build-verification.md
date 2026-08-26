@@ -23,9 +23,10 @@ Issue #154 / PR #156 以刪除前的精確 blob
 - Canonical full command：`ant all-checks`。它必須保留 strict ECJ build；不能用跳過 ECJ
   或較弱 prefs 來取得綠燈。
 - 此 fleet 在 Temurin 21.0.10+7 執行 bundled native solvers 時會在 host
-  `libstdc++.so.6` 產生已知 SIGSEGV。Component evidence 使用
-  `VGUIDE_SKIP_BROKEN_NATIVE_SOLVERS=1 ant unit-tests`，但這是環境 exclusion，不是
-  canonical full command 的替代品。
+  `libstdc++.so.6` 產生已知 SIGSEGV。仍能重現 #30/#111 的 host/JDK 可使用
+  `VGUIDE_SKIP_BROKEN_NATIVE_SOLVERS=1 ant unit-tests` 作 component evidence，但這是環境
+  exclusion，不是 canonical full command 的替代品。Ubuntu packaged OpenJDK 21 已能跑完
+  bare repo-wide JUnit；不要在未重現 native failure 時預設 exclusion。
 - 看到 fresh checkout 先因 prefs 缺檔失敗時，恢復 prefs 後要預期 ECJ 可能揭露先前
   被遮住的 dead imports、unused parameters、hiding 或 invalid Javadoc；應清掉
   diagnostics，不要弱化 gate。
@@ -82,6 +83,23 @@ env JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
   PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
   ant -q configuration-checks
 ```
+
+# Fork 已採用的預設與 full-gate 證據
+
+PR #159 將 Ubuntu packaged OpenJDK 21 policy 合併到 fork `main`（merge commit
+`40dd75e569e2cf3ad43f38e6e717a47cb4e11e68`）：
+
+- `bin/cpachecker` 未設定 `JAVA` 時，先找
+  `/usr/lib/jvm/java-21-openjdk-*/bin/java`，支援 amd64/arm64；明確 `JAVA` override 與
+  找不到 distro path 時的原 `java` fallback 均保留。
+- Fresh task worktree 在 Ubuntu OpenJDK 21.0.11 執行 canonical `ant all-checks`：strict
+  ECJ 編譯 3,480 sources；bare JUnit 4,318 tests、0 failures/errors、734 skips；
+  configuration checks 3,880 cases、0 failures/errors、744 skips，沒有 Z3/JVM crash。
+- 同一 full command 最後只在 fork `origin/main` 的既有 78 個 VGuide Forbidden APIs
+  findings 停止；PR #159 改動 0 Java/VGuide files，沒有跳過或弱化該 gate。
+- Latest head `9df14ed827940dc645449dabac68cfe8d29db00f` 的 architecture finding 修正後，
+  Gemini review 明確回報沒有 review comments；repository 沒有額外 required CI check、
+  branch protection 或 ruleset。
 
 目前可確定的 workaround 是使用 Ubuntu packaged OpenJDK；不要把它誤寫成「Z3 4.15.4
 太舊」或「Ubuntu 21.0.11 已修好」。沒有同 host 的 Temurin 21.0.11 artifact，不能把
