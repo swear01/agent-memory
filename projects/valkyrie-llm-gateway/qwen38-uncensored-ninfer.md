@@ -6,7 +6,7 @@ machines: [valkyrie, zeus]
 tags: [qwen3.8, ninfer, bifrost, mtp, llm-inference]
 status: active
 created: 2026-08-25
-updated: 2026-08-25
+updated: 2026-08-26
 ---
 
 # Valkyrie Qwen3.8 Uncensored NInfer production
@@ -39,6 +39,14 @@ updated: 2026-08-25
 - 安全的一般維運請求優先設 `reasoning_effort: "none"`；需短推理時用 `low`。預設 thinking 曾在安全唯讀請求上耗盡 4,096 tokens，而 `none` 能正常完成。
 - 「uncensored」不代表更強或可放寬控制；仍保留私網、Virtual Key、日誌與授權邊界。
 - 精確的 NInfer groupwise artifact 尚未執行完整 harmful-prompt benchmark；同家族 GGUF 與模型作者數據只能作旁證。
+
+## Server-side tool 與 Web Search 邊界
+
+- NInfer 能接收 client-defined function tools、保留 tool-use history 並解析模型產生的 tool call，但不會自行執行 function、hosted tool 或 MCP tool；因此 direct NInfer endpoint 本身沒有 Web Search。
+- Bifrost Agent Mode（`v1.4.0-prerelease1` 以上）可以連接 MCP server，自動執行 `tools_to_auto_execute` allowlist 內的工具，把結果餵回模型並迭代到最終回答。這條路徑可讓 runner 不負責搜尋迴圈；Bifrost 官方範例也包含 HTTP `web_search` MCP client。
+- 搜尋 MCP 可部署在 Zeus 或 Valkyrie；實際對外搜尋流量由 MCP 所在主機送出。這是 server-side search，但不是模型權重或 NInfer process 自己上網。
+- Agent Mode 不支援 streaming，只能使用 non-streaming `chat`／`responses`。因此它不能直接取代要求串流的 Pi runner 路徑；移除 runner extension 前，必須先確認 Pi 能否對該模型改用 non-streaming。
+- 官方依據：Bifrost `Agent Mode (Auto-Execution)`、`Connecting to MCP Servers`，以及 NInfer `docs/serving.md`；不要再把 MCP Gateway Mode 的 client-side loop 限制誤套到 Agent Mode。
 
 ## 維護檢查
 
