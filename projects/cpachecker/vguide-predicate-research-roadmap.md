@@ -25,11 +25,19 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
   冗餘、但對 location-specific abstraction 有用的 predicate。
 - PR #155（merge `f478fdb76b907c067759f9518661b39c8ae79597`）把 production cue 改為：
   `Add a candidate only if it separates proof-relevant concrete or spurious abstract states at that head; for nested loops, consider inherited outer-guard facts over variables unchanged there.`
-  這是 answer-free direction cue；#149 仍需 frozen blind A/B 與完整 response replay。
+  這是 answer-free direction cue。#149 的 Muse frozen blind A/B 已完成：control
+  final-JSON strict hit `0/3`，treatment `2/3`；最低編號 treatment hit 的完整五項
+  response 經 production consumer replay 為 `TRUE/TRUE`，兩次皆 exact request/list、
+  zero rejection。這證明該 cue 在 HH2012 base case 有 generation 與 consumer utility，
+  但 `2/3` 也顯示輸出不是 deterministic，不能外推 population hit rate。
 
 # 後續工作佇列
 
-- #149：驗證 inherited outer-loop cue 的 generation hit 與 consumer verdict，分開回報。
+- #149：已達 acceptance 並關閉；implementation 是先前已 merge 的 PR #155，本次完成的是
+  post-merge frozen experiment evidence，沒有新的 CPAchecker production commit/PR。
+- inherited outer-loop cue 的下一步：另開 follow-up，選 2–3 個 held-out、consumer-positive
+  nested-loop cases，用相同 control/treatment、strict final-JSON scoring 與 complete-response
+  replay 檢查 generalization；不得把 #149 的單題 `2/3` 當作一般成功率。
 - #150：location-complete placement；先用 remove-head 證明每個 head 都是 consumer-positive。
 - #151：從 coupled updates 生成 affine conservation relation；先過 G2 consumer gate。
 - #152：提供 deterministic/source-grounded inductiveness obligations；加 irrelevant-obligation control。
