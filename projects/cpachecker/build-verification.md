@@ -104,3 +104,11 @@ PR #159 將 Ubuntu packaged OpenJDK 21 policy 合併到 fork `main`（merge comm
 目前可確定的 workaround 是使用 Ubuntu packaged OpenJDK；不要把它誤寫成「Z3 4.15.4
 太舊」或「Ubuntu 21.0.11 已修好」。沒有同 host 的 Temurin 21.0.11 artifact，不能把
 vendor/packaging 與 21.0.10→21.0.11 patch level 完全拆開；而 JDK-8379560 仍 unresolved。
+
+# Fork baseline 的 ownership 邊界
+
+使用者明確只維護目前 issue/PR 自己變更的部分；未被該 diff 觸及的舊 CPAchecker/fork
+baseline code 不應順手併入研究或文件 PR。對已知 78 個 `forbiddenapis` findings，仍要執行並
+如實回報 canonical `ant all-checks` 的 baseline failure，但不要關閉或 suppress verifier，也
+不要為了讓無關 PR 變綠而修改那些檔案。需要清理時另開明確限定範圍的工作；docs-only diff
+使用 diff-local verification，並把 full-gate baseline failure 與本次變更結果分開說明。

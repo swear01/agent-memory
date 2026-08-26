@@ -47,8 +47,13 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
 - #150：location-complete placement；先用 remove-head 證明每個 head 都是 consumer-positive。
 - #151：從 coupled updates 生成 affine conservation relation；先過 G2 consumer gate。
 - #152：提供 deterministic/source-grounded inductiveness obligations；加 irrelevant-obligation control。
-- #153：用 bounded refinement feedback 做 incremental lemma completion；和等 call/token budget 的
-  one-shot 對照。
+- #153：已完成並關閉。Frozen complete consumer group 兩次為 `TRUE`，strict subset 與
+  zero-call lifecycle 為 `UNKNOWN`。在相同 4-call / 4096 completion-token ceiling 下，兩次
+  incremental natural replay 都是 `TRUE`（106 refinements、10 個 solver-distinct bindings），
+  matched one-shot 分別是 `UNKNOWN`（129/135 refinements、0 bindings）。Production validation、
+  MathSAT 跨 round dedup 與完整 sequence replay 均通過，錯誤 verdict 為 0。這只支持 later-round
+  feedback 產生替代的十個 `j` bindings；模型仍只生成 frozen group 的 1/3，不能宣稱 literal
+  group completion、population hit rate、timing 或一般模型品質。
 - #154：已由 PR #156 修復並保留 strict ECJ gate；build/fleet 驗證分層見
   `build-verification.md`。
 
