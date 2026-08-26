@@ -2,10 +2,23 @@
 title: ICCAD2026B submission 已移除官方 LLM 通道
 project: ICCAD2026B
 tags: [submission, llm, deterministic, clustering]
-status: verified
+status: superseded
 created: 2026-08-25
-updated: 2026-08-25
+updated: 2026-08-26
 ---
+
+# 後續狀態
+
+這項決策已被後續合併推翻。`main` 的 PR `#172`（merge commit `1f21af4f`）
+重新加入 `src/llm_client.py`、`src/llm_features.py`、`src/llm_refine.py`，而且
+`src/__main__.py` 再次讀取 `LLM_MODEL_CONFIG`、建立 embedding 並呼叫
+`refine_labels()`。因此下列內容只描述 PR `#170` 合併當下，不能再視為目前
+`main` 的真相。
+
+正式 submission 仍以 Rust binary 為準，但 Rust 本身也保留 LLM completion／
+embedding 路徑。若要恢復「完全 local、deterministic」政策，必須另做 production
+變更並同步 Rust、Python reference、active docs 與 parity gate，不能引用本筆舊決策
+當作已完成證據。
 
 # 決策
 
