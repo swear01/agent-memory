@@ -35,9 +35,15 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
 
 - #149：已達 acceptance 並關閉；implementation 是先前已 merge 的 PR #155，本次完成的是
   post-merge frozen experiment evidence，沒有新的 CPAchecker production commit/PR。
-- inherited outer-loop cue 的下一步：另開 follow-up，選 2–3 個 held-out、consumer-positive
-  nested-loop cases，用相同 control/treatment、strict final-JSON scoring 與 complete-response
-  replay 檢查 generalization；不得把 #149 的單題 `2/3` 當作一般成功率。
+- #158 held-out gate：source-matched census 只有 `nested_5`、`nested_6` 兩個非 HH、Stock-UNKNOWN
+  nested-loop cases，沒有用 Stock-TRUE 或 #150 的 `nested9` 補成三題。兩題的 matched-empty
+  都在 300 CPU-s 維持 `UNKNOWN`，但從 empty trajectory 凍結的 complete ancestor-guard
+  schedule 在注入前兩層後改變了後續 spurious trace；`nested_5` 的 `N28/N33` 共有 7 個
+  `head_not_on_trace` rejection，`nested_6` 的 `N29/N34/N39` 共有 12 個。因此兩題都在
+  deterministic consumer-positive gate 停止，沒有做 live blind A/B。這不能判定 cue 在
+  held-out generation 成功或失敗；只證明不能把 empty-arm 的未受干預 trajectory 當成
+  intervention arm 的靜態 location schedule。若續做，必須另開並預註冊能依當下 trace
+  決定合法 head 的 reference gate，不能在 #158 內手改 head 或加 draw。
 - #150：location-complete placement；先用 remove-head 證明每個 head 都是 consumer-positive。
 - #151：從 coupled updates 生成 affine conservation relation；先過 G2 consumer gate。
 - #152：提供 deterministic/source-grounded inductiveness obligations；加 irrelevant-obligation control。
