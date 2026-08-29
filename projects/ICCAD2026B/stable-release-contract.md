@@ -53,6 +53,13 @@ publish／Drive jobs 全部成功。
 
 # 容易重犯的整合錯誤
 
+- 不可從目前 dirty／落後的 local worktree 判斷既有 release 是 Python 或 Rust；應查
+  tag 指向、該 tag 的 workflow log 與下載後 ELF markers。歷史上 `alpha-1.6` 是
+  67,750,088-byte Nuitka/Python onefile；後來誤發的 `alpha-1.7` 則確實是
+  5,413,984-byte Cargo/Rust ELF（含 `rustc` marker、無 Nuitka／Python marker），
+  但當時仍把 optional `reqwest`／`tokio` LLM client 編進 binary，所以不符合最終
+  「submission 完全沒有 LLM channel」的 contract。`alpha-1.7` 已刪除，不能再當
+  正式版本；目前只以 `stable-2.3` 的 no-LLM Rust artifact 為準。
 - 「某功能 PR 已 merged」不代表 `main` 已包含它；PR `#170` 曾合到 `develop`，
   導致正式 release 仍未採用 no-LLM 變更。
 - 從舊 `develop` 開出的 PR 可能把已淘汰的 release workflow 一起帶回來。PR

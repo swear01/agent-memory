@@ -32,6 +32,24 @@ generated_by: openai-codex/gpt-5.6-sol
   `mazu-ci`; formal release jobs use the dedicated `mazu-ci-release` label.
 - The formal release runner exposes rootless Podman and must not expose
   `/var/run/docker.sock`. The workflow verifies both properties before building.
+- Dedicated release deployment details: outer Docker container
+  `mazu-iccad2026b-release`, image
+  `iccad2026b-actions-runner:2.336.0-jammy-rustup-release`, and image source
+  `$HOME/.local/share/github-actions-runner/iccad2026b-release/Dockerfile`. Persistent
+  volumes are `mazu-iccad2026b-release-config:/runner-config`,
+  `mazu-iccad2026b-release-work:/_work`, and
+  `mazu-iccad2026b-release-podman:<remote-home>/.local/share/containers`.
+- Nested rootless Podman requires `slirp4netns` plus
+  `runner:100000:65536` in both `/etc/subuid` and `/etc/subgid`. On this Docker host the
+  outer runner container needs `--privileged` for Podman namespaces, but it still runs as
+  UID 1001 (`runner`) and deliberately has no Docker socket bind. Starting that container
+  with the image default `RUN_AS_ROOT=true` while overriding `--user runner` causes a
+  restart loop with `ERROR: RUN_AS_ROOT env var is set to true ... UID '1001'`; set
+  `RUN_AS_ROOT=false` when reusing the saved runner config.
+- The persisted Podman store currently uses `vfs`; `podman info` emits
+  `User-selected graph driver "overlay" overwritten by graph driver "vfs" from database`.
+  This is noisy but the cached, cold-cache, publish, and Drive jobs all completed through
+  that store. Do not delete libpod state during an active job merely to silence it.
 - Release ABI comes from `manylinux_2_28_x86_64`, not from the Ubuntu host image.
   `stable-2.3` verified the dedicated runner path through cached build, cold-cache build,
   GitHub publish, and Google Drive upload.
