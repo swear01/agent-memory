@@ -30,11 +30,13 @@ Required regression gates:
 - interruption resumes below the whole-source boundary;
 - the full residual scanner covers data URIs and runtime IDs.
 
-## Verified v2 resolution
+## V2 correction and v3 gate
 
-`source-process-shard-v2` removes image fields plus standalone and nested-JSON image data URIs while preserving textual siblings. It enforces the 2,700-character ceiling before candidate construction and tokenization. The formerly crashing source rebuilt in 14m56s with 18,438 records, 21,642 references, and zero residual image payloads. Full reconstruction verified all 44,832 occurrences; SQLite, FTS, hashes, token BLOBs, Unicode provenance, and source-input digest all passed. Validation artifact SHA-256: `425986619c9faf0fc6f9d39f3f02ccde39fbf3e96e7bdef6c659e9acb18851a6`.
+`source-process-shard-v2` removed image fields plus standalone and nested-JSON image data URIs and enforced the 2,700-character ceiling before tokenization. The formerly crashing source rebuilt in 14m56s, and full reconstruction verified all 44,832 occurrences. A deeper audit nevertheless found 210 empty `input_image` metadata containers. The image bytes were absent, but those markers violate a strict text-only output contract. The v2 full rebuild was stopped and is not eligible for assembly or embedding.
 
-The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the earlier v1 shard generation.
+`source-process-shard-v3` also removes image-container metadata and image-only containers while preserving captions and input-text siblings. Its validator explicitly requires zero residual image containers. Real-Qwen builder/core tests pass 13/13; the production-scale v3 pilot must pass before another global rebuild. Deep-audit artifact SHA-256: `df01cca7d76c77e8f21ffcd8780da838c0633b57a04090f9b57b4c9eae236833`.
+
+The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
 ## Metric boundary
 
