@@ -30,6 +30,12 @@ Required regression gates:
 - interruption resumes below the whole-source boundary;
 - the full residual scanner covers data URIs and runtime IDs.
 
+## Execution ownership and resumability
+
+Do not run long builders as foreground SSH children. A v4 pilot's SSH transport exited 255 after 141 seconds while Athena retained the same boot ID; no matching Node process remained, and the partial SQLite database passed `quick_check` with the exact building contract and zero committed sources. This does not prove the remote termination cause, but the lifetime boundary is unsafe. Use enabled user services with exact-contract resume, bounded restart, and an `ExecCondition` that skips completed reports.
+
+For resumability below a whole source, stage exact chunks in a private per-source SQLite database. Persist the immutable source hash, producer contract, chunk index, next record/code-point and overlap cursors, chunk text hash, and UInt32LE formatted token BLOB in bounded transactions. On resume, verify the complete staged prefix before continuing. Import only a complete source with a verified ordered digest into the shard DB in one source-atomic transaction; require interrupted and uninterrupted runs to have byte-identical logical digests.
+
 ## V2 correction and v4 gate
 
 `source-process-shard-v2` removed image fields plus standalone and nested-JSON image data URIs and enforced the 2,700-character ceiling before tokenization. The formerly crashing source rebuilt in 14m56s, and full reconstruction verified all 44,832 occurrences. A deeper audit nevertheless found 210 empty `input_image` metadata containers. The image bytes were absent, but those markers violate a strict text-only output contract. The v2 full rebuild was stopped and is not eligible for assembly or embedding.
