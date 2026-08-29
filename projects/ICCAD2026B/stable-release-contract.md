@@ -1,14 +1,30 @@
 ---
 title: ICCAD2026B formal stable release contract
 project: ICCAD2026B
-tags: [release, rust, github-actions, google-drive, rclone, glibc]
+tags: [release, rust, github-actions, google-drive, rclone, glibc, archive]
 status: verified
 created: 2026-08-30
 updated: 2026-08-30
 source_refs:
   - github:swear01/ICCAD2026B#178
+  - github:swear01/ICCAD2026B#180
   - github:swear01/ICCAD2026B@stable-2.3
 ---
+
+# 專案終態
+
+ICCAD 2026 比賽結束後，PR `#180` 只更新封存文件並合進
+`main@ad6ca72a`；它沒有改 production code 或 submission artifact。
+`stable-2.3@210921a0` 仍是不可變的最終繳交版本，沒有任何後續 branch、未 tag
+commit 或 release 取代它。
+
+GitHub repository `swear01/ICCAD2026B` 已設為 private archived/read-only，description
+也標明 final submission。封存前已關閉所有剩餘 issue 與 PR；如需再寫入 code、
+branch、issue、PR、release 或設定，必須先明確 unarchive repository。
+
+封存文件 merge 後，`main@ad6ca72a` 的完整 baseline、Python 3.13/3.14、Rust、
+public BA/determinism、secret scan、GLIBC 2.28 sanity build 與 cold-cache build 均成功；
+因沒有新 `stable-*` tag，publish job 正確跳過，沒有產生新的正式 release。
 
 # 正式發布契約
 
