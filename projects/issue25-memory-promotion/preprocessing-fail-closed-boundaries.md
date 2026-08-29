@@ -34,7 +34,7 @@ Required regression gates:
 
 `source-process-shard-v2` removed image fields plus standalone and nested-JSON image data URIs and enforced the 2,700-character ceiling before tokenization. The formerly crashing source rebuilt in 14m56s, and full reconstruction verified all 44,832 occurrences. A deeper audit nevertheless found 210 empty `input_image` metadata containers. The image bytes were absent, but those markers violate a strict text-only output contract. The v2 full rebuild was stopped and is not eligible for assembly or embedding.
 
-`source-process-shard-v3` also removes image-container metadata and image-only containers while preserving captions and input-text siblings. Its validator explicitly requires zero residual image containers. Real-Qwen builder/core tests pass 13/13; the production-scale v3 pilot must pass before another global rebuild. Deep-audit artifact SHA-256: `df01cca7d76c77e8f21ffcd8780da838c0633b57a04090f9b57b4c9eae236833`.
+`source-process-shard-v3` also removes image-container metadata and payload fields such as `source`/`data`/`url`, and drops image-only containers while preserving captions and input-text siblings. Its validator explicitly requires zero residual image containers, image MIME fields, and image data URIs. Real-Qwen builder/core tests pass 13/13; the production-scale v3 pilot must pass before another global rebuild. Deep-audit artifact SHA-256: `df01cca7d76c77e8f21ffcd8780da838c0633b57a04090f9b57b4c9eae236833`.
 
 The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
