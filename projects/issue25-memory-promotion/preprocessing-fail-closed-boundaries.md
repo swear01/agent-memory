@@ -30,6 +30,12 @@ Required regression gates:
 - interruption resumes below the whole-source boundary;
 - the full residual scanner covers data URIs and runtime IDs.
 
+## Verified v2 resolution
+
+`source-process-shard-v2` removes image fields plus standalone and nested-JSON image data URIs while preserving textual siblings. It enforces the 2,700-character ceiling before candidate construction and tokenization. The formerly crashing source rebuilt in 14m56s with 18,438 records, 21,642 references, and zero residual image payloads. Full reconstruction verified all 44,832 occurrences; SQLite, FTS, hashes, token BLOBs, Unicode provenance, and source-input digest all passed. Validation artifact SHA-256: `425986619c9faf0fc6f9d39f3f02ccde39fbf3e96e7bdef6c659e9acb18851a6`.
+
+The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the earlier v1 shard generation.
+
 ## Metric boundary
 
 `issue25_occurrences` counts contextual split-chunk occurrences. It is not the fixed source episode-record reference count and may exceed 10,785,150. Compute reference progress from `SUM(issue25_sources.reference_count)`.
