@@ -1,29 +1,46 @@
 ---
-title: Pi 跨 provider 延續 session 可能產生重複 tool output
+title: Pi Processes 通知切入 tool flow 會讓 Meta 收到重複 output
 scope: tool
 tool: Pi coding agent
-tags: [pi, openai-responses, tool-history, provider-switch]
+tags: [pi, pi-processes, openai-responses, tool-history, meta]
 status: active
 created: 2026-08-30
 updated: 2026-08-30
 ---
 
-# Pi 跨 provider 延續 session 可能產生重複 tool output
+# Pi Processes 通知切入 tool flow 會讓 Meta 收到重複 output
 
-Pi 0.84.2 的長 session 原先使用 `openai-codex/gpt-5.6-luna`，包含大量平行
-tool calls；Codex OAuth 失效後，在同一條 session history 切換成
-`meta/muse-spark-1.2-contributor`，Meta Responses API 連續回覆：
+Pi 0.84.2 的長 session 原先使用 `openai-codex/gpt-5.6-luna`，之後切換成
+`meta/muse-spark-1.2-contributor`；Meta Responses API 連續回覆：
 
 ```text
 Duplicate function_call_output for call_id '...'. Each function_call must have exactly one matching function_call_output
 ```
 
+## 根因
+
+出錯的歷史順序為：
+
+1. Codex assistant 發出 `bash` tool call。
+2. `@aliou/pi-processes` 0.10.9 在真正 tool result 前持久化一筆
+   `ad-process:notification`；該筆為 `attention: "ignore"` 的 log-match 通知。
+3. Pi core 把 custom message 投影成 `user` context。
+4. Pi AI 的 Responses history 正規化器把 user message 視為 tool flow 中斷，先為
+   未完成 call 合成 `No result provided` tool result。
+5. 真正 tool result 隨後仍被保留，轉換後同一 `call_id` 出現兩筆
+   `function_call_output`，Meta 依 Responses 契約回 400。
+
+跨 provider 使舊 Codex tool ID 被正規化成 Meta request 使用的 64 字元 call ID，
+但不是重複的直接成因；直接成因是 process notification 切入 call/result 之間，
+以及 Pi core 沒有丟棄後到的 unmatched result。
+
 ## 已驗證邊界
 
 - 錯誤只出現在該舊 session 的 Meta request；不是 OpenAI Codex OAuth 回覆。
-- JSONL 中沒有重複的完整 `toolCallId`，以 `|` 前的 Responses `call_id` 正規化
-  後也沒有重複；錯誤中的 call ID 只出現在伺服器 400，沒有落盤的原始
-  tool call/result。
+- JSONL 中原始 tool call/result 各只有一筆；第二筆 output 是 request 組裝時合成，
+  不是 session 重複落盤。
+- 400 中的 call ID 可精確反推到 JSONL 裡的 Codex `call_id|fc_item_id`；Pi 對
+  foreign provider ID 做字元替換與 64 字元截斷後，得到 Meta 拒絕的 ID。
 - 同機、同 provider、同 model 的全新無狀態呼叫成功：
 
   ```bash
@@ -32,15 +49,19 @@ Duplicate function_call_output for call_id '...'. Each function_call must have e
 
   退出碼為 0 並回覆 `OK`。
 
-因此故障位於舊 session 跨 provider 重播時的 Responses payload/history 組裝，
-不是帳號、Meta model 或原始 JSONL 重複。官方 Responses function-calling 契約要求
-每個 `function_call` 只追加一個同 `call_id` 的 `function_call_output`。
+因此故障不是帳號、Meta model、`pi-meta-oauth` 或原始 JSONL 重複。Meta endpoint
+只是拒絕 Pi 組出的非法 Responses payload。
 
 ## 處理方式
 
-不要在帶有既有 tool history 的 Codex session 直接切換到 Meta；為新 provider
-建立新 session。保留舊 session 作唯讀診斷，不要手改 JSONL 或刪除認證。
+已污染的舊 session 改用新 session；不要手改 JSONL 或刪除認證。
 
-當時安裝版本為 Pi 0.84.2、`@howaboua/pi-codex-conversion` 3.0.15、
-`pi-meta-oauth` 0.4.4；查詢時前兩者已有 0.84.4 與 3.0.23，是否已修正此特定
-跨 provider history 問題尚未驗證，不應把升級當成已確認修復。
+預防新事件可更新 `@aliou/pi-processes`：0.12.0 已把 `context`／`ignore` 通知從
+`deliverAs: "steer"` 改成 `"nextTurn"`，其原始碼明示這是為了避免通知切開 tool
+call 與 result。這項變更會防止相同通知順序再次形成，但不會修復已落盤的舊
+session history。
+
+Pi AI 0.84.4 的相關 `transform-messages.js` 與 0.84.2 無差異，因此只升級 Pi
+core 不會修掉這條路徑。`pi-codex-conversion` 3.0.23 的相關 message-history 邏輯
+也與 3.0.15 無差異；Meta 使用 Pi core 的普通 `openai-responses` provider，並不
+走 Codex adapter 的去重路徑。
