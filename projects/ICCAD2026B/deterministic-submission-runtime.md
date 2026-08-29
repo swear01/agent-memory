@@ -2,28 +2,30 @@
 title: ICCAD2026B submission 已移除官方 LLM 通道
 project: ICCAD2026B
 tags: [submission, llm, deterministic, clustering]
-status: superseded
+status: verified
 created: 2026-08-25
-updated: 2026-08-26
+updated: 2026-08-30
 ---
 
-# 後續狀態
+# 目前狀態
 
-這項決策已被後續合併推翻。`main` 的 PR `#172`（merge commit `1f21af4f`）
-重新加入 `src/llm_client.py`、`src/llm_features.py`、`src/llm_refine.py`，而且
-`src/__main__.py` 再次讀取 `LLM_MODEL_CONFIG`、建立 embedding 並呼叫
-`refine_labels()`。因此下列內容只描述 PR `#170` 合併當下，不能再視為目前
-`main` 的真相。
+PR `#178`（merge commit `210921a0`）已在 `main` 恢復並完整落實這項決策；
+`stable-2.3` 是第一個依此 contract 實際發布、上傳 GitHub Release 與 Google Drive
+並獨立核對的正式版本。先前「PR `#172` 又帶回 LLM」的 superseded 狀態只描述
+`stable-2.3` 之前的短暫歷史，已不是目前真相。
 
-正式 submission 仍以 Rust binary 為準，但 Rust 本身也保留 LLM completion／
-embedding 路徑。若要恢復「完全 local、deterministic」政策，必須另做 production
-變更並同步 Rust、Python reference、active docs 與 parity gate，不能引用本筆舊決策
-當作已完成證據。
+現在 Rust submission 與 Python reference 都沒有 submission LLM channel。Rust
+manifest 不含 `reqwest`／`tokio`，`rust/src/` 不存在 `*llm*` 模組；Python `src/`
+也不再包含 `llm*.py`、model config 或 `LLM_MODEL_CONFIG` production 呼叫鏈。
+`tests/test_ci_contract.py` 同時鎖定 Rust、Python 與 locked Cargo build，避免只刪
+其中一側後再次漂移。
 
 # 決策
 
-PR `#170`（merge commit `9c2b65f0`）已把正式 submission runtime 改成完全
-local、deterministic 的單一路徑。`src/__main__.py` 不再讀取官方 model config、
+PR `#170` 首先把 submission runtime 改成完全 local、deterministic 的單一路徑；
+該 PR 當時合進 `develop` 而非 `main`，所以不能只用其 merge 狀態證明正式版本已
+採用。PR `#178` 將等價變更移植到 `main` 並由正式 release 驗證。
+`src/__main__.py` 不再讀取官方 model config、
 呼叫 endpoint、產生 embedding，或執行 completion/refinement/routing。
 
 實作直接刪除 `src/llm*.py`、`src/llm_config/`、API key 範例、live/routing
@@ -47,6 +49,7 @@ OpenAI，但不被 submission runtime、submission requirements 或 build 引入
 
 # 驗證基準
 
-合併前最新 head 通過 1,315 個 fast tests、3 個 nightly tests、公開 baseline
-`set_1=1.000000`、`set_2=0.930993`，以及 GitHub 上的 Python 3.13/3.14、
-nightly、baseline、secret scan、aggregate checks 與 Swear Review。
+PR `#178` 最新 head 通過 1,332 個 fast tests、3 個 nightly tests、Rust unit／
+integration、clippy、fmt、Rust/Python parity，以及 GitHub 的 Python 3.13/3.14、
+nightly、baseline、secret scan 與 review checks。正式 release 另通過 RHEL 8／
+GLIBC 2.28 build、cold-cache build、公開 sanity gates 與 Drive publication。
