@@ -33,5 +33,5 @@
 
 ## 未決事項
 
-- mazu 的 Codex OAuth `refresh_token_reused`（LLM 層，與搜尋棧無關）：需在 mazu 跑 `/login openai-codex` 重登。
+- mazu 的 Codex OAuth `refresh_token_reused`：**已修復**（2026-08-26 實測 `pi auth check --provider openai-codex` = ready；登入流程見 `tools/pi/openai-codex-login.md`）。
 - P2：Baidu adapter、You.com adapter（都要才做）。
