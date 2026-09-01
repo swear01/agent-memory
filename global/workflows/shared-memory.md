@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-08-25
+updated: 2026-09-02
 tags:
   - shared-memory
   - qmd
@@ -23,3 +23,9 @@ GitHub repository `swear01/agent-memory` 負責在不同 machines 之間同步�
 QMD 2.8.3 會在 collection 根目錄執行 `update` hook，與呼叫 `qmd update` 時所在的 working directory 無關。`memory` collection 使用 `git pull --ff-only`，只接受可 fast-forward 的同步；若本機與遠端分歧，停止並人工處理，不讓索引更新自動 rebase Git 歷史。
 
 QMD 2.8.3 的 `qmd update` 結尾會用預設 embedding model 計算 pending hashes；使用自訂 `QMD_EMBED_MODEL` 時可能誤報全部文件需要 vectors。執行一次 `qmd embed` 後，以其 `All content hashes already have embeddings` 結果及 `qmd status` 的 document/vector counts 為準，不因該提示重複 embed。
+
+若 `qmd embed` 在 GPU VRAM 緊張時回報 `Failed to create any embedding context`，先用
+`qmd doctor` 確認 device probe 與可用 VRAM；這不是 Markdown／Git 資料遺失。以
+`QMD_FORCE_CPU=1 QMD_EMBED_PARALLELISM=1 qmd embed` 做單工 CPU retry，完成後再用
+`qmd doctor` 驗證 `embedding freshness` 與 vector sample。不要因 auto-GPU context 失敗而略過
+embedding 或重建 canonical Markdown。
