@@ -4,7 +4,7 @@ project: swear01/cpachecker
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-02
 ---
 
 # Frozen benchmark pairing
@@ -26,3 +26,23 @@ gh issue comment ISSUE --repo OWNER/REPO --body-file COMMENT.md
 ```
 
 Launch 前再讀回遠端 comment，確認 body hash、內容與 timestamp；remote comment 尚未存在就不得啟動 formal job。
+
+# Exact request hash 與 replay cache identity
+
+`LlmResponseCache` 的 key 是 production Java 產生之完整 request JSON bytes 的 SHA-256，不是
+只有 prompt hash。Request body 同時包含 exact system/user messages、provider、model、
+`max_completion_tokens`、stream flags、provider-specific response schema，以及
+thinking/reasoning settings；任一欄位或 JSON schema 改變都應該 fail-closed cache miss。這個
+hash 設計適合 exact replay，不應改成忽略 provider/model 的寬鬆 key。
+
+Current main 預設 `VGUIDE_LLM_PROVIDER=meta` 與
+`VGUIDE_LLM_MODEL=muse-spark-1.2-contributor`。Java client 不讀 retired
+`DEEPSEEK_MODEL`；historical DeepSeek replay 必須明確設定 `VGUIDE_LLM_PROVIDER=deepseek` 與
+`VGUIDE_LLM_MODEL`。不要跨 runtime commit 抄舊 request hash。
+
+也不要假設同一 task 的不同 arm 共用整條 hash sequence：第一個 response 是否注入 predicate
+會改變後續 refinement、prompt 與第二個 request hash。每個 arm 應先以 production Java client、
+明確 current request identity、local deterministic oracle 與 `VGUIDE_LLM_RECORD_DIR` 建立自己的
+cache；oracle ledger 的 raw-request SHA 必須等於 recorded/dump request hash。Freeze cache、
+prompt/request sequence 與 verifier 後，formal stage 只用 `VGUIDE_LLM_REPLAY_DIR`。禁止在 formal
+cache miss 後手補 path 再把同一 attempt 重跑。
