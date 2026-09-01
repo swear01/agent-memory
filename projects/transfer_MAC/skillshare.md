@@ -7,7 +7,7 @@ status: active
 confidence: high
 evidence: Successful target sync, nested-skill naming fix, explicit migration precedence, and separate MCP workflow; legacy overlap remains a verification caveat.
 created: 2026-08-18
-updated: 2026-08-22
+updated: 2026-09-01
 tags:
   - skillshare
   - skills
@@ -50,6 +50,10 @@ During the explicit migration, the live machine skill source won over divergent 
 # Submodule update boundary
 
 The active Mac source is the detached `.skillshare/skills` submodule. Running `skillshare pull` there merges `origin/main` into detached HEAD and can create local, unpushable merge commits even when the resulting tree equals upstream. After a shared-skills PR merges, fetch and detach-checkout the exact upstream merge SHA, verify a clean source, then run `skillshare sync`; update the parent gitlink separately. Do not use `skillshare pull` for this detached submodule checkout.
+
+# Worktree cleanup boundary
+
+On the installed Git version, `git worktree remove` refuses a clean worktree whose tree contains the tracked `.skillshare/skills` submodule, even after `git submodule deinit`. The workflow policy forbids `git worktree remove --force`, so keep and report that worktree rather than bypassing the safety guard. This does not indicate dirty task files.
 
 # MCP separation
 
