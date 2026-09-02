@@ -48,6 +48,8 @@ After shared-skills `427a864` merged, parent `transfer_MAC` advanced to descenda
 
 Canonical source-order assembly runs under enabled `issue25-v4-assemble.service`. It commits one canonical source at a time, verifies exact token bytes on cross-shard matches, preserves the first canonical representative, globally deduplicates exact inputs, and resumes from the last source ordinal. Five local and Athena TDD tests cover cross-shard dedup/order, source resume, both report-publication interruption boundaries, and completed-run idempotence. Deployed assembler SHA-256 is `440cfe48ebd01bf5c710418b4c03d6cb606308fb7f7e0a51e8eaa11b3f01402c`.
 
+The assembly then survived a real Athena boot transition from `f3672ac5-495f-4084-b0e3-bbc923b71736` to `e10d23a2-37ad-4ea3-8fac-9456f0557a31`: the enabled service restarted and advanced beyond the last pre-boot sample from 1,561 to 1,616 committed sources with state `building`. The local watcher had exited 255 only because SSH reported `Network is unreachable`. Unprivileged previous-boot logs provide no shutdown cause and pstore is inaccessible, so retain the reboot as an unknown-cause event rather than attributing it to assembly or the earlier scheduler defect.
+
 The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
 ## Metric boundary
