@@ -50,6 +50,8 @@ Canonical source-order assembly runs under enabled `issue25-v4-assemble.service`
 
 The assembly then survived a real Athena boot transition from `f3672ac5-495f-4084-b0e3-bbc923b71736` to `e10d23a2-37ad-4ea3-8fac-9456f0557a31`: the enabled service restarted and advanced beyond the last pre-boot sample from 1,561 to 1,616 committed sources with state `building`. The local watcher had exited 255 only because SSH reported `Network is unreachable`. Unprivileged previous-boot logs provide no shutdown cause and pstore is inaccessible, so retain the reboot as an unknown-cause event rather than attributing it to assembly or the earlier scheduler defect.
 
+Assembly ultimately completed after about 45m41s active wall across both boots (46m52s elapsed). The 69,093,679,104-byte final database has 5,559,818 occurrences and 3,007,191 globally unique content/token inputs. Cross-shard dedup removed 164,735 shard-local inputs; contextual dedup removed 2,552,627 repeated occurrences; no distinct content hashes shared a formatted-token BLOB. Initial SQLite/FTS/cardinality/join checks pass, while full corpus reconstruction remains a separate blocking validator. Host-local temp paths are not interchangeable: Mac source scripts live under `/var/tmp/issue25-text-only-v4`, but Athena's hash-validated deployed core and validator live under `/var/tmp/issue25-qmd-athena/shard-candidate-v4`.
+
 The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
 ## Metric boundary
