@@ -54,6 +54,8 @@ Assembly ultimately completed after about 45m41s active wall across both boots (
 
 Do not conflate the 45m41s Athena assembly duration with the whole multi-day workflow or the legacy Cthulhu embedding. Cthulhu's exact QMD CUDA p4 PID `361884`, launched `2026-08-24 04:19:53 +08:00`, was still active after 9d4h at 97–100% GPU, 63°C, about 3.0 GiB VRAM and 182 W. Its old episode index had 23,710,293 chunk vectors and 173,513 pending document hashes at 210.3 GB. The process is not stalled; a linear completed-document estimate suggests roughly 19 days remain, but variable chunk density makes this low-confidence. Keep it rollback-only and separately monitored until the replacement passes retrieval validation.
 
+The assembled Athena database's full validator passed in 27m52s wall / 27m22s CPU with zero failures. It reconstructed all 4,429 sources and 5,559,818 occurrence bodies and verified source/corpus hashes, records, episode ranges, 3,007,191 content/input rows, SQLite/FTS/token/provenance gates, and zero residual image URI/container/MIME failures. Report SHA-256: `5ea4f59e16f94766b3c377f24bdbc7c88e58a9ed804291a4592e3b0a3c5e383b`. Completed assembly/validation services are disabled; serial logical digest, broader residual security, backend parity, and retrieval gates remain separate blockers.
+
 The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
 ## Metric boundary
