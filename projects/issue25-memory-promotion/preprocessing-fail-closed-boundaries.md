@@ -52,6 +52,8 @@ The assembly then survived a real Athena boot transition from `f3672ac5-495f-408
 
 Assembly ultimately completed after about 45m41s active wall across both boots (46m52s elapsed). The 69,093,679,104-byte final database has 5,559,818 occurrences and 3,007,191 globally unique content/token inputs. Cross-shard dedup removed 164,735 shard-local inputs; contextual dedup removed 2,552,627 repeated occurrences; no distinct content hashes shared a formatted-token BLOB. Initial SQLite/FTS/cardinality/join checks pass, while full corpus reconstruction remains a separate blocking validator. Host-local temp paths are not interchangeable: Mac source scripts live under `/var/tmp/issue25-text-only-v4`, but Athena's hash-validated deployed core and validator live under `/var/tmp/issue25-qmd-athena/shard-candidate-v4`.
 
+Do not conflate the 45m41s Athena assembly duration with the whole multi-day workflow or the legacy Cthulhu embedding. Cthulhu's exact QMD CUDA p4 PID `361884`, launched `2026-08-24 04:19:53 +08:00`, was still active after 9d4h at 97–100% GPU, 63°C, about 3.0 GiB VRAM and 182 W. Its old episode index had 23,710,293 chunk vectors and 173,513 pending document hashes at 210.3 GB. The process is not stalled; a linear completed-document estimate suggests roughly 19 days remain, but variable chunk density makes this low-confidence. Keep it rollback-only and separately monitored until the replacement passes retrieval validation.
+
 The private harvested episodes remain immutable; only the downstream text projection must be rebuilt. Never assemble or embed the v1 or v2 shard generations.
 
 ## Metric boundary
