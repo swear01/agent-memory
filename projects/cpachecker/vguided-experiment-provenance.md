@@ -46,3 +46,27 @@ Current main 預設 `VGUIDE_LLM_PROVIDER=meta` 與
 cache；oracle ledger 的 raw-request SHA 必須等於 recorded/dump request hash。Freeze cache、
 prompt/request sequence 與 verifier 後，formal stage 只用 `VGUIDE_LLM_REPLAY_DIR`。禁止在 formal
 cache miss 後手補 path 再把同一 attempt 重跑。
+
+# Fail-closed 只停止不可信 attempt，不停止研究工作
+
+Replay cache miss、schema mismatch 或 provenance mismatch 必須讓當下的 consumer run
+fail-closed，避免錯誤 response 被當成 evidence；但這只是 integrity boundary，**不是 agent 的
+工作終止條件**。自造成且可修復的 harness/config/cache 錯誤不得回報成整個研究 blocked。
+
+Agent 在 fail-closed 後必須自行完成 recovery ladder：
+
+1. 保存 failed attempt、expected/actual hash、effective provider/model/options、log 與 artifacts，
+   並在 tracking issue 標記該 attempt invalid。
+2. 用 production Java request path 調查 exact body drift；先查 effective env/config，再用 local
+   deterministic oracle + `VGUIDE_LLM_RECORD_DIR` 捕捉實際 request。不得猜 hash，也不得改成
+   prompt-only key。
+3. 若尚未 freeze，修正 harness、為各 response arm 重建 cache、跑 ledger-SHA equality 與 pure
+   replay qualification，直到 preflight 通過。
+4. 若已 freeze，保留原 attempt 不動；在 freeze 外完成同樣修復，將新的 cache/request/response
+   hashes 與原因更新到 issue，preregister 新 attempt 後繼續。
+5. 只有缺少必要權限/credential、需要會改變研究問題的使用者決策，或同一不可控外部 blocker
+   經至少三次有記錄的 recovery 仍重現時，才停止整個任務並請求介入。
+
+禁止的兩個極端都是錯的：不能在 cache miss 後 silent live fallback，也不能因為 formal attempt
+必須 stop 就讓 agent 停止調查與後續合規 retry。Issue 的 stop rule 要明確分開
+`attempt_stop`、`recovery_action` 與 `task_stop`。
