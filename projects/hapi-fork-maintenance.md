@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-08-19
+updated: 2026-09-02
 tags:
   - hapi
   - fork
@@ -36,6 +36,12 @@ A rehearsal proving tree equality, tests, or artifacts does not authorize public
 - `--force-with-lease` using the captured old branch SHA
 
 Keep tokens, signing material, runner environments, and deployment configuration out of the patch series and upstream.
+
+# Latest verified release
+
+`v0.29.0.3` was rebuilt from upstream `980a921ba` after auditing 141 open PRs (`46 carry / 91 defer / 4 drop`). The exact release commit is `a6a0c03d2`; tag tests, the release workflow, asset digests, and the seven-Runner deployment passed. Hub schema V29 passed `quick_check` and `integrity_check`, and all 19 recorded pre-deployment session roots survived.
+
+Binary replacement can briefly remove `runner.state.json` while a supervised Runner completes its own handoff. Treat a missing state file during this window as transient: re-read supervisor and state together before taking action. If ownership remains split, stop the supervisor, terminate only the exact state PID after verifying it is `hapi runner start-sync` without `--started-by runner`, then start the supervisor and require its PID to match the new state PID.
 
 # Contribution boundary
 
