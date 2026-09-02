@@ -2,12 +2,16 @@
 title: CPAchecker issue 166 next-agent handoff
 project: swear01/cpachecker
 tags: [vguide, issue166, handoff, replay, schema11]
-status: active
+status: superseded
 created: 2026-09-02
 updated: 2026-09-02
 ---
 
 # 狀態
+
+> 2026-09-02：此接手狀態已由 schema-11 deterministic controls 正式通過而 supersede。
+> 後續 Python classifier 環境與目前狀態見 `issue166-python-environment.md`；以下保留為當時的
+> recovery provenance，不再當作 active next step。
 
 #166 仍 open，acceptance 未滿；目前沒有 run。PR #169 的 schema-11 instrumentation 已 merge，
 最後確認的 milestone commit 是 `4a14d72cc15dd38263a2430f4064b352a9b2782c`，但接手者必須先
