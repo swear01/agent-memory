@@ -29,10 +29,10 @@ ICCAD2026B 的大量 worktree 不是 Git 自動產生，而是 2026-07 至 2026-
   `~/.agent-worktrees/<repo-key>/<task>`，並禁止 sibling、`/tmp` 與 repo 內路徑。
 - global agent rule 在 transfer_MAC commit `5c389d6`（2026-08-23）才加入中央路徑要求；
   所以歷史 home sibling 不代表目前規則仍在建立新 sibling。
-- 目前仍有真實衝突：installed `fix-issue/references/worktree-and-pr.md` 明寫
+- 當時仍有真實衝突：installed `fix-issue/references/worktree-and-pr.md` 明寫
   `WORKTREE="/tmp/${REPO_SLUG}-issue-${ISSUE_NUMBER}"`，而 transfer_MAC
   `tests/test_fix_issue_skill.py` 還反向測試必須使用該 `/tmp` 路徑。這會覆蓋較泛用的 global
-  規則，必須與 `personal-pr-workflow` 對齊。
+  規則；2026-09-02 已與 `personal-pr-workflow` 對齊。
 - `personal-pr-workflow` 雖要求 merge 後普通 `git worktree remove`，卻未處理 initialized
   submodule。ICCAD agent transcript 已記錄 merge 後 cleanup 因 submodule 被 Git 拒絕，且依
   no-force 規則正確保留 worktree。安全非 force 流程已記在
@@ -40,10 +40,22 @@ ICCAD2026B 的大量 worktree 不是 Git 自動產生，而是 2026-07 至 2026-
 
 # 最小修正方向
 
-1. 把 `fix-issue` 的 `/tmp` 路徑與對應 test 改成中央 root，並加入一個全域 contract test：
-   installed skills 不得出現 task worktree 的 sibling、repo 內或 `/tmp` fallback。
+1. 已完成：`fix-issue` 改為
+   `~/.agent-worktrees/<repo>-<path-hash>/issue-<number>`，新增禁止舊 `/tmp` 路徑的 contract
+   test；shared-skills PR #28 merge `6ca8391`、transfer_MAC PR #32 merge `982ddef`，並已執行
+   `skillshare sync -g`。
 2. 收斂 ICCAD 的 concurrency 規則：允許同一 task 內的 worker/process 並行，不得因此自動
    展開多個 issue/task worktree；多 task fan-out 必須由使用者明確要求。
 3. 在共用 cleanup lifecycle 加入 clean/ownership 驗證與 submodule-aware 非 force 清理；
    任一步無法驗證才保留並回報。
 
+# 本機清理結果
+
+2026-09-02 經使用者明確授權，永久刪除 ICCAD2026B 的本機 main repo、58 個 home sibling、
+4 個中央 worktree、repo 內 nested worktrees、`.iccad-dvc`，以及已登記或專用的 `/var/tmp`
+runner/campaign/cache 目錄。GitHub repository 與共享 agent/session 歷史未刪除。
+
+NFS main repo 含大量 `build/` campaign/benchmark/cache 小檔，單一 `rm -rf` 約 90 分鐘；
+root/其他 UID 寫入的 `/var/tmp/ICCAD2026B-ledgers` 需把該精確頂層目錄 bind-mount 到既有
+`busybox:1.36` container，由 container root 清空。最終獨立掃描確認：專用檔案系統殘留 0、
+活動 ICCAD 程序 0。
