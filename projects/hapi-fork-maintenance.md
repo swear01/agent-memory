@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-02
+updated: 2026-09-03
 tags:
   - hapi
   - fork
@@ -54,6 +54,14 @@ The Windows `swop` Runner has no direct SSH management path. A standalone compil
 5. Remove the temporary override, restore the standalone Hub, and recheck the public Web, all Runner versions, active sessions, DB `quick_check`, and schema version before cleaning the isolated checkout.
 
 For `v0.29.0.3`, the Windows artifact SHA-256 was `d439f3d18b004ed401d7bdd13cce499ea32bf176ca2cbfcb4bf55ad8380b90b7` and the source generation was `7170b7a8be2ca0f175810408de96cb9e23aa2e3dc74fd778f6cfef202c4a6877`. The Runner lock handoff completed and its existing active session survived unchanged.
+
+# Current v0.29.0.4 candidate
+
+The unpublished `v0.29.0.4` candidate keeps upstream at `980a921ba`, audits 153 open PRs (`53 carry / 96 defer / 4 drop`), and keeps schema V29. Seven new exact-head PRs are selected: #1748, #1750, #1754, #1755, #1757, #1760, and #1761; carried #1436 and #1543 are refreshed. #1745 is deferred because its V25-to-V26 index migration conflicts with maintained schema V29 and does not justify a standalone V30 bump.
+
+The replayed source tree is `21b89b666c233e4f388e426ac06d34e986e073a7`. Local Bun 1.4.0 builds produced all five CLI targets and the darwin-arm64 binary reports HAPI 0.29.0.4. When using `hapi job run`, invoking a Bun 1.4.0 binary is not sufficient if package scripts call `bun` again: prepend the 1.4.0 directory to the job environment's `PATH` and avoid a login shell that rewrites it; verify the compiler path/runtime in build output.
+
+Publication remains No-Go until Linux CI confirms two macOS-local gates: composer clipboard E2E reads an empty clipboard despite granted permissions, and the serial Runner integration can exceed its hard-coded 10-second startup wait under fleet load. The same Runner timeout reproduced on exact `v0.29.0.3` with a different test, so it is baseline instability rather than evidence against #1755. Local archives are candidates only; signed macOS CLI and desktop bundles still require the tag-triggered release workflow.
 
 # Contribution boundary
 
