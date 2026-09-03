@@ -59,6 +59,14 @@ A post-rollout functional audit found that this Runner was still online while Co
 
 On 2026-09-04, a local Windows remediation run performed a clean supervised restart: `swop` changed from PID `17608` to `3388` while retaining HAPI `0.29.0.4` and the expected artifact generation. A post-restart HAPI-managed Codex canary successfully executed `Get-Location`, returned the Windows user home, and was archived; the machine then had zero active sessions. This closes the omitted child-Agent functional gate. Hub evidence does not reveal whether the stale override was removed or replaced, so its exact persistence source still depends on the local remediation report.
 
+# Windows `swop` operations onboarding
+
+On 2026-09-04, `swop` was brought into the shared Skillshare and QMD workflow. Its clean `shared-skills` checkout fast-forwarded six commits to `2525b8ed3ca12ea3bc332b3bdfce0a335fb3cd4f`; Skillshare `0.20.27` then reported 30 active skills, two targets, 54 junctions, and zero broken, out-of-source, or drifted links while preserving `.codex\skills\.system`. Node `24.19.0`, npm `11.17.0`, QMD `2.8.3`, and a clean HTTPS checkout of `agent-memory` were added. The `memory` collection indexed 92 Markdown files and a BM25 canary found `hapi-fork-maintenance.md`.
+
+Do not treat Windows QMD vector embedding as healthy yet. A CPU run remained at zero vectors for about 28 minutes despite consuming CPU, matching upstream Windows hang reports #679 and #739; only that QMD child process was interrupted, leaving the lexical index usable. The host now resolves Codex `0.152.0`, Claude `2.1.258`, OpenCode `1.18.27`, AGY `1.1.25`, Grok `1.0.5`, and Pi `0.84.4`; Gemini and Cursor Agent remain absent because Gemini is retired and no confirmed official Windows Cursor Agent package was found. Preserve newer working official versions rather than rolling them back merely to match an older fleet snapshot.
+
+The HAPI launcher and Runner now both report `0.29.0.4`; Hub state records active Runner PID `10864`, the expected generation `102c471d67d16c3fdd037a5187ee6b1d45b5c63666f2659eeadb4dc6b41ac40c`, supervised restart, and no last spawn error. The existing Codex session process PID `4116` survived the graceful Runner restart and remained responsive, but the replacement Runner's local session list did not re-adopt it. Do not claim Runner session reattachment or per-Agent HAPI availability from CLI-version checks alone; prove those with a later disposable HAPI spawn when credentials and an official Windows executable are available.
+
 # v0.29.0.4 release
 
 The published release keeps upstream at `980a921ba`, audits 153 open PRs (`53 carry / 96 defer / 4 drop`), and keeps schema V29. Seven new exact-head PRs are included: #1748, #1750, #1754, #1755, #1757, #1760, and #1761; carried #1436 and #1543 were refreshed. #1745 remains deferred because its V25-to-V26 index migration conflicts with maintained schema V29 and does not justify a standalone V30 bump.
