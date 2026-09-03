@@ -5,7 +5,7 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-08-26
+updated: 2026-09-04
 ---
 
 # DVLab persistent storage migration inventory
@@ -43,6 +43,13 @@ updated: 2026-08-26
 6. 冷備份碟連接後完成實際讀回、解壓與 hash 驗證。
 7. 先清可再生成資料，再清連續搬家世代，最後才整代退役；每批以 `df` 核對釋放量。
 8. 權限不可讀與 `df`/`du` 差額必須由 root 級盤點補完。
+
+## G2 精確重複的判讀（2026-09-04）
+
+- G2 大於 1 MiB 的檔案有 12,402 組 SHA-256 精確重複、27,431 個多餘路徑；表觀理論可回收 267.816 GB，其中跨帳號 160.978 GB。
+- `stat` inode 回查證明其中 57.487 GB 原本已是 hard link，已共用實體空間。重複報表必須先按 `(st_dev, st_ino)` 去重，不能把表觀重複量直接當成 `df` 可釋放量。
+- 跨帳號相同內容常見於公開 dataset、課程 testcase、Conda/CUDA library 與 editor runtime。直接刪掉某一路徑會破壞該帳號封存目錄的完整性；ext4 hard link 又無法保留不同 owner，因此必須先選 canonical copy，或整批淘汰可重建環境。
+- G2 中可整批重建的頂層 cache、Conda/Anaconda/Micromamba、VS Code Server 與 Snap 共 97 個目錄、451.53 GiB。這類應以完整目錄為刪除單位；不要逐檔刪除重複 library 後留下半壞環境。`.local` 不可直接列入，裡面可能有使用者腳本或唯一資料。
 
 ## 目前狀態與文件邊界
 
