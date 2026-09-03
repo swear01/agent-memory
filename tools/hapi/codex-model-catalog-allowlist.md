@@ -14,6 +14,7 @@ tags:
   - allowlist
 source_refs:
   - hapi:canonical-gist
+  - local:<project-root>/hapi-handover.md
   - live:zeus-2026-09-03
 generated_by: openai-codex/gpt-5.6-sol
 ---
@@ -36,6 +37,10 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 - `gpt-5.6-luna`
 
 不要用 allowlist JSON 的 entry 數量代替有效驗證；canonical 檔案也可包含不會出現在一般選單的 hidden/internal models。
+
+# Documentation mirrors
+
+Durable HAPI changes must keep the canonical Gist `hapi-readme.md`, `<project-root>/hapi-handover.md`, and the Skillshare `references/gist-latest.md` plus `references/hapi-readme.md` byte-identical. QMD indexes this shared-memory pointer, not the full playground handover.
 
 # Zeus incident
 
