@@ -72,9 +72,16 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 
 ## 執行閘門
 
-1. 不與現有 sequential Git metadata pass 並行啟動另一個外接碟掃描。
-2. 先完成 98 個 dossier；50 個 READY 是第一批，33 個 editable/local 與 14 個截斷
-   archive 不自動排除。
-3. 再納入 Conda cache 與可復現 build tree，產生非重疊 exclusion manifest。
-4. 在新 archive 完整建立、完整性驗證、抽樣重建驗證與 SHA-256 manifest 通過前，
+1. 帳號活動 gate 優先於技術上的可重建判定。只要帳號仍存在於目前的中央 identity
+   database、有 current session/process、近 365 天登入證據，或仍列在現役 roster，
+   該帳號的 env、cache、build 與 repo 全部改為 HOLD，除非 owner／管理者另行確認。
+2. 備份 snapshot 的 mtime 只能證明備份當時的狀態，不能判斷帳號現在是否活躍。
+   `loginctl` 只列 current sessions；`last`/`wtmp` 與 system journal 是 per-host 且受
+   retention、權限與記錄設定限制。單一主機沒有紀錄、帳號已從 NSS 消失或 live home
+   不可見，都不能單獨證明 inactive；需中央 roster 或跨主機 audit 補證。
+3. 不與現有 sequential Git metadata pass 並行啟動另一個外接碟掃描。
+4. 先完成 98 個 dossier；原始 50 個 READY 還需套用當下的帳號活動 gate，33 個
+   editable/local 與 14 個截斷 archive 不自動排除。
+5. 再納入 Conda cache 與可復現 build tree，產生非重疊 exclusion manifest。
+6. 在新 archive 完整建立、完整性驗證、抽樣重建驗證與 SHA-256 manifest 通過前，
    保留原始 archive，不刪除或覆寫。
