@@ -5,7 +5,7 @@ project: cpachecker
 tags: [vguide, cegar, predicate-abstraction, precision-compilation, cfa, issue170]
 status: active
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-04
 ---
 
 # 研究決策
@@ -198,12 +198,54 @@ contract；compiler 應直接消費完整 split result，並以 C declaration/ty
 #172 的 C3b gate 維持 5/5：四個 v1 regression facts 不能退步，且 `nested9` 必須完整恢復
 `i >= 0 @ {N52,N57,N62}`。C3b 未通過前，#170 C4 仍 blocked。
 
+# C4 consumer gate：Issue #173（2026-09-04）
+
+使用者決定把 `nested9` 的 assignment-derived 缺口留給獨立 #172，並讓本 session 在四個
+guard-transport-compatible fixtures 上繼續。#173 依 #138 consumer gates 分離 generation、
+validation、trajectory、verdict 與 cost；runtime 固定為
+`6091a95c5ca12d548b2d2c9663c06aad5bfec1a0`，正式 replay 外部模型呼叫為零。
+
+已完成且可接受的 fixture-level consumer evidence：
+
+- `hh2012-ex1b` stock `UNKNOWN ×2`，compiler-only `TRUE ×2`；exact LLM-only 與
+  combined replay 都是 `TRUE ×3`。compiler-only 在沒有模型的情況提供了足夠的 abstraction
+  vocabulary，這是 first pass 的明確 consumer-positive anchor。
+- `nest-if3`、`nested-1`、`nested3-1` 的 completed compiler-only cells 都維持
+  `UNKNOWN`；candidate 確實注入並改變部分 trajectory，但不能把 refinement 差異當作 solve。
+- live generation 24/24 slots，59/60 calls，7 `TRUE`、17 `UNKNOWN`、0 `FALSE`；59 calls
+  共 94,634 prompt、38,997 completion、133,631 total tokens。完整 candidate set 保留，
+  parser rejection 為零。
+
+完整四-arm C4 **沒有完成，也沒有 aggregate result**。三個分別凍結的 formal roots 發生
+native abort；最後一次是 `nested-1` combined draw-1，refinement 19 後 exit `-6`。保存的
+`hs_err_pid3129964.log` 定位為 `libmathsat5j.so` 的 `Hashtable::find` /
+`Mathsat5NativeApi.msat_make_term`，由 `FormulaManagerView.instantiate` 經
+`PredicateAbstractionManager.getRelevantPredicates` 呼叫；native thread stack 尚有約 1013 KiB，
+不是 Java stack exhaustion。依預註冊的零額外 native-failure rule，recovery budget 已耗盡，
+不得再補 draw、把 crash 記作 UNKNOWN 或靜默 fallback。runtime blocker 另立 #174。
+
+主要 immutable evidence 位於：
+`<remote-home>/cpachecker-experiments/runs/issue173_guard_transport_precision_consumer_20260903/`。
+
+- generation composite：`96c2fe5d02de7a31bde40a2aa290ac95fa0c95fca74938a49ebaa8e6fec88e5a`
+- generation ledger：`81e9f33f6c4227fe037c4a628cb2ae708a311a9fe4521bc82e954dbdfad4c86e`
+- attempt-2 stop ledger：`51018b75fa109d91f435613f85042059df5813977e4e160abcee39160a681b61`
+- qualified nest-if3 combined ledger：`af47c3834ad0b9900aa1e6fa6b8e66e6480b1e9f5dadeb61787fdd7b23cc09ef`
+- final stop ledger：`f86968bb84eaf9db20dfc9cd07ce13813efbcf825bd676a6eac22d71fd628682`
+- preserved hs_err：`ad3722d10f9f8b6f66a6461ec2dcde17a7e97eb71bcdd2c350bea3c18742ffa8`
+
+研究決策：此 evidence 支持 precision compilation 在 `hh2012-ex1b` 是實際 abstraction
+consumer，不支持「first pass 可解大多數 proof failures」。C5 不從不完整 matrix 晉升；先由
+#174 解決可重現的 native runtime stability，再凍結新的 consumer gate。#172 保持獨立，處理
+assignment-derived coverage。#170 保持開啟。
+
 # 下一個 agent 的入口
 
 Source of truth 是 GitHub issue
-`https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166。
-實驗/Wiki 規則與 artifacts 仍以 `<remote-home>/cpachecker-experiments/` 的索引和 GitHub
-Wiki 為準。C0-C2 已完成並合併，C3 已誠實失敗於 `nested9`，所以不得直接啟動 C4。下一步由
-#172 先凍結並驗證 assignment-derived scalar consequence pass；完成 C3b mechanism gate 後，
-才可重新判斷是否具備 C4 前提。不能用 generation/recovery 成功替代 verifier utility，也
-不能從五個 mechanism fixtures 宣稱 population、timing 或 publication result。
+`https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166、#172、
+#173、#174。實驗/Wiki 規則與 artifacts 仍以
+`<remote-home>/cpachecker-experiments/` 的索引和 GitHub Wiki 為準。C0-C2 已完成並合併；
+C3 是 4/5；#173 的 partial C4 只有 `hh2012-ex1b` 可作 consumer-positive claim，完整 C4
+依 stop rule 停止。不得重啟 #173 formal matrix 或晉升 C5，直到 #174 有 reviewed fix 並另行
+preregister。不能用 generation success 替代 verifier utility，也不能從這些 fixtures 宣稱
+population、timing 或 publication result。
