@@ -52,6 +52,31 @@ compilation 尋找足以分離 abstraction failure 的 Boolean vocabulary 與放
 - `LoopHeadPrecisionInjector` 已能把 native `BooleanFormula` 以 location-specific
   `PRECISION_ONLY` predicate 注入；不需要新增文字 parser 或 solver abstraction。
 
+C0 contract 已凍結於
+`https://github.com/swear01/cpachecker/issues/170#issuecomment-5524304792`。C1/C2 已由 PR
+#171 合併為 `origin/main@6091a95c5ca12d548b2d2c9663c06aad5bfec1a0`：bridge 保留
+authoritative `ARGPath`，compiler 以 `getFullPath()`、native taken `CAssumeEdge` formula、AST
+declaration-backed `MemoryLocation` support 和單一 caching `EdgeDefUseData` extractor 實作
+same-function scalar frame transport。輸出直接成為 exact-node `PRECISION_ONLY` native
+predicate，production prompt 未改，compiler-only 模式不建立或呼叫外部模型。
+
+已驗證的 implementation 細節：
+
+- compiler 只處理 spurious counterexample；feasible counterexample 不做 compiler work；
+- path hole、cross-function、call、pointer/pointee write、partial definition、unsupported/null
+  declaration、formula-to-declaration mapping failure 都產生穩定 typed rejection；
+- certificate 的 transport interval 是 half-open，並記錄 source predecessor/successor、target
+  node、sorted accumulated direct may-defs 與 frame rule；
+- canonical dump 先固定排序與 dedup，再對「不含自身 `sha256` 欄位」的 canonical payload
+  取 SHA-256；相同輸入 regression test 為 byte-stable；
+- `LoopHeadPrecisionInjector` 必須先收集 reached set 的 distinct precisions 再 union；逐一從
+  root precision 反覆覆寫會遺失較早 precision component；
+- stock native delta 必須在 compiler injection 前歸因，否則 compiler output 會被誤記為
+  pre-existing proof artifact。
+
+驗證：39 個 targeted tests 通過；full checks 有 4,336 unit tests 與 3,880 config checks 通過，
+Checkstyle/SpotBugs 通過。Forbidden APIs 為 branch 70、相同 base 77，因此未新增 violation。
+
 # Soundness 邊界
 
 MVP 的 frame rule 是：
@@ -102,11 +127,40 @@ pass，不是研究上限。
 第一個 implementation 仍只做 conservative same-function scalar frame transport，以隔離機制；
 其餘階梯逐層 preregister、驗證並晉升為 deterministic pass，不能一次混進 MVP。
 
+# C3 正式 mechanism replay（2026-09-03）
+
+正式 preregistration：
+`https://github.com/swear01/cpachecker/issues/170#issuecomment-5525840763`；結果：
+`https://github.com/swear01/cpachecker/issues/170#issuecomment-5526005796`。runtime 為
+`270790e3847c6307daf11fd6821e29c77d32bde1`，使用 idle-ready `valkyrie`、CPU affinity
+`0,2,4,6,8,10,12,14` 與 HAPI attached job。所有 frozen input/formal artifact hash 重算
+成功，external model calls = 0、wrong verdicts = 0、integrity failures = 0。
+
+- `hh2012-ex1b`: `i < 100 @ N24`，pass，TRUE；
+- `nest-if3`: `k < n @ N47`，pass，UNKNOWN；
+- `nested-1`: `i < n @ N47`，pass，UNKNOWN；
+- `nested3-1`: native unsigned `x < 0x0fffffff @ N24`，pass，UNKNOWN；
+- `nested9`: `i >= 0 @ {N52,N57,N62}` 全部未恢復，fail，UNKNOWN。
+
+因此 frozen all-five C3 為 **4/5、整體 failed**；依 stop rule 沒有 preregister 或執行 C4。
+四個成功案例都是 taken-branch-derived fact；`nested9` 是 assignment-derived fact。這是支持
+把 assignment-aware SSA/WP/SP transport 設為下一個待凍結 pass 的 residual-gap 證據，不是
+該 pass 必然成功的證據，也不能據此主張 consumer utility、timing、solve rate 或 population
+結果。UNKNOWN 必須保留。
+
+完整 artifacts：
+`<remote-home>/cpachecker-experiments/runs/issue170_precision_compiler_c3_20260903`。
+第一次 pool attempt 因本機 `load/` 輸出目錄不存在，在任何 CPAchecker process、model call 或
+formal result 之前失敗；應在 formal launch 前建立 harness 的 output directories。該事件已在
+`PRELAUNCH_ATTEMPT.md` 與 issue audit comment 保留，正式 case 沒有重跑。
+
 # 下一個 agent 的入口
 
 Source of truth 是 GitHub issue
 `https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166。
 實驗/Wiki 規則與 artifacts 仍以 `<remote-home>/cpachecker-experiments/` 的索引和 GitHub
-Wiki 為準。先完成 issue 的 C0 contract，再以 TDD 實作 C1/C2；C3 mechanism replay 和
-C4 consumer experiment 必須分開，不能用生成成功替代 verifier utility，也不能從五個
-mechanism fixtures 宣稱 population、timing 或 publication result。
+Wiki 為準。C0-C2 已完成並合併，C3 已誠實失敗於 `nested9`，所以不得直接啟動 C4。下一步若
+繼續 #170，先針對 assignment-aware SSA/WP/SP transport 另行凍結 hypothesis、oracle、typed
+rejections、consumer gate 與 stop rules；完成新的 mechanism gate 後，才可重新判斷是否具備
+C4 前提。不能用 generation/recovery 成功替代 verifier utility，也不能從五個 mechanism
+fixtures 宣稱 population、timing 或 publication result。
