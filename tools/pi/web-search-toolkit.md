@@ -1,3 +1,16 @@
+---
+title: Pi 網路搜尋工具鏈（fleet 全機）
+scope: tools/pi
+status: active
+confidence: high
+created: 2026-08-26
+updated: 2026-08-26
+tags:
+  - pi
+  - web-search
+  - fleet
+---
+
 # Pi 網路搜尋工具鏈（fleet 全機）
 
 - status: active
@@ -8,7 +21,7 @@
 
 ## 現狀（2026-08-26）
 
-- 七台（Mac + mazu/athena/cthulhu/valkyrie 共用 NFS `<remote-home>` + zeus `<remote-home>` + oracle `<remote-home>`）都用上游 `npm:pi-web-access@0.25.0`（360K DL/月），已移除 lean fork。footprint 實測 6,227（lean）→ 8,143（精簡後），用戶接受。
+- 七台（Mac + mazu/athena/cthulhu/valkyrie 共用 NFS `<remote-home>/swear01` + zeus `<remote-home>/swear02` + oracle `<remote-home>/ubuntu`）都用上游 `npm:pi-web-access@0.25.0`（360K DL/月），已移除 lean fork。footprint 實測 6,227（lean）→ 8,143（精簡後），用戶接受。
 - 0.25.0 tools：`web_search` / `source_check` / `fetch_content` / `get_search_content`（`code_search` 已砍掉，code 查詢走 Exa provider；要 port 回 lean 的 code-search.ts 約 100 行）。
 - 精簡設定在 `~/.pi/web-search.json.template`：`workflow:"none"`、sourceCheck/curator/google-account/image/autoOpenBrowser/allowBrowserCookies 全關；保留 PDF 抽取、GitHub clone。
 - key 機制：`~/.secrets`（`export X_API_KEY=...`，chmod 600）＋ `~/.local/bin/pi-websearch-apply` 渲染 `~/.pi/web-search.json`。只把**非空** key 寫成 credential 引用；改 key 後每台跑一次 apply 即可，呼叫時才 source，不用重啟 pi。

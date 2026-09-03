@@ -24,8 +24,8 @@ updated: 2026-08-26
 |---|---|---:|---|
 | G1 | Valkyrie `/mnt/md1` | 5.563 TiB 已用 | 舊 Cthulhu 家目錄世代 |
 | G2 | Zeus `<remote-home>.bak` | 1.202 TiB 已用 | 2024-03 前後的舊家目錄世代 |
-| G3 | NAS `<remote-home>` | 1.194 TiB | 2024-03 的完整 home tar |
-| G4 | NAS `<remote-home>/cthulhu_home` | 260.06 GiB | 2025-05 的搬家 tgz |
+| G3 | NAS `<remote-home>/.backup` | 1.194 TiB | 2024-03 的完整 home tar |
+| G4 | NAS `<remote-home>/copy/cthulhu_home` | 260.06 GiB | 2025-05 的搬家 tgz |
 
 排除現行共享 `<remote-home>`，四代合計約 8.213 TiB。G1 逐帳號可讀內容為 5.300 TiB，其中約 4.012 TiB 是條件式排除候選；若全數通過刪除門檻，G1 可讀內容約降至 1.288 TiB，才有機會讓冷備份總量低於 2 TiB。
 
