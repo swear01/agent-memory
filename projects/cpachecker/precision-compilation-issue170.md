@@ -167,6 +167,12 @@ taken `AssumeEdge` 直接陳述 `i >= 0`；compiler 必須先從 `i = 0` 等 ass
 compilation 仍無法恢復 target，必須停止並另行考慮 recurrence/loop-predicate pass，不能為了讓
 fixture 通過而把 recurrence、dominance/join 或 learned templates 偷混進 implementation。
 
+C3 formal dump 的第一輪 occurrence/certificate 再核對顯示，首次 `N52`、`N57`、`N62` 分別是
+path occurrence 31、34、37；到這三點的 direct may-def 依序為 `{i}`、`{i,j}`、`{i,j,k}`。
+因此 frozen target 首先檢驗的是從 `i = 0` 編譯 `i >= 0`，再沿既有 frame transport 到三個首次
+head；恢復這個 target 本身不需先跨過外層 `i++`。#172 仍另以 targeted TDD 約束 supported
+assignment transformation，不能把 initializer-only recovery 誤報成完整 assignment transport。
+
 #172 的 C3b gate 維持 5/5：四個 v1 regression facts 不能退步，且 `nested9` 必須完整恢復
 `i >= 0 @ {N52,N57,N62}`。C3b 未通過前，#170 C4 仍 blocked。
 
