@@ -35,3 +35,11 @@ Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，�
 因此目前無法從任一 NFS client 設定 named user ACL。需要先在儲存伺服器端
 啟用／設定 ACL 或開放管理通道；在此之前只可用 owner-only mode，不能宣稱
 已對特定使用者完成最小 ACL。
+
+Zeus 與 Mazu 的 `/var/tmp` 是各自主機本機目錄，不會互相同步。若分析產物在
+Zeus 的 owner-only 暫存目錄，而 Mazu runner 是另一帳號，可用已驗證的 SSH
+host key 與 `BatchMode=yes` 連線，先確認 Zeus 既有 Docker image，再以
+`--pull=never --network none --read-only --user 0:0` 和唯讀 bind mount 將指定小檔
+串流到 Mazu 的本機 staging。全程不可停用 host-key 驗證；接收後必須先核對
+來源公布的 SHA-256，再原子替換正式報表。這條路只適用於明確列名的交接檔，
+不能拿來遍歷或複製另一帳號的其他資料。
