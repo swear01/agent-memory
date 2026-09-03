@@ -173,6 +173,28 @@ path occurrence 31、34、37；到這三點的 direct may-def 依序為 `{i}`、
 head；恢復這個 target 本身不需先跨過外層 `i++`。#172 仍另以 targeted TDD 約束 supported
 assignment transformation，不能把 initializer-only recovery 誤報成完整 assignment transport。
 
+更進一步核對第一輪 formal proof artifact：interpolant 0/1 已分別在 `N52`/`N57` 含有 native
+bitvector `main::i@3 = 0`，後續 local precision 也確實保存 `i = 0`；缺的是 verifier 需要的
+較弱 abstraction vocabulary `i >= 0`，不是數值事實本身。這使 #172 的最小突破口成為
+**proof-guided equality order projection**：只對 authoritative assignment/interpolant equality
+產生固定的兩個 order consequences，再用既有 frame rule 放置，而不是掃描常數或建立一般
+consequence generator。`PRECISION_ONLY` 只是要求 CPA 追蹤該原子，不宣告它是 invariant，
+所以首次 path 的 placement 不需要先證明它跨過 back-edge/`i++`。
+
+CPAchecker 已有 `FormulaManagerView.splitNumeralEqualityIfPossible`，能把 numeral equality 變成
+`<=`/`>=`；但 `extractAtoms(..., true)` 只保留 split list 的第一個元素再保留原 equality，且
+測試明示方向受 solver 的 equality argument order 影響。全域
+`cpa.predicate.refinement.splitItpAtoms=true` 因而不能作為 #172 的 byte-stable 雙向 projection
+contract；compiler 應直接消費完整 split result，並以 C declaration/type 決定 signedness。
+現有 helper 對 bitvector comparison 寫死 signed=true，也不能直接用於 unsigned contract。
+
+`PathFormulaManager.buildWeakestPrecondition` 雖有公開 API，但預設
+`handlePointerAliasing=true` 時 `PathFormulaManagerImpl` 不建立 `CtoWpConverter`，呼叫會直接丟
+`UnsupportedOperationException`。因此 #172 不應把 WP 可用性當前提；較小且與目前 runtime
+相容的 certificate 是用 `PathFormulaManager.makeAnd` 建 exact native SSA transition relation，
+再驗證 `source_evidence && transition => target_atom`。WP/SP 只作為 semantics/certificate，
+不負責無界合成；候選仍由 assignment/proof equality 的固定 projection 限定。
+
 #172 的 C3b gate 維持 5/5：四個 v1 regression facts 不能退步，且 `nested9` 必須完整恢復
 `i >= 0 @ {N52,N57,N62}`。C3b 未通過前，#170 C4 仍 blocked。
 
