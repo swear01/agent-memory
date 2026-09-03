@@ -1,0 +1,113 @@
+---
+title: CPAchecker #170 CFA-native precision compilation
+project: cpachecker
+tags: [vguide, cegar, predicate-abstraction, precision-compilation, cfa, issue170]
+status: active
+created: 2026-09-03
+updated: 2026-09-03
+---
+
+# 研究決策
+
+Issue #170 將 VGuide 的新主線定義為 **CFA-native precision compiler**：不再把
+predicate formula 與 loop-head placement 一起交給 LLM 猜，而是把 program semantics、
+CFA、spurious `ARGPath`、current precision 與 proof artifacts 編譯成可驗證的
+precision delta。三個最小語義輸出是：
+
+```text
+antecedent_formula
+consequent_head
+preserved_variables
+```
+
+研究領域候選名稱是 **precision compilation** 或 **proof-obligation compilation**。
+核心差異：invariant synthesis 尋找對 reachable region 為真的公式；precision
+compilation 尋找足以分離 abstraction failure 的 Boolean vocabulary 與放置位置。
+後者的 predicate 不必是全域 invariant，但必須能 soundly lowering 到分析 consumer，
+並帶有可稽核 provenance/certificate。
+
+# 已確認的動機
+
+- #150 證明某些 verifier-effective predicates 需要完整且精確的多 head placement；generic
+  nested-loop cue 沒有提升 exact head completeness。
+- #165 在 `hh2012-ex1b` 顯示 explicit CFA obligation 或 generic cue 都能穩定觸發需要的
+  cross-loop placement，但只有單一 base case。
+- #166 固定三案例的 generation 結果只有 `nest-if3` 通過；`nested-1` 與
+  `nested3-1` 未通過。八個可執行 consumer arms 全部維持 `UNKNOWN`。因此繼續微調
+  prompt 不是足夠的主線。
+
+# 已確認的實作邊界
+
+核對基準為 `origin/main@4a14d72cc15dd38263a2430f4064b352a9b2782c`：
+
+- `ARGPath.getFullPath()` 已能取得精確有序的 CFA edges，無法填補 path hole 時回傳空表。
+- `PredicateCPARefiner` 呼叫 VGuide bridge 時只傳 `allStatesTrace.asStatesList()`，所以目前
+  bridge 遺失 authoritative edge path。
+- `StructuredCounterexampleBuilder` 因而把 `branch_conditions`、`ssa_values`、
+  `assignments` 標為 unavailable。
+- `PredicateStaticRefiner` 已用
+  `PathFormulaManager.makeAnd(makeEmptyPathFormula(), assume)` 把 `AssumeEdge` 轉成 native
+  formula，但只做 global/function placement，不做 downstream exact-head placement。
+- `EdgeDefUseData` 已提供 direct defs/uses、pointee defs/uses 與 partial-def flag。
+- `LoopHeadPrecisionInjector` 已能把 native `BooleanFormula` 以 location-specific
+  `PRECISION_ONLY` predicate 注入；不需要新增文字 parser 或 solver abstraction。
+
+# Soundness 邊界
+
+MVP 的 frame rule 是：
+
+```text
+FV(g) ∩ MayDef(tau) = ∅
+```
+
+輸出只代表 observed path 上從 taken guard 到 downstream head 的
+`path-preserved precision candidate`，不能當成該 head 對所有路徑成立的 invariant。
+它可以作為任意 abstraction dimension 走 `PRECISION_ONLY`，但沒有額外 entailment proof
+時絕不能走 `ENTAILED` 或 interpolant strengthening。
+
+MVP 對 cross-function segment、unknown call effect、pointer/pointee write、partial def、
+unsupported declaration 與 unresolved path hole 一律 fail closed。這是第一個 compiler
+pass，不是研究上限。
+
+# 大膽但尚未驗證的假說
+
+以下是 #170 的 falsifiable moonshot hypotheses，不是既有結果：
+
+- H1：在 frozen nested-loop integer cohort，至少 70% 具有 marginal verifier utility 的
+  location-specific predicates 可由 CFA/path/proof artifacts 機械重建或 transport。
+- H2：以 CFA cutpoint、dominance、def-use 與 abstraction locations 計算 placement，可消除
+  至少 80% formula-correct/head-wrong failures。
+- H3：native IR 可使 JSON/parser/scope/signedness/`head_not_on_trace` interface loss 歸零，
+  並使相同輸入產生相同 precision delta。
+- H4：SSA substitution、WP/SP 與 solver-checked preservation 可跨修改 assignment 編譯
+  affine、phase、congruence 與 selected-index relations。
+- H5：同一 proof-obligation IR 可 lowering 到 PredicateCPA 與至少另一種實質不同 consumer。
+- H6：deterministic passes 之後，LLM 的最佳角色縮減為 missing-template proposal、成本排序與
+  residual semantics；compiler + residual learning 在 held-out consumer-positive tasks
+  嚴格優於任一單獨元件。
+- H7：反覆出現的成功生成或 rejection pattern 可固化成新 compiler pass，逐步縮小
+  generative search space。
+
+# 完整研究階梯
+
+1. frame transport；
+2. assignment-aware symbolic transport；
+3. join/dominance-aware placement；
+4. solver-checked semantic preservation；
+5. recurrence/loop predicate compilation；
+6. interpolant、unsat-core、block-formula 驅動的 precision minimization；
+7. learned residual passes；
+8. multi-backend lowering。
+
+第一個 implementation 仍只做 conservative same-function scalar frame transport，以隔離機制；
+其餘階梯逐層 preregister、驗證並晉升為 deterministic pass，不能一次混進 MVP。
+
+# 下一個 agent 的入口
+
+Source of truth 是 GitHub issue
+`https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166。
+實驗/Wiki 規則與 artifacts 仍以 `<remote-home>/cpachecker-experiments/` 的索引和 GitHub
+Wiki 為準。先完成 issue 的 C0 contract，再以 TDD 實作 C1/C2；C3 mechanism replay 和
+C4 consumer experiment 必須分開，不能用生成成功替代 verifier utility，也不能從五個
+mechanism fixtures 宣稱 population、timing 或 publication result。
+

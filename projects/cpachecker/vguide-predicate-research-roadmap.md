@@ -4,7 +4,7 @@ project: cpachecker
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-08-26
+updated: 2026-09-03
 ---
 
 # 核心目標
@@ -33,6 +33,12 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
 
 # 後續工作佇列
 
+- #170：新主線是把 proof failure 編譯成 abstraction vocabulary 的 CFA-native precision
+  compiler。MVP 由 exact `ARGPath`、native `AssumeEdge` formula、`EdgeDefUseData` 與 exact
+  loop-head placement 產生 `(antecedent_formula, consequent_head, preserved_variables)`，只走
+  `PRECISION_ONLY`。完整研究階梯含 symbolic transport、join-aware placement、semantic
+  preservation、recurrence compilation、proof-directed optimization、learned residual passes
+  與 multi-backend lowering；詳見 `precision-compilation-issue170.md`。
 - #149：已達 acceptance 並關閉；implementation 是先前已 merge 的 PR #155，本次完成的是
   post-merge frozen experiment evidence，沒有新的 CPAchecker production commit/PR。
 - #158 held-out gate：source-matched census 只有 `nested_5`、`nested_6` 兩個非 HH、Stock-UNKNOWN
