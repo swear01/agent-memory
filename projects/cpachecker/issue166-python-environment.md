@@ -4,14 +4,15 @@ project: swear01/cpachecker
 tags: [vguide, issue166, python, z3, reproducibility]
 status: active
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-09-03
 ---
 
 # 目前狀態
 
-#166 的 schema-11 deterministic controls 已正式通過；issue 仍 open，下一步是另行 freeze 的
-model-free semantic classifier。External model calls 維持 0，重建 Python 分析環境不等於啟動
-formal run。
+#166 的 schema-11 deterministic controls 與另行 freeze 的 model-free trace-relative classifier
+均已正式通過；issue 仍 open，因為尚無 all-path invariant 或 held-out replication evidence。
+Classifier 用此 task-local venv 的 Z3 5.1.0 一次通過三個 frozen cases；external model calls 維持
+0。重建或使用 Python 分析環境不等於啟動 CPAchecker formal run。
 
 # 環境漂移根因
 
