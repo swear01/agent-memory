@@ -70,3 +70,18 @@ Agent 在 fail-closed 後必須自行完成 recovery ladder：
 禁止的兩個極端都是錯的：不能在 cache miss 後 silent live fallback，也不能因為 formal attempt
 必須 stop 就讓 agent 停止調查與後續合規 retry。Issue 的 stop rule 要明確分開
 `attempt_stop`、`recovery_action` 與 `task_stop`。
+
+# Pool host admission 與 NFS 平行啟動
+
+正式 CPU-isolated pool wrapper 不可把 `local` 當成方便的第四分支，除非先以 `hostname -s`
+斷言它就是 frozen allowlist 中的主機。Issue #166 fixed-three generation attempt 001 曾因 wrapper
+接受本機 `mazu` 而在四個 allowed hosts 以外開始；即使 input、CPU affinity 與 model 都正確，
+整個 attempt 仍必須保存並排除。較安全的最小做法是 wrapper 只列出明確的
+`label=ssh-target` allowlist，claim 後再由 run metadata 驗證實際 hostname。
+
+多台主機共用 NFS artifact root 時，不要讓平行 runner 首次同時執行
+`mkdir -p common-parent/distinct-child`。Issue #166 consumer formal attempt 001 中三台同時建立缺少的
+共同 parent，兩台在 CPAchecker 啟動前收到 `mkdir: Already exists`，只有一台成功。Recovery 是在
+preregister 後、啟動 parallel jobs 前由單一 controller 建立空的 common parent；每個 runner 再用
+plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保留並排除整個失敗 attempt，
+以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
