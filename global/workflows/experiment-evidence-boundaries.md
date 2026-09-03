@@ -15,7 +15,7 @@ source_refs:
   - agent-memory:issue-13
   - agent-memory:issue-16
 created: 2026-08-20
-updated: 2026-08-20
+updated: 2026-09-04
 generated_by: openai-codex/gpt-5.6-luna
 ---
 
@@ -53,6 +53,13 @@ Use fixed denominators and stable keys when comparing progressive or partial
 runs. Do not combine numbers from different builds, datasets, solver
 portfolios, seeds, time limits, parallelism, or timeout policies into one
 experiment.
+
+Process snapshots may capture unrelated command-line credentials. Before an
+artifact ledger or public harvest, scan snapshot arguments and redact only the
+secret value, retain an explicit marker, record the pre/post hashes and exact
+scope, and verify that no semantic input, output, verdict, or load sample was
+changed. Never publish the raw credential-bearing snapshot merely for
+provenance completeness.
 
 # Fail closed
 
