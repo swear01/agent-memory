@@ -25,6 +25,10 @@ Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，�
 
 ## 共享 home 的 ACL 限制
 
+備份 handoff 若位於 `swear02` 的 `<remote-home>`，Mazu 上應直接使用 owner
+帳號 `swear02` 讀取與處理；不可因一般 Mazu HAPI runner 使用 `swear01`，就改以
+`swear01` 存取或替它設 ACL。只有使用者明確要求跨帳號分享時才處理 ACL。
+
 2026-09-04 實測 Zeus 與 Mazu 的共享 home 都由同一個 NFSv4.1 backend
 提供。客戶端 `setfacl` 回覆 `Operation not supported`，`nfs4_getfacl` 也回覆
 `Operation to request attribute not supported`；儲存伺服器的 SSH 連線則被拒絕。
