@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-03
+updated: 2026-09-04
 tags:
   - hapi
   - fork
@@ -56,6 +56,8 @@ The Windows `swop` Runner has no direct SSH management path. A standalone compil
 For `v0.29.0.4`, the Windows artifact SHA-256 is `d73f43498b564ecaf984f6ab6ab9bf3739ac35b5b2b8e0ed487f15efef0493de` and the source generation is `102c471d67d16c3fdd037a5187ee6b1d45b5c63666f2659eeadb4dc6b41ac40c`. The `swop` handoff replaced PID `29320` with `17608`, kept the active-session set unchanged at zero, and left the restored standalone Hub healthy with upgrade channel off.
 
 A post-rollout functional audit found that this Runner was still online while Codex availability was `invalid_configuration`; all other probed Agents were `not_found`, and the machine had zero active sessions. The HAPI update did not create the Codex override: production source only reads `HAPI_CODEX_APP_SERVER_BIN`, while both Runner handoff paths clone `process.env` into the replacement. The Agent-availability implementation is byte-identical in official upstream `980a921ba`, `v0.29.0.3`, and `v0.29.0.4` (blob `da8ed9b02dc75c7e90d4f88c1ca6cdf1f2bf6d8c`), and official `v0.29.0` already honored the same override in the app-server launcher. The same `Codex app-server exited (code=1, signal=null)` boundary failure was observed on `swop` while it still ran official `0.29.0`, before either maintained upgrade. Therefore the release artifact and self-upgrade are not the origin of the bad Codex path, but self-upgrade preserves the stale launch environment and the original acceptance check failed to detect the existing child-Agent problem. The override's exact value and persistence source remain unverified until inspected on Windows; likely sources include the Runner launch script, scheduled task, or user environment.
+
+On 2026-09-04, a local Windows remediation run performed a clean supervised restart: `swop` changed from PID `17608` to `3388` while retaining HAPI `0.29.0.4` and the expected artifact generation. A post-restart HAPI-managed Codex canary successfully executed `Get-Location`, returned the Windows user home, and was archived; the machine then had zero active sessions. This closes the omitted child-Agent functional gate. Hub evidence does not reveal whether the stale override was removed or replaced, so its exact persistence source still depends on the local remediation report.
 
 # v0.29.0.4 release
 
