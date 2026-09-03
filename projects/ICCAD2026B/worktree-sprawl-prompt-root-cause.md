@@ -20,7 +20,7 @@ ICCAD2026B 的大量 worktree 不是 Git 自動產生，而是 2026-07 至 2026-
 `d29d02a7`（2026-07-22）加入「Maximum useful concurrency」，58 個中有 56 個在此後
 建立。Cursor child transcript 證實 2026-08-07 同一時間派出多個 issue agent；child prompt
 只指定 branch/worktree 名稱，未指定絕對路徑，agent 遂自行使用
-`<remote-home>/ICCAD2026B-issueNNN`。
+`<worktree-root>/ICCAD2026B-issueNNN`。
 
 # 規則時間線與目前缺口
 

@@ -38,7 +38,7 @@ generated_by: openai-codex/gpt-5.6-sol
   `$HOME/.local/share/github-actions-runner/iccad2026b-release/Dockerfile`. Persistent
   volumes are `mazu-iccad2026b-release-config:/runner-config`,
   `mazu-iccad2026b-release-work:/_work`, and
-  `mazu-iccad2026b-release-podman:<remote-home>/.local/share/containers`.
+  `mazu-iccad2026b-release-podman:<runner-home>/.local/share/containers`.
 - Nested rootless Podman requires `slirp4netns` plus
   `runner:100000:65536` in both `/etc/subuid` and `/etc/subgid`. On this Docker host the
   outer runner container needs `--privileged` for Podman namespaces, but it still runs as

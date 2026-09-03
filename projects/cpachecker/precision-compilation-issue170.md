@@ -110,4 +110,3 @@ Source of truth 是 GitHub issue
 Wiki 為準。先完成 issue 的 C0 contract，再以 TDD 實作 C1/C2；C3 mechanism replay 和
 C4 consumer experiment 必須分開，不能用生成成功替代 verifier utility，也不能從五個
 mechanism fixtures 宣稱 population、timing 或 publication result。
-
