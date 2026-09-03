@@ -39,7 +39,7 @@ Keep tokens, signing material, runner environments, and deployment configuration
 
 # Latest verified release
 
-`v0.29.0.3` was rebuilt from upstream `980a921ba` after auditing 141 open PRs (`46 carry / 91 defer / 4 drop`). The exact release commit is `a6a0c03d2`; tag tests, the release workflow, asset digests, and the seven-Runner deployment passed. Hub schema V29 passed `quick_check` and `integrity_check`, and all 19 recorded pre-deployment session roots survived.
+`v0.29.0.4` was rebuilt from upstream `980a921ba15665c54998a6ddb658103d467ff4cb` after auditing 153 open PRs (`53 carry / 96 defer / 4 drop`). The exact release commit is `dbd150922d491b3e126725c1eb1a8b5c26714d82` with source tree `6c14779972d2f5a2da7708957b2df468bf27bdf7`; PR #15, exact-main CI, release workflow `33751306214`, all eight payload digests, macOS signing, and the eight-Runner deployment passed. Hub schema V29 passed `quick_check` and backup `integrity_check` before rollout.
 
 Binary replacement can briefly remove `runner.state.json` while a supervised Runner completes its own handoff. Treat a missing state file during this window as transient: re-read supervisor and state together before taking action. If ownership remains split, stop the supervisor, terminate only the exact state PID after verifying it is `hapi runner start-sync` without `--started-by runner`, then start the supervisor and require its PID to match the new state PID.
 
@@ -53,15 +53,15 @@ The Windows `swop` Runner has no direct SSH management path. A standalone compil
 4. Require a new Runner PID, the exact target version and generation, the new required capabilities, and identical active-session IDs before and after handoff. Session summaries associate a machine through `.metadata.machineId`, not a top-level `machineId`.
 5. Remove the temporary override, restore the standalone Hub, and recheck the public Web, all Runner versions, active sessions, DB `quick_check`, and schema version before cleaning the isolated checkout.
 
-For `v0.29.0.3`, the Windows artifact SHA-256 was `d439f3d18b004ed401d7bdd13cce499ea32bf176ca2cbfcb4bf55ad8380b90b7` and the source generation was `7170b7a8be2ca0f175810408de96cb9e23aa2e3dc74fd778f6cfef202c4a6877`. The Runner lock handoff completed and its existing active session survived unchanged.
+For `v0.29.0.4`, the Windows artifact SHA-256 is `d73f43498b564ecaf984f6ab6ab9bf3739ac35b5b2b8e0ed487f15efef0493de` and the source generation is `102c471d67d16c3fdd037a5187ee6b1d45b5c63666f2659eeadb4dc6b41ac40c`. The `swop` handoff replaced PID `29320` with `17608`, kept the active-session set unchanged at zero, and left the restored standalone Hub healthy with upgrade channel off.
 
-# Current v0.29.0.4 candidate
+# v0.29.0.4 release
 
-The unpublished `v0.29.0.4` candidate keeps upstream at `980a921ba`, audits 153 open PRs (`53 carry / 96 defer / 4 drop`), and keeps schema V29. Seven new exact-head PRs are selected: #1748, #1750, #1754, #1755, #1757, #1760, and #1761; carried #1436 and #1543 are refreshed. #1745 is deferred because its V25-to-V26 index migration conflicts with maintained schema V29 and does not justify a standalone V30 bump.
+The published release keeps upstream at `980a921ba`, audits 153 open PRs (`53 carry / 96 defer / 4 drop`), and keeps schema V29. Seven new exact-head PRs are included: #1748, #1750, #1754, #1755, #1757, #1760, and #1761; carried #1436 and #1543 were refreshed. #1745 remains deferred because its V25-to-V26 index migration conflicts with maintained schema V29 and does not justify a standalone V30 bump.
 
-The replayed source tree is `21b89b666c233e4f388e426ac06d34e986e073a7`. Local Bun 1.4.0 builds produced all five CLI targets and the darwin-arm64 binary reports HAPI 0.29.0.4. When using `hapi job run`, invoking a Bun 1.4.0 binary is not sufficient if package scripts call `bun` again: prepend the 1.4.0 directory to the job environment's `PATH` and avoid a login shell that rewrites it; verify the compiler path/runtime in build output.
+The published source tree is `6c14779972d2f5a2da7708957b2df468bf27bdf7`. Bun 1.4.0 builds produced all five CLI targets, and the released darwin-arm64 binary reports HAPI 0.29.0.4. When using `hapi job run`, invoking a Bun 1.4.0 binary is not sufficient if package scripts call `bun` again: prepend the 1.4.0 directory to the job environment's `PATH` and avoid a login shell that rewrites it; verify the compiler path/runtime in build output.
 
-Publication remains No-Go until Linux CI confirms two macOS-local gates: composer clipboard E2E reads an empty clipboard despite granted permissions, and the serial Runner integration can exceed its hard-coded 10-second startup wait under fleet load. The same Runner timeout reproduced on exact `v0.29.0.3` with a different test, so it is baseline instability rather than evidence against #1755. Local archives are candidates only; signed macOS CLI and desktop bundles still require the tag-triggered release workflow.
+Linux CI confirmed the release candidate, GitHub review found no major issues, and the tag-triggered release workflow produced the signed macOS CLI and desktop bundles. The macOS-local clipboard and serial Runner timing failures also reproduced on the previous exact release and remain classified as baseline test instability, not release regressions.
 
 # Contribution boundary
 
