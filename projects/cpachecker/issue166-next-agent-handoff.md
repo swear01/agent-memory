@@ -1,17 +1,54 @@
 ---
 title: CPAchecker issue 166 next-agent handoff
 project: swear01/cpachecker
-tags: [vguide, issue166, handoff, replay, schema11]
-status: superseded
+tags: [vguide, issue166, handoff, schema11, z3, classifier]
+status: active
 created: 2026-09-02
-updated: 2026-09-02
+updated: 2026-09-03
 ---
 
-# 狀態
+# 目前狀態
 
-> 2026-09-02：此接手狀態已由 schema-11 deterministic controls 正式通過而 supersede。
-> 後續 Python classifier 環境與目前狀態見 `issue166-python-environment.md`；以下保留為當時的
-> recovery provenance，不再當作 active next step。
+#166 仍 open。Schema-11 deterministic controls 與其後另行 preregister 的 model-free
+trace-relative classifier 均已正式通過。Classifier 僅用 accepted artifacts + 本機 Z3；沒有
+CPAchecker execution、新 response、external model/API call 或 embedding。
+
+Accepted classifier 結果：
+
+- complete refinement 3，N24/index 1，`i < 100`：`block ∧ ¬target` UNSAT，
+  `abstraction ∧ ¬target` SAT，label=`trace_relative_precision_loss`；
+- refinement 4 retention control：兩個 counterexample query 都 UNSAT，
+  label=`retained_by_abstraction`；
+- refinement 3 synthetic `i == 100` control：`block ∧ ¬target` SAT，
+  label=`not_trace_entailed`。
+
+Preregistration comment 是 `#issuecomment-5520027895`，remote body SHA-256
+`e50983922bdc61970f5c72a3741ba81fbf860ee3c3a4c4694bf431d2eed1a08b`。Accepted result comment
+是 `#issuecomment-5520039486`，remote body SHA-256
+`9e48c968c02f9d9323c3c5ebbed2c79252a9a4730382f19f3a3c55db0d0cbcbb`。Formal summary SHA-256
+`8fce30380cbe0f7b066306e673e69678d5adb85a009bb172d404cff61a5629ba`。
+
+# 下一步研究邊界
+
+目前只證明單一 observed trajectory 的 trace-relative precision loss 與下一 refinement 的
+retention。要 close #166 前，必須另行選擇並 preregister：
+
+1. 依 Wiki evidence funnel 補 concrete entry/loop-transition 的 initiation 與 inductiveness，才可
+   談 all-path invariant；或
+2. freeze provenance-defined held-out cohort，以 model-free classifier 做 replication，且禁止依
+   outcome 挑 case。
+
+不得從目前結果推論 invariant validity、population/prevalence、held-out/generalization 或 candidate
+5 單獨造成 complete-arm TRUE。Generation、transport/validity、abstraction precision 與 consumer
+usefulness 必須繼續分開。
+
+Current full handoff：
+`<remote-home>/cpachecker-experiments/runs/issue166_semantic_precision_census_20260901/NEXT_AGENT_HANDOFF_20260903.md`。
+Python/Z3 重建資訊見 `issue166-python-environment.md`。
+
+# 已完成的 2026-09-02 歷史主線（禁止再執行）
+
+以下保留 request-cache recovery provenance；schema-11 controls 已完成，不再是 active workflow。
 
 #166 仍 open，acceptance 未滿；目前沒有 run。PR #169 的 schema-11 instrumentation 已 merge，
 最後確認的 milestone commit 是 `4a14d72cc15dd38263a2430f4064b352a9b2782c`，但接手者必須先
@@ -22,7 +59,7 @@ fetch 並以當時最新 `origin/main` 建立新 claim/worktree。禁止修改�
 evidence，complete 未啟動，external call=0。Frozen protocol/harness/stop artifacts 必須保留，不能
 原地補 cache 重跑。
 
-# 下一步唯一主線
+# 當時的下一步唯一主線
 
 1. 先讀 issue #166 全部 comments、experiment protocol、GitHub Wiki、#139/#147/#148/#149 與
    `<remote-home>/cpachecker-experiments/runs/issue166_semantic_precision_census_20260901/NEXT_AGENT_HANDOFF.md`。
@@ -55,5 +92,6 @@ Exact-request SHA 設計正確；舊 harness 使用被 Java 忽略的 retired `D
 arm 的後續 request sequence 不保證相同。不要放寬 hash、猜 hash、手修 loop heads、改 production
 prompt、換題，或作 population/timing claim。
 
-Canonical full handoff:
-`<remote-home>/cpachecker-experiments/runs/issue166_semantic_precision_census_20260901/NEXT_AGENT_HANDOFF.md`。
+Historical full handoff:
+`<remote-home>/cpachecker-experiments/runs/issue166_semantic_precision_census_20260901/NEXT_AGENT_HANDOFF.md`，
+SHA-256 `0953626ebe685e12af52ed86139cf2ed49faa10a5dadc03b1cdae6db6b8b1a00`；不可覆寫。
