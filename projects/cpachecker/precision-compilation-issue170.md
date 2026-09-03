@@ -1,5 +1,6 @@
 ---
 title: CPAchecker #170 CFA-native precision compilation
+scope: project
 project: cpachecker
 tags: [vguide, cegar, predicate-abstraction, precision-compilation, cfa, issue170]
 status: active
@@ -154,13 +155,27 @@ pass，不是研究上限。
 formal result 之前失敗；應在 formal launch 前建立 harness 的 output directories。該事件已在
 `PRELAUNCH_ATTEMPT.md` 與 issue audit comment 保留，正式 case 沒有重跑。
 
+# 後續 pass：Issue #172
+
+`https://github.com/swear01/cpachecker/issues/172` 已凍結為下一個獨立工作項：從 exact scalar
+assignment semantics 與既有 proof artifacts 編譯 deterministic native consequence atoms，再
+重用 v1 frame transport 做 location-specific placement。
+
+精確缺口不只是「讓既有 predicate 穿過 assignment」：`nested9` 的 authoritative path 上沒有
+taken `AssumeEdge` 直接陳述 `i >= 0`；compiler 必須先從 `i = 0` 等 assignment/proof semantics
+產生該 abstraction atom。#172 將這設為可證偽 hypothesis；若 bounded SSA/WP/SP consequence
+compilation 仍無法恢復 target，必須停止並另行考慮 recurrence/loop-predicate pass，不能為了讓
+fixture 通過而把 recurrence、dominance/join 或 learned templates 偷混進 implementation。
+
+#172 的 C3b gate 維持 5/5：四個 v1 regression facts 不能退步，且 `nested9` 必須完整恢復
+`i >= 0 @ {N52,N57,N62}`。C3b 未通過前，#170 C4 仍 blocked。
+
 # 下一個 agent 的入口
 
 Source of truth 是 GitHub issue
 `https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166。
 實驗/Wiki 規則與 artifacts 仍以 `<remote-home>/cpachecker-experiments/` 的索引和 GitHub
-Wiki 為準。C0-C2 已完成並合併，C3 已誠實失敗於 `nested9`，所以不得直接啟動 C4。下一步若
-繼續 #170，先針對 assignment-aware SSA/WP/SP transport 另行凍結 hypothesis、oracle、typed
-rejections、consumer gate 與 stop rules；完成新的 mechanism gate 後，才可重新判斷是否具備
-C4 前提。不能用 generation/recovery 成功替代 verifier utility，也不能從五個 mechanism
-fixtures 宣稱 population、timing 或 publication result。
+Wiki 為準。C0-C2 已完成並合併，C3 已誠實失敗於 `nested9`，所以不得直接啟動 C4。下一步由
+#172 先凍結並驗證 assignment-derived scalar consequence pass；完成 C3b mechanism gate 後，
+才可重新判斷是否具備 C4 前提。不能用 generation/recovery 成功替代 verifier utility，也
+不能從五個 mechanism fixtures 宣稱 population、timing 或 publication result。
