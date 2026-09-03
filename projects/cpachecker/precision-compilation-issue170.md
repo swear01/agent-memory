@@ -155,7 +155,7 @@ pass，不是研究上限。
 formal result 之前失敗；應在 formal launch 前建立 harness 的 output directories。該事件已在
 `PRELAUNCH_ATTEMPT.md` 與 issue audit comment 保留，正式 case 沒有重跑。
 
-# 後續 pass：Issue #172
+# 後續 pass：Issue #172（已完成）
 
 `https://github.com/swear01/cpachecker/issues/172` 已凍結為下一個獨立工作項：從 exact scalar
 assignment semantics 與既有 proof artifacts 編譯 deterministic native consequence atoms，再
@@ -196,7 +196,52 @@ contract；compiler 應直接消費完整 split result，並以 C declaration/ty
 不負責無界合成；候選仍由 assignment/proof equality 的固定 projection 限定。
 
 #172 的 C3b gate 維持 5/5：四個 v1 regression facts 不能退步，且 `nested9` 必須完整恢復
-`i >= 0 @ {N52,N57,N62}`。C3b 未通過前，#170 C4 仍 blocked。
+`i >= 0 @ {N52,N57,N62}`。
+
+PR #175 已合併為 `25689ef90128695709a6c758db518ee46dda244f`。實作沒有建立完整
+assignment SP/WP，而是只接受 aligned native interpolant 中、能與最近 direct scalar integer
+assignment 的 post-state equality 雙向等價的 equality；再固定產生 native `<=` 與 `>=`，用
+assignment LHS 的 C type 決定 signedness/width，並重用 v1 scalar frame transport。self-dependent
+SSA collision、call、pointer/pointee、partial write、cross-function、ambiguous/missing equality 與
+solver certificate failure 都 fail closed。所有輸出仍是 `PRECISION_ONLY`，dump schema 為
+`cfa-precision-compiler-v2`。
+
+Production indexing 的重要細節：`PredicateCPARefiner` 的 `abstractionStatesTrace` 不含 root，
+且明確與 `BlockFormulas` 等長；去掉最後 error state 後，interpolant `i` 與
+`abstractionStatesTrace[i]` 配對。不能套用一般「states 比 interpolants 多一個，所以 index +1」
+的假設；既有 `VGuideAnalysisDumper` 也是 same-index mapping。正式 `nested9` dump 在 N52/N57 的
+proof equality 也驗證了這個 alignment。
+
+Targeted `CfaPrecisionCompilerTest` 14/14 通過；完整 ECJ、javac、JUnit、3,880 configuration
+checks 與 Checkstyle 通過。SpotBugs 缺 Eclipse classes、Forbidden APIs 70 errors 都與相同 base
+commit 完全一致，變更檔沒有新增 violation。PR review 的 Swear Review 因 OCR infrastructure
+failure 無可用結果；Gemini 對 exact head `59f99e25bc` 的第二次 review 明確回報沒有 comments。
+
+## C3b 正式結果（2026-09-04）
+
+preregistration：`https://github.com/swear01/cpachecker/issues/172#issuecomment-5531094745`；
+harvest：`https://github.com/swear01/cpachecker/issues/172#issuecomment-5531204306`。正式 merged
+runtime 為 `25689ef90128695709a6c758db518ee46dda244f`，使用第一次即 idle-ready 的
+`valkyrie`、P-core affinity `0,2,4,6,8,10,12,14` 與 HAPI attached job；不作 timing claim。
+
+- `hh2012-ex1b`: N24，TRUE，5 refinements，pass；
+- `nest-if3`: N47，UNKNOWN，15 refinements，pass；
+- `nested-1`: N47，UNKNOWN，22 refinements，pass；
+- `nested3-1`: N24，UNKNOWN，85 refinements，pass；
+- `nested9`: `i >= 0 @ {N52,N57,N62}`，TRUE，2 refinements，pass。
+
+因此 C3b **5/5 passed**；external model calls、wrong verdicts、integrity failures、scientific
+failures 與 missing heads 全為 0。`nested9` refinement 1 已由 assignment edge occurrence 30、
+proof-source occurrences 31/34 產生 signed 32-bit `PROOF_EQUALITY/GREATER_OR_EQUAL` origins，
+equivalence/implication flags 皆為 true，並放到三個 required heads。這證實最小突破口是
+proof-guided equality order projection，而非完整 assignment SP/WP。
+
+完整 artifacts：
+`<remote-home>/cpachecker-experiments/runs/issue172_equality_projection_c3b_20260904`。
+summary SHA-256 為 `665185083aac13c6058e11437d4947147a0e46265b7a4005cf405a7b710932a6`，
+48-file ledger SHA-256 為 `37bc297b0bd12c71434fd0b536051e89330412040d6841c6185cd1c3d697b6df`。
+#172 已完成關閉，C3 stop condition 已清除；#170 C4 在研究機制上解鎖，但仍需另行
+preregister，且既有 #174 native MathSAT stability blocker 沒有被本結果解決。
 
 # C4 consumer gate：Issue #173（2026-09-04）
 
@@ -245,7 +290,8 @@ Source of truth 是 GitHub issue
 `https://github.com/swear01/cpachecker/issues/170`，並需讀 #138、#150、#165、#166、#172、
 #173、#174。實驗/Wiki 規則與 artifacts 仍以
 `<remote-home>/cpachecker-experiments/` 的索引和 GitHub Wiki 為準。C0-C2 已完成並合併；
-C3 是 4/5；#173 的 partial C4 只有 `hh2012-ex1b` 可作 consumer-positive claim，完整 C4
-依 stop rule 停止。不得重啟 #173 formal matrix 或晉升 C5，直到 #174 有 reviewed fix 並另行
-preregister。不能用 generation success 替代 verifier utility，也不能從這些 fixtures 宣稱
-population、timing 或 publication result。
+C3 第一次是 4/5，#172 C3b 已補足為 5/5；#173 的 partial C4 只有 `hh2012-ex1b` 可作
+consumer-positive claim，完整 C4 依 stop rule 停止。C3b 解鎖下一個 C4 設計，但不得重啟
+#173 formal matrix 或晉升 C5，直到 #174 有 reviewed fix 並另行 preregister。不能用 generation
+success 替代 verifier utility，也不能從這些 fixtures 宣稱 population、timing 或 publication
+result。
