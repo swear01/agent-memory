@@ -49,4 +49,8 @@ Opening the media as a new chart can create a blank `chart.json` with default of
 and BPM instead of importing the maidata. After import, verify the UI values before
 saving: Baby Shark should show offset `0.10` and BPM `115`; the prepared template is
 intentionally empty of note tokens, so an empty note list alone is not proof that
-import failed.
+import failed. However, the standalone parser rejects a completely empty chart
+with `max() iterable argument is empty`; a minimal importable starter must contain
+at least one legal Note. The repaired Baby Shark template therefore uses one
+placeholder `1` at the first beat followed by `,,,E`; the placeholder can be
+deleted when real charting begins.
