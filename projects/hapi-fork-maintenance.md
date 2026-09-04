@@ -96,3 +96,11 @@ Linux CI confirmed the release candidate, GitHub review found no major issues, a
 # Contribution boundary
 
 Searching issues, reproducing problems, and creating an issue are separate from implementing a fix and publishing a PR. Approval to implement a fix does not imply approval to publish it.
+
+Treat `tiann/hapi` upstream actions as separate authorization boundaries. A request to fix or update the operator's existing PR authorizes commits and pushes only to that PR's existing head branch; it does not authorize merging the PR, enabling auto-merge, closing it, or changing upstream repository state beyond the requested PR update. Green CI, a clean review, and `MERGEABLE` status are evidence that the PR is ready for maintainers, never implied permission to merge. Invoke a merge operation only when the operator explicitly asks to merge that exact PR.
+
+The maintained `swear01/hapi` fork is a separate repository boundary. Updating an upstream contribution does not authorize moving the fork's `main`, rebuilding or publishing a release, or deploying the fleet; each requires its own explicit request or an already-authorized release workflow.
+
+# PR #1607 Delete Group failure
+
+On 2026-09-04, production Hub logs and a rollback-only database reproduction confirmed that group deletion returned HTTP 500 even when every target session was stopped and archived. Bun SQLite counted foreign-key cascade deletions in `Statement.run().changes`, so deleting five direct session rows with existing child data reported a much larger change count and tripped the transaction's exact-count guard. The minimal fix on the existing PR head uses `DELETE ... RETURNING id` and counts only returned session rows; the regression test adds a child message and verifies both sessions and the cascaded message are removed. Commit `f6cb2324fddb8bf3062faa6d077bcd0917311384` passed the upstream PR's `test`, `integration`, `drift-gate`, and latest-head review with no findings. The PR remained open for an upstream maintainer; no merge was authorized.
