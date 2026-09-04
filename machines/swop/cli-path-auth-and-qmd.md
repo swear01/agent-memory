@@ -44,8 +44,8 @@ QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、�
 
 # Local DeepSeek gateway
 
-`swop` 的 Pi `opencode-go` provider 指向同機 `127.0.0.1:35001/v1`，由 `DeepSeek Gateway (SWOP)` Scheduled Task 執行 Windows x64 gateway。Task 使用互動使用者 token、啟動時執行 `<home>/.local/bin/deepseek-gateway-safe.ps1`，並設有失敗重啟；從 OpenSSH session 註冊 task 時應以 `WindowsIdentity.GetCurrent().Name` 取得可映射的 local principal，不要使用可能只回傳 `WORKGROUP` 的 `USERDOMAIN`。
+`swop` 的 Pi `opencode-go` provider 指向同機 `127.0.0.1:35001/v1`，由 `DeepSeek Gateway (SWOP)` Scheduled Task 執行 Windows x64 gateway。Task 使用 `AtStartup` BootTrigger 與 `SYSTEM` service account，在使用者尚未登入時即可執行 `<program-data>/DeepSeekGateway/deepseek-gateway-system.ps1`；同時設有 `StartWhenAvailable`、每分鐘失敗重啟及無執行時間上限。不要使用 `AtLogOn` interactive task：2026-09-04 實測該版本會在部署 SSH session 結束後以 `0xc000013a` 停止。
 
-Gateway 設定與 route 分開存於 `<home>/.config/deepseek-gateway/config.yaml` 和 `routing.yaml`。五組 upstream credential 僅以 CurrentUser DPAPI blob 保存在 `<home>/.config/dvlab`，launcher 解密到自己的 Process environment 後啟動 gateway；User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。
+Gateway binary、設定、route、launcher、logs 與 active secret blobs 都位於 `<program-data>/DeepSeekGateway`。五組 upstream credential 以 LocalMachine DPAPI blob 保存，ACL 僅授權 `SYSTEM`、Administrators 與本機使用者；launcher 解密到自己的 Process environment 後啟動 gateway，User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。舊 CurrentUser DPAPI blobs 與 task XML backup 暫留作無重開機驗證前的 rollback。
 
-2026-09-04 的 live verification 為 gateway `health=ok`、零 stderr、HAPI machine `pi-models` 正好八筆；Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。Flash 測試觸發 latch 向後切換到第三個 OpenCode endpoint，證明不是僅做 health check。HAPI Runner PID 與兩個既有 active Codex sessions 均保留，沒有重啟 Runner。
+2026-09-04 的 live verification 為 Task `Running`、principal `SYSTEM`、trigger `MSFT_TaskBootTrigger`，gateway process owner 為 `NT AUTHORITY\SYSTEM`、`health=ok`、零 stderr；另一條 SSH connection 在部署程序退出後仍能讀到同一個 listener。HAPI machine `pi-models` 正好八筆，Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。HAPI Runner PID 與當時的一個 active Codex session 均保留，沒有重啟 Runner。為保留該 session，未做實機 reboot；BootTrigger、SYSTEM context 與斷線存活已驗證，首次真實開機後仍應再確認 task last-run 與 health。
