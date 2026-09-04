@@ -86,3 +86,11 @@ entries and landing index before CSS rotation. Replacing only the delayed
 animation callbacks with the existing `onFinish` and close callbacks makes both
 results appear immediately while preserving costs, upgrades, and achievement
 side effects.
+
+The first Slot/Price Wheel animation patch targeted duplicate bundled
+components that are not used by the Marketplace screen. The active screen uses
+the `Zn` Slot Machine component and `rr` Price Wheel component; their live
+handlers are `M` and `P`. The active handlers performed the actual CSS reel
+transition and wheel `transform: rotate` inside delayed callbacks. Patching
+those handlers directly, and removing their container transitions, is required
+for the visible Marketplace controls.
