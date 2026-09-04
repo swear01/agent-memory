@@ -34,3 +34,10 @@ writes overwrite the same cell. Increasing the timer scale therefore increases
 the attempted spawn count without increasing the visible particle count. A
 real extractor-rate fix needs a spawn queue/buffer or interleaved GPU simulation,
 not only a larger timer multiplier.
+
+The applied extractor fix adds `pendingSpawns` and queues extractor writes.
+Each of the 50 main simulation iterations flushes at most one queued spawn per
+unique emitter cell, submits that write, and then submits its compute pass.
+This interleaves movement with spawning so repeated writes to one emitter cell
+no longer overwrite one another. The patched bundle passed `node --check` and
+the Renderer remained responsive after relaunch.
