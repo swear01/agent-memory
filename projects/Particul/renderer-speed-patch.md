@@ -57,3 +57,16 @@ Those counts drive both the top-left particle labels and `removeLastParticles`
 used by auto-sellers, so an early readback makes the labels empty/zero and
 makes auto-selling appear to return to normal speed. Moving `readBack()` after
 the count/render submission fixes both symptoms.
+
+The 50x timer also scales the monthly autosave trigger. The renderer's
+`save()` copies the full WebGPU particle buffer to a MAP_READ buffer and sends
+it to a worker-backed IndexedDB writer; the worker emits a shared `saved`
+event. Calling this unawaited save once per simulated month floods GPU readback
+and IndexedDB transactions, which can stall the game and leave startup unable
+to finish loading. Throttling autosave to once per 5 real seconds prevents the
+flood. The game also stalled during startup while awaiting
+`tryImportSaveFromCloud()` even though the Steam Cloud files were intact;
+bypassing that blocking import and loading local IndexedDB first restored the
+renderer loop. Before repair, the local IndexedDB contained the `saves/main`
+record and a particle blob; Steam Cloud retained `saveStrings.sav` and
+`saveBuffer.sav` with the original progress.
