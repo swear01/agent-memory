@@ -5,7 +5,7 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-04
+updated: 2026-09-05
 ---
 
 # DVLab persistent storage migration inventory
@@ -79,9 +79,19 @@ updated: 2026-09-04
 - 唯一長期備份是 Mazu Ultra Touch mountpoint `/mnt/ultra-touch` 下的 `backup`/`home`/`jonathan.tar.zst`：76,204,875,019 bytes，SHA-256 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf`。`zstd -tq`、257,533-member 完整 tar list、內含 160,099-file SHA manifest 與 README 讀回 `cmp` 均通過；碟已回到唯讀。此檔是 Jonathan 唯一 canonical home，屬永久保護項，不得列入 duplicate/delete candidates；只有另一份 replacement 通過逐 byte、SHA-256 與 archive 讀回驗證並取得人工授權後，才可替換或移除。
 - 刪除前確認來源為 Valkyrie 本地 ext4 且 `proc_refs=0`。`/mnt/md1/jonathan` 已刪除，`df` 實測釋放 2,211,264,499,712 bytes；現行 NFS home 未動。Mazu staging 也已移除並釋放 184,431,239,168 bytes。恢復只能依上述 canonical archive 與 SHA-256。
 
+## NFS 單一 home 合併（2026-09-05）
+
+- `192.168.1.199` 與 `192.168.1.200` 是同一台 NAS、同一份 `/volume1/nfs-home`，不能當成兩份備份。現行 NFS 70 個帳號共 10,047,759,310,516 logical bytes；NFS 內 G3 `.backup/*.tar` 1,313,249,259,520 bytes、G4 `copy/cthulhu_home/*.tgz` 279,240,795,714 bytes。
+- 最終格式只能有一個 `home/` 與每帳號一個 `home/<account>/`。current 是現役帳號 base，舊世代 unique 內容以 `.archive/<generation>/` overlay；同路徑不同內容不可覆寫。帳號名是 canonical identity，不能只看 numeric UID/GID：舊 `b09901005` 的 1041 現已解析成 `ice890425`，restore 前要人工決定 owner。
+- 已證明 NFS delete-later 共 863,836,148 bytes：`b09901005.tar` 20,480 bytes，b09901037 G3+G4 469,898,111 bytes，b10901098 G3+G4 393,917,557 bytes。後兩帳號的 G3/G4 對 G2/current filtered compare 四次皆 exit 0；目前只記錄，尚未刪除。
+- b10901099 與七個較小 G3 帳號（enfest、chenying、chengen、henningy、ferayer、spongebobaa16、jack0716）原始輸入 30,822,155,791 bytes，已萃取成 15,069 files、1,466,782,963 logical bytes 的 canonical fragments，排除/去重 95.24%。其中 ferayer 保留三個 current 缺少的 Git/source repo；spongebobaa16 保留 current 缺少的 SoCV/LSV/Comm source 與 benchmark；jack0716 八個 old commit 已由 current Git 表示，只需補 5 個 unique worktree files。
+- 不可在 `.git/` 內做 content hardlink：Git refs 可能被錯誤連結而互相改寫。跨 home 精確重複可在最終 archive payload 層處理，但 Git object/ref 結構維持獨立。
+- 未加密 cold archive 明確排除 SSH/GPG identity、`.git-credentials`、`github_token`、`.conda/aau_token`、browser/history/Xauthority 及 editor/cache/runtime。fragment 位於 Zeus `/var/tmp/nfs-canonical-20260905`，受 30 天 tmpfiles policy；在 current+fragment 寫入冷備份、archive test、逐檔 SHA-256 與讀回驗證完成前，G1/G2/G3/G4 來源均不得刪除。
+- 本 NFS session 不 mount、不讀寫兩顆外接備份碟；磁碟寫入權由另一個 session 獨占。詳細逐檔證據與各 fragment hash 位於任務盤點 `NFS-HOME-CONSOLIDATION.md`。
+
 ## 目前狀態與文件邊界
 
-- 除上列 Jonathan 已完成批次外，其餘 persistent 資料、舊搬家世代與 `/var/tmp` 候選仍只盤點，未因本次工作刪除。
+- 除上列 Jonathan 已完成批次外，其餘 persistent 資料與舊搬家世代未因本次工作刪除；NFS 合併目前只新增上述 `/var/tmp` canonical fragments。
 - 2026-09-04 Mazu 同時掛載兩顆冷備份碟；Jonathan 寫入只短暫將 Ultra Touch remount RW，完成 sync 與三輪完整讀驗證後已回到唯讀。One Touch 未改寫。
 - 長備份碟的 5 個外層 tgz、4,853,391 筆原始 member、4,096,391 筆巢狀 tar member 與 600,910 筆其他巢狀 archive member 均查無 `Jonathan` 路徑，以及 `mix1.tar`、`mix2.tar`、`mix3.tar`、`1min.tar`、`pack.tar`。`jon*` 命中只有圖片、Java 類名、zsh theme 與 IsolatedStorage 隨機目錄，不能誤認為 Jonathan home。
 - 短備份碟外層有 45 個 tgz，沒有 `jon*` 檔名；其中 G4 `copy.tgz` 對應 NAS 仍存在的 `copy/cthulhu_home`。該來源目錄精確是 19 個其他帳號 tgz、搬移腳本與帳號清單，沒有 Jonathan；21 個檔案加兩層目錄的預期 tar 長度 `279240816640` bytes，和 `copy.tgz` gzip trailer ISIZE 同為 `67942400`（模 `2^32`）。2026-09-04 全串流外層 member 掃描直到 gzip trailer 才以 CRC error 結束，未命中任何 `jon*.tgz` 或五個 Jonathan 目標 tar；因此外層名稱可否定，但 `copy.tgz` payload 完整性不合格，也不能據此否定內容藏在其他帳號巢狀 tgz 內。不可把它當成健康備份或直接刪除。
