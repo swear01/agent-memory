@@ -120,6 +120,15 @@ cache、VS Code server/cache、GPU compute cache、Python bytecode、pytest cach
 測試垃圾；不含 `node_modules`、env、build、log、dataset/model、Trash、AppleDouble 或泛稱
 `tmp/swp/core`。後者仍可另行審查，但不可混入 strict-safe 數字。
 
+2026-09-04 在 Mazu 套用帳號活動 gate：NSS 順序是 `files systemd nis sss`，NIS domain
+為 `ee.ntu.edu.tw`、server 為 Zeus。仍存在於中央身分來源的 `dvlab`、`chinyi0523`、
+`dsnp_student`、`ntuwp`、`ric` 相關候選一律 HOLD，共 138 個 strict-safe 候選、約
+4.17 GiB archive heuristic。其餘 875 個 strict-safe 候選屬於中央身分來源已不存續的
+owner，約 8.72 GiB logical／5.60 GiB archive heuristic；再加上 3 個 dossier 已完成且
+不重疊的環境根目錄，形成目前可納入乾淨 archive 的候選聯集：878 個項目、約 9.75 GiB
+logical／6.09 GiB archive heuristic。這仍是重建候選，實際節省以新 archive 完成後為準。
+執行時必須保留 strict-safe manifest 的 `path_scope`；`matched_members_only` 不得誤刪父目錄。
+
 ## 最小 reconstruction dossier
 
 一般 Python venv 至少保留 Python major/minor、平台、每個 package 的名稱與版本、
