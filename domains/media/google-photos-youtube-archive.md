@@ -4,8 +4,9 @@ description: "Google Photos 大型影片轉存 YouTube 的門檻、批次與安�
 tags: [google-photos, youtube, storage, video]
 category: domains
 scope: global
-updated: 2026-09-03
-sources: [live Google Photos inventory, live YouTube upload attempt, user decision]
+status: active
+updated: 2026-09-05
+sources: [live Google Photos inventory, live YouTube Studio verification, local file verification, user decision]
 confidence: high
 ---
 
@@ -30,5 +31,12 @@ confidence: high
 
 ## 現況
 
-- 第一批 15 支已備妥並通過媒體檢查，實際約 11.895 GB；YouTube 未發現精確重複項目。
-- 上次傳送因頻道每日上傳限制而全部未建立，來源仍須保留，待限制解除再續傳。
+- 2026-09-05 已重新確認本輪 15 支（約 11.895 GB）全部存在於 YouTube Studio：皆為「私人」、不是草稿，並各自顯示非零片長；這批不得重複上傳。
+- 對應來源已完成可復原清理：15 個 Google Photos 項目已移入 Photos 垃圾桶，其中 7 個另有 Google Drive 對應來源，已由 Drive File Provider 移入垃圾桶；兩邊垃圾桶都未清空。
+- 15 個本機 Downloads 上傳暫存檔共 11,894,923,726 bytes，已移入 macOS 垃圾桶並核對原路徑全數不存在；macOS 垃圾桶未清空。
+- 以原始盤點 134 支、約 37.976 GB 計算，本輪完成 15 支後尚餘最多 119 支、約 26.081 GB。這只是盤點基準的差額；下一批開始前仍要重新盤點，不能把較早完成的另一批 15 支／約 31.8 GB 混入這個基準。
+
+## Drive 與本機刪除方式
+
+- Google Drive Desktop 路徑由 macOS File Provider 管理。系統 `trash` 曾在這類雲端路徑遇到 File Provider 權限錯誤；Finder 刪除能把操作交給同步層並保留 Drive 雲端垃圾桶，因此本輪 Drive 來源採 Finder。
+- 一般本機 Downloads 暫存檔可直接使用 macOS `trash`，速度快且仍可還原。大量 Drive 清理若要自動化，優先使用已設定並驗證的 Drive API 或 `rclone` 雲端垃圾桶語意；不要用 `rm` 取代可復原流程。
