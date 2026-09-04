@@ -34,8 +34,10 @@ the beginning of each `&inote_*` section, for example `(115)`, even when
 
 For the supplied Pinkfong video, visual inspection and audio segmentation identified
 the main song as source time `10.02–105.48` seconds. Beat-period analysis of that
-segment was stable at `115 BPM`, with the first beat phase near `0.10` seconds after
-the trimmed audio start. The source video was preserved unchanged; the prepared
+segment was stable at `115 BPM`, with the first stable beat phase near `0.22` seconds after
+the trimmed audio start. An earlier coarse analysis reported `0.10`; that value was
+wrong because it locked onto an intro transient rather than the sustained beat grid.
+The source video was preserved unchanged; the prepared
 folder contains a separate MP3, video-only PV, background PNG, and an editable empty
 Master template. No note chart was invented when the destination folder contained no
 note data.
@@ -47,7 +49,7 @@ Visual Maimai's Open flow must select `track.mp3` or `track.ogg`; it auto-import
 separate File > Import maidata command is the reliable route for an existing chart.
 Opening the media as a new chart can create a blank `chart.json` with default offset
 and BPM instead of importing the maidata. After import, verify the UI values before
-saving: Baby Shark should show offset `0.10` and BPM `115`; the prepared template is
+saving: Baby Shark should show offset `0.22` and BPM `115`; the prepared template is
 intentionally empty of note tokens, so an empty note list alone is not proof that
 import failed. However, the standalone parser rejects a completely empty chart
 with `max() iterable argument is empty`; a minimal importable starter must contain
