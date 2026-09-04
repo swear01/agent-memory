@@ -39,3 +39,14 @@ the trimmed audio start. The source video was preserved unchanged; the prepared
 folder contains a separate MP3, video-only PV, background PNG, and an editable empty
 Master template. No note chart was invented when the destination folder contained no
 note data.
+
+# Visual Maimai import contract
+
+Visual Maimai's Open flow must select `track.mp3` or `track.ogg`; it auto-imports
+`maidata.txt` and `pv.mp4` only when those files are beside the selected audio. The
+separate File > Import maidata command is the reliable route for an existing chart.
+Opening the media as a new chart can create a blank `chart.json` with default offset
+and BPM instead of importing the maidata. After import, verify the UI values before
+saving: Baby Shark should show offset `0.10` and BPM `115`; the prepared template is
+intentionally empty of note tokens, so an empty note list alone is not proof that
+import failed.
