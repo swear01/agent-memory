@@ -21,6 +21,19 @@ updated: 2026-09-04
 /dev/sdb2 /mnt/ultra-touch exfat ro
 ```
 
+## 2026-09-04 實際使用量
+
+- 長備份碟：filesystem used 590,040,793,088 bytes（549.518 GiB）。正式 `backup/` 的
+  apparent content 為 474,001,460,913 bytes（441.448 GiB）；`.Trash-1043/` 另有
+  80,340,117,871 bytes apparent（74.823 GiB），但因 exFAT allocation unit 與大量小檔，
+  allocated size 約 107.998 GiB。Trash 內含大型舊 archive 與刪除後的目錄樹；它是高價值
+  清理候選，但在核對現行 archive、checksum 並取得刪除授權前不得移除。
+- 短備份碟：filesystem used 1,808,727,801,856 bytes（1.809 TB decimal／1.645 TiB）；
+  `backup/` apparent content 為 1,808,648,730,588 bytes，證明不是只有幾百 GB，也不是單純
+  filesystem allocation overhead。「短備份」描述保留週期／用途，不代表容量較小。
+
+因此只有長備份碟目前是五百多 GB allocated；短備份碟實際保存約 1.81 TB 檔案內容。
+
 Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，但該帳號屬於 `docker` 群組。已驗證可使用本機既有 `ubuntu:24.04` image（禁止 pull、禁網路），進入 host mount namespace 後以 UUID 和 `-o ro` 掛載；操作前後都用 `findmnt` 核對來源與 `ro` 選項。
 
 ## 共享 home 的 ACL 限制

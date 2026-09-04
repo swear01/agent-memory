@@ -46,6 +46,35 @@ payload SHA-256 結果，未重新讀取外接碟。正確 JSON 欄位是
 - 36 個環境根目錄混有非標準檔案（可能包含 editable source），不可整棵排除；14 個位於
   inventory 不完整的截斷 container。這些集合彼此重疊。
 
+`local/editable project source mapping` 是暫時性的刪除閘門，不代表 dependency 本身不能
+重建。只要確認被 `.egg-link`、`.pth`、`direct_url.json` 或 Pipenv `.project` 指向的
+source tree 已保留，並保存 package/version/platform、manifest/lockfile，以及適用時的
+VCS URL 與 commit，就能把環境本體改判為可排除。只有 package name 不足以覆蓋未發布的
+editable/private code。94 個 mapping HOLD 中已有 75 個找到相鄰 project manifest；46 個
+只有 mapping 這一項 blocker（其中 40 個已有 linked manifest），應優先核對而非永久保留。
+
+先前的 33 個是小型 metadata pass 前，以 local/editable marker 粗分出的 provisional
+category（24 個 `.egg-link`、6 個 private/editable manifest、2 個 `direct_url.json`、
+1 個 private manifest）；不可把它當成最後的不可刪數量。
+
+## `cph.tgz` 完整性
+
+巢狀檔 `yoctol.tgz!yoctol/cph.tgz` 的外層 inventory 宣告大小與實際抽出的 payload 大小
+都是 37,711,249,408 bytes（35.121 GiB），所以不是稽核抽取時少複製；損壞位於既存的
+`cph.tgz` 本身。`gzip -t` 回報 unexpected end of file，GNU tar 回報 unexpected EOF，
+bsdtar 在讀取 archive-relative path
+`home/cph/LibriSpeech/LibriSpeech/train-clean-100/1737/142397/1737-142397-0000-norm.wav`
+時回報 truncated input。
+
+截斷前仍可列出 283,594 個 members（39,040 directories、243,815 files、739 other），
+已宣告的 readable file bytes 約 78.291 GiB logical；因此不是整包都無法讀，而是上述 WAV
+為部分資料、其後資料缺失或不可知。工具訊息中的 467,968 bytes 只是當下 tar entry 尚需的
+uncompressed data，不能推論整包只缺這麼多。現有證據無法區分是原始建立中斷、複製中斷，
+或來源檔本來就壞。
+
+其中 14 個 Python env 的 1,669 個小型 metadata files 已全部讀完且零 metadata error，
+可繼續建立 dossier；但 container 不完整，所以仍不可宣稱整個 `cph.tgz` 可完整還原。
+
 完成版 Git 小型 metadata pass 是 72/72、外接碟寫入 0；三組 clone-family 候選中只有一組
 具有相同 HEAD 與 packed-refs，但報告未把任何一組宣告為 exact duplicate clone。
 
