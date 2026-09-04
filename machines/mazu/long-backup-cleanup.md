@@ -5,7 +5,7 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-05
 ---
 
 # Mazu 長備份可重建資料清理邊界
@@ -173,3 +173,36 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 5. 再納入 Conda cache 與可復現 build tree，產生非重疊 exclusion manifest。
 6. 在新 archive 完整建立、完整性驗證、抽樣重建驗證與 SHA-256 manifest 通過前，
    保留原始 archive，不刪除或覆寫。
+
+## 2026-09-05 已執行結果與續作點
+
+長備份 One Touch（UUID `001D-7DC1`）已完成第一批精簡 archive 的重製、完整遞迴驗證、
+外接碟寫入、`sync`、唯讀讀回驗證及提交：
+
+- `/mnt/one-touch/backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
+  `301251df790c54eb50b40816fc1d478c12b1f6a63ac2f60b3c56ee93720a0d14`。
+- `/mnt/one-touch/backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
+  `35ac9e0424be2ea2cabee021cda915643ae1abcb05e891e2214a99f656af0893`。
+
+兩份成品的 tar/ZIP 巢狀容器、member 數、邏輯位元組與保留內容 SHA 都通過；寫回外接碟後
+又從 `.partial` 完整讀回通過，才原子改名並移除被取代的
+`backup/dvlab.tgz`（178,497,851,239 bytes）與 `backup/yoctol.tgz`
+（245,242,677,163 bytes）。兩份 archive 淨省 8,810,044,079 bytes；提交後 filesystem used
+為 581,230,919,680 bytes。`cph.tgz` 保持原始 bytes，不重新包裝；`CADathlon.rar` 內無安全
+寫入工具可處理的 3 個候選／48,128 bytes 亦保留。`dsnp_student.tgz`、`ntuwp.tgz`、
+`ric.tgz` 因近期帳號 gate 未重製。
+
+Trash 的後續唯讀核對在 Mazu 離線前得到：
+
+- `dsnp_student/` 的 6/6 檔案同時與正式 `.tgz`、Trash 舊 `.tar.xz` 內容相同。
+- `ntuwp/` 的 62,253 檔中，62,252 檔與正式 `ntuwp.tgz` 內容相同；唯一不同檔是可重建的
+  `.cache/Cypress/10.10.0/Cypress/resources/app/node_modules/ajv/dist/ajv.min.js.map`。
+- `ric/` 的 4,868 檔中，4,867 檔與正式 `ric.tgz` 內容相同；唯一必須保留的差異是核心
+  原始碼 `ric/class/DSnP/1051/fraig_final/b04901036_fraig/src/sat/test/Proof.h`。
+- `dvlab/` 有 59,027 檔；全量 GNU tar `--compare` 因 Mazu 網路／主機離線中斷，partial
+  報告不足以判定，不得據此刪除。Mazu 恢復後必須從頭重跑。
+- Trash 尚未刪除任何內容。舊 `yoctol.2.tgz` 的已驗證截斷前綴結論仍適用；另一份
+  3,092,774,912-byte `yoctol.tgz` 尚需完成內容清單核對。
+
+本批未碰短備份 Ultra Touch。Jonathan 唯一 canonical home
+`<short-backup-mount>/backup/<remote-home>/jonathan.tar.zst` 仍是永久保護項，不得列為重複候選。
