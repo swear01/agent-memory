@@ -62,9 +62,11 @@ updated: 2026-09-04
 ## G1 深層容量分級（2026-09-04）
 
 - G1 的 `du` 使用量為 5.563 TiB。跨 G2 exact copy 與 124 個嚴格可重建根目錄去除重疊後為 656.84 GiB；再加上一個藏在舊備份內、經目錄結構確認的 16.44 GiB Anaconda 環境，直接清理層約 673.28 GiB（11.82%）。
-- 四個冷帳號已定位 3.705 TiB（66.61%）的批次 log、proof trace 與 testcase output。這一層不是整個帳號直接刪除：先抽出 source、論文、重現腳本、final/best 結果與摘要，再刪或壓縮原始輸出。
+- 四個冷帳號已定位 3.749 TiB（67.39%）的批次 log、proof trace、testcase output 與 tar 內精確重複。這一層不是整個帳號直接刪除：先抽出 source、論文、重現腳本、final/best 結果與摘要，再刪或壓縮原始輸出。特別是 tyyywei 的待精簡樹內混有 19,051 個 QDIMACS/AIG input（36.247 GiB），不能整個目錄移除。
 - 最大帳號有四個未壓縮 tar，合計 1.700 TiB；完整 member inventory 共 3,686 個 regular files，全部為 `.log`、沒有 non-log。相鄰的 `pack.tar` 則有 316.890 GiB 一般檔案內容，其中 `.log` 只佔 98.137 GiB（30.97%）；其餘主要是 SAT benchmark 125.072 GiB、proof 28.609 GiB、舊工具安裝包 31.503 GiB 與 WebProg 13.174 GiB，必須分開判讀。
-- `pack.tar` 的 SAT raw log 有相鄰執行設定、特徵萃取 scripts、case/status/runtime 與 train/test/validation CSV 摘要，適合在保留 manifest、source/config、摘要及少量異常案例後精簡。`.proof`/RUP certificate、舊版授權工具與非 log 專案不能沿用同一刪除判斷。
+- `pack.tar` 是 Jonathan 人工整理的舊 home/workspace 搬家封存：member mtime 為 1996–2019、tar 本身 mtime 為 2023，根目錄與 shell alias 都對應 `workspace/sat`、`workspace/RPgen` 等工作路徑；不是套件 cache 或純 log archive。
+- `pack.tar` 的 SAT raw log 有相鄰執行設定、特徵萃取 scripts、case/status/runtime 與 train/test/validation CSV 摘要，適合在保留 manifest、source/config、摘要及少量異常案例後精簡。62,223 個 CNF 經完整 SHA-256 後有 820 組、1,390 個多餘 member，共 44.469 GiB 精確重複；保留每組一份可將 CNF 從 125.072 GiB 降到 80.603 GiB。排除 98.134 GiB raw log 與這批 exact CNF 後，第一版 slim tar 的一般檔案內容約 174.287 GiB。`.proof`/RUP certificate、舊版授權工具與非 log 專案不能沿用同一刪除判斷。
+- 四個相鄰 pure-log tar 共有 2,343 個唯一 case，case 名稱都能在 `pack.tar` 的摘要表找到；這只是 case-level coverage，仍須對齊 method、30s/60s timeout、seed 與完成狀態才可排除原 tar。
 - `du` 與表觀檔案大小都要保留：某個訓練 `tmp` 目錄表觀約 87 GiB、實際配置僅 12.93 GiB，因 sparse files 不能把 `st_size` 當成回收容量。
 - G1 內部大於等於 1 GiB 的同大小候選，尺寸法推測 79.41 GiB 重複；完整 SHA-256 後只剩 16 組、43.21 GiB。再擴大掃描 yochi 專案後，扣除既有 exact/rebuildable 與大型輸出區的新增精確重複更新為 8.559 GiB，主要是生成 output、課程 dataset，以及跨帳號 ML dataset/archive；仍須先指定 canonical owner。另有同檔名同大小但雜湊不同的 benchmark input，明確不可刪。
 - 巨型文字輸出的 zstd level-1 小樣本壓縮率約 0.14% 到 31.7%。樣本不能外推為最終容量，但可用來決定：需完整保留的少數 log 優先壓縮，其餘只保存摘要。
