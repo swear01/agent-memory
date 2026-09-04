@@ -51,6 +51,14 @@ updated: 2026-09-04
 - 跨帳號相同內容常見於公開 dataset、課程 testcase、Conda/CUDA library 與 editor runtime。直接刪掉某一路徑會破壞該帳號封存目錄的完整性；ext4 hard link 又無法保留不同 owner，因此必須先選 canonical copy，或整批淘汰可重建環境。
 - G2 中可整批重建的頂層 cache、Conda/Anaconda/Micromamba、VS Code Server 與 Snap 共 97 個目錄、451.53 GiB。這類應以完整目錄為刪除單位；不要逐檔刪除重複 library 後留下半壞環境。`.local` 不可直接列入，裡面可能有使用者腳本或唯一資料。
 
+## G1 與 G2 的跨世代精確比對（2026-09-04）
+
+- 先以帳號內相對路徑與大小篩出 20,908 個候選、486.51 GiB，再做雙邊 SHA-256；20,798 個、485.87 GiB 相同，另 110 個、0.637 GiB 即使路徑與大小相同，內容仍不同。尺寸與路徑只能當候選條件，不能當刪除證明。
+- 跨世代相同檔案採 G2 為 canonical copy、G1 為 delete-later path；詳細 pair manifest 的 SHA-256 為 `d9600680eeb00bfa412586216bebd6f37f894208d2975209ee52dfb5c924473a`。
+- G1 的 20,798 個路徑實際只有 18,390 個唯一 inode。以 `(st_dev, st_ino, st_nlink)` 校正並確認清單涵蓋所有 hard-link 名稱後，預估可釋放量由表觀 485.87 GiB 降為 441.79 GiB。
+- 被共享 home 遮住的 Valkyrie 本地 home 另有 7,361 個與 G2 相同的路徑，表觀 125.17 GiB；實際為 4,632 個唯一 inode、83.77 GiB。配對 manifest SHA-256 為 `2e9fd9f28b478cefec2cd880b861023e03f66ddcb4bb792bc6230dda8b26bf50`。
+- 因此跨檔案系統 hash 相同也不能直接把檔案大小加總當成 `df` 回收量；刪除端仍須先以 inode/link count 去重，並確認沒有清單外 hard link。
+
 ## 目前狀態與文件邊界
 
 - 盤點時沒有執行 persistent 資料、舊搬家世代或 `/var/tmp` 的刪除。
