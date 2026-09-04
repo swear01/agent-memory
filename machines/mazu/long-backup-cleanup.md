@@ -67,10 +67,33 @@ bsdtar 在讀取 archive-relative path
 時回報 truncated input。
 
 截斷前仍可列出 283,594 個 members（39,040 directories、243,815 files、739 other），
-已宣告的 readable file bytes 約 78.291 GiB logical；因此不是整包都無法讀，而是上述 WAV
-為部分資料、其後資料缺失或不可知。工具訊息中的 467,968 bytes 只是當下 tar entry 尚需的
-uncompressed data，不能推論整包只缺這麼多。現有證據無法區分是原始建立中斷、複製中斷，
-或來源檔本來就壞。
+已宣告的 readable file bytes 約 78.291 GiB logical。2026-09-04 重新從唯讀外接碟抽取後，
+payload 長度仍是 37,711,249,408 bytes，SHA-256 仍是
+`fd4244733ec1faa81884ae5859347ac900dcf34ed16b466f788ae2ab4098a841`；kernel journal 沒有
+USB、block I/O 或 exFAT read error，證明這是穩定存在的 archive truncation，不是此次讀取
+失敗或檔案持續劣化。
+
+前 283,593 個已列出的 members 可順序讀完；第 283,594 個也是最後一個可見 header，亦即
+上述 WAV。它宣告 467,918 bytes，實際可抽出 356,352 bytes，缺 111,566 bytes。可抽出的
+部分是有效 Microsoft PCM（16-bit、mono、16 kHz）：header 宣告 233,920 frames／14.620 s，
+實際可解碼 178,137 frames／11.134 s，最後 55,783 frames／3.486 s 缺失。舊 bsdtar 訊息
+`needed 467968 bytes, only 0 available` 是 skip/padding 路徑的描述，不能當成實際可救資料量。
+
+因此「現存且有 header 的成員」只有最後這一個不完整，但 archive 沒有正常 tar/gzip 結尾；
+原本是否還計畫寫入其他、尚未產生 header 的 members，無法由截斷檔本身回答。現有證據也
+無法區分是原始建立中斷、複製中斷，或來源檔本來就壞。
+
+Trash 中 57,183,305,728-byte 的舊 `yoctol.2.tgz` 只列出 `yoctol/`、完整的
+`achiang.tgz` header 與同樣宣告 37,711,249,408 bytes 的 `cph.tgz` header，之後外層即
+unexpected EOF，沒有第四個 member；它只是更短的 `cph.tgz` 前綴，不能補回位於尾端的 WAV。
+
+此 WAV 的前 11.134 s 可直接 salvage；遺失的 3.486 s 不能由現有 compressed bytes 推算。
+但 archive 另保留 `home/cph/voicefilter/utils/normalize-resample.sh`，命令是
+`ffmpeg-normalize <source.flac> -ar 16000 -o <source>-norm.wav`，環境中可見
+`ffmpeg-normalize 1.15.2`，WAV muxer signature 是 `Lavf57.83.100`。原始素材屬於公開的
+LibriSpeech `train-clean-100`；從官方 source FLAC 配合該腳本與相符 toolchain，可高可信度
+重建完整音訊。若要求 byte-for-byte 相同，仍需同一 source FLAC、同版 ffmpeg-normalize／
+FFmpeg 及相同 normalization defaults，或找到另一份完整副本。
 
 其中 14 個 Python env 的 1,669 個小型 metadata files 已全部讀完且零 metadata error，
 可繼續建立 dossier；但 container 不完整，所以仍不可宣稱整個 `cph.tgz` 可完整還原。
