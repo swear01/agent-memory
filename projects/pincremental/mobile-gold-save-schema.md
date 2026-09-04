@@ -82,19 +82,19 @@ Steam v1.107 的 `AvailableManaNow()` 只用
 
 ## Steam 成就與啟動方式
 
-Pincremental 的 Steam App ID 是 `1369470`。以檔案路徑直接啟動
-`Pincremental.exe` 的一次實測中，Sacrifice 後的 Steam 成就稍有延遲但最終
-仍成功觸發；因此不能推論「直接執行一定無法解鎖成就」。不過，若任務目標
-包含 Steam 成就，後續操作應優先透過 Steam launcher 啟動：
+Pincremental 的 Steam App ID 是 `1369470`。實測以檔案路徑直接啟動
+`Pincremental.exe` 後執行 Sacrifice，沒有觸發 Steam 成就；關閉遊戲並從
+Steam 手動重新啟動後，成就才成功觸發。因此，只要任務目標包含 Steam 成就，
+後續操作必須透過 Steam launcher 啟動：
 
 ```powershell
 Start-Process "steam://rungameid/1369470"
 ```
 
-或使用已安裝的 `steam.exe -applaunch 1369470`。這能明確走 Steam 的遊戲
-啟動流程並初始化 Steam client／overlay，避免成就是否可用或何時同步產生
-不必要的不確定性。存檔修改仍應在遊戲完全關閉時進行，修改完成後再由 Steam
-啟動，最後在遊戲內正常執行會觸發成就的動作；不要只離線改成就結果欄位。
+或使用已安裝的 `steam.exe -applaunch 1369470`。這會走 Steam 的遊戲啟動
+流程並初始化 Steam client／overlay。不要直接執行遊戲 `.exe` 來完成成就
+相關操作。存檔修改仍應在遊戲完全關閉時進行，修改完成後再由 Steam 啟動，
+最後在遊戲內正常執行會觸發成就的動作；不要只離線改成就結果欄位。
 
 ## Import Successful 但欄位沒更新
 
