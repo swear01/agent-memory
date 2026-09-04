@@ -70,3 +70,11 @@ bypassing that blocking import and loading local IndexedDB first restored the
 renderer loop. Before repair, the local IndexedDB contained the `saves/main`
 record and a particle blob; Steam Cloud retained `saveStrings.sav` and
 `saveBuffer.sav` with the original progress.
+
+The Marketplace negotiate modal's 1.5-second wait is presentation-only. Its
+random `choices` array is generated before the Plinko renderer starts, and the
+result is calculated from the sum of those choices in the modal component;
+the WebGPU animation does not determine the outcome. Replacing the Plinko
+constructor and delayed callback with the same sum/result calculation, followed
+by the existing `onFinish` and close callbacks, skips the animation while
+preserving negotiation results and stat updates.
