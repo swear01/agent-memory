@@ -41,3 +41,11 @@ unique emitter cell, submits that write, and then submits its compute pass.
 This interleaves movement with spawning so repeated writes to one emitter cell
 no longer overwrite one another. The patched bundle passed `node --check` and
 the Renderer remained responsive after relaunch.
+
+After interleaving 50 compute submissions, the count pass is submitted in a
+later command buffer. `readBack()` must therefore be called after that count
+buffer is submitted; calling it before submission reads cleared/stale counts.
+Those counts drive both the top-left particle labels and `removeLastParticles`
+used by auto-sellers, so an early readback makes the labels empty/zero and
+makes auto-selling appear to return to normal speed. Moving `readBack()` after
+the count/render submission fixes both symptoms.
