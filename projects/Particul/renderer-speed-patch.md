@@ -78,3 +78,11 @@ the WebGPU animation does not determine the outcome. Replacing the Plinko
 constructor and delayed callback with the same sum/result calculation, followed
 by the existing `onFinish` and close callbacks, skips the animation while
 preserving negotiation results and stat updates.
+
+The Slot Machine and Price Wheel also calculate their random results before
+their presentation steps: Slot Machine builds the weighted reels and jackpot
+reroll condition before CSS reel animation, while Price Wheel builds the wheel
+entries and landing index before CSS rotation. Replacing only the delayed
+animation callbacks with the existing `onFinish` and close callbacks makes both
+results appear immediately while preserving costs, upgrades, and achievement
+side effects.
