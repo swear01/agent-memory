@@ -94,3 +94,9 @@ handlers are `M` and `P`. The active handlers performed the actual CSS reel
 transition and wheel `transform: rotate` inside delayed callbacks. Patching
 those handlers directly, and removing their container transitions, is required
 for the visible Marketplace controls.
+
+For a direct Steam achievement trigger, the renderer can call
+`window.electron.activateAchievement("king-of-the-market")` during the main
+`To` component's one-time startup effect. The main process exposes this IPC
+handler and forwards the ID to Steamworks; the call is idempotent when Steam
+already reports the achievement as activated.
