@@ -4,7 +4,7 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-09-05
 ---
 
 # Mazu 外接備份硬碟識別
@@ -33,6 +33,19 @@ updated: 2026-09-04
   filesystem allocation overhead。「短備份」描述保留週期／用途，不代表容量較小。
 
 因此只有長備份碟目前是五百多 GB allocated；短備份碟實際保存約 1.81 TB 檔案內容。
+
+## 2026-09-05 長備份提交後狀態
+
+長備份碟已以兩份完整讀回驗證的精簡 archive 取代舊 `dvlab.tgz` 與 `yoctol.tgz`：
+
+- `backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
+  `301251df790c54eb50b40816fc1d478c12b1f6a63ac2f60b3c56ee93720a0d14`。
+- `backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
+  `35ac9e0424be2ea2cabee021cda915643ae1abcb05e891e2214a99f656af0893`。
+
+舊兩檔只在兩份成品完成本機與外接碟全量驗證後移除，archive 淨省 8,810,044,079 bytes。
+最後成功核對的 filesystem used 是 581,230,919,680 bytes（15%），掛載選項為 `ro`。
+Trash 尚未刪除；後續驗證因 Mazu 離線中斷，詳見 `long-backup-cleanup.md`。
 
 Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，但該帳號屬於 `docker` 群組。已驗證可使用本機既有 `ubuntu:24.04` image（禁止 pull、禁網路），進入 host mount namespace 後以 UUID 和 `-o ro` 掛載；操作前後都用 `findmnt` 核對來源與 `ro` 選項。
 
