@@ -59,6 +59,15 @@ updated: 2026-09-04
 - 被共享 home 遮住的 Valkyrie 本地 home 另有 7,361 個與 G2 相同的路徑，表觀 125.17 GiB；實際為 4,632 個唯一 inode、83.77 GiB。配對 manifest SHA-256 為 `2e9fd9f28b478cefec2cd880b861023e03f66ddcb4bb792bc6230dda8b26bf50`。
 - 因此跨檔案系統 hash 相同也不能直接把檔案大小加總當成 `df` 回收量；刪除端仍須先以 inode/link count 去重，並確認沒有清單外 hard link。
 
+## G1 深層容量分級（2026-09-04）
+
+- G1 的 `du` 使用量為 5.563 TiB。跨 G2 exact copy 與 124 個嚴格可重建根目錄去除重疊後為 656.84 GiB；再加上一個藏在舊備份內、經目錄結構確認的 16.44 GiB Anaconda 環境，直接清理層約 673.28 GiB（11.82%）。
+- 四個冷帳號已定位 3.610 TiB（64.89%）的批次 log、proof trace 與 testcase output。這一層不是整個帳號直接刪除：先抽出 source、論文、重現腳本、final/best 結果與摘要，再刪或壓縮原始輸出。
+- 最大帳號有四個未壓縮 tar，合計 1.700 TiB；完整 member inventory 共 3,686 個 regular files，全部為 `.log`、沒有 non-log。相鄰的另一個大型 tar 混有 source、文件、結果與 Git metadata，必須分開 HOLD，不能用檔名或同目錄位置推論內容。
+- `du` 與表觀檔案大小都要保留：某個訓練 `tmp` 目錄表觀約 87 GiB、實際配置僅 12.93 GiB，因 sparse files 不能把 `st_size` 當成回收容量。
+- G1 內部大於等於 1 GiB 的同大小候選，尺寸法推測 79.41 GiB 重複；完整 SHA-256 後只剩 16 組、43.21 GiB。扣除既有 exact/rebuildable 與四大輸出區後，新增精確資料重複約 6.52 GiB，仍須先指定 canonical owner。另有同檔名同大小但雜湊不同的 benchmark input，明確不可刪。
+- 巨型文字輸出的 zstd level-1 小樣本壓縮率約 0.14% 到 31.7%。樣本不能外推為最終容量，但可用來決定：需完整保留的少數 log 優先壓縮，其餘只保存摘要。
+
 ## 目前狀態與文件邊界
 
 - 盤點時沒有執行 persistent 資料、舊搬家世代或 `/var/tmp` 的刪除。
