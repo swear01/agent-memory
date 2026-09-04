@@ -95,6 +95,10 @@ LibriSpeech `train-clean-100`；從官方 source FLAC 配合該腳本與相符 t
 重建完整音訊。若要求 byte-for-byte 相同，仍需同一 source FLAC、同版 ffmpeg-normalize／
 FFmpeg 及相同 normalization defaults，或找到另一份完整副本。
 
+使用者於 2026-09-04 決定不再修復此 WAV，將它視為可重建且可忽略的單一不完整 member。
+這項決定只授權後續乾淨 archive 略過該 member，不代表原始 `cph.tgz` 已健康，也不等於立即
+刪除原始 archive；原檔仍保留到新 archive 建立與完整性驗證通過。
+
 其中 14 個 Python env 的 1,669 個小型 metadata files 已全部讀完且零 metadata error，
 可繼續建立 dossier；但 container 不完整，所以仍不可宣稱整個 `cph.tgz` 可完整還原。
 
