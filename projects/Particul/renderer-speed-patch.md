@@ -107,3 +107,9 @@ achievement cache. The original IPC handler dereferenced
 could fail silently from the renderer. Making that lookup null-safe allowed the
 startup trigger to reach Steamworks; after relaunch, Steam's local cache
 verified Particul at 27/27 achievements (100%).
+
+Final verified state for this session: the game was relaunched after the
+renderer and main-process patches; all Particul processes reported responsive.
+The renderer passed `node --check`, the active Slot Machine and Price Wheel
+callbacks contain no spin delays or CSS rotation transitions, and Steam's local
+achievement cache reports 27/27 (100%).
