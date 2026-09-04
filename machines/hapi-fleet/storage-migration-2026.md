@@ -66,15 +66,23 @@ updated: 2026-09-04
 - 最大帳號有四個未壓縮 tar，合計 1.700 TiB；完整 member inventory 共 3,686 個 regular files，全部為 `.log`、沒有 non-log。相鄰的 `pack.tar` 則有 316.890 GiB 一般檔案內容，其中 `.log` 只佔 98.137 GiB（30.97%）；其餘主要是 SAT benchmark 125.072 GiB、proof 28.609 GiB、舊工具安裝包 31.503 GiB 與 WebProg 13.174 GiB，必須分開判讀。
 - `pack.tar` 是 Jonathan 人工整理的舊 home/workspace 搬家封存：member mtime 為 1996–2019、tar 本身 mtime 為 2023，根目錄與 shell alias 都對應 `workspace/sat`、`workspace/RPgen` 等工作路徑；不是套件 cache 或純 log archive。
 - `pack.tar` 的 SAT raw log 有相鄰執行設定、特徵萃取 scripts、case/status/runtime 與 train/test/validation CSV 摘要，適合在保留 manifest、source/config、摘要及少量異常案例後精簡。62,223 個 CNF 經完整 SHA-256 後有 820 組、1,390 個多餘 member，共 44.469 GiB 精確重複；保留每組一份可將 CNF 從 125.072 GiB 降到 80.603 GiB。排除 98.134 GiB raw log 與這批 exact CNF 後，第一版 slim tar 的一般檔案內容約 174.287 GiB。`.proof`/RUP certificate、舊版授權工具與非 log 專案不能沿用同一刪除判斷。
-- 四個相鄰 pure-log tar 共有 2,343 個唯一 case，case 名稱都能在 `pack.tar` 的摘要表找到；這只是 case-level coverage，仍須對齊 method、30s/60s timeout、seed 與完成狀態才可排除原 tar。
+- Jonathan 四個 pure-log tar 的 method／timeout／summary frame 已完成對齊：`mix1/2/3` 的 1,013 個 mix case 全有完整 30 秒 frame，`1min.tar` 的 330 個 mix 與 1,343 個 rup case 全有完整 60 秒 frame。1,000 個無法可靠分類的 3lit log 全留，另對五個 cohort 各留大小極值；外層共留 1,010 檔、11,726,501,020 bytes，排除 2,676 檔、1,857,516,134,377 bytes。
 - `du` 與表觀檔案大小都要保留：某個訓練 `tmp` 目錄表觀約 87 GiB、實際配置僅 12.93 GiB，因 sparse files 不能把 `st_size` 當成回收容量。
 - G1 內部大於等於 1 GiB 的同大小候選，尺寸法推測 79.41 GiB 重複；完整 SHA-256 後只剩 16 組、43.21 GiB。再擴大掃描 yochi 專案後，扣除既有 exact/rebuildable 與大型輸出區的新增精確重複更新為 8.559 GiB，主要是生成 output、課程 dataset，以及跨帳號 ML dataset/archive；仍須先指定 canonical owner。另有同檔名同大小但雜湊不同的 benchmark input，明確不可刪。
 - 巨型文字輸出的 zstd level-1 小樣本壓縮率約 0.14% 到 31.7%。樣本不能外推為最終容量，但可用來決定：需完整保留的少數 log 優先壓縮，其餘只保存摘要。
 
+## Jonathan canonical 完成狀態（2026-09-04）
+
+- 將現行 NFS 非敏感設定、legacy 非敏感設定、精簡 `pack.tar` 與必要 raw-log 樣本合併為單一 `jonathan/`。現行 NFS `<remote-home>/jonathan` 保留原地；SSH/GPG identity、`.netrc`、browser、history、`.Xauthority`、cache/runtime 不寫入未加密外接碟。
+- `pack.tar` 排除 105,370,504,056-byte SAT raw-log tree、472,182 個 `node_modules`、bytecode、7,923,939,835-byte waveform、5,139,276,539-byte RPgen `patch.v` 與三個外部 CAD symlink；保留 source/Git/摘要/proof/唯一 benchmark/舊工具安裝包。另抽回 `pack.tar` 兩個代表 log；全體樣本共 1,012 檔、12,173,965,999 bytes。
+- SAT benchmark 全部路徑保留；`hardlink --content` 對 62,223 檔正式連結 1,385 個精確重複檔，節省 44.47 GiB。canonical staging 加入樣本後實佔 184,335,990,784 bytes。
+- 唯一長期備份是 Mazu Ultra Touch mountpoint `/mnt/ultra-touch` 下的 `backup`/`home`/`jonathan.tar.zst`：76,204,875,019 bytes，SHA-256 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf`。`zstd -tq`、257,533-member 完整 tar list、內含 160,099-file SHA manifest 與 README 讀回 `cmp` 均通過；碟已回到唯讀。此檔是 Jonathan 唯一 canonical home，屬永久保護項，不得列入 duplicate/delete candidates；只有另一份 replacement 通過逐 byte、SHA-256 與 archive 讀回驗證並取得人工授權後，才可替換或移除。
+- 刪除前確認來源為 Valkyrie 本地 ext4 且 `proc_refs=0`。`/mnt/md1/jonathan` 已刪除，`df` 實測釋放 2,211,264,499,712 bytes；現行 NFS home 未動。Mazu staging 也已移除並釋放 184,431,239,168 bytes。恢復只能依上述 canonical archive 與 SHA-256。
+
 ## 目前狀態與文件邊界
 
-- 盤點時沒有執行 persistent 資料、舊搬家世代或 `/var/tmp` 的刪除。
-- 2026-09-04 Mazu 已同時以唯讀方式掛載兩顆冷備份碟：長備份碟約 4 TB、短備份碟約 5 TB；仍未執行搬移、還原或刪除。
+- 除上列 Jonathan 已完成批次外，其餘 persistent 資料、舊搬家世代與 `/var/tmp` 候選仍只盤點，未因本次工作刪除。
+- 2026-09-04 Mazu 同時掛載兩顆冷備份碟；Jonathan 寫入只短暫將 Ultra Touch remount RW，完成 sync 與三輪完整讀驗證後已回到唯讀。One Touch 未改寫。
 - 長備份碟的 5 個外層 tgz、4,853,391 筆原始 member、4,096,391 筆巢狀 tar member 與 600,910 筆其他巢狀 archive member 均查無 `Jonathan` 路徑，以及 `mix1.tar`、`mix2.tar`、`mix3.tar`、`1min.tar`、`pack.tar`。`jon*` 命中只有圖片、Java 類名、zsh theme 與 IsolatedStorage 隨機目錄，不能誤認為 Jonathan home。
 - 短備份碟外層有 45 個 tgz，沒有 `jon*` 檔名；其中 G4 `copy.tgz` 對應 NAS 仍存在的 `copy/cthulhu_home`。該來源目錄精確是 19 個其他帳號 tgz、搬移腳本與帳號清單，沒有 Jonathan；21 個檔案加兩層目錄的預期 tar 長度 `279240816640` bytes，和 `copy.tgz` gzip trailer ISIZE 同為 `67942400`（模 `2^32`）。2026-09-04 全串流外層 member 掃描直到 gzip trailer 才以 CRC error 結束，未命中任何 `jon*.tgz` 或五個 Jonathan 目標 tar；因此外層名稱可否定，但 `copy.tgz` payload 完整性不合格，也不能據此否定內容藏在其他帳號巢狀 tgz 內。不可把它當成健康備份或直接刪除。
 - 詳細逐帳號清單保留在任務盤點文件，不複製進 shared memory。
