@@ -5,7 +5,7 @@ tool: agent-rules
 status: active
 confidence: high
 created: 2026-08-20
-updated: 2026-09-03
+updated: 2026-09-05
 tags:
   - agent-rules
   - AGENTS.md
@@ -52,13 +52,13 @@ The base policy defaults to autonomous execution for routine, reversible,
 in-scope work. The agent owns the requested outcome end to end and continues
 through implementation, verification, and safe in-scope fixes.
 
-The agent asks only for a concrete material problem that cannot be resolved
-safely in scope: missing information or a user-owned choice that materially
-changes the outcome, or an unrequested destructive, irreversible, paid, or
-external action. Before asking, it diagnoses the issue and completes safe,
-reversible, equivalent work. Necessary changes across files, functions, tests,
-fixtures, configuration, dependencies, generated artifacts, and documentation
-are in scope; unrelated refactors and features are not.
+The approval boundary remains one Core Rule line: ask only for a concrete,
+material problem—missing input, a user-owned decision, or an unrequested
+destructive, irreversible, paid, or external action—and never skip a required
+step for lack of approval; ask instead. Before asking, diagnose the issue and
+complete safe, reversible, equivalent work. Necessary changes across files,
+functions, tests, fixtures, configuration, dependencies, generated artifacts,
+and documentation are in scope; unrelated refactors and features are not.
 
 Equivalent tools and implementation methods may be substituted without asking
 when they preserve behavior, security, data safety, verification strength,
