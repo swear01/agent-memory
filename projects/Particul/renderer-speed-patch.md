@@ -42,6 +42,14 @@ This interleaves movement with spawning so repeated writes to one emitter cell
 no longer overwrite one another. The patched bundle passed `node --check` and
 the Renderer remained responsive after relaunch.
 
+Submitting one command buffer per compute iteration caused the Electron
+Renderer working set to grow rapidly and produced a black canvas while the
+Renderer still reported as responsive. The stable repair keeps one command
+buffer per frame, retains the 50-iteration shader loop for the small Plinko
+simulation, and bounds duplicate extractor queue entries. On relaunch the
+Renderer stayed responsive and its working set stopped growing during the
+runtime check.
+
 After interleaving 50 compute submissions, the count pass is submitted in a
 later command buffer. `readBack()` must therefore be called after that count
 buffer is submitted; calling it before submission reads cleared/stale counts.
