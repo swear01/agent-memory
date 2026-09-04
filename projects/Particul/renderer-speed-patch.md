@@ -25,3 +25,12 @@ clock. A game-specific speed patch therefore needs both the main simulation and
 Plinko compute loops changed, plus the JavaScript timer scale. The verified
 50x patch was applied to the bundled renderer script, with an adjacent backup
 of the original bundle.
+
+Extractor generation has a separate bottleneck: the scaled `tick(e)` can call
+`addParticleAt` many times in one JavaScript frame, but every call writes one
+particle to the same extractor cell with `queue.writeBuffer`. The writes do not
+accumulate into multiple cells before the following GPU compute pass; later
+writes overwrite the same cell. Increasing the timer scale therefore increases
+the attempted spawn count without increasing the visible particle count. A
+real extractor-rate fix needs a spawn queue/buffer or interleaved GPU simulation,
+not only a larger timer multiplier.
