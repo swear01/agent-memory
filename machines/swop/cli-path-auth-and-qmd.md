@@ -1,5 +1,5 @@
 ---
-title: swop CLI PATH, GitHub authentication, and QMD boundaries
+title: swop CLI PATH, authentication, QMD, and local DeepSeek routing
 scope: machines/swop
 machine: swop
 status: active
@@ -12,6 +12,9 @@ tags:
   - github-cli
   - git-credential-manager
   - qmd
+  - deepseek
+  - gateway
+  - pi
 source_refs:
   - live:swop-2026-09-04
   - local:GitHub-CLI-2.100.0-help
@@ -38,3 +41,11 @@ Git Credential Manager 與 GitHub CLI 是兩個獨立的 credential consumer。G
 QMD 2.8.3 已安裝，npm registry 的 `latest` 也是 2.8.3。Machine-local `memory` collection 使用 `<temp>/qmd-memory-<host>/config/qmd` 與同根 cache；2026-09-04 的 `qmd update` 成功索引 94 份 Markdown，`qmd search model_catalog_json -c memory` 能找回 Codex allowlist 筆記。
 
 QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、驗證、commit 並同步的 Markdown，QMD 只負責 indexing／retrieval。此 Windows host 目前是 94 documents、0 vectors；lexical search 可用，但 vector／hybrid retrieval 尚不可宣稱健康。QMD 2.8.3 已是最新版，而 upstream Windows embed hang issue #679 仍 open；本機先前 CPU embed 長時間維持零 vectors，因此不要為了形式上的 closeout 再啟動相同長跑，直到 upstream 修正或有新的可驗證 workaround。
+
+# Local DeepSeek gateway
+
+`swop` 的 Pi `opencode-go` provider 指向同機 `127.0.0.1:35001/v1`，由 `DeepSeek Gateway (SWOP)` Scheduled Task 執行 Windows x64 gateway。Task 使用互動使用者 token、啟動時執行 `<home>/.local/bin/deepseek-gateway-safe.ps1`，並設有失敗重啟；從 OpenSSH session 註冊 task 時應以 `WindowsIdentity.GetCurrent().Name` 取得可映射的 local principal，不要使用可能只回傳 `WORKGROUP` 的 `USERDOMAIN`。
+
+Gateway 設定與 route 分開存於 `<home>/.config/deepseek-gateway/config.yaml` 和 `routing.yaml`。五組 upstream credential 僅以 CurrentUser DPAPI blob 保存在 `<home>/.config/dvlab`，launcher 解密到自己的 Process environment 後啟動 gateway；User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。
+
+2026-09-04 的 live verification 為 gateway `health=ok`、零 stderr、HAPI machine `pi-models` 正好八筆；Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。Flash 測試觸發 latch 向後切換到第三個 OpenCode endpoint，證明不是僅做 health check。HAPI Runner PID 與兩個既有 active Codex sessions 均保留，沒有重啟 Runner。
