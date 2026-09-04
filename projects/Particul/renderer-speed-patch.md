@@ -100,3 +100,10 @@ For a direct Steam achievement trigger, the renderer can call
 `To` component's one-time startup effect. The main process exposes this IPC
 handler and forwards the ID to Steamworks; the call is idempotent when Steam
 already reports the achievement as activated.
+
+The first startup-trigger attempt ran before the main process populated its
+achievement cache. The original IPC handler dereferenced
+`j.find(...).isActivated` without handling a missing entry, so the direct call
+could fail silently from the renderer. Making that lookup null-safe allowed the
+startup trigger to reach Steamworks; after relaunch, Steam's local cache
+verified Particul at 27/27 achievements (100%).
