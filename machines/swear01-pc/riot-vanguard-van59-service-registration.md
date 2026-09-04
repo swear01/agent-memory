@@ -29,6 +29,7 @@ tags:
 - 第一次重開機發生在 Vanguard 重裝之前，因此重裝後雖可手動啟動 `vgk` 與 `vgc`，`vgk` 並未經過系統開機階段載入。League Client 可短暫完成 `VGC connect+login OK`，隨即使 `vgc` 以 service-specific exit code `57` 結束；Riot Client 收到 `PLAYER_LACKS_VANGUARD_SESSION`，玩家會被移出列隊。
 - 將 `C:\Windows\vgkbootstatus.dat` 改名保留備份，確認 `vgc` 為 Automatic，然後再次完整重開機。新開機後 `vgk`、`vgc` 均持續 Running、exit code `0`，並建立新的 `vgkbootstatus.dat`。
 - 修復後 League Client 依序記錄 `VGC connect`、`VGC login`、`VGC connect+login OK` 與 `Successfully logged in to Vanguard client`；超過一分鐘監看未再發生 7023、exit code 57 或 Vanguard disconnect，遊戲程序也成功啟動。這確認真正有效的步驟是讓新安裝的 `vgk` 經過完整開機載入並重建 boot status，而不是只手動啟動服務。
+- 使用者後續確認修復完成；此結果與服務、League Client 及遊戲程序的即時驗證一致。
 - 排除項目：`DevOverrideEnable` 不存在、Driver Verifier 未啟用、BCD 無 `testsigning`／`nointegritychecks`／`flightsigning`、Winsock 無 Bonjour `mdnsNSP.dll`、Defender 與 Code Integrity 無 Vanguard 封鎖事件。Radmin VPN 與 ZeroTier 暫停後未執行 League 連線測試，且恢復後經正確開機仍修復，因此沒有證據認定它們是根因。
 - Secure Boot 仍為關閉，TPM 2.0 已啟用；本次 VAN 57 已在 Secure Boot 關閉的狀態下修復，因此 Secure Boot 不是此事件的直接原因。
 
