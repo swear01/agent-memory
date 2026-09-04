@@ -74,6 +74,8 @@ updated: 2026-09-04
 ## 目前狀態與文件邊界
 
 - 盤點時沒有執行 persistent 資料、舊搬家世代或 `/var/tmp` 的刪除。
-- 5TB 冷備份碟尚未連接，因此沒有執行搬移或還原測試。
+- 2026-09-04 Mazu 已同時以唯讀方式掛載兩顆冷備份碟：長備份碟約 4 TB、短備份碟約 5 TB；仍未執行搬移、還原或刪除。
+- 長備份碟的 5 個外層 tgz、4,853,391 筆原始 member、4,096,391 筆巢狀 tar member 與 600,910 筆其他巢狀 archive member 均查無 `Jonathan` 路徑，以及 `mix1.tar`、`mix2.tar`、`mix3.tar`、`1min.tar`、`pack.tar`。`jon*` 命中只有圖片、Java 類名、zsh theme 與 IsolatedStorage 隨機目錄，不能誤認為 Jonathan home。
+- 短備份碟外層有 45 個 tgz，沒有 `jon*` 檔名；其中 G4 `copy.tgz` 對應 NAS 仍存在的 `copy/cthulhu_home`。該來源目錄精確是 19 個其他帳號 tgz、搬移腳本與帳號清單，沒有 Jonathan；21 個檔案加兩層目錄的預期 tar 長度 `279240816640` bytes，和 `copy.tgz` gzip trailer ISIZE 同為 `67942400`（模 `2^32`）。這是強結構證據，但刪除前仍須完成 `copy.tgz` 全串流 member 驗證。
 - 詳細逐帳號清單保留在任務盤點文件，不複製進 shared memory。
 - 個人 Drive 上的 Google 文件只是暫時閱讀副本，不是永久 canonical 紀錄；memory 不保存帳號、Google file ID 或受限文件 URL。
