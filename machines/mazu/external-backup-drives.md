@@ -24,7 +24,7 @@ updated: 2026-09-05
 
 ## 實際使用量
 
-- 長備份碟完成精簡後，filesystem used 465,195,237,376 bytes（433.247 GiB）；
+- 長備份碟加入精簡 qsyn archive 後，filesystem used 465,196,285,952 bytes（433.248 GiB）；
   根目錄只剩 `backup/`。
 - 短備份碟在加入 Jonathan canonical archive 後，2026-09-05 實測 filesystem used
   1,884,933,062,656 bytes（1.885 TB decimal／1.714 TiB）。原有 45 個 `.tgz` 合計
@@ -56,9 +56,28 @@ OS metadata 也已清理。2026-09-05 最後實測 filesystem used 465,195,237,3
 - 其餘三個 `.tgz` 是 `#recycle.tgz`、`qsyn_benchmark.tgz` 與 272,522,182,543-byte
   `copy.tgz`。`copy.tgz` 對應 NAS 仍存在的舊 `copy/cthulhu_home` 搬家世代；完整串流曾在
   gzip trailer 回報 CRC error，不能視為健康備份或直接刪除。
-- 原有 45 個 `.tgz` 目前只做過 inventory／來源判讀，尚未整批重製或刪除。唯一完成精簡、
-  寫入與完整讀回驗證的是 `backup/<remote-home>/jonathan.tar.zst`；它整合現行 NFS 與
+- 第一批刪除前，原有 45 個 `.tgz` 只做過 inventory／來源判讀；當時唯一完成精簡、
+  寫入與完整讀回驗證的是 `backup/<remote-home>/jonathan.tar.zst`。它整合現行 NFS 與
   Valkyrie legacy home，是永久保護的唯一 canonical Jonathan home，不是 2025-06 舊 snapshot。
+
+## 2026-09-05 短備份第一批精簡
+
+- 使用者明確授權移除 42 個逐帳號舊 `.tgz`。執行前以檔名與 size manifest 重新核對
+  42 檔、1,535,744,805,174 bytes；manifest SHA-256 為
+  `e38fa222421e877f9b27468bbcd4ff55be371acd81aac51d61c713e4b203d8d3`。刪除後清單已為空。
+- `#recycle.tgz` 只有 `desktop.ini`、`test.txt` 與 0-byte `arttr1521.tar`，判定無保存價值並移除。
+- `qsyn_benchmark.tgz` 原檔 gzip 完整，沒有 venv、Node dependency tree、CMake build tree 或
+  cache。精簡版移除四個可由固定 URL/commit 重建的 Git submodule checkout，保留 parent Git、
+  QASM、scripts、documents、small logs、publication data 與唯一 untracked QASMBench overlay；
+  由 381,742,557 bytes 降到 752,399 bytes。它已用原檔名寫入長備份
+  `backup/<remote-home>/qsyn_benchmark.tgz`，SHA-256
+  `265106c7ea82db82f7fa2794c66f16db113853fa9242ee0db22f82ddc750d1b8`；`cmp`、`gzip -t`、
+  完整 tar traversal 與 Git fsck 通過後，短備份原檔才移除。
+- 短備份根目錄的 Seagate tutorial、volume icons、Spotlight/FSEvents 與 AppleDouble metadata
+  已移除；根目錄只剩 `backup/`。filesystem used 降至 348,731,211,776 bytes（7%）。
+- 短備份目前只剩損壞的 `copy.tgz`、永久保護的 `jonathan.tar.zst` 及其 SHA sidecar。
+  `copy.tgz` 的 19 個 G4 內層帳號仍在另一個 NFS canonical 工作中逐帳號精簡；該 staging
+  混合不同舊世代差異，完成明確 handoff 前不可直接整包封裝或刪除短碟來源。
 
 Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，但該帳號屬於 `docker` 群組。已驗證可使用本機既有 `ubuntu:24.04` image（禁止 pull、禁網路），進入 host mount namespace 後以 UUID 和 `-o ro` 掛載；操作前後都用 `findmnt` 核對來源與 `ro` 選項。
 
