@@ -20,6 +20,13 @@ tags:
 - `06:18:09.796`，同一 CPU 在 timer interrupt 的 `SCHED_SOFTIRQ` 路徑發生 fatal page fault 並 panic；這比最後一筆應用日誌晚約 25 秒。
 - `systemd-pstore` 在下一次開機封存 `Oops#1` 與 `Panic#2` 兩組記錄。兩者有相同時間戳、CPU、CR2 和 trace；這是同一事故的 Oops／panic 階段，不是兩次獨立 crash。
 
+# 遠端復原邊界
+
+- 當時 Mazu 的 LAN 鄰居解析、SSH、HAPI Hub 與公開 HAPI 入口均不可用。這只能證明 OS／網路未運作，不能單靠網路狀態區分關機、panic 或開機卡住。
+- Zeus 已向 Mazu 傳送兩輪 Wake-on-LAN magic packet（UDP 9 與 7），等待約六分鐘後仍無 LAN／SSH／Hub 回應。這證明現有 WoL 路徑不能將已處於 kernel panic／硬卡死的運作中主機當作硬體 Reset；不代表 Mazu 從正常關機狀態的 WoL 已被否定。
+- 使用者手動重開後，`hapi-runner.service`、`hapi-hub.service` 與 `hapi-tunnel.service` 均自動回到 `active/running`，本機與公開 HAPI HTTP 均為 `200`。
+- 當前 `kernel.panic=0`、`kernel.panic_on_oops=0`，且沒有 `/dev/watchdog*`。因此同類 panic 不會自動重開；最小軟體改善是設定有限的 `kernel.panic` 秒數，完整的硬卡死復原則需硬體 watchdog、BMC／IPMI 或可遠端控制的 PDU。這些改動尚未施作。
+
 # 已確認判斷
 
 - `/sys/module/printk/parameters/always_kmsg_dump=N`；依本機 `systemd-pstore(8)`，正常 shutdown、reboot、halt 只有在該參數開啟時才會寫入 pstore。這批記錄因此證明前一個 kernel 走過 crash／panic 類型的 fatal path，不是正常關機。
