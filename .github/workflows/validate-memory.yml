@@ -34,6 +34,8 @@ jobs:
               r"(^|/)(?:\.env(?:\.|$)|.*\.(?:sqlite|sqlite-wal|sqlite-shm|db|db-wal|db-shm)|qmd/|\.qmd/)$",
               re.I,
           )
+          absolute_users_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"Users/[^\s`<>]+")
+          absolute_home_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"home/[^\s`<>]+")
           secret_patterns = [
               re.compile(r"(?i)\b(?:gh" + r"[pousr]_" + r"|github_pat_)[A-Za-z0-9_-]{10,}"),
               re.compile(r"-----BEGIN [^-]*PRIVATE KEY-----"),
@@ -45,10 +47,15 @@ jobs:
               re.compile(
                   r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
               ),
-              re.compile(r"/" + r"Users/[^\s`<>]+"),
-              re.compile(r"/" + r"home/[^\s`<>]+"),
+              absolute_users_path,
+              absolute_home_path,
               re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
           ]
+
+          assert absolute_users_path.search("/" + "Users/example/private.txt")
+          assert absolute_home_path.search("/" + "home/example/private.txt")
+          assert not absolute_users_path.search("archive/Users/example/private.txt")
+          assert not absolute_home_path.search("backup/home/jonathan.tar.zst")
 
           for name in files:
               if forbidden_names.search(name):
