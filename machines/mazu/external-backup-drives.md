@@ -12,7 +12,8 @@ updated: 2026-09-05
 以 UUID 識別，不依賴可能變動的 `/dev/sdX`：
 
 - 長備份碟：Seagate One Touch，UUID `001D-7DC1`，約 4 TB。`backup/` 內是按來源命名的 `.tgz` 靜態歸檔（如 `dvlab.tgz`、`ntuwp.tgz`、`ric.tgz`），時間集中於 2025-06-03。
-- 短備份碟：Seagate Ultra Touch，UUID `84CE-326E`，約 5 TB。內容是可直接瀏覽的 `backup/<remote-home>` 目錄樹，mtime 為 2025-06-06。
+- 短備份碟：Seagate Ultra Touch，UUID `84CE-326E`，約 5 TB。`backup/<remote-home>/`
+  內主要是 2025-06 建立的逐帳號 `.tgz` home snapshots，不是展開後可直接瀏覽的 home tree。
 
 2026-09-03 在 Mazu 驗證兩顆皆以唯讀模式掛載：
 
@@ -21,31 +22,43 @@ updated: 2026-09-05
 /dev/sdb2 /mnt/ultra-touch exfat ro
 ```
 
-## 2026-09-04 實際使用量
+## 實際使用量
 
-- 長備份碟：filesystem used 590,040,793,088 bytes（549.518 GiB）。正式 `backup/` 的
-  apparent content 為 474,001,460,913 bytes（441.448 GiB）；`.Trash-1043/` 另有
-  80,340,117,871 bytes apparent（74.823 GiB），但因 exFAT allocation unit 與大量小檔，
-  allocated size 約 107.998 GiB。Trash 內含大型舊 archive 與刪除後的目錄樹；它是高價值
-  清理候選，但在核對現行 archive、checksum 並取得刪除授權前不得移除。
-- 短備份碟：filesystem used 1,808,727,801,856 bytes（1.809 TB decimal／1.645 TiB）；
-  `backup/` apparent content 為 1,808,648,730,588 bytes，證明不是只有幾百 GB，也不是單純
-  filesystem allocation overhead。「短備份」描述保留週期／用途，不代表容量較小。
+- 長備份碟完成精簡後，filesystem used 465,195,237,376 bytes（433.247 GiB）；
+  根目錄只剩 `backup/`。
+- 短備份碟在加入 Jonathan canonical archive 後，2026-09-05 實測 filesystem used
+  1,884,933,062,656 bytes（1.885 TB decimal／1.714 TiB）。原有 45 個 `.tgz` 合計
+  1,808,648,730,588 bytes（1.645 TiB）；另有 76,204,875,019-byte 的
+  `jonathan.tar.zst` 與 83-byte SHA-256 sidecar。「短備份」描述保留週期／用途，不代表容量較小。
 
-因此只有長備份碟目前是五百多 GB allocated；短備份碟實際保存約 1.81 TB 檔案內容。
+因此長備份碟目前是四百多 GB allocated；短備份碟實際保存約 1.885 TB。
 
 ## 2026-09-05 長備份提交後狀態
 
-長備份碟已以兩份完整讀回驗證的精簡 archive 取代舊 `dvlab.tgz` 與 `yoctol.tgz`：
+長備份碟已以兩份完整讀回驗證的精簡 archive 取代原內容，並依使用者要求保留原始路徑與檔名：
 
-- `backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
+- `backup/dvlab.tgz`：178,168,055,053 bytes，SHA-256
   `301251df790c54eb50b40816fc1d478c12b1f6a63ac2f60b3c56ee93720a0d14`。
-- `backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
+- `backup/yoctol.tgz`：236,762,429,270 bytes，SHA-256
   `35ac9e0424be2ea2cabee021cda915643ae1abcb05e891e2214a99f656af0893`。
 
-舊兩檔只在兩份成品完成本機與外接碟全量驗證後移除，archive 淨省 8,810,044,079 bytes。
-最後成功核對的 filesystem used 是 581,230,919,680 bytes（15%），掛載選項為 `ro`。
-Trash 尚未刪除；後續驗證因 Mazu 離線中斷，詳見 `long-backup-cleanup.md`。
+舊兩檔只在兩份成品完成本機與外接碟全量驗證後移除；已驗證的 Trash、Seagate 出廠檔與
+OS metadata 也已清理。2026-09-05 最後實測 filesystem used 465,195,237,376 bytes（12%），
+根目錄只剩 `backup/`，掛載選項為 `ro`；詳見 `long-backup-cleanup.md`。
+
+## 2026-09-05 短備份來源與處理狀態
+
+- 45 個 `.tgz` 中有 42 個逐帳號 archive；每個第一個 tar root 都是同名帳號並保留當時
+  UID/GID。42 個名稱目前全有現行共享 NFS home directory，其中 40 個仍可由 NSS 解析；
+  `athena` 與 `b09901005` 只剩 directory、NSS 已無帳號。
+- Mazu 現行 home 來自共享 NAS NFS，而不是本機系統碟。因此這批是 2025-06 的多使用者
+  NFS home snapshots；Mazu 只是掛載與備份執行點，不能描述成 Mazu 本機某一目錄的單一鏡像。
+- 其餘三個 `.tgz` 是 `#recycle.tgz`、`qsyn_benchmark.tgz` 與 272,522,182,543-byte
+  `copy.tgz`。`copy.tgz` 對應 NAS 仍存在的舊 `copy/cthulhu_home` 搬家世代；完整串流曾在
+  gzip trailer 回報 CRC error，不能視為健康備份或直接刪除。
+- 原有 45 個 `.tgz` 目前只做過 inventory／來源判讀，尚未整批重製或刪除。唯一完成精簡、
+  寫入與完整讀回驗證的是 `backup/<remote-home>/jonathan.tar.zst`；它整合現行 NFS 與
+  Valkyrie legacy home，是永久保護的唯一 canonical Jonathan home，不是 2025-06 舊 snapshot。
 
 Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，但該帳號屬於 `docker` 群組。已驗證可使用本機既有 `ubuntu:24.04` image（禁止 pull、禁網路），進入 host mount namespace 後以 UUID 和 `-o ro` 掛載；操作前後都用 `findmnt` 核對來源與 `ro` 選項。
 
