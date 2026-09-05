@@ -5,7 +5,7 @@ project: cpachecker
 tags: [vguide, cegar, predicate-abstraction, precision-compilation, cfa, issue170]
 status: active
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-09-06
 ---
 
 # 研究決策
@@ -306,3 +306,29 @@ hunk）。A/B（mazu、100+ 次冻结命令、只換 `.so`）：兩版本 0 原�
 **含義**：上述「#174 有 reviewed fix」條件已滿足——但依原規則，重啟 #173 formal
 matrix 或晉升 C5 仍需**另行 preregister**（且新 gate 若跑正式 run，runtime 應基於
 新 main 重新預建/驗證，而非 6091a95 舊 runtime）。
+
+# 新 consumer gate 的兩個測量陷阱（#181）
+
+在 main `36290f3264` 的新零模型 C3b replay，五個 frozen targets 再次恢復，
+但 recovered candidate 數不等於實際新增 precision 數。`nested3-1` 有 84 個
+`(assert true)` compiler candidates：`PredicateAbstractionManager.getPredicateFor`
+明確拒絕 TRUE，而 `LoopHeadPrecisionInjector.inject` 捕捉該例外。保留這些
+candidates 與 certificates，但獨立計作 ineffective TRUE/no-op；其他非平凡
+formula 必須在 `precision_local_after` 的 exact head 找到，不能僅憑 compiler dump
+聲稱 consumer exposure。
+
+`LlmCallScheduler.recordCallCompleted()` 只在 HTTP round 成功後增加 per-analysis／
+per-process counter。`VGuideRefinementBridge` 的 IOException handler 記錄
+`llm_failed`，不消耗 round cap。因此 `every_n` 配 `maxLlmRounds*` 不是失敗
+HTTP attempts 的硬預算。未修正 attempt accounting 前，要使用可證明有限的
+schedule（例如單一 analysis 的 `first_spurious`＋single SAFE draw），或另行
+實作並測試 attempt cap；不得把成功 response 計數誤報成完整 HTTP attempt 計數。
+
+首輪 native precision 可以為空；即使 compiler enabled，當輪候選是 call 之後
+才注入，不能把 combined 預設稱為 residual learning。應核對每個實際 prompt
+中的 native context，報 exposed／omitted 數。兩次 local deterministic oracle
+request/record/replay 能驗證稍後 context exposure，但不能替代 live model evidence。
+
+驗證來源：#181 C3b（5/5、2 TRUE/3 UNKNOWN、zero model calls）、exact lowering audit、
+production-Java local oracle 的 raw-request SHA 與 full cache replay，以及上述
+三個 source methods。#173 STOP roots 不可重啟；後續只能建立新 gate/root。
