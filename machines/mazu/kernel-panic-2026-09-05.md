@@ -16,24 +16,32 @@ tags:
 # 已確認時間線
 
 - 前一個 boot 的最後一筆可見應用日誌是 `2026-09-05 06:17:44.894 +08:00`；下一個 boot 從 `15:54:13` 開始。
-- EFI pstore 記錄時間是 `06:18:09`，與日誌突然停止相差約 24 秒。
-- `systemd-pstore` 在下一次開機封存兩組壓縮 `dmesg-efi_pstore`，合併後各約 34 KiB、36 KiB，每組各有 23 個 EFI fragments。
+- `06:17:00.614`，CPU 8 的 idle thread `swapper/8` 先出現 `BUG: scheduling while atomic`，preempt count 是 `0x00000002`。
+- `06:18:09.796`，同一 CPU 在 timer interrupt 的 `SCHED_SOFTIRQ` 路徑發生 fatal page fault 並 panic；這比最後一筆應用日誌晚約 25 秒。
+- `systemd-pstore` 在下一次開機封存 `Oops#1` 與 `Panic#2` 兩組記錄。兩者有相同時間戳、CPU、CR2 和 trace；這是同一事故的 Oops／panic 階段，不是兩次獨立 crash。
 
 # 已確認判斷
 
 - `/sys/module/printk/parameters/always_kmsg_dump=N`；依本機 `systemd-pstore(8)`，正常 shutdown、reboot、halt 只有在該參數開啟時才會寫入 pstore。這批記錄因此證明前一個 kernel 走過 crash／panic 類型的 fatal path，不是正常關機。
+- fatal trace 是 `kernel tried to execute NX-protected page`、`supervisor instruction fetch in kernel mode`，最後為 `Kernel panic - not syncing: Fatal exception in interrupt`。
+- faulting `RIP=ffffd32e8036cea8` 位於當下 kernel stack 範圍，且只比 `RSP=ffffd32e8036ce88` 高 `0x20`；CPU 嘗試把 stack data 當指令執行。這證明直接故障型態是 kernel 控制流或 stack 被破壞，不是正常函式內的一般 NULL dereference。
+- trace 的有效外層是 `sched_balance_update_blocked_averages` → `sched_balance_softirq` → timer IRQ；當時 CPU 正在 `cpuidle_enter_state`。`preferred_group_nid` 與 `timerqueue_add` 是在已損壞 stack 上展開出的內層 frame，不能單獨認定為根因函式。
 - 關機前 HAPI hub 仍每數秒正常完成請求，最後成功後日誌直接中斷，沒有使用者服務停止或 graceful shutdown 序列。
 - 使用者沒有 crontab、`at` 工作或 user timer／unit 中的 `poweroff`、`shutdown -h`、`halt` 指令。
-- `panic_on_oom=0`、`panic_on_oops=0`、hard／soft lockup panic 均為 `0`；這些是下一次開機讀值，不能代替事故當下的 root journal，但沒有發現刻意設定的自動 panic policy。
+- 完整 previous-boot journal 與 pstore 都沒有 MCE、EDAC error、PCIe AER error、NVIDIA Xid、thermal critical、watchdog、OOM、NVMe 或 filesystem failure。kernel taint `P/O` 只表示 proprietary/out-of-tree NVIDIA modules 曾載入；NVIDIA 不在實際 call trace 中。
+- sysstat 在 `06:00`／`06:10` 顯示整機約 `96.6%`／`96.5%` idle、load average 約 `1.1`、沒有 blocked task，約 `121 GiB` memory available。事故不是全機高負載或記憶體耗盡時發生。
 - `issue25-v5-downstream-thermal-guard.service` 是共享 home 留下的遠端 Issue25 unit；Mazu 上的本機腳本不存在，開機後只會以 `203/EXEC` 失敗，不能是本次主動關機來源。
 
 # 過熱證據與界線
 
 - 重開後在 CPAchecker Java 與備份 `tar/gzip` 工作同時執行時，Core i9-14900K package 連續量到 `93–96°C`；硬體規格的 Tjunction／最高操作溫度是 `100°C`。
 - 本次 boot 已累積每個 logical CPU 約 `774–775` 次 package thermal throttling、約 `3.9 s` throttle time，部分 core 另有數百次 core throttling。這證明目前散熱餘裕不足，但不能單靠重開後的讀值把事故 trace 判成 thermal shutdown。
+- 事故前的 journal 沒有 thermal-critical 訊息，且 sar 顯示整機大多 idle；因此過熱是需要另行處理的現況，但不是這次 panic 的首要解釋。
 - GPU 當時重開後的即時讀值約 `35°C`、閒置；這也不能回推事故當下 GPU 狀況。
 
-# 尚缺的唯一關鍵證據
+# 根因界線與下一步
 
-- 合併後的兩份 pstore `dmesg.txt` 是 `root:root 0640`，現有 runner 帳號和 sudo policy 都不能讀。必須由管理者擷取其中的 `Kernel panic`、`BUG/Oops`、`RIP`、`Call Trace`、`NMI watchdog`、`MCE/Hardware Error`、`thermal`、`NVRM/Xid` 行，才能把根因定到 scheduler、driver、CPU/RAM/主機板或過熱。
-- 同 fleet 的 Athena 曾在相同 Ubuntu `26.04`、kernel `7.0.0-30-generic`、NVIDIA `580.173.02` 上發生 `SCHED_SOFTIRQ`／idle scheduler panic；見 `machines/hapi-fleet/ubuntu-gpu-maintenance-plan.md`。在讀到 Mazu stack trace 前只可列為比對候選，不可宣告同一根因。
+- Mazu 的指紋與 Athena 先前四次事故同屬 `SCHED_SOFTIRQ`／idle scheduler、`sched_balance_update_blocked_averages`、NX stack execution。現在可判定為同一故障類別；兩台都使用 Ubuntu `26.04`、kernel `7.0.0-30-generic`、Raptor Lake i9、Z790、microcode `0x133`。
+- 這使 shared kernel/platform fault 明顯比 HAPI、CPAchecker、NVIDIA 或單純過熱更可疑，但 pstore 尚不能二選一：可能是 kernel scheduler／preemption race，也可能是 CPU、RAM 或主機板造成 silent control-flow corruption。沒有 MCE 不足以排除後者。
+- Mazu 的 `USE_KDUMP=0` 且 `kexec_crash_loaded=0`，所以本次沒有 vmcore。Ubuntu repository 已有 candidate `7.0.0-31.31`（含 upstream 7.0.13/7.0.14），但 changelog 沒有可直接對應此 trace 的修正，不可先宣稱新版已修好。
+- 最小隔離順序：先用新版 kernel 做 A/B；若仍重現，改用既有 `6.8.0-138` 做 A/B；再做離線 MemTest86 與 CPU 交叉交換／保固隔離。若要取得能定到 instruction/資料結構的證據，必須先啟用並驗證 kdump，確認 `kexec_crash_loaded=1`。
