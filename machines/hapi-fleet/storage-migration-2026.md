@@ -83,15 +83,17 @@ updated: 2026-09-05
 
 - `192.168.1.199` 與 `192.168.1.200` 是同一台 NAS、同一份 `/volume1/nfs-home`，不能當成兩份備份。現行 NFS 70 個帳號共 10,047,759,310,516 logical bytes；NFS 內 G3 `.backup/*.tar` 1,313,249,259,520 bytes、G4 `copy/cthulhu_home/*.tgz` 279,240,795,714 bytes。
 - 最終格式只能有一個 `home/` 與每帳號一個 `home/<account>/`。current 是現役帳號 base，舊世代 unique 內容以 `.archive/<generation>/` overlay；同路徑不同內容不可覆寫。帳號名是 canonical identity，不能只看 numeric UID/GID：舊 `b09901005` 的 1041 現已解析成 `ice890425`，restore 前要人工決定 owner。
-- 已證明 NFS delete-later 共 863,836,148 bytes：`b09901005.tar` 20,480 bytes，b09901037 G3+G4 469,898,111 bytes，b10901098 G3+G4 393,917,557 bytes。後兩帳號的 G3/G4 對 G2/current filtered compare 四次皆 exit 0；目前只記錄，尚未刪除。
-- b10901099、七個較小 G3 帳號（enfest、chenying、chengen、henningy、ferayer、spongebobaa16、jack0716）及 jerry0314 原始輸入 45,658,308,111 bytes，已萃取成 17,281 files、1,774,573,414 logical bytes 的 canonical fragments，排除/去重 96.11%。ferayer 保留三個 current 缺少的 Git/source repo；spongebobaa16 保留 current 缺少的 SoCV/LSV/Comm source與 benchmark；jack0716 八個 old commit 已由 current Git 表示，只需補 5 個 unique worktree files；jerry0314 主要補回 current 缺少的 ALSRAC/DOIMI 與少量 old worktree source。
+- G4 19/19、G3 29/29、主要 G2 17/17 已全部定性與收斂。原始來源分別是 279,240,795,714、1,313,249,259,520、1,274,891,141,120 bytes，合計 2,867,381,196,354 bytes（2.6079 TiB）；來源仍原地保護，沒有在本階段刪除。
+- 必要差異已封印在 Zeus `<remote-home>.bak/nfs-canonical-20260905/home`：26 accounts、143,954 regular files、1,965 symlinks、36,046,476,712 bytes（33.57 GiB）。其中 G4/G3/G2 payload 分別為 12,556,927,871、1,668,027,537、21,821,521,304 bytes；全檔 manifest 自身 SHA-256 是 `d4c61f00aa4719356cc9002f4245d76cc7aff6e9da73ec85e0907cc1c763eed2`，143,954/143,954 讀回通過，symlink escape、forbidden directory、high-confidence secret hit 均為 0。
+- 現行 70 accounts 與 overlay 的聯集是 71 accounts，唯一新增 alumni identity 為 `b10901099`。Jonathan 不在這批 overlay；既有 Ultra Touch `backup/home/jonathan.tar.zst` 仍是唯一永久保護 canonical，不得另建第二份。
+- G2 staging 曾把 current 已有的 dirty/untracked 檔重複納入；root cause 是 staging 缺少 same-relative-path SHA filter。共 26,069 個 current-exact 檔、2,648,075,407 bytes 與 162 個 exact symlink 已在每次 `cmp`/hash 後移到 sibling `.work/g2-current-exact-hold-*`，hold manifest/readback 全通過。`.work` 是復原與證據，不是 cold-backup payload。
 - 不可在 `.git/` 內做 content hardlink：Git refs 可能被錯誤連結而互相改寫。跨 home 精確重複可在最終 archive payload 層處理，但 Git object/ref 結構維持獨立。
-- 未加密 cold archive 明確排除 SSH/GPG identity、`.git-credentials`、`github_token`、`.conda/aau_token`、browser/history/Xauthority 及 editor/cache/runtime。fragment 位於 Zeus `/var/tmp/nfs-canonical-20260905`，受 30 天 tmpfiles policy；在 current+fragment 寫入冷備份、archive test、逐檔 SHA-256 與讀回驗證完成前，G1/G2/G3/G4 來源均不得刪除。
-- 本 NFS session 不 mount、不讀寫兩顆外接備份碟；磁碟寫入權由另一個 session 獨占。詳細逐檔證據與各 fragment hash 位於任務盤點 `NFS-HOME-CONSOLIDATION.md`。
+- 未加密 cold archive 明確排除 SSH/GPG identity、credentials/token、browser/history/Xauthority 及 editor/cache/runtime。current+overlay 必須先寫成單一 `home/<account>/`、做 archive test、逐檔 SHA-256 與冷碟完整讀回；在人工授權前，G2/G3/G4 來源都只能是 delete-later，不能實際刪除。
+- damaged short-drive `copy.tgz` 最終 CRC 不合格，不能當 canonical input，也不應重建 archive-of-archives；健康 NFS current 與 sealed overlay 才是單一-home 冷備份輸入。本 NFS session 沒有 mount、讀寫或清理兩顆外接碟，寫入權已正式交接給外接碟 session。
 
 ## 目前狀態與文件邊界
 
-- 除上列 Jonathan 已完成批次外，其餘 persistent 資料與舊搬家世代未因本次工作刪除；NFS 合併目前只新增上述 `/var/tmp` canonical fragments。
+- 除上列 Jonathan 已完成批次外，其餘 persistent 資料與 G2/G3/G4 舊搬家世代未因本次工作刪除；NFS 合併只新增 Zeus 本地資料碟上的 sealed canonical overlay 與 sibling evidence/holds。
 - 2026-09-04 Mazu 同時掛載兩顆冷備份碟；Jonathan 寫入只短暫將 Ultra Touch remount RW，完成 sync 與三輪完整讀驗證後已回到唯讀。One Touch 未改寫。
 - 長備份碟的 5 個外層 tgz、4,853,391 筆原始 member、4,096,391 筆巢狀 tar member 與 600,910 筆其他巢狀 archive member 均查無 `Jonathan` 路徑，以及 `mix1.tar`、`mix2.tar`、`mix3.tar`、`1min.tar`、`pack.tar`。`jon*` 命中只有圖片、Java 類名、zsh theme 與 IsolatedStorage 隨機目錄，不能誤認為 Jonathan home。
 - 短備份碟外層有 45 個 tgz，沒有 `jon*` 檔名；其中 G4 `copy.tgz` 對應 NAS 仍存在的 `copy/cthulhu_home`。該來源目錄精確是 19 個其他帳號 tgz、搬移腳本與帳號清單，沒有 Jonathan；21 個檔案加兩層目錄的預期 tar 長度 `279240816640` bytes，和 `copy.tgz` gzip trailer ISIZE 同為 `67942400`（模 `2^32`）。2026-09-04 全串流外層 member 掃描直到 gzip trailer 才以 CRC error 結束，未命中任何 `jon*.tgz` 或五個 Jonathan 目標 tar；因此外層名稱可否定，但 `copy.tgz` payload 完整性不合格，也不能據此否定內容藏在其他帳號巢狀 tgz 內。不可把它當成健康備份或直接刪除。
