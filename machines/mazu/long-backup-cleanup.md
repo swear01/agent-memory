@@ -179,9 +179,9 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 長備份 One Touch（UUID `001D-7DC1`）已完成第一批精簡 archive 的重製、完整遞迴驗證、
 外接碟寫入、`sync`、唯讀讀回驗證及提交：
 
-- `<long-backup-mount>/backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
+- `<long-backup-mount>/backup/dvlab.tgz`：178,168,055,053 bytes，SHA-256
   `301251df790c54eb50b40816fc1d478c12b1f6a63ac2f60b3c56ee93720a0d14`。
-- `<long-backup-mount>/backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
+- `<long-backup-mount>/backup/yoctol.tgz`：236,762,429,270 bytes，SHA-256
   `35ac9e0424be2ea2cabee021cda915643ae1abcb05e891e2214a99f656af0893`。
 
 兩份成品的 tar/ZIP 巢狀容器、member 數、邏輯位元組與保留內容 SHA 都通過；寫回外接碟後
@@ -191,6 +191,10 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 為 581,230,919,680 bytes。`cph.tgz` 保持原始 bytes，不重新包裝；`CADathlon.rar` 內無安全
 寫入工具可處理的 3 個候選／48,128 bytes 亦保留。`dsnp_student.tgz`、`ntuwp.tgz`、
 `ric.tgz` 因近期帳號 gate 未重製。
+
+正式提交後依使用者要求保留原始外層路徑與檔名：`.cleaned` 與 `backup-clean/` 只可作為 staging
+標記，不得成為最後備份結構。兩份已驗證成品已在同一 filesystem 內原子改名回上述
+`backup/*.tgz`，大小、mtime 與既有 SHA-256 不變，空的 `backup-clean/` 已移除。
 
 Trash 的完整唯讀核對在 Mazu 恢復後完成：
 
@@ -214,7 +218,7 @@ Trash 的完整唯讀核對在 Mazu 恢復後完成：
 由 581,230,919,680 降到 465,269,424,128 bytes，實際釋放 115,961,495,552 bytes。之後又移除
 Seagate 出廠安裝／教學檔、Spotlight/TemporaryItems metadata、磁碟圖示、AppleDouble 與空 Trash
 目錄，另釋放 73,924,608 bytes。整批合計釋放 116,035,420,160 bytes（108.066 GiB），最終 used
-為 465,195,499,520 bytes；根目錄只剩 `backup/` 與 `backup-clean/`。One Touch 已恢復唯讀，沒有
+為 465,195,499,520 bytes；根目錄只剩 `backup/`。One Touch 已恢復唯讀，沒有
 使用者程序占用，近十分鐘 kernel journal 無 USB、exFAT 或 block I/O error。
 
 本批未碰短備份 Ultra Touch。Jonathan 唯一 canonical home
