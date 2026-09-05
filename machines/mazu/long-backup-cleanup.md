@@ -179,9 +179,9 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 長備份 One Touch（UUID `001D-7DC1`）已完成第一批精簡 archive 的重製、完整遞迴驗證、
 外接碟寫入、`sync`、唯讀讀回驗證及提交：
 
-- `/mnt/one-touch/backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
+- `<long-backup-mount>/backup-clean/dvlab.cleaned.tgz`：178,168,055,053 bytes，SHA-256
   `301251df790c54eb50b40816fc1d478c12b1f6a63ac2f60b3c56ee93720a0d14`。
-- `/mnt/one-touch/backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
+- `<long-backup-mount>/backup-clean/yoctol.cleaned.tgz`：236,762,429,270 bytes，SHA-256
   `35ac9e0424be2ea2cabee021cda915643ae1abcb05e891e2214a99f656af0893`。
 
 兩份成品的 tar/ZIP 巢狀容器、member 數、邏輯位元組與保留內容 SHA 都通過；寫回外接碟後
@@ -192,17 +192,30 @@ stash、repo config、hooks 或 reflog-only/unreachable objects，這些需要�
 寫入工具可處理的 3 個候選／48,128 bytes 亦保留。`dsnp_student.tgz`、`ntuwp.tgz`、
 `ric.tgz` 因近期帳號 gate 未重製。
 
-Trash 的後續唯讀核對在 Mazu 離線前得到：
+Trash 的完整唯讀核對在 Mazu 恢復後完成：
 
 - `dsnp_student/` 的 6/6 檔案同時與正式 `.tgz`、Trash 舊 `.tar.xz` 內容相同。
-- `ntuwp/` 的 62,253 檔中，62,252 檔與正式 `ntuwp.tgz` 內容相同；唯一不同檔是可重建的
-  `.cache/Cypress/10.10.0/Cypress/resources/app/node_modules/ajv/dist/ajv.min.js.map`。
-- `ric/` 的 4,868 檔中，4,867 檔與正式 `ric.tgz` 內容相同；唯一必須保留的差異是核心
-  原始碼 `ric/class/DSnP/1051/fraig_final/b04901036_fraig/src/sat/test/Proof.h`。
-- `dvlab/` 有 59,027 檔；全量 GNU tar `--compare` 因 Mazu 網路／主機離線中斷，partial
-  報告不足以判定，不得據此刪除。Mazu 恢復後必須從頭重跑。
-- Trash 尚未刪除任何內容。舊 `yoctol.2.tgz` 的已驗證截斷前綴結論仍適用；另一份
-  3,092,774,912-byte `yoctol.tgz` 尚需完成內容清單核對。
+- `ntuwp/` 的 62,253 檔中，62,252 檔與正式 `ntuwp.tgz` 內容相同；唯一 size difference
+  是 `.cache/Cypress/10.10.0/Cypress/resources/app/node_modules/ajv/dist/ajv.min.js.map`，但 Trash
+  版本是 0-byte 空檔，沒有唯一內容。
+- `ric/` 的 4,868 檔中，4,867 檔與正式 `ric.tgz` 內容相同；唯一 size difference
+  `ric/class/DSnP/1051/fraig_final/b04901036_fraig/src/sat/test/Proof.h` 的 Trash 版本也是
+  0-byte 空檔。正式 archive 版本較大，因此不需保留 Trash 空殼。
+- `dvlab/` 的 59,027 檔已從頭完成 GNU tar `--compare`，archive 無完整性錯誤。只有 25 個
+  `.DS_Store`／`Thumbs.db` 被精簡規則略過，以及
+  `dvlab/backup/hschiang/metronic/metronic_v4.6/theme_rtl/admin_3_angularjs/demo/ecommerce_order_invoices.php`
+  的 Trash 版本是 0-byte 空檔；其餘 59,001 檔內容相同。
+- 3,092,774,912-byte 的舊 `yoctol.tgz` 只讀到外層 `yoctol/` 與宣告
+  43,830,855,632-byte 的 `achiang.tgz` header，隨即 unexpected EOF；它只是 `achiang.tgz`
+  的短前綴。57,183,305,728-byte 的 `yoctol.2.tgz` 仍是已驗證的完整 `achiang.tgz` 加上
+  更短 `cph.tgz` 前綴；兩者都沒有正式精簡 archive 之外的可恢復尾端資料。
+
+上述 7 個 Trash payload 與 7 個 `.trashinfo` 已在 fail-closed 檢查後移除；filesystem used
+由 581,230,919,680 降到 465,269,424,128 bytes，實際釋放 115,961,495,552 bytes。之後又移除
+Seagate 出廠安裝／教學檔、Spotlight/TemporaryItems metadata、磁碟圖示、AppleDouble 與空 Trash
+目錄，另釋放 73,924,608 bytes。整批合計釋放 116,035,420,160 bytes（108.066 GiB），最終 used
+為 465,195,499,520 bytes；根目錄只剩 `backup/` 與 `backup-clean/`。One Touch 已恢復唯讀，沒有
+使用者程序占用，近十分鐘 kernel journal 無 USB、exFAT 或 block I/O error。
 
 本批未碰短備份 Ultra Touch。Jonathan 唯一 canonical home
 `<short-backup-mount>/backup/<remote-home>/jonathan.tar.zst` 仍是永久保護項，不得列為重複候選。
