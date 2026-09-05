@@ -295,3 +295,14 @@ consumer-positive claim，完整 C4 依 stop rule 停止。C3b 解鎖下一個 C
 #173 formal matrix 或晉升 C5，直到 #174 有 reviewed fix 並另行 preregister。不能用 generation
 success 替代 verifier utility，也不能從這些 fixtures 宣稱 population、timing 或 publication
 result。
+
+# #174 blocker 已解除（2026-09-05）
+
+#174 已有 reviewed fix 並合併：PR #176（main `36290f3264`）把 MathSAT 原生庫從
+非可重入的 5.6.11 升到 JavaSMT 6.0.0 配套的 reentrant 5.6.15（`lib/ivy.xml` 單
+hunk）。A/B（mazu、100+ 次冻结命令、只換 `.so`）：兩版本 0 原生崩潰、verdict
+一致；5.6.11 的低頻崩潰在 mazu 未復現（~60 runs），歸因靠凍結 backtrace +
+5.6.12 reentrant 分界線。細節見 `mathsat-crash-issue174.md`。
+**含義**：上述「#174 有 reviewed fix」條件已滿足——但依原規則，重啟 #173 formal
+matrix 或晉升 C5 仍需**另行 preregister**（且新 gate 若跑正式 run，runtime 應基於
+新 main 重新預建/驗證，而非 6091a95 舊 runtime）。
