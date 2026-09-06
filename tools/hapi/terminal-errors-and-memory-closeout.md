@@ -8,6 +8,9 @@ updated: 2026-09-07
 # 在線狀態不能證明 turn 成功
 
 HAPI inspect 的 active/thinking/lifecycle 與底層 Codex turn 結果是不同層。
+模型也要用實際 turn_context 核對：已驗證案例中，worker 自述 Sol/high，
+但兩筆 turn_context 均為 gpt-5.6-luna/medium，與 Hub 設定一致。全域
+config.toml 的預設值和 agent 自我描述不能取代該輪 model/effort 證據。
 已核對的案例中，peer 摘要没有顯示底層 rollout 的 event_msg/task_complete 錯誤；
 session 仍在線，輪次卻已由 cyber_policy 中止。調查「停止工作」時應檢查
 error.codex_error_info 和終止時間，再與實際程序、產物、job 結束狀態交叉核對。
@@ -45,6 +48,10 @@ update/search 與遠端 HEAD；worker 的「稍後更新」或單獨的口頭完
 並 inspect 確認；關閉 session 不等於 issue 完成，也不刪除未合併 worktree。
 受工具批准或外部依賴阻塞的 session 要明列 blocker、負責 issue 與恢復條件，
 不能只依 thinking=true 算作有效進度，也不能無限重試來維持在線。
+
+派工文字要明確指出「你已是 worker，直接執行，不再建立 session」。曾有 worker
+把接手 remit 誤當再派工要求；發現後先停掉多餘協調輪次，確認唯一產物作者，
+由 root 接管實際 worker 並收尾多餘 session，避免重複寫檔與無限等待。
 
 # Jobs 能力與版本查核
 
