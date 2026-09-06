@@ -5,7 +5,7 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-05
+updated: 2026-09-06
 ---
 
 # DVLab persistent storage migration inventory
@@ -86,10 +86,14 @@ updated: 2026-09-05
 - G4 19/19、G3 29/29、主要 G2 17/17 已全部定性與收斂。原始來源分別是 279,240,795,714、1,313,249,259,520、1,274,891,141,120 bytes，合計 2,867,381,196,354 bytes（2.6079 TiB）；來源仍原地保護，沒有在本階段刪除。
 - 必要差異已封印在 Zeus `<remote-home>.bak/nfs-canonical-20260905/home`：26 accounts、143,954 regular files、1,965 symlinks、36,046,476,712 bytes（33.57 GiB）。其中 G4/G3/G2 payload 分別為 12,556,927,871、1,668,027,537、21,821,521,304 bytes；全檔 manifest 自身 SHA-256 是 `d4c61f00aa4719356cc9002f4245d76cc7aff6e9da73ec85e0907cc1c763eed2`，143,954/143,954 讀回通過，symlink escape、forbidden directory、high-confidence secret hit 均為 0。
 - 現行 70 accounts 與 overlay 的聯集是 71 accounts，唯一新增 alumni identity 為 `b10901099`。Jonathan 不在這批 overlay；既有 Ultra Touch `backup/home/jonathan.tar.zst` 仍是唯一永久保護 canonical，不得另建第二份。
+- 冷備份 session 的 current-home 處理分母是 69，因為現行 70 accounts 中扣除已單獨封存的 Jonathan；最終單一 home 的 71 identities = 69 個一般 current homes + Jonathan protected canonical + `b10901099` legacy-only canonical。這是帳號邊界，不是備份進度百分比。
+- sealed overlay 與逐帳號 fragments 只是「舊世代相對 current 的必要差異」，不是 standalone home。不得單獨封裝後冒充 canonical `copy.tgz`：它們沒有 current base，且 `b09901037`、`b10901098` 因與 current 完全相同而刻意無 fragment。如需單獨保存 delta archive，必須標明 non-standalone 並保留 account/disposition manifests；完整 canonical 仍必須合併 current base + overlay 成單一 `home/<account>/`。
 - G2 staging 曾把 current 已有的 dirty/untracked 檔重複納入；root cause 是 staging 缺少 same-relative-path SHA filter。共 26,069 個 current-exact 檔、2,648,075,407 bytes 與 162 個 exact symlink 已在每次 `cmp`/hash 後移到 sibling `.work/g2-current-exact-hold-*`，hold manifest/readback 全通過。`.work` 是復原與證據，不是 cold-backup payload。
 - 不可在 `.git/` 內做 content hardlink：Git refs 可能被錯誤連結而互相改寫。跨 home 精確重複可在最終 archive payload 層處理，但 Git object/ref 結構維持獨立。
 - 未加密 cold archive 明確排除 SSH/GPG identity、credentials/token、browser/history/Xauthority 及 editor/cache/runtime。current+overlay 必須先寫成單一 `home/<account>/`、做 archive test、逐檔 SHA-256 與冷碟完整讀回；在人工授權前，G2/G3/G4 來源都只能是 delete-later，不能實際刪除。
 - damaged short-drive `copy.tgz` 最終 CRC 不合格，不能當 canonical input，也不應重建 archive-of-archives；健康 NFS current 與 sealed overlay 才是單一-home 冷備份輸入。本 NFS session 沒有 mount、讀寫或清理兩顆外接碟，寫入權已正式交接給外接碟 session。
+
+- SHA handoff manifests 使用相對路徑；`sha256sum -c` 必須從 manifest 指定的 audit/root 目錄執行。從其他 working directory 執行會產生假性 missing/FAILED，不能據此判定 payload 壞掉。
 
 ## 目前狀態與文件邊界
 
