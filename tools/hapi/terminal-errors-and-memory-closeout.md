@@ -34,3 +34,12 @@ path 與驗證結果。若全庫 validation 被既有資料或 history 問題擋
 
 使用者明確規定：每次 QMD 更新後都必須完成 canonical memory 的 Git 同步，
 並讀回遠端 HEAD 確認；未同步只能回報待完成，不能宣稱收尾完成。
+
+# Jobs 能力與版本查核
+
+2026-09-06 的 HAPI 0.29.0.6 fleet notes 明確記錄：operator 暫時排除
+session-attached Jobs，CLI/API/meters/pinning 不提供，legacy schema/rows 保留。
+因此舊 executable 有 job 子命令、DB 有舊紀錄，都不能證明目前 Hub 支援 Jobs。
+先查目前 help 與部署註記，再判斷 HTTP404；不可僅憑404宣稱是升級故障。
+本次只以 help/parser 查驗，未執行背景工作；若操作規範仍強制 session job，
+其長工作要等支援契約恢復，不能用假 heartbeat 或旁路 launcher 冒充。
