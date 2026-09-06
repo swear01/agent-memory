@@ -1,10 +1,11 @@
 ---
 title: CPAchecker ECJ 與 fleet verification gate
 project: cpachecker
+scope: projects/cpachecker
 tags: [ant, ecj, verification, native-solvers]
 status: active
 created: 2026-08-26
-updated: 2026-08-26
+updated: 2026-09-06
 ---
 
 # ECJ prefs 是 build input
@@ -112,3 +113,53 @@ baseline code 不應順手併入研究或文件 PR。對已知 78 個 `forbidden
 如實回報 canonical `ant all-checks` 的 baseline failure，但不要關閉或 suppress verifier，也
 不要為了讓無關 PR 變綠而修改那些檔案。需要清理時另開明確限定範圍的工作；docs-only diff
 使用 diff-local verification，並把 full-gate baseline failure 與本次變更結果分開說明。
+
+
+# NFS worktree 的獨立 verification runtime
+
+Issue #109 的 bounded audit 證實：只把 classes / Ivy jars 複製至機器本地目錄，會改變
+CPAchecker 依 class location 尋找 sibling config、lib、src、test 的根目錄。這會讓既有
+TraceFormula、witness、FormulaSlicing tests 出現 missing specification 或 null reached
+等假 regression。保留同一 worktree 的 sibling resource layout，並將
+`-Djava.library.path=<own-worktree>/lib/native/x86_64-linux` 傳給驗證 JVM；不要借用其他
+agent 的 classes 或 rebuild 他人的 runtime。該次所有 11 個失敗類別修正執行環境後重跑
+通過，直接使用未修改 baseline classes 的 CPAsTest 也通過。
+
+即使 classes 已本地化，Ant JUnit runner 的 `registerTestCase` 仍會逐案例開啟 worktree
+內的 watcher 檔案。thread dump 若顯示 `FileOutputStream.open0`、CPU 時間遠小於 wall
+時間，瓶頸可能是 NFS，而非 solver。可用相同 JUnit 類別、classpath、assertions 與 heap
+直接執行 JUnitCore，避開 Ant watcher。#109 的 ConfigurationFileChecks 在 Ubuntu
+OpenJDK 21、`-ea -Xmx4g` 下直接執行通過 3880 cases；中止的 Ant 記錄必須保留並明確
+區分，不能稱為原 Ant command 通過。這不是跳過 ECJ/full-build 規則的普遍授權；只適用
+owner 已限定 build 次數、且沿用已完成的獨立 build 進行等價測試的情境。
+
+## NFS ClassPath 掃描：同 bytes 的 JAR 加 file resources
+
+Issue #183 已完成全量資格驗證：Guava `ClassPath.from` 掃描 NFS classes directory，
+使 `PackageSanityTest` 的 3 cases 耗時約 241 秒。把自己 worktree 經 canonical
+ECJ + javac 新編譯的 5550 個 class/resource entries 原樣封裝至 private JAR，另將
+34 個原始 nonclass resources 解出至自己 worktree 的 sibling directory，並以
+`<resource-directory>:<private-classes.jar>:<dependencies>` 排列 classpath，保留
+resource 的相對目錄與 sibling config base；合格配置的同組 package tests 約 3.5 秒。
+
+不能只用 JAR：`WitnessExporter` 的 `loadFromResource` 會遇到含相對 `#include` 的
+設定，`jar:` URL 沒有原始 file base。JAR-only witness smoke 確實失敗，保留該失敗
+log；file resources 優先載入才恢復原有 file URL/include 行為。先做 PackageSanity、
+WitnessExporter 及新增測試的等價 smoke，再跑完整 inventory。
+
+這次每個原始 test class 使用 fresh JVM、assertions、`enableExpensiveTests=true`，
+不借用共享 classes、不重新編譯、不新增 exclusions。全 202 類別共 4346 entries
+通過，0 failures/errors；734 原有 skips = 161 ignored + 573 assumptions，
+JUnit `Result.runCount=4185` 已包含後者，不能把 runCount 全稱為實際執行 assertions。
+`FloatValueTest` 的 570 entries 保留並跑完約 351 秒。另以 canonical 4 GiB heap
+及 assertions 跑完全部 3880 configuration entries，0 failures/errors、768 assumptions。
+這些是該快照的驗證結果，不是所有環境的固定 test 數或性能保證。
+
+原始 Ant 只停止 owner 自己的程序並保留 partial reports；strict ECJ/javac 證據完整，
+但 interrupted `ant all-checks` 不能標為通過。後續完整 Forbidden APIs 仍有 70 個
+既有 findings，與 untouched baseline 的 signature/class/source-line multiset 完全
+一致；不可用等價 JUnit/configuration PASS 掩蓋該 baseline gate failure。
+
+證據：Issue #183 comments `5554279495`（資源配置與 smoke）、`5554355576`
+（全量 JUnit）、`5554373354`（configuration）、`5554450321`（baseline findings
+比對）；PR #194 head `40047d7867eac3fe8a5769d05efc910123f61726`。

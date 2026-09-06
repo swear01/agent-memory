@@ -1,10 +1,11 @@
 ---
 title: CPAchecker VGuide 實驗 provenance 與 preregistration 陷阱
 project: swear01/cpachecker
+scope: project
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-09-02
+updated: 2026-09-06
 ---
 
 # Frozen benchmark pairing
@@ -85,3 +86,80 @@ Agent 在 fail-closed 後必須自行完成 recovery ladder：
 preregister 後、啟動 parallel jobs 前由單一 controller 建立空的 common parent；每個 runner 再用
 plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保留並排除整個失敗 attempt，
 以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
+
+# Exploratory integration qualification（Issue #180）
+
+Owner-authorized exploratory run 可接受普通背景 load；這只放寬 performance admission，
+不豁免官方 labels、data model、raw exit/verdict 或 provenance。六個 crash/unqualified exclusions
+與十二個 official-label wrongs 是不同集合，annotation 不得把 wrong 改成 correct。
+
+在共用 runner 中，以單一 launch builder 將 frozen `ILP32`/`LP64` 映射為實際
+`analysis.machineModel=Linux32`/`Linux64`，並把 exact argv 存入 execution sidecar。
+只測 command string 不足；tiny width fixture 應以實際 verifier 證明兩種 model 的不同 verdict。
+`run_one` 由 xargs 的新 Bash 呼叫時，必須 export 它呼叫的 builder/mapping functions。
+
+Python capture 若擁有 outer wall timeout，argv 不應再套 GNU timeout；這樣 raw exit/signal
+才來自 verifier process group。Log 應由 capture 以 exclusive creation 建立，不能先寫 runner
+的 model marker，也不能在 crash 後補寫 UNKNOWN。SIGTERM timeout 後的 SIGKILL 仍有
+process-exit race；捕捉 `ProcessLookupError` 後繼續 wait/save status，保留真實 evidence。
+
+Runtime identity 會指紋化既有 classes、libraries、launcher、JDK executable/modules/libjvm；
+大型 file-hash inventory 應經 temporary JSON file 傳遞，不應放進單一 environment variable。
+Runner 行為測試若 mock verifier，也要在 temporary repo 建立明確的 fake runtime 與 Git HEAD；
+不能偷偷依賴開發者 checkout 已 build。這種 fixture 只算 harness test，不能當 live evidence。
+
+凍結 verifier worktree 可 detach 到 exact SHA，後續 PR 修正放在另一個 worktree。如此新的
+review commit 不會改動正在執行的 HEAD、classes 或 harness bytes。若只修正控制器而不中斷
+既有 verifier draws，保留舊控制器與 freeze，建立新的 version/freeze，明列接手邊界；不得
+silent overwrite。停止條件必須使用 recorder 的實際 taxonomy，例如 `out_of_memory`，
+不要用沒有產生過的 `oom` alias。
+
+參考：integration `7b69e3c`、review fixes `7dc36a3995`；Issue #180/#182。
+
+### Refinement attempts 不等於 completed dump rows
+
+`PredicateCPARefiner` 在檢查 counterexample 前增加 refinement count；
+`VGuideRefinementBridge.onSpuriousAfterRefinement` 只在 spurious strategy 成功返回後
+寫 `refinements.jsonl`。因此 summary 的 N attempts 與 N−1 rows 可合法來自最後一個
+feasible counterexample、timeout 或 analysis failure。不能以嚴格相等斷言判定檔案損壞；
+缺口應保守標 partial coverage，再以原始 log 解釋，partial dump 的候選計數僅是已觀察列。
+R>N 則不可能，應拒絕；不能把缺失觀察補零。
+
+已驗證：PR #184 `5f84e2387f` 的 regression tests，以及 #108 獨立 producer 語義檢查
+（Issue #180 comment 5554823395）。同一修正也拒絕會在 launcher 尾端追加的
+`CPACHECKER_ARGUMENTS`，並要求 `score_wall_s` 從 uncapped raw statistic 重新計算。
+Xargs 產生的普通 Bash 不繼承 parent `set -e`；function/command substitution 的模型驗證
+錯誤必須逐層 `|| return 1`，不能只靠 export helper 或 parent manifest precheck。
+
+### First-spurious round cap 不等於 transport call cap（2026-09-06）
+
+Frozen `37064e4` 的 `VGuideRefinementBridge` 在 SAFE primary 沒有可解析候選、
+但有 rejected text 時，仍可在同一 round 再發一次 repair call；`LlmCallScheduler`
+只數 completed rounds。故 FIRST_SPURIOUS / samples=1 最多是一個 scheduled round，
+不是保證一個 logical provider request。每 request 允許兩次 retry 時，structural
+worst-case 是每 task 2 logical / 6 HTTP attempts。正式成本 freeze 必須區分預算、
+程式可達上限與觀測 calls；不能從 round count 推論 dollar/call cap。
+#180 recovery 的 132 sealed rows 全是 `safe_primary`、repair=0；觀測 tokens 不受影響，
+但舊 freeze 的218/654宣告不是 enforced worst-case。補跑 budget 要重新明確確認。
+證據：Issue #180 comment5559713563 / #182 comment5559713668。
+
+### Terminal sentinel 不是通知 callback（2026-09-06）
+
+#177 monitor 在 STOP 出現時 exit0，早於九分鐘後的 final summary，且實際 command
+沒有 `ping-peer`。Completed HAPI job 不保證 coordinator 被喚醒。Terminal wrapper
+必須等待 real supervisor 完成 summary，再傳送 summary hash/counts/exit/STOP reason，
+保存 notification receipt；accepted 只代表 CLI 接受，不等於 agent/human 已讀。
+
+### Dataset lineage 與交付狀態（收尾查核）
+
+#177 核對的現行 cohort 是224父集合按原序排除6題後的218；historical764
+是舊研究集合，不能混作本次分母。六題排除與官方標籤判錯是不同分類。
+重新納入題目需另立有資格驗證的 cohort，不能因 native crash 修掉就改寫既有218。
+
+Agent 已交付、PR review 通過、PR merged、issue completed 是不同狀態。
+#178/#179 的修正經整合 PR 吸收時，逐項比較剩餘差異；不要整批再次套用舊
+runner/resume 語義。研究實驗得到可驗收的負結果可結案，但不代表相關程式
+已合併或應 rollout。已凍結 runtime 與最新 PR HEAD 仍須分開記錄。
+
+#109 context 修正與 prompt wording A/B 是獨立 intervention；沒有包含前者
+的全量 run，不能用來宣稱前者有效。測試來源 context 時保持其他條件固定。
