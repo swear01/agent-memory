@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-08-20
+updated: 2026-09-06
 tags:
   - hapi
   - supervisors
@@ -77,3 +77,18 @@ active-session handoff.
 # Platform checks
 
 Verify the loaded supervisor configuration, signing identity where applicable, protected-folder probes, and the platform's restart command after every rollout.
+
+# Verified maintained-release baseline (2026-09-06)
+
+HAPI `v0.29.0.6` 已發布並部署到 standalone Hub 與全部 8 台 Runner；main/tag 為 `cc45252848ba0033d1927e24c1121f821eb5b68d`。Release run `34038209117`、main/tag CI、9 assets 的 8 payload SHA-256、兩種 macOS `xyz.hapi.cli` strict signing 均通過。這是部署完成紀錄，未來操作仍應重新讀取 live 狀態。
+
+- `.6` 依 operator 要求暫時排除 #1424 session-attached Jobs 的 CLI/API/meters/Jobs 置頂；保留 schema V29、legacy job rows、正常 active-session pinning，以及原先混在該補丁中的獨立 CLI/Cursor 修復。
+- 5 台 Linux 與 Oracle 都曾出現新版 Runner 在線，但 systemd activating/restart-loop 或 PM2 errored 的 handoff。僅驗證 binary version 或 Hub heartbeat 不夠。先確認 state PID 的 argv 是主 `runner start-sync` 且沒有 `--started-by`，再停止 supervisor、TERM 該主 PID、啟動 supervisor；Linux 要 MainPID 等於 state PID 且重試穩定，Oracle 要 PM2 online、treekill=false、PM2 wrapper 實際為 Runner 父程序並 pm2 save。
+- session 保留用 PID 加 start time 比較。此次第一階段 12/12 保留；最終 2 個 Zeus session 明確有 `archiveReason=User terminated`，剩餘 10/10 PID/start time 不變。不可把稍後使用者終止算成部署殺掉，也不可無證據排除遺失程序。
+- 最後回查 standalone Hub/channel off/policy alert、Hub/Tunnel HTTP 200、served Web `.6` 與 no-store、DB V29 quick_check ok，以及 Mac protected-folder Runner RPC。
+
+# Exact-source Windows artifact cache
+
+Windows 定向升級的 source generation 必須對應正式 release source；artifact SHA-256、offer、實際新 Runner PID/version/generation 都要一致，`started` 回覆不算完成。
+
+Mazu 暫時 source Hub 使用快速本機磁碟與完整 fingerprint inputs，並包含 `hub/dist`、`web/dist`、pinned tunwg platform binaries。WorkingDirectory 設 source tree 的 `hub`，不是 `hub/dist`。ensureCliArtifact 在 cache lookup 前仍檢查／下載 tunwg；唯讀快取缺少該 binary 會先因 EACCES 失敗。完成指定 Windows 升級後，移除本次專用 drop-in、恢復 standalone Hub，保留 DB/env 與其他 drop-ins。
