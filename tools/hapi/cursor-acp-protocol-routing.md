@@ -8,7 +8,7 @@ evidence: >-
   Current Cursor launcher and hub metadata tests bind cursor session IDs to
   their protocol and reject unsupported legacy/ACP resume combinations.
 created: 2026-08-20
-updated: 2026-08-20
+updated: 2026-09-06
 tags:
   - hapi
   - cursor
@@ -49,3 +49,14 @@ not delete or merge the legacy row. Cursor CLI model labels are not ACP wire
 IDs. When a base-only SKU is mapped to a wire catalog that contains fast
 variants, select the explicit `fast=false` entry rather than guessing a fast
 variant.
+
+# Pending permission 與模型確認
+
+已核對的兩個 Cursor sessions 在報告 Write permission queued 後，仍持續顯示
+active=true/thinking=true；檔案停止更新不是仍在推理的證據。比對 permission
+queue、最後工具事件與產物 mtime，分開報告「等工具批准」與 provider safety halt。
+
+啟動 argv 指定 cursor-grok-4.6-medium，不代表 ACP 設定回讀確認成功。
+若 log 表示 model 不在 configOptions 並 skipping，保留 requested model 與
+實際 effective model/effort 的差別；此警告本身也不證明已換成另一模型或 Fast。
+不要用 agent models 清單或 spawn metadata 代替 ACP runtime 確認。
