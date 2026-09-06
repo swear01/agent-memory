@@ -5,7 +5,7 @@ machine: swop
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-06
+updated: 2026-09-07
 tags:
   - windows
   - path
@@ -49,6 +49,22 @@ QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、�
 Gateway binary、設定、route、launcher、logs 與 active secret blobs 都位於 `<program-data>/DeepSeekGateway`。五組 upstream credential 以 LocalMachine DPAPI blob 保存，ACL 僅授權 `SYSTEM`、Administrators 與本機使用者；launcher 解密到自己的 Process environment 後啟動 gateway，User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。舊 CurrentUser DPAPI blobs 與 task XML backup 暫留作無重開機驗證前的 rollback。
 
 2026-09-04 的 live verification 為 Task `Running`、principal `SYSTEM`、trigger `MSFT_TaskBootTrigger`，gateway process owner 為 `NT AUTHORITY\SYSTEM`、`health=ok`、零 stderr；另一條 SSH connection 在部署程序退出後仍能讀到同一個 listener。HAPI machine `pi-models` 正好八筆，Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。HAPI Runner PID 與當時的一個 active Codex session 均保留，沒有重啟 Runner。為保留該 session，未做實機 reboot；BootTrigger、SYSTEM context 與斷線存活已驗證，首次真實開機後仍應再確認 task last-run 與 health。
+
+## 2026-09-07 Gateway 更新驗證
+
+swop 是 Gateway fleet 的第八台，不能沿用只列七台的舊 Gateway 總覽。
+已補部署 PR #10 合併提交 `73f0fb5` 的 Windows x64 build；正式
+`<program-data>/DeepSeekGateway/deepseek-gateway.exe` 與 user-local
+`.local/bin/deepseek-gateway.exe` 副本一致。新程序、binary hash、health、
+原生 session header 封包測試均通過；真實推論 HTTP 200 走 CommandCode
+備援。SYSTEM 排程 XML 與 config/routing 未變，舊 binary 備份保留。
+
+Windows 替換流程：先驗證候選與舊版備份，等 port 35001 連線清空，停止
+原 Gateway task；若仍有 child，只停止 executable path 已核對的 Gateway。
+替換完成後啟動原 SYSTEM task 並驗證；失敗恢復備份，不改成臨時 user process。
+Windows PowerShell 呼叫 `[IO.File]::Replace` 時，第三參數應給明確備份
+路徑；實測 `$null` 被轉成空字串，導致 `The path is not of a legal form`。
+這個失敗可在未替換 binary 時恢復原 task，再以明確路徑重試。
 
 # Skillshare transport and junction verification (2026-09-06)
 
