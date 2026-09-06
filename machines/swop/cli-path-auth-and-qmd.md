@@ -5,7 +5,7 @@ machine: swop
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-06
 tags:
   - windows
   - path
@@ -49,3 +49,9 @@ QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、�
 Gateway binary、設定、route、launcher、logs 與 active secret blobs 都位於 `<program-data>/DeepSeekGateway`。五組 upstream credential 以 LocalMachine DPAPI blob 保存，ACL 僅授權 `SYSTEM`、Administrators 與本機使用者；launcher 解密到自己的 Process environment 後啟動 gateway，User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。舊 CurrentUser DPAPI blobs 與 task XML backup 暫留作無重開機驗證前的 rollback。
 
 2026-09-04 的 live verification 為 Task `Running`、principal `SYSTEM`、trigger `MSFT_TaskBootTrigger`，gateway process owner 為 `NT AUTHORITY\SYSTEM`、`health=ok`、零 stderr；另一條 SSH connection 在部署程序退出後仍能讀到同一個 listener。HAPI machine `pi-models` 正好八筆，Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。HAPI Runner PID 與當時的一個 active Codex session 均保留，沒有重啟 Runner。為保留該 session，未做實機 reboot；BootTrigger、SYSTEM context 與斷線存活已驗證，首次真實開機後仍應再確認 task last-run 與 health。
+
+# Skillshare transport and junction verification (2026-09-06)
+
+GitHub SSH fetch 卡住不表示 Windows LAN SSH 或 source repository 不可用。已驗證替代方式：在來源建立以 Windows 已有 commit 為 prerequisite 的增量 Git bundle，兩端驗證 bundle，經 LAN SSH 傳送，確認 Windows source clean 後 fetch bundle 並 merge --ff-only，再 skillshare sync。只終止自己發起且已核實 process tree 的卡住 pull，不改憑證、不 force reset、不覆蓋 dirty source。最後核對 source SHA 與 targets。
+
+同一次部署中，OpenSSH PowerShell Get-Content 對 `.agents/skills/hapi/SKILL.md` 回報不存在，但 junction 指向正確 source，source 可直接讀取；實際 HAPI Runner 的 list-directory RPC 對 `.agents` 與 `.codex` junction 都成功看到最新版 SKILL.md。必須區分 SSH 與互動登入 Runner principal 的 filesystem 可見性，不要僅凭 SSH 失敗就重建 junction、重裝 skill 或宣稱 Runner 讀不到。使用實際 Runner RPC 加 junction target/source SHA 驗證。
