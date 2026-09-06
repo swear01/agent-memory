@@ -8,7 +8,7 @@ evidence: >-
   Current Cursor launcher and hub metadata tests bind cursor session IDs to
   their protocol and reject unsupported legacy/ACP resume combinations.
 created: 2026-08-20
-updated: 2026-09-06
+updated: 2026-09-07
 tags:
   - hapi
   - cursor
@@ -60,3 +60,23 @@ queue、最後工具事件與產物 mtime，分開報告「等工具批准」與
 若 log 表示 model 不在 configOptions 並 skipping，保留 requested model 與
 實際 effective model/effort 的差別；此警告本身也不證明已換成另一模型或 Fast。
 不要用 agent models 清單或 spawn metadata 代替 ACP runtime 確認。
+
+# 已重現：缺少 arguments 導致待批准狀態無效
+
+HAPI 0.29.0.6 lockfile 使用 Zod4.4.3。PermissionAdapter 的 deriveToolInput
+在 rawInput/rawOutput 都無資料時回傳 undefined；JSON 傳輸會省略 arguments。
+AgentStateRequestSchema 的 arguments:z.unknown() 在4.4.3要求欄位存在：
+帶明確 undefined 的記憶體物件通過，JSON round-trip 後失敗，error path 指向
+requests/request-id/arguments。明確 null 可 round-trip。4.2.1 對同一最小輸入
+反而通過，因此必須使用 lockfile版本重現，不可只依 package range 或其他工具的Zod。
+
+兩個報告 session 的唯讀 persisted requests 都缺 arguments；同時出現
+Ignoring invalid agentState value from ack。applyVersionedAck 保留舊的 valid state
+但前進 version；下一次從舊 state 建構更新會漏掉前一筆請求。DB各只剩最後一筆，
+backend則仍等所有queued requests。Hub sessionCache也將invalid state映射null。
+這是批准狀態傳遞錯誤，不是檔案系統拒寫，也不同於provider cyber_policy。
+
+default mode 不會自動批准Write，文字授權不會自動轉成ACP決策。修正應在共用
+pending/completed輸入邊界保留真實的缺值語義，並測JSON序列化、多請求保留、
+逐筆批准與reject/cancel；不能改成全域自動允許。僅切mode也未證明能解除既有pending。
+診斷證據與修正驗收：CPAchecker issue201；尚未部署修正。
