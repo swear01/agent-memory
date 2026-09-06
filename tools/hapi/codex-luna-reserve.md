@@ -47,3 +47,9 @@ rateLimitsByLimitId 保存多組額度。百分比僅供顯示：有效 usedPerc
 - openai/codex：codex-rs/tui/src/app/backend_banner_fallback.rs。
 - openai/codex：codex-rs/tui/src/chatwidget/backend_banners.rs、luna_reserve_model.rs。
 - swear01/hapi：cli/src/codex/codexRemoteLauncher.ts、codexAppServerClient.ts、utils/appServerConfig.ts。
+
+## 0.153.4 真實協定驗證補充
+
+2026-09-06 直接啟動本機 codex app-server：initialize 成功；account/rateLimits/read 帶 supportsLunaReserve:false 物件回傳 -32600，改傳 null 則成功。初次能力探測應使用 null；確認新版 ordinaryUsageAllowed 欄位與 thread/settings/update 能力後，才傳 supportsLunaReserve:true。不能只查 TypeScript 型別而假設舊 server 忽略新參數。
+
+官方 ac192cd7937 的 Reserve fixture 使用 limitId=base_model_inference、limitName=gpt-reserve。不能假設 rateLimitsByLimitId 的 key 等於模型別名；依 limitName 找 Reserve，普通 codex bucket 保持獨立。
