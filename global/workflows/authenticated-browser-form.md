@@ -3,13 +3,19 @@ title: Authenticated browser form continuity and submission gates
 scope: global
 status: active
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-06
 tags:
   - browser
   - forms
   - privacy
   - submission
 ---
+
+# Browser selection
+
+使用者日常瀏覽器是 Brave。操作網站、既有分頁或登入狀態時，必須使用使用者的 Brave；不可自行啟動 Google Chrome 或另一個 Chrome 自動化 profile 作為替代。先確認控制工具實際連接的 browser identity 與 profile。若無法連接既有 Brave，回報控制連線限制，不要重啟或清除使用者 profile。
+
+另一個自動化瀏覽器顯示登入頁，只能證明該 browser context 未登入，不能推論使用者日常 Brave、桌面 App 或 repository integration 已登出／停用。
 
 # Form continuity
 
