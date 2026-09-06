@@ -22,6 +22,12 @@ cyber_policy 證明 provider 安全機制中止該輪，不證明是哪條命令
 
 # 記憶收尾要分層驗證
 
+2026-09-07 使用者明確指定 HAPI Codex 派工以 YOLO 啟動，避免一般 shell／
+檔案操作反覆要求人工核對。新 session 明確傳 `--permission-mode yolo`；
+已在執行的 Codex session 可透過 HAPI `/permissions yolo` 切換，讀回
+`preferredPermissionMode` 與命令處理回覆確認，不只看送出成功。保留原模型、
+medium/high 成本偏好與 Fast off；不把 YOLO 解讀為重試 provider 安全 halt 的授權。
+
 Issue comment、canonical Markdown、Git commit/push、QMD 索引是不同交付。
 每一層都需要自己的證據。看見記憶檔不代表 worker 更新過 QMD；qmd search
 找得到內容也不代表 Git validation 通過或已同步 remote。
