@@ -46,6 +46,16 @@ updated: 2026-09-06
 OS metadata 也已清理。2026-09-05 最後實測 filesystem used 465,195,237,376 bytes（12%），
 根目錄只剩 `backup/`，掛載選項為 `ro`；詳見 `long-backup-cleanup.md`。
 
+長備份碟目前六個主要 archive 與 69 個 current-home 帳號的關係不可只用檔名判定：
+
+- `dvlab.tgz`（178,168,055,053 bytes）是 9 個舊 owner 的獨立歷史集合，沒有 current-plan 精確帳號重疊。
+- `yoctol.tgz`（236,762,429,270 bytes）是 15 個舊 owner 的歷史集合；只有 `chinyi0523`、`ric` 與 current plan 帳號名重疊，因此屬部分重疊而非整檔重複。
+- `dsnp_student.tgz`（1,060,668 bytes）與 `ntuwp.tgz`（48,630,888,337 bytes）是獨立的歷史／課程或服務資料根，沒有 current-69 帳號重疊。
+- `ric.tgz`（1,628,983,506 bytes）有直接帳號名重疊，但尚未證明內容逐 byte 重複。
+- `qsyn_benchmark.tgz`（752,399 bytes）也有帳號關聯，但它是已精簡的專案 snapshot，保留 vendor 重建資訊與唯一 untracked overlay，不是一般 home 副本。
+
+總結為 3 個獨立 archive、1 個部分重疊、2 個直接重疊；六個都不能僅靠名稱批次刪除。`dvlab.tgz`、`yoctol.tgz` 已完成全量讀回並有上列 SHA-256；其餘 archive 的保留／刪除仍須以內容 manifest 或 canonical replacement 證據判斷。
+
 ## 2026-09-05 短備份來源與處理狀態
 
 - 45 個 `.tgz` 中有 42 個逐帳號 archive；每個第一個 tar root 都是同名帳號並保留當時
