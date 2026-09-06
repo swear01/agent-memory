@@ -4,7 +4,7 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-05
+updated: 2026-09-06
 ---
 
 # Mazu 外接備份硬碟識別
@@ -76,8 +76,10 @@ OS metadata 也已清理。2026-09-05 最後實測 filesystem used 465,195,237,3
 - 短備份根目錄的 Seagate tutorial、volume icons、Spotlight/FSEvents 與 AppleDouble metadata
   已移除；根目錄只剩 `backup/`。filesystem used 降至 348,731,211,776 bytes（7%）。
 - 短備份目前只剩損壞的 `copy.tgz`、永久保護的 `jonathan.tar.zst` 及其 SHA sidecar。
-  `copy.tgz` 的 19 個 G4 內層帳號仍在另一個 NFS canonical 工作中逐帳號精簡；該 staging
-  混合不同舊世代差異，完成明確 handoff 前不可直接整包封裝或刪除短碟來源。
+  `copy.tgz` 的 19 個 G4 內層帳號已全部完成逐帳號定性與 handoff：16 個有已驗證差異 fragment，
+  `b09901037`、`b10901098` 與 current 完全相同而無 fragment，`b10901099` 是 legacy-only canonical。
+  這些 fragments 只是舊世代相對 current 的 non-standalone delta，不能單獨封裝為 canonical `copy.tgz`；
+  必須與 current base 合併成單一 `home/<account>/` 後再做冷備份驗證。
 
 Mazu 的遠端 `swear01` HAPI session 會被 PolicyKit 拒絕 UDisks 掛載，但該帳號屬於 `docker` 群組。已驗證可使用本機既有 `ubuntu:24.04` image（禁止 pull、禁網路），進入 host mount namespace 後以 UUID 和 `-o ro` 掛載；操作前後都用 `findmnt` 核對來源與 `ro` 選項。
 
