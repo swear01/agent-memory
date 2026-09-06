@@ -2,7 +2,7 @@
 title: HAPI 終止錯誤與記憶收尾驗證
 scope: tools/hapi
 status: active
-updated: 2026-09-06
+updated: 2026-09-07
 ---
 
 # 在線狀態不能證明 turn 成功
@@ -34,6 +34,17 @@ path 與驗證結果。若全庫 validation 被既有資料或 history 問題擋
 
 使用者明確規定：每次 QMD 更新後都必須完成 canonical memory 的 Git 同步，
 並讀回遠端 HEAD 確認；未同步只能回報待完成，不能宣稱收尾完成。
+
+使用者另明確要求：每次關閉 session 前，都檢查是否有應保存的新知，以及是否
+真的已寫入。由 coordinator 核對實際 Markdown、validation、commit、QMD
+update/search 與遠端 HEAD；worker 的「稍後更新」或單獨的口頭完成聲明不足。
+沒有新知時記錄理由並引用既有已驗證內容，不為了收尾製造重複記憶。
+
+已交接且没有可立即執行任務的 worker，不因 issue／PR 尚未結案或「可能還會
+用到」而無限保留在線。把未完成項目、產物與恢復條件交接到 issue，再 archive
+並 inspect 確認；關閉 session 不等於 issue 完成，也不刪除未合併 worktree。
+受工具批准或外部依賴阻塞的 session 要明列 blocker、負責 issue 與恢復條件，
+不能只依 thinking=true 算作有效進度，也不能無限重試來維持在線。
 
 # Jobs 能力與版本查核
 
