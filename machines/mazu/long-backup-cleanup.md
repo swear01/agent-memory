@@ -5,7 +5,7 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-05
+updated: 2026-09-07
 ---
 
 # Mazu 長備份可重建資料清理邊界
@@ -223,3 +223,15 @@ Seagate 出廠安裝／教學檔、Spotlight/TemporaryItems metadata、磁碟圖
 
 本批未碰短備份 Ultra Touch。Jonathan 唯一 canonical home
 `<short-backup-mount>/backup/<remote-home>/jonathan.tar.zst` 仍是永久保護項，不得列為重複候選。
+
+## 2026-09-07：NFS 備份慢先確認實際連線協商速度
+
+Canonical Home 串流平均約 8.6 MB/s，tar 等待 nfs_file_read；進一步以路由確認使用 eno2，sysfs speed 與 ethtool 均顯示 100 Mb/s 全雙工。介面支援並宣告最高 2500baseT/Full，auto-negotiation 開啟，但當下只協商到 100 Mb/s（理論 12.5 MB/s）。因此不能僅憑 tar 等待 NFS 就歸因於 NAS 磁碟或小檔案；先查實際 link speed。線材、交換器埠或對端設定的具體原因尚未確認；本次只讀診斷，沒有重新協商或中斷備份。
+
+同日追加只讀調查：I226-V（8086:125c rev06），igc 驅動；開機日誌 2026-09-05 15:54:12 為 1000 Mbps，18:33–18:36 多次 link down/up，18:36:25 變為 100 Mbps。EEE 當下 disabled。NetworkManager profile auto-negotiate=no 但 speed=0、duplex 未設；依官方語意為略過 link 設定，不能誤判為強制關閉硬體協商；ethtool live autoneg=on。LLDP 無鄰居；PHY downshift 查詢回 Operation not supported。沒有交換器埠資料，不能確診線材或對端故障，也未執行可能斷線的 cable test／renegotiation。
+
+拓樸診斷補充：ethtool 的 speed 只代表本機與直接相連設備的實體鏈路，不代表整條 NFS 路徑。上游長線降速不會自動使下游網卡也顯示相同速度；應先定位長線所在段。最初即時查詢 NAS 兩個介面的路由都走同一個 100 Mb/s eno2，因此單換 NFS server IP 無法避開當時的本機瓶頸。使用者後續確認所謂長線是 NETGEAR ↔ 防火牆，約 7 公尺；不能用這段長度解釋 Mazu ↔ NETGEAR 的降速，且上游實際協商速度仍未驗證。
+
+後續網路調查：使用者授權重新協商後，`ethtool -r eno2` 成功，2026-09-07 13:03 恢復 1000 Mbps Full Duplex，13:14 複查仍維持，carrier_changes 保持 16。這是恢復連線，尚非根因修復。以 swear02 的 sudo 讀取日誌，確認 9/5 18:36:14 曾報 `exceed max 2 second`；Linux v7.0 `drivers/net/ethernet/intel/igc/igc_main.c` 的 `igc_watchdog_task` 在 1 Gbps 等待 `PHY_1000T_STATUS` 的 `SR_1000T_REMOTE_RX_STATUS`，20 次 100 ms 等待耗盡會報此訊息。它是 Gigabit 接收狀態等待逾時，不能單憑訊息確診線材或 NETGEAR 埠。該時窗先出現 NIC Link Down，NetworkManager 才因 carrier-changed 重連 DHCP；核心沒有 PCIe AER、網卡 watchdog/hang/reset 訊息，所查 sudo 日誌沒有相關網路重設命令，但日誌缺席不代表可排除所有人工操作。I226-V 型號本身也有 Intel 官方 EEE 隨機斷線通報；本機實測 EEE disabled，不應直接套用該根因。
+
+2026-09-07 16:52:23 網路追蹤：重新協商後約 3 小時 49 分鐘仍為 1000 Mbps、full duplex；carrier_changes 仍為 16，13:03 以後的核心日誌無新增斷線或降速。rx_crc_errors 與 rx_errors 均維持原有 1，tx_errors 與 tx_timeout_count 均為 0。這是有時間界線的穩定觀察，不是線材、埠或網卡故障已排除。後續若 NFS 備份仍慢，應重新量測瓶頸，不可繼續沿用已恢復的 100 Mbps 診斷。
