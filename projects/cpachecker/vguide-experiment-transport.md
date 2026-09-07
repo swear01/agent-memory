@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, PredicateProposalClient, experiments, deepseek]
 status: active
 created: 2026-08-20
-updated: 2026-09-07
+updated: 2026-09-08
 ---
 
 # VGuide 實驗 transport 邊界
@@ -42,3 +42,19 @@ CPA LogManager 在分開的 message arguments 之間加空白，末尾也會附 
 14 個 client tests 與 root 獨立重跑通過；最新 head 的 Gemini review5130800874
 無待修意見。Merge `7159acae251afbac2e5f907bde01e41a8e0eb17c`。完整 native/Ant gate
 並未全綠，不能將 scoped HTTP test PASS 擴張成完整 gate PASS。
+
+## Attempt cap 與分階段計數
+
+`max_attempts` 是上限，不是實際次數；第 1/3 或 2/3 次成功都有效。每個 logical
+request 的 observed attempt index 必須連續，且每次各有 start 與 terminal，再有一次
+logical outcome。只比對最後一次 terminal 會漏掉中間缺失；不能要求一定耗盡 cap。
+
+分階段續跑時，以唯一 slot ID 的已保存紀錄建立同一份 cumulative ledger。
+若完整 slot-result 清單已包含 first pair，就不能再加 first-pair 的摘要數字。
+Issue #218 的 slot15 曾因此被 checker 誤判超額；保留失敗 receipt，重新核對原始
+execution 與 HTTP events 後只修正衍生計數，沒有重跑或替換有效結果。必須區分
+checker accounting failure 和 provider/solver failure，避免為修正統計而再付費執行。
+
+Provider usage 的 `completion_tokens_details.reasoning_tokens` 是 `completion_tokens`
+內的細分，不能再加到 completion 或 total。失敗 attempt 未回傳 usage 時保留 unknown，
+不可補成零或從其他 attempt 推估。
