@@ -96,3 +96,13 @@ synthetic control artifacts. A common-base context contrast needs evidence that
 non-context production behavior is identical; build/instrumentation differences
 remain separately accounted. Preserve timeout grace and output/dump paths in
 exact rerun commands, or promised comparisons and observability can change.
+
+
+# Derived manifests retain provenance
+
+A subset with the correct task IDs and source hashes can still lose canonical
+license, seed or provenance fields through a projection helper. When a derived
+manifest claims unchanged row identity, retain the complete source objects and
+compare every field; prove disjoint union separately. Preserve a frozen lossy
+version as dated evidence and issue a versioned correction with unchanged
+selection rather than silently overwriting its bytes.
