@@ -201,3 +201,22 @@ GitHub 不允許直接改 closed PR 的 base。復原方法是將已合併父分
 list、label annotation 與 provider helper 沒有 current-main caller，因此
 採保留 branch／artifacts、退休舊 PR 的處置，不為了清 PR 搬入無人使用的
 工具或以 annotations 豁免官方 wrong verdict。
+
+### first_spurious 下先證明 ablation 變因會生效（2026-09-07）
+
+在合併後 main `1eef72b44e`，`LlmCallScheduler.shouldCall` 的 FIRST_SPURIOUS
+只接受 refinement 1。`VGuideRefinementBridge` 在 scheduled call 前建立 CE
+history／completed refinement outcomes；history 是 build 後才 record 当前 CE，
+outcome 是 after-refinement 才完成，故首輪通常都是空。history store 的 record
+本身也位於 scheduled-call 分支，不能假設涵蓋所有未呼叫模型的 native rounds。
+LLM ownership 初始空且 lastValidation 每次 before-refinement 清空；單次注入
+通常無上一輪 owned predicates 可替換。#40/#42/#43 要先用離線 evidence 證明
+多輪下 nonempty history/outcome／owned removal，再花錢做 ablation；#41 則核對
+實際 native exposure。這是實驗變因是否生效的條件，不是現在改預設 schedule
+的理由。多輪前仍須處理 successful-round counter 不等於 hard attempt cap。
+
+候選 entries 比 target placements 少可以只是 multi-head 展開，不能單憑
+1,418／1,469 差異宣稱 validity bug。優先從 raw JSONL 產生 report-local
+(task, round, response-index, candidate-index) occurrence identity，不為了摘要
+缺欄位立即新增 production schema。新 main 的整體對照與舊 runtime pending
+cells 是不同 estimands；#208 的新 comparison 不可填進 #180 缺失 cells。
