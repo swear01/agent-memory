@@ -1,31 +1,31 @@
 ---
-title: "修正共用終端機邏輯時檢查所有使用者"
+title: "玩家介面避免反覆加入多餘解釋"
 scope: "projects/magic-storage"
 status: active
 updated: 2026-09-07
-evidence_digest: 971b416f50f616b21403221cecb72c3fb02ddba736fe920d907e459016b99baf
+evidence_digest: 3ce49ceb83a9ebd20bddac418d76084a3cfa76660fb160febac1c7baf612005b
 negative_result: false
 redaction: passed
 ---
 
-# 修正共用終端機邏輯時檢查所有使用者
+# 玩家介面避免反覆加入多餘解釋
 
 ## Problem
 
-Agent 只修正 crafting terminal，漏掉應共用行為的 storage terminal。
+Agent 多次在玩家介面加入多餘操作提示與機制說明，使用者再次要求移除。
 
 ## Mechanism
 
-以單一畫面為修正範圍，沒有追查共同邏輯的其他使用者。
+把開發者想交代的實作細節放進玩家介面，增加了不必要的標籤。
 
 ## Durable rule
 
-先追查共用終端機邏輯的所有使用者，在共同位置修正；驗證 crafting 與 storage terminal 都得到相同修正。
+玩家介面以辨識與操作必要資訊為主；新增提示前檢查它是否幫助玩家作決定，避免重加使用者已要求移除的說明。
 
 ## Boundary
 
-適用於此專案共享終端機行為；storage terminal 是功能較少的版本，各自特有功能仍應分別驗證。
+這是此遊戲專案的玩家介面偏好，不代表刪除必要錯誤訊息或無障礙說明。
 
 ## Verification
 
-來源使用者直接指出只修了一個 terminal，並明確要求共用程式碼；來源片段未提供最終修正通過的證據。
+來源含使用者對 energy/t 說明與前後切換提示的具體糾正，並要求將 simple is better 寫入專案規則；本次沒有重跑 GUI。
