@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-09-06
+updated: 2026-09-07
 ---
 
 # Frozen benchmark pairing
@@ -163,3 +163,17 @@ runner/resume 語義。研究實驗得到可驗收的負結果可結案，但不
 
 #109 context 修正與 prompt wording A/B 是獨立 intervention；沒有包含前者
 的全量 run，不能用來宣稱前者有效。測試來源 context 時保持其他條件固定。
+
+### Candidate 診斷的分母與資料層（#45）
+
+Recovery 的218個 cohort rows 僅有184 matched pairs；132個 complete-response
+rows 的 endpoint intersection 是21 ok、98 timeout、13 analysis_failure。
+不能把全部 augmented 的28 ok 除以132。候選 entries 與注入 target placements
+也不是相同單位，後者可以多於前者，不能直接當作唯一候選通過率。
+
+`details.json` 沒有 per-location 欄位，不代表原始資料沒有：已直接核對的
+sample 在 `llm_rounds.jsonl` 的 `response_raw` 內有 `candidates[].loop_heads`，
+`refinements.jsonl` 有 `validated_predicates[].loop_head/injected`。區分摘要
+丟失欄位、原始 schema 缺欄位與讀檔 I/O 阻塞；sample 成功不等於全 cohort
+可讀或已彙總。Provider/model 資訊也應交叉查 launch freeze／config 等來源，
+不可僅因 task-level details 缺值就宣稱整個 frozen experiment 沒有 metadata。
