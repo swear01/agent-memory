@@ -192,3 +192,12 @@ GitHub 不允許直接改 closed PR 的 base。復原方法是將已合併父分
 測試報告也要區分父 PR 的獨立 test tree 與後繼 PR 的合併 test tree：
 #191 原有 7 個專用測試，#195 合併後有 10 個，不能把後者寫成兩個 head
 各自都跑過 10 個。
+
+### PR99 歷史 manifest hash 不可推定等價（2026-09-07）
+
+#207 離線盤點確認 canonical 218（`3350720a…`）與224父集合排除六題後
+逐筆欄位及順序一致；PR99 宣告的 `a969cad2…` 原始 bytes 未找到，差異
+仍為 unknown，不能自行歸因於 JSON 排版或 metadata。舊 generator、六題
+list、label annotation 與 provider helper 沒有 current-main caller，因此
+採保留 branch／artifacts、退休舊 PR 的處置，不為了清 PR 搬入無人使用的
+工具或以 annotations 豁免官方 wrong verdict。
