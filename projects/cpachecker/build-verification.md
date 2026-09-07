@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [ant, ecj, verification, native-solvers]
 status: active
 created: 2026-08-26
-updated: 2026-09-06
+updated: 2026-09-07
 ---
 
 # ECJ prefs 是 build input
@@ -163,3 +163,27 @@ JUnit `Result.runCount=4185` 已包含後者，不能把 runCount 全稱為實�
 證據：Issue #183 comments `5554279495`（資源配置與 smoke）、`5554355576`
 （全量 JUnit）、`5554373354`（configuration）、`5554450321`（baseline findings
 比對）；PR #194 head `40047d7867eac3fe8a5769d05efc910123f61726`。
+
+## 對齊 Ant 的 per-class JVM 與當次計數（#203）
+
+`build/build-junit.xml` 的 `batchtest fork=true` 讓每個 test class 使用新 JVM。
+把多個 classes 一起傳給一次 `JUnitCore` 並不等價：#203 的 55-case 合併
+invocation 有 5 個 dumper/accounting setup failures，但相同 classpath 下分別
+啟動 `PromptAccountingTest`（3）與 `VGuideAnalysisDumperTest`（4）全部通過，
+canonical Ant 也通過。不能逕自診斷成缺少檔案或用不被 Configuration builder
+讀取的 `-D` 假修復；保留原始例外，先對齊 process isolation。`frozenDir` 是
+`VGuideOptions` 的前綴組合 option，grep 不到完整 `vguide.frozenDir` 字串不代表
+選項不存在。
+
+當次 full-gate stdout 有 205 個 unit-class summaries：4361 entries、0 failures/
+errors、734 skips；另 3880 configuration entries、0 failures/errors、768 skips。
+舊 #183 的4346是另一個 snapshot，不能複製到新報告。此後所有 src tree bytes
+相同（Git tree `0c0e435ee263aef42557823970ee29d523c5e586`），所以僅 main 文件／
+Python 整合不需要重跑完整 Java suite。
+
+完整 gate 仍因68 Forbidden APIs findings exit1。Root 對當次 stdout 與 accepted
+#109 baseline 比較 API/class/source-file multiset（只正規化 source line numbers），
+68項完全相同、0新增；不是僅比較總數。相同源碼且完整 tests PASS 可使用
+repo 明訂的 scoped baseline policy，但不得稱 `ant all-checks` 全綠。證據在
+#203 的 `reports/issue203-integration/canonical-java-test-summaries.json` 與
+`canonical-forbidden-comparison.json`，原始 artifacts 留在 sibling experiments。
