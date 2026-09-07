@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [ant, ecj, verification, native-solvers]
 status: active
 created: 2026-08-26
-updated: 2026-09-07
+updated: 2026-09-08
 ---
 
 # ECJ prefs 是 build input
@@ -187,3 +187,15 @@ Python 整合不需要重跑完整 Java suite。
 repo 明訂的 scoped baseline policy，但不得稱 `ant all-checks` 全綠。證據在
 #203 的 `reports/issue203-integration/canonical-java-test-summaries.json` 與
 `canonical-forbidden-comparison.json`，原始 artifacts 留在 sibling experiments。
+
+# 絕對 launcher 路徑仍可能被環境導向另一個 runtime
+
+`<arm-worktree>/scripts/cpa.sh` 會優先採用既有 `PATH_TO_CPACHECKER`，最後
+exec 該變數所指的 `bin/cpachecker`。所以 control/treatment 即使用不同絕對
+launcher 路徑，也可能一起誤跑 parent 的 runtime。每個 slot 必須明確設定
+`PATH_TO_CPACHECKER=<that-arm-worktree>`，再搭配 JAVA/JAVA_HOME/PATH；只檢查
+命令列上的 cpa.sh 路徑不夠。
+
+Issue216 已以兩個暫存 stub executables 驗證：同一個絕對 cpa.sh 在 inherited
+值下選 ambient，明確覆寫後選指定 stub。此檢查沒有啟動 verifier/JVM。
+這是既有 launcher 的設定優先序，不需要為實驗改 production launcher。
