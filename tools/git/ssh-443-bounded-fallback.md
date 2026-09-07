@@ -7,8 +7,9 @@ status: verified
 updated: 2026-09-07
 ---
 
-Mazu 的 HTTPS Git fetch/ls-remote 與 SSH 22 在限時內沒有完成，但 GitHub API
-仍可用。這不足以診斷防火牆或 NFS 根因；不要直接重裝 Git、改憑證或全域 remote。
+Mazu 的 HTTPS Git fetch/ls-remote 與經 SSH 22 的 Git fetch 在限時內沒有完成，
+但 GitHub API 與獨立 SSH 22 authentication 都成功。這不足以診斷防火牆或 NFS
+根因，也不能稱 SSH 22 無法連線；不要直接重裝 Git、改憑證或全域 remote。
 
 本次實測有效替代是 invocation-only SSH 443：remote URL 使用
 `ssh://<ssh-user>@ssh.github.com/<owner>/<repo>.git`，Git 加上
