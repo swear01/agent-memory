@@ -67,3 +67,12 @@ session-attached Jobs，CLI/API/meters/pinning 不提供，legacy schema/rows �
 先查目前 help 與部署註記，再判斷 HTTP404；不可僅憑404宣稱是升級故障。
 本次只以 help/parser 查驗，未執行背景工作；若操作規範仍強制 session job，
 其長工作要等支援契約恢復，不能用假 heartbeat 或旁路 launcher 冒充。
+
+## Coordinator 持續管理（使用者明示，2026-09-07）
+
+派出 sessions 不是協調工作的結束。核心 coordinator 要持續巡檢目前派出的
+workers、驗收實際 artifacts、把不成立的 PASS 退回同一任務修正，並接續已
+授權且條件具體的工作。完成的 worker 在 memory/QMD/Git 驗收後立即封存，
+不能只列一張正在跑的表就留下全部 idle。新的獨立工作用 fresh session／
+issue；原任務驗收修正可回到該 worker。Open session、完成 handoff、通過
+驗收、PR merged、issue closed 都是不同狀態，必須逐一判定。

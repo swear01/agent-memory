@@ -15,7 +15,7 @@ source_refs:
   - agent-memory:issue-13
   - agent-memory:issue-16
 created: 2026-08-20
-updated: 2026-09-04
+updated: 2026-09-07
 generated_by: openai-codex/gpt-5.6-luna
 ---
 
@@ -84,3 +84,15 @@ The rules above are G1 experimental-method boundaries. Tool or fleet
 implementation details are G2, project integrations are G3, and individual
 benchmark values or incidents remain G4 unless a later review establishes a
 broader scope.
+
+# Qualification must match the claimed stage
+
+A dry-run that emits a verifier command proves command construction, not runtime
+startup, response-cache compatibility, or evidence capture. A real fail-closed
+replay miss proves the request path was reached; it does not prove successful
+response replay, downstream consumer behavior, or a second experimental arm.
+Do not label a two-arm gate PASS from only the treatment runtime plus old
+synthetic control artifacts. A common-base context contrast needs evidence that
+non-context production behavior is identical; build/instrumentation differences
+remain separately accounted. Preserve timeout grace and output/dump paths in
+exact rerun commands, or promised comparisons and observability can change.
