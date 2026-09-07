@@ -199,3 +199,10 @@ launcher 路徑，也可能一起誤跑 parent 的 runtime。每個 slot 必須�
 Issue216 已以兩個暫存 stub executables 驗證：同一個絕對 cpa.sh 在 inherited
 值下選 ambient，明確覆寫後選指定 stub。此檢查沒有啟動 verifier/JVM。
 這是既有 launcher 的設定優先序，不需要為實驗改 production launcher。
+
+`bin/cpachecker` 還會把 inherited `CLASSPATH` 放在 arm classes 前面，並採用
+`JAVA_VM_ARGUMENTS`、`JAVA_GC`、`JAVA_ASSERTIONS` 等 launcher overrides；隔離實驗的
+wrapper 應先清除這些父程序設定，再套用明確的共同 recipe。Bash 的
+`unset VGUIDE_*` 只做 filename glob，不能清除同前綴變數；要遍歷
+`"${!VGUIDE_@}"` 得到變數名稱後逐一 unset。以無害 sentinel 和 stub 驗證環境清除，
+不需要為 wrapper 檢查再呼叫模型或 verifier。
