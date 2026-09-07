@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-09-07
+updated: 2026-09-08
 ---
 
 # Frozen benchmark pairing
@@ -35,6 +35,25 @@ Launch 前再讀回遠端 comment，確認 body hash、內容與 timestamp；rem
 `max_completion_tokens`、stream flags、provider-specific response schema，以及
 thinking/reasoning settings；任一欄位或 JSON schema 改變都應該 fail-closed cache miss。這個
 hash 設計適合 exact replay，不應改成忽略 provider/model 的寬鬆 key。
+
+Issue #217 證實：舊 runtime 的八筆 recorded hash equality 只能證明輸入 provenance；
+新 runtime 要靠新 production request 的 hash-addressed replay hit 與實際 prompt bytes
+驗證。Cache namespace 也要明確對齊：預設 `default` 不會命中既有 case namespace。
+修正設定時保留失敗 attempt，另建 attempt 目錄；不要覆寫原 log 或漏算次數。
+若 first-request 已完成、之後 solver timeout，可接受 request qualification，但整題仍為
+incomplete，不能寫成 verifier PASS。
+
+# Dump 的 commit 是工作目錄資訊，不是 runtime 身分
+
+`VGuideAnalysisDumper.readGitCommit()` 在 process cwd 執行 `git rev-parse HEAD`。
+Issue #217 即使透過正確的 `PATH_TO_CPACHECKER` 選到新 arm，從 navigation worktree
+啟動仍會把 navigation HEAD 寫入 `run_manifest.json`。實際 startup version 與 classes/
+libraries hashes 已另行確認新 runtime；不得為了對齊而修改既有 raw dump。
+之後每個 arm invocation 必須同時指定 cwd 為該 arm worktree、明確 launcher/runtime
+與 JDK，再核對 dump commit、startup version 和 runtime manifest。新增環境變數無法
+修正這個 cwd-derived 欄位。
+
+# 明確固定 replay provider 與序列
 
 Current main 預設 `VGUIDE_LLM_PROVIDER=meta` 與
 `VGUIDE_LLM_MODEL=muse-spark-1.2-contributor`。Java client 不讀 retired
