@@ -2,7 +2,7 @@
 title: CPAchecker native predicate test baseline on Java 21
 scope: project
 status: active
-updated: 2026-09-07
+updated: 2026-09-08
 project: cpachecker
 machine: valkyrie
 tags: [cpachecker, mathsat, java21, baseline]
@@ -21,3 +21,17 @@ XML inventory、hs_err file count、最新 focused JUnit stdout 是不同證據�
 明確設定 JAVA/JAVA_HOME/PATH 時仍須核對實際 JVM；override 可以繞過 launcher 的
 正確預設。此次只比對既有 artifacts，沒有重跑 native case，也不據 signature alone
 宣稱最終 root cause 或此次完整 suite 已通過。
+
+## Stock benchmark crash is a separate qualification failure
+
+2026-09-08 的 issue208 Stock stage24 在 Ubuntu OpenJDK21.0.12+8、MathSAT5
+5.6.15 下，copysome2-1 出現 SIGSEGV：`libmathsat5j.so` 的
+`msat::HashMultiSet<...>::begin()+0x8`，capture 記 exit -6 / signal6。
+這是關閉 VGuide、零 provider calls 的 Stock，不能歸因於 LM predicates，也不能
+當成前述 Temurin codecvt signature 已知原因。Ubuntu JDK 讓 build/focused tests
+通過不等於 native benchmark 已全面穩定。既有 artifact 診斷由 issue215 追蹤。
+
+三個 launcher exit0、24份紀錄的完整性與 hash 驗證通過，仍不表示實驗 gate
+通過：task-level native crash 依預先停止規則阻止 Augmented/remaining194 admission。
+保留 crash outcome 與原始218/24分母；不可刪題後把同次 checkpoint 稱為通過。
+證據見 sibling experiments 的 `reports/issue208-final-runtime-20260907/`。
