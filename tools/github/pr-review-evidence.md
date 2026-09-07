@@ -22,3 +22,11 @@ MERGEABLE、全部實際 required checks 和 Gemini 的 exact-head clean respons
 以既有授權建立相同 branch 的 ready PR 成功。這證明當次操作權限不同，不證明
 GitHub 帳號整體失去權限。可由已授權的 integration session 接手具體 PR 操作，
 不用移交 token、修改全域 credentials 或重新向使用者要求已給過的同意。
+
+
+GitHub review inline comment 的 `commit_id` 可隨新 head 重新定位，不能單靠它判定
+finding 屬於最新 review。PR213 的舊 b81 finding 後來顯示 current c27 commit_id；
+`original_commit_id` 和 `pull_request_review_id` 仍指向原始審查。核對 review 本身的
+head、provider terminal response 與舊 finding 修正狀態。Codex summary 的 Completed
+也不等於 clean；有明確「Didn't find any major issues」和相符 reviewed commit 才接受，
+不能在它仍帶 findings 時以完成狀態當通過。

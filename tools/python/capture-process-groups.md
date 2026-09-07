@@ -3,7 +3,7 @@ title: 隔離 subprocess 的 capture 必須處理父程序中斷
 scope: tools/python
 tool: Python subprocess
 status: verified
-updated: 2026-09-07
+updated: 2026-09-08
 ---
 
 `Popen(start_new_session=True)` 讓 verifier 不會跟著 capture 收到終端訊號。只在
@@ -32,7 +32,7 @@ exit/signal、elapsed 與 log hash，再傳遞原訊號；classifier 一律 infr
 程式 bytes 並補 recovery 文件，整合111測試通過（含 leader 提早退出的 descendant）。
 
 
-## Nested capture 的新限制（issue212，修復待驗）
+## Nested capture 的修復與驗證（issue212 / PR213）
 
 單層 TERM/INT regression 通過，不能直接推廣到 outer capture → launcher →
 inner capture → separate-session leaf。2026-09-07 的 harmless nested probe
@@ -43,6 +43,24 @@ coordinator 核實 PID/command 後單獨清理。
 
 因此不能從 outer 已退出／outer sidecar 已寫出，宣稱內層工作全部停止或紀錄完整。
 Nested supervision 必須另外驗證 leader-first exit、內層的 TERM/grace/flush 及 leaf
-消失，並避免外層 escalation 先殺掉負責清理的內層 supervisor。這項修復正在
-issue212，現有單層契約不變；在實際 nested regression 通過前，不把 proposed
-wrapper 當成已可用的批次停止方案。
+消失，並避免外層 escalation 先殺掉負責清理的內層 supervisor。PR213 已修復並通過實際 nested regression，merge
+`2c6689c932bf6259d646bb1e525db34c9d16e21e`。TERM 後保留完整 grace deadline，
+不因 leader 提早退出而立即 KILL，也不在 grace 內先 reap leader 後再用其 PID 發訊號。
+CLI `--termination-grace` 預設10秒，外層明確15秒讓內層10秒完成 cleanup/record flush。
+CLI wall limit 必須正且有限，grace 非負且有限；NaN/Infinity 不可通過 float validation。
+
+Root 獨立 outer SIGINT probe 使用內層預設10秒、外層15秒、延遲2秒後正常退出的
+leaf；外/內 interrupted sidecars 均存在，leaf exit0 且程序消失，outer 傳回原SIGINT，
+未需額外清理。production source SHA
+`2de0011b09de9db759593b0755091ac64aae397b08c0e365a697f68ec47cf06b`。
+外層 group 消失不足以推論其他 session 的 descendants 完成，所以不能只為縮短等待
+加入早退 polling。這不涵蓋不可捕捉的 SIGKILL 或無法立即結束的 kernel D-state I/O。
+
+測試 fixture 也要負責 setup failure：launcher 使用阻塞的 `subprocess.run(inner)`
+即可，不要在它回傳後永遠等待未必會建立的 leaf marker。finalizer 先 TERM、bounded
+wait，再處理必要的 KILL fallback；只殺 outer wrapper 會讓獨立 group 留下孤兒。
+六個 CLI 非有限值案例用 `--name=value` 單獨改一個參數，避免另一個 invalid 參數讓
+測試因錯誤原因通過。active notes 的 cleanup/API 說明與實作一起更新。
+
+最終 head 的 Codex review 明確無重大問題；早期118個 core-only tests 與後來新增
+setup-failure 等8個 focused checks 是分開的執行，不虛構成一次119-case full run。
