@@ -35,3 +35,11 @@ XML inventory、hs_err file count、最新 focused JUnit stdout 是不同證據�
 通過：task-level native crash 依預先停止規則阻止 Augmented/remaining194 admission。
 保留 crash outcome 與原始218/24分母；不可刪題後把同次 checkpoint 稱為通過。
 證據見 sibling experiments 的 `reports/issue208-final-runtime-20260907/`。
+
+Issue215 的一次同機、同命令、同 native/JDK/source 的單題重跑（改為單題，
+原 run 是 parallel8）在600.330CPU秒後為 UNKNOWN/timeout，
+沒有 native crash；不可据此宣稱修復、歸因負載，或回填原 stage24。最近 issue180
+同題也曾在 MathSAT5 5.6.15 下 timeout；root 核對 preserved library bytes，
+其 Linux `libmathsat5j.so` hash 與新 run 相同（`3cf15b57…eb345`）。
+因此舊5.6.11資料並非完整近期歷史，solver binary 升版不是這組觀察的已知差異；
+JDK、整體 runtime/source、主機與 trajectory 的差異仍未隔離。
