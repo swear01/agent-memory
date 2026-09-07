@@ -1,6 +1,6 @@
 ---
 title: "檔案存在不代表實際建置已使用該 artifact"
-scope: "tools/build"
+scope: "tools/build-verification"
 status: active
 updated: 2026-09-07
 evidence_digest: 6b7589abdc01ae0506893c1c4143dc9f5a398670f12e4806ce297481f856d5fa
