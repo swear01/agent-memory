@@ -177,3 +177,18 @@ sample 在 `llm_rounds.jsonl` 的 `response_raw` 內有 `candidates[].loop_heads
 丟失欄位、原始 schema 缺欄位與讀檔 I/O 阻塞；sample 成功不等於全 cohort
 可讀或已彙總。Provider/model 資訊也應交叉查 launch freeze／config 等來源，
 不可僅因 task-level details 缺值就宣稱整個 frozen experiment 沒有 metadata。
+
+### 相依 PR 的 base branch 也是整合條件（2026-09-07）
+
+#203 整合時，#195 的 head 含 #191，但實際 `baseRefName` 是 #191 的來源
+branch。合併 #191 後使用 `--delete-branch`，GitHub 產生 `base_ref_deleted`
+並自動關閉 #195；這不是測試失敗或人工否決。單看 head ancestry／MERGEABLE
+不足以驗收相依 PR。合併前列出所有 open PR 的 `baseRefName`，先把後繼
+PR 改接 main，再刪除父分支。#196 對 #184 有相同依賴，已用此順序避免。
+
+GitHub 不允許直接改 closed PR 的 base。復原方法是將已合併父分支恢復到
+原 exact head（無 force），reopen 後 retarget main，再驗證 head、diff、checks。
+重新開啟可重啟 Swear Review；舊 pass 不能當作目前 IN_PROGRESS 已完成。
+測試報告也要區分父 PR 的獨立 test tree 與後繼 PR 的合併 test tree：
+#191 原有 7 個專用測試，#195 合併後有 10 個，不能把後者寫成兩個 head
+各自都跑過 10 個。
