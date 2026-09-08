@@ -308,8 +308,16 @@ request/response、head、formula 與 ID mapping，不能把不同 namespace 的
 不要從區域變數名 `injected` 或「同一 list 傳兩次」推論 telemetry 丟失 validation。
 已逐函式核對：`markInjected()` 保留全部 validated records，只設定各項的 injected flag；
 `validatedPredicatesJson` 輸出全部，`injectedPredicatesJson` 才過濾 false flags。
-#226 的 replay-only suppression/filter 應重用這條既有路徑。先追產生、轉換與消費端，
+#226/PR227 的 replay-only suppression/filter 已重用這條既有路徑。先追產生、轉換與消費端，
 再判定資料是否遺失；不為錯誤的初步診斷新增重複欄位或框架。
+
+`vguide.replayInjectionMode` 支援 FULL（預設）、SUPPRESS_ALL、EXCLUDE；非 FULL 必須
+使用 `VGUIDE_LLM_REPLAY_DIR`。EXCLUDE 的 `vguide.replayInjectionExclusions` 每行是一個
+`head=N<number>;formula=<canonical SMT from dump>;provenance=<source_profile>`，不是 raw
+candidate 文字或 response ordinal。匹配要跨 refinement rounds 累積，不能逐輪把尚未出現
+的 selector 當成不存在；正常 analysis end 才檢查未匹配集合。未進入 dynamic selection 的
+run 不會觸發此檢查，不能視為合格的 exclusion。真正的消融須逐 run 驗證 request/response、
+完整 validated bindings 和實際 injected flags；mock callback 或設定值不等於實際介入成功。
 
 ## 實際 benchmark input 與同名 source 不可互換（2026-09-08）
 
