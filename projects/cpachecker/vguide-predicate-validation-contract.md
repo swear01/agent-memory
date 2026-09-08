@@ -1,10 +1,11 @@
 ---
 title: VGuide predicate literal 與 validation 責任邊界
 project: cpachecker
+scope: projects/cpachecker
 tags: [vguide, parser, smt-lib, bitvector, validation, muse]
 status: active
 created: 2026-08-30
-updated: 2026-08-30
+updated: 2026-09-08
 ---
 
 # 先區分 generation 與 parser representability
@@ -47,3 +48,21 @@ population、timing 或 cost claim。
 - Canonical `ant all-checks` 與 exact base 都只停在相同 78 個 inherited
   `forbiddenapis` findings；此 diff 沒新增 finding。
 
+
+# C-syntax array 的模板路由限制（Issue #219）
+
+`ArrayTermTranslator.hasArrayAccess` 表示存在可轉譯模板，並非只辨識 array 語法。
+`collectTemplates` 只掃 `select`；現有 recognizer 要求 `bvadd` 左 operand 是 address
+atom，右 operand 是可識別的 `bvshl` indexed access。若只有 constant-first offset select
+和 indexed `store`，就不會產生模板，`a[9]` 轉入 scalar parser 後被報成
+`variable_not_in_scope`。Prompt 明確允許 C-syntax `a[i]`，因此不能直接把此診斷算作
+模型 scope 選擇錯誤；但路由問題也不證明候選語意正確或 invariant 有用。
+
+Issue #218 四筆 first-request 原始序列、各兩個 block formulas，在 production pure-Java
+helper 中均未產生 `a` 模板；六個原始拒收候選皆走 scalar route，shift-shaped positive
+control 可轉譯。Root 核對 fixture hashes、JSON decoded formulas 與兩 arm 相同 class，
+並重跑 helper 通過；沒有 solver/native/provider 執行。這是診斷完成，尚未修復。
+
+擴充 constant-offset 支援前，要有 typed source/layout 或已知 indexed access 的 stride
+依據；heap value width 本身不足以證明 C object layout。證據不足時保留拒收並改善能力
+診斷，不能猜 stride、放寬 unknown-variable/scope checks 或宣稱修好後一定提升 solve。
