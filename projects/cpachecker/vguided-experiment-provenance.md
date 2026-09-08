@@ -297,3 +297,16 @@ HTTP headers 或憑空補齊 usage，也不得為修正報表重跑或替換原�
 重現該誤報，但原始 records 經既有 `check_core_only_smoke.summarize` 分類實為 1/1。
 整合必須共用 validator 的 official verdict 分類，並核對互斥的
 correct + wrong + unresolved = manifest 題數。這是報告計數更正，不是新的實驗結果。
+
+## Counterfactual binding identity 與既有 dump 語意（2026-09-08）
+
+#224 Problem14 的 raw response ordinal 不等於 production dump `predicate_id`。
+離散候選是 response ordinals 1,2,3,10,11,12，卻是 dump IDs 1..6；數值切點候選是
+response ordinals 4..9，卻是 dump IDs 7..12。做 group-removal 必須凍結
+request/response、head、formula 與 ID mapping，不能把不同 namespace 的整數混用。
+
+不要從區域變數名 `injected` 或「同一 list 傳兩次」推論 telemetry 丟失 validation。
+已逐函式核對：`markInjected()` 保留全部 validated records，只設定各項的 injected flag；
+`validatedPredicatesJson` 輸出全部，`injectedPredicatesJson` 才過濾 false flags。
+#226 的 replay-only suppression/filter 應重用這條既有路徑。先追產生、轉換與消費端，
+再判定資料是否遺失；不為錯誤的初步診斷新增重複欄位或框架。
