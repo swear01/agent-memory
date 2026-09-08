@@ -275,3 +275,17 @@ LLM ownership 初始空且 lastValidation 每次 before-refinement 清空；單�
 (task, round, response-index, candidate-index) occurrence identity，不為了摘要
 缺欄位立即新增 production schema。新 main 的整體對照與舊 runtime pending
 cells 是不同 estimands；#208 的新 comparison 不可填進 #180 缺失 cells。
+
+# SSE 完成與候選 JSON 成功是不同層（2026-09-08）
+
+在 #208 / #221 的既存證據中，8 個回應即使記錄 HTTP 200、`stream_success`
+與 `[DONE]`，保存的 content 仍是未完成 JSON；另 1 個回應在 client 以
+`No text content in LLM response` 結束。`PredicateProposalClient` 先完成 SSE
+解析才寫 cache，bridge 又在 client 成功返回後才記 LLM round，因此
+`llm_calls=0` 或沒有 cache 並不證明沒有 HTTP request。先對照 per-attempt event，
+再分別判斷 transport、candidate parser、predicate validation 與 solver outcome。
+
+凍結版本未保存 `finish_reason`，不能從這些 bytes 推定 token cap、拒絕或截斷原因。
+usage 缺失仍是 unknown，summary 的 observed-only 零值不是零消耗。
+後續觀測修正應保存有限的 terminal metadata 與 parser reason；不需要保存完整
+HTTP headers 或憑空補齊 usage，也不得為修正報表重跑或替換原始樣本。
