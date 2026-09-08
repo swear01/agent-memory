@@ -8,7 +8,7 @@ evidence: >-
   HAPI web and hub tests cover voice/draft reconciliation, queued-send
   settlements, cancellation races, and restart-safe ambiguous delivery.
 created: 2026-08-20
-updated: 2026-08-20
+updated: 2026-09-08
 tags:
   - hapi
   - message-delivery
@@ -53,3 +53,11 @@ message that was already cancelled.
 Treat these as one delivery contract: voice draft recovery, queued-message
 settlement, and soft-steer restart handling are different surfaces of the same
 stale-state problem.
+
+## Recheck before parking
+
+A historical steer-RPC race lost a wakeup while trySteerActiveTurn awaited the app-server reply, before a waiter was installed. Before parking, recheck the steering mode and whether the queue is nonempty; re-loop only when no pending fallback owns the deferred message. Preserve the non-steerable or ended-turn fallback so it handles the message as a fresh turn.
+
+## Verification of parking fix
+
+The retained source reports this repair and includes raw output showing 57 launcher tests passed. This is historical source evidence, not a new execution of the HAPI regression suite.
