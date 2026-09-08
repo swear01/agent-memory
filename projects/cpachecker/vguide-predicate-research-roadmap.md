@@ -1,10 +1,11 @@
 ---
 title: CPAchecker VGuide predicate 研究主線
 project: cpachecker
+scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-03
+updated: 2026-09-08
 ---
 
 # 核心目標
@@ -30,6 +31,26 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
   response 經 production consumer replay 為 `TRUE/TRUE`，兩次皆 exact request/list、
   zero rejection。這證明該 cue 在 HH2012 base case 有 generation 與 consumer utility，
   但 `2/3` 也顯示輸出不是 deterministic，不能外推 population hit rate。
+
+# 目前 hard218 的兩個成功案例研究（2026-09-08）
+
+#208 的完整凍結配對結果為 Stock 16 correct、Augmented 18 correct，官方 wrong 都是
+同一組 11 題；兩個新增正確題為 `c/systemc/token_ring.06.cil-2.yml` 與
+`c/eca-rers2012/Problem14_label45.yml`，Stock 均 timeout。這是單輪觀察，還不是
+可重現的 LLM 效果，也不能歸因於 context 或某次 prompt 改動。
+
+使用者明確指定下一主線：兩個成功案例要專門深挖「為何可解、做對什麼、何種程式特徵」，
+並平行研究失敗案例。#224 承接這兩個目前 cohort 的案例，連到 #105/#139 的方法；
+#225 做分層失敗 census 與相近案例比較；#223 保留 stream/parser telemetry 修正。
+這些不是歷史 HH2012/nested9 研究的替代，也不把先前的因果結論自動套到新題。
+
+目前觀察：token_ring 單次 response 有 10 個 candidate items，展開為 14 個
+validated/injected head bindings；Problem14 有 12 個 items/bindings。
+前者包含 token/local 關係與排程狀態，後者包含數值切點 -43、11、80 與離散狀態。
+這些是待驗證機制的線索；接受、注入、數量和 solve 不能直接標成 usefulness。
+先完成 source/prompt/response/trajectory 對照，再用原始動態 first_spurious 路徑，
+比較 full-response 與 suppressed-injection，先群組移除再逐項移除。後續 trajectory
+自然改變屬於實驗結果，不能要求它永遠等於原始 empty trace。
 
 # 後續工作佇列
 
