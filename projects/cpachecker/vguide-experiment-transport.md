@@ -74,3 +74,12 @@ Replay cache 沒有保存的 terminal evidence 維持 unknown，不從成功 rep
 既有 `recordsStreamCloseFailureBeforeSuccess` 的 second-close fixture 可直接驗證此邊界，
 不必增加另一套 HTTP 模擬。PR228 的 client/dumper 21 個 focused tests 通過；這不是 live
 provider 或完整 verifier 的驗證。
+
+## Response hash 的原始來源（#229 packet 核對）
+
+`VGuideAnalysisDumper` 的 `response_hash` 是 `hashUtf8(api.content())`；
+`LlmResponseCache.record` 保存同一個 `result.content()`，replay 直接讀出該字串。
+因此應以相同 task/request/ordinal 的實際 `llm_rounds.jsonl` 和 cache content 核對；
+cache 整份 JSON 檔案的 SHA 另計。不能把跨案例抄錯的 response hash 解釋成未證實的
+「正規化差異」。#229 準備曾誤填 token_ring.06 的 hash 到 token_ring.11；直接讀取
+原始 token_ring.11 round 後，其 response hash 與該 cache content SHA 完全相同。
