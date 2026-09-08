@@ -206,3 +206,15 @@ wrapper 應先清除這些父程序設定，再套用明確的共同 recipe。Ba
 `unset VGUIDE_*` 只做 filename glob，不能清除同前綴變數；要遍歷
 `"${!VGUIDE_@}"` 得到變數名稱後逐一 unset。以無害 sentinel 和 stub 驗證環境清除，
 不需要為 wrapper 檢查再呼叫模型或 verifier。
+
+## 外層 wall budget 與兩層 cleanup grace
+
+Issue #208 的600CPU/900wall 使用 `VGUIDE_TIMEOUT_GRACE=300`；這是加在 task CPU
+limit 上的 wall allowance。外層 capture 的 `--termination-grace 15` 要留出內層 capture
+預設10秒的收尾時間。三個值不能互換：timeout grace誤填10會把單題wall改成610；
+outer cleanup也設10則失去已驗證的nested cleanup餘裕。這些都是 launch contract，
+不是可任意縮短的等待時間。
+
+Model-free dispatch check 要執行各主機的實際 wrapper、讀實際 CWD/env/argv，且验证
+nonzero stage status確實阻止後續stage。只比對文字、測一份重寫過的命令，或確認
+argv沒有env sentinel，都不能證明實際啟動與環境清除正確。
