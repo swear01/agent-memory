@@ -187,6 +187,17 @@ worst-case 是每 task 2 logical / 6 HTTP attempts。正式成本 freeze 必須�
 但舊 freeze 的218/654宣告不是 enforced worst-case。補跑 budget 要重新明確確認。
 證據：Issue #180 comment5559713563 / #182 comment5559713668。
 
+### 跨主機 accounting 的統計範圍（2026-09-08）
+
+報告寫在某個 host 的目錄、檔名叫 `accounting-final.json`，都不代表內容只涵蓋該 host
+或整個實驗已完成。#208 的共用 reporter 固定掃描三台，top-level `counts` 是全域快照；
+單機結案必須先用 `row.host` 篩選再加總，並分開記錄 `launched`、`terminal` 與預期題數。
+曾把全域 157 次 HTTP 誤列為 Valkyrie 單機用量，實際該機只有 67 次；原始快照保留，
+另存 host-local receipt 更正範圍。全域計數只能對全域上限，單機計數才對單機上限。
+Task coverage 只計唯一 task records 或 `logs/*.execution.json`；外層 launcher 的
+execution sidecar 不是額外一題。候選的 validated/injected 統計也不能改稱原始候選數
+或證明 usefulness；未知 usage 維持 unknown，不得補零。
+
 ### Terminal sentinel 不是通知 callback（2026-09-06）
 
 #177 monitor 在 STOP 出現時 exit0，早於九分鐘後的 final summary，且實際 command
