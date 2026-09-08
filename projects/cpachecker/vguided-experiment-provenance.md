@@ -289,3 +289,11 @@ cells 是不同 estimands；#208 的新 comparison 不可填進 #180 缺失 cell
 usage 缺失仍是 unknown，summary 的 observed-only 零值不是零消耗。
 後續觀測修正應保存有限的 terminal metadata 與 parser reason；不需要保存完整
 HTTP headers 或憑空補齊 usage，也不得為修正報表重跑或替換原始樣本。
+
+## 非空 verdict 不等於已解決（2026-09-08）
+
+`UNKNOWN` 是非空字串，不能用 `bool(verdict)` 或「非空數減 correct」算 official wrong。
+#208 Cthulhu 的舊 callback 將 stage24/remaining 的 wrong 寫成 4/33；此算法恰好
+重現該誤報，但原始 records 經既有 `check_core_only_smoke.summarize` 分類實為 1/1。
+整合必須共用 validator 的 official verdict 分類，並核對互斥的
+correct + wrong + unresolved = manifest 題數。這是報告計數更正，不是新的實驗結果。
