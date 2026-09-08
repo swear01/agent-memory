@@ -106,6 +106,23 @@ preregister 後、啟動 parallel jobs 前由單一 controller 建立空的 comm
 plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保留並排除整個失敗 attempt，
 以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
 
+# 探索性批次的單題結果與全域停止（Issue #208）
+
+單題 native crash 若已有完整 raw exit/log、失敗分類且 owned process 已清理，可保留為
+crash outcome，讓其他獨立題目繼續。Timeout、analysis failure 與 official wrong 也必須
+原樣計數；不能因 smoke_ok=false 就推論 integrity_ok=false 或整批不能執行。
+是否停批必須依事前記錄的實驗政策，不能為了完成率抹除失敗或新增結果導向 exclusion。
+
+Root 曾把 Stock24 的單題 crash 修復誤設為全部剩餘題目的共同前置條件，造成完整24筆
+已有 integrity PASS，剩餘工作仍閒置。修正是在 issue 明確記錄 prospective continuation，
+保留舊 STOP receipt 和24筆原始結果，只執行未啟動的194筆 Stock；cohort、runtime、limits
+不變。#215 的診斷與其餘題目執行解耦，沒有宣稱 crash 已修好或舊 stage 已通過。
+
+派工需一次授予完整 bounded shard 的執行權與明確終止條件，不應每一 wave 再等 root。
+單題結果只停止不可信的該筆 evidence；身份/hash不符、程序無法控制、持續資源失控或
+provider/cost異常才停止受影響 lane，證實是共用問題再全域停止。已凍結 stop policy 若需
+調整，先保留歷史、公開記錄調整與適用範圍，再啟動後續 cells；不可默默改寫原先 gate。
+
 # Exploratory integration qualification（Issue #180）
 
 Owner-authorized exploratory run 可接受普通背景 load；這只放寬 performance admission，
