@@ -310,3 +310,14 @@ request/response、head、formula 與 ID mapping，不能把不同 namespace 的
 `validatedPredicatesJson` 輸出全部，`injectedPredicatesJson` 才過濾 false flags。
 #226 的 replay-only suppression/filter 應重用這條既有路徑。先追產生、轉換與消費端，
 再判定資料是否遺失；不為錯誤的初步診斷新增重複欄位或框架。
+
+## 實際 benchmark input 與同名 source 不可互換（2026-09-08）
+
+#225 驗收發現，`mapsum5.yml` 與 `sep.yml` 的 `input_files` 分別指向
+`mapsum5.i` 與 `sep.i`；frozen record 的 `source` 和 `source_sha256` 也對應這些
+預處理輸入。同目錄雖有同名 `.c`，其 bytes/hash 不同，不能把 `.yml` 副檔名
+直接改成 `.c` 再宣稱是已執行的 source。
+
+建立證據索引應沿 task `input_files` 與實際 record `source` 解析路徑，再驗 bytes/hash。
+同名原始 `.c` 若有助閱讀，可另外標成 supplemental source；不可替代執行輸入或
+混用兩者的行號、hash 與 prompt visibility。這是報告 provenance 更正，不是新實驗。
