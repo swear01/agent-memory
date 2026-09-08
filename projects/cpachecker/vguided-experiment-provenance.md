@@ -319,6 +319,15 @@ candidate 文字或 response ordinal。匹配要跨 refinement rounds 累積，�
 run 不會觸發此檢查，不能視為合格的 exclusion。真正的消融須逐 run 驗證 request/response、
 完整 validated bindings 和實際 injected flags；mock callback 或設定值不等於實際介入成功。
 
+注入策略的其他 consumer 也要追到完成階段。#230 發現 `RefinementOutcomeStore` 曾在
+選取前把 `precisionOnly().size()` 存成 injected，並在 `onSpuriousAfterRefinement`
+選取／注入前完成文字；因此 SUPPRESS_ALL 的 structured flags/array 正確為 0，文字卻仍
+顯示全部候選數。後續 outcome context 也會使用這段文字。實際注入數應在策略選取後
+記錄，而 nativeDelta 快照仍須在 LLM/compiler 注入前取得，避免把 LLM 當成 native。
+修正要測 normal pending-dump callback、完成文字與後續 context；只測 fallback 或直接
+呼叫 store 不足。凍結實驗的原 checker 與不一致文字要保留，衍生 checker 更正另存並
+明示缺陷，不為修正統計而重跑或改寫 raw evidence。
+
 ## 實際 benchmark input 與同名 source 不可互換（2026-09-08）
 
 #225 驗收發現，`mapsum5.yml` 與 `sep.yml` 的 `input_files` 分別指向
