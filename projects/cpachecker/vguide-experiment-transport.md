@@ -58,3 +58,19 @@ checker accounting failure 和 provider/solver failure，避免為修正統計�
 Provider usage 的 `completion_tokens_details.reasoning_tokens` 是 `completion_tokens`
 內的細分，不能再加到 completion 或 total。失敗 attempt 未回傳 usage 時保留 unknown，
 不可補成零或從其他 attempt 推估。
+
+## SSE 終止證據與內容解析分開（PR228）
+
+HTTP 200、SSE `[DONE]` 與 candidate JSON 可解析是三個不同結果。已收到 DONE 的
+content 仍可能是不完整 JSON；缺少 observed `finish_reason` 時，不可把截斷直接歸因於
+token cap。保留 HTTP status、DONE/EOF/error、nullable finish reason/usage、UTF-8
+content byte length/SHA-256 與 parser reason 即可，不需增加原始 headers 或完整 wire log。
+Replay cache 沒有保存的 terminal evidence 維持 unknown，不從成功 replay 推造 HTTP 事件。
+
+`PredicateProposalClient.proposeWithUsage()` 的外層 try-with-resources 可能在 parser 已成功
+後才因 `bodyStream.close()` 丟出普通 IOException。只從 `StreamParseException` 取 evidence
+會漏掉已知 DONE、content hash/length、finish reason 與 usage；應保留成功解析得到的 evidence
+作為 close-failure fallback，仍記 `stream_close_failure`，不可提前記 success。
+既有 `recordsStreamCloseFailureBeforeSuccess` 的 second-close fixture 可直接驗證此邊界，
+不必增加另一套 HTTP 模擬。PR228 的 client/dumper 21 個 focused tests 通過；這不是 live
+provider 或完整 verifier 的驗證。
