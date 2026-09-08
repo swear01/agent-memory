@@ -2,11 +2,14 @@
 title: CPAchecker verdict audits
 scope: project
 status: active
-updated: 2026-09-06
+updated: 2026-09-08
 ---
 
 # CPAchecker verdict audits
 
 - For SV-COMP verdict triage, the frozen dataset/official SV-COMP label remains the correctness ground truth. Agreement from k-induction or independent tools is diagnostic evidence and must not relabel a disagreement.
 - Keep arithmetic/bitvector, array-permutation, and heap/list-structural explanations separate unless source inspection identifies a shared cause. A machine-model mismatch is only a hypothesis until independently reproduced with exact provenance.
-- In issue #54/#56 (2026-09-06), the 12 historical disputes were source/property/hash checked against frozen records and the official SV-COMP 2026 table; the six crash/unqualified tasks and #178 LP64 observation remain separate lanes.
+- #54/#56 的本地 source/task/property hashes 與 frozen records 比對，和官方結果表的 task/property 對照是兩種證據。重用已驗收的歷史本地來源紀錄，不能直接標成官方 source bytes/data model 完全一致；必須另有官方來源與模型的可核對證據，否則明記 name/property-only。歷史十二個 disputes、六個 crash/unqualified tasks 和 #178 LP64 observation 保持分開。
+- BenchExec HTML 表內有結構化 `const data` JSON；用標準 JSON parser 讀取，從實際 tool metadata 找 status 欄位，驗證 task 唯一性和工具/欄位數量。不要用 HTML regex 配硬編碼工具清單的位置來推定結果歸屬。
+- 外部結果分類要區分 mixed、agreement-with-expected、disagreement-with-expected 和 no-definite-result。非空且一致反對 expected 的集合不是「沒有明確結果」。#56 的 `sll-01-1` 曾因這個 else 分支誤報；修正分類仍不改 frozen expected verdict 或 official-wrong 計數。
+- 驗證依據：#56 current verdict cross-check 的 raw public table 與 root review，`<experiments-root>/reports/issue56-current-verdict-crosscheck-20260908/`。
