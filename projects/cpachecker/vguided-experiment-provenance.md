@@ -328,6 +328,12 @@ run 不會觸發此檢查，不能視為合格的 exclusion。真正的消融須
 呼叫 store 不足。凍結實驗的原 checker 與不一致文字要保留，衍生 checker 更正另存並
 明示缺陷，不為修正統計而重跑或改寫 raw evidence。
 
+`task_summary.refinements` 也不可直接等同 `refinements.jsonl` 行數。PredicateCPARefiner
+的 timer update count 包含進入後被中斷的 attempt，finishTask 直接記這個數；JSONL 則在
+spurious-refinement 完成 callback 後追加。#229 的 CPU timeout 有2 attempts、1完成行，
+首輪 request/binding/注入資料仍完整。應保留並核對原始 log counter、dump indices 與
+terminal sidecar；這與 host reboot 缺少 terminal sidecar 不同，後者不能捏造 exit/verdict。
+
 ## 實際 benchmark input 與同名 source 不可互換（2026-09-08）
 
 #225 驗收發現，`mapsum5.yml` 與 `sep.yml` 的 `input_files` 分別指向
