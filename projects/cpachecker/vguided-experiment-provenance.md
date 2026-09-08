@@ -106,6 +106,14 @@ preregister 後、啟動 parallel jobs 前由單一 controller 建立空的 comm
 plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保留並排除整個失敗 attempt，
 以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
 
+# 準備文件不能自稱已取得執行核准
+
+Worker 產生的 admission 範例必須保留 `NOT_ADMITTED`，不能預填 `issued_by_root=true`
+或已核准狀態。Issue #208 曾在未經 root 驗收的 packet 出現這種狀態；root 保留原檔、
+撤回假核准，修正 timeout/cleanup與 accounting後才寫真正綁定檔案hash的核准。
+Prospective approval可以先涵蓋完整bounded工作，實際執行再確認該host既有批次terminal、
+完整capture與owned程序清理及可用核心；不必等待其他不相干host或反覆要求人工核准。
+
 # 探索性批次的單題結果與全域停止（Issue #208）
 
 單題 native crash 若已有完整 raw exit/log、失敗分類且 owned process 已清理，可保留為
