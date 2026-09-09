@@ -2,7 +2,7 @@
 title: CPAchecker verdict audits
 scope: project
 status: active
-updated: 2026-09-08
+updated: 2026-09-09
 ---
 
 # CPAchecker verdict audits
@@ -13,3 +13,6 @@ updated: 2026-09-08
 - BenchExec HTML 表內有結構化 `const data` JSON；用標準 JSON parser 讀取，從實際 tool metadata 找 status 欄位，驗證 task 唯一性和工具/欄位數量。不要用 HTML regex 配硬編碼工具清單的位置來推定結果歸屬。
 - 外部結果分類要區分 mixed、agreement-with-expected、disagreement-with-expected 和 no-definite-result。非空且一致反對 expected 的集合不是「沒有明確結果」。#56 的 `sll-01-1` 曾因這個 else 分支誤報；修正分類仍不改 frozen expected verdict 或 official-wrong 計數。
 - 驗證依據：#56 current verdict cross-check 的 raw public table 與 root review，`<experiments-root>/reports/issue56-current-verdict-crosscheck-20260908/`。
+
+- Counterexample 輸出能力要追完整呼叫鏈，不能只讀 ARG witness options。已驗證 runtime208 的 `PredicateCPARefiner` real-error branch 呼叫 `PathChecker`，後者可透過 `counterexample.export.formula` 與 `counterexample.export.model` 加入 SMT formula / assignment，最後由 `CEXExporter` 內迭代 `counterexample.getAllFurtherInformation()` 的迴圈寫出。原 run 使用 `--no-output-files` 而缺檔，不能推論 exporter 不支援。精確路徑與模型取得成功才有相關輸出；timeout 或 imprecise path 的缺漏要照實記錄。
+- `PathChecker.createCounterexample` 的模型重建是同一 CPA 分析內的既有 SMT 操作；和另行啟用 `analysis.checkCounterexamples` 或啟動第二個 verifier 不同。做 allocator 診斷時兩 arm 必須保持相同的輸出／檢查設定，只改預定的 allocation option。依據：#236 root source review，`<experiments-root>/reports/issue236-allocation-diagnostic-20260909/root-source-export-review.json`；不代表已執行或證實任何 wrong-verdict 根因。
