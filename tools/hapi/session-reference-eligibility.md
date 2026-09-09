@@ -18,6 +18,12 @@ updated: 2026-09-09
 - Codex direct import 先建立 cache，再追加內容；新建 session 不發逐筆 message-received，需要寫入完成後 refresh。
 - 發布內容資格變更的完整 session 時，使用當下物件快照，避免後續 markMessageQueued 修改同一物件，令 earlier event 的 thinking 狀態被回溯改寫。
 
+- OpenCode clear-abort 直接將 held messages 搬回 source；成功後須刷新 source 與 replacement 的內容資格。正常 clear / merge 已有 messages-invalidated，不能據此假設 abort 也有。
+
+## 測試隔離
+
+CLI globalSetup 固定使用暫存目錄下的 hapi-test-config.json，結束時刪除。不同 worktree 的完整測試不可共用同一暫存目錄平行跑，否則一套 teardown 會令另一套報 Missing isolated hub config；依序執行即可。
+
 ## SQLite iterator 注意
 
 本機 Bun 1.3.14 實測：使用快取的 db.query(...).iterate()，找到第一筆即 return，重複查詢可能報 `bad parameter or other API misuse`。改用獨立 db.prepare，並以 try/finally 呼叫 statement.finalize；仍逐筆 decode 並於首筆有效內容停止，不載入完整 transcript。
