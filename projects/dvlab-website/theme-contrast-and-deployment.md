@@ -1,5 +1,5 @@
 ---
-title: DVLab 網站深淺色對比與主站部署驗證
+title: DVLab 網站深淺色對比、粒子配色與主站部署驗證
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
@@ -30,9 +30,26 @@ updated: 2026-09-09
 - 瀏覽器測試不可與清空／重建同一份 dist 的工作同時執行；曾因此看到暫時性首頁連結 404，建置結束後重跑完整瀏覽器測試通過。
 - 不要將一次明示的「略過機器人審查」保存成永久偏好。本次 PR #87 的略過及合併已獲使用者明確同意。
 
-## 最後確認狀態（需重新查核的快照）
+## PR #87 歷史驗證（後續版本見下節）
 
 - 2026-09-09 主站已觀察到 `current -> releases/20260909-5c9b733`；先前「等待管理員切換」狀態已過期。
 - GitHub Pages 與主站各完成 137 個 URL 的深淺色掃描，無瀏覽錯誤，124 個詳細頁 badge 都是修正後的 8.75:1。主站 HTTPS、英文論文深層路由及不存在路由的 404 狀態亦確認。
 - 本任務預備封裝（非實際啟用封裝的身分證明）SHA-256 為 `619dc7a762cd8c2dc212d6d65e5b7cf28eb0ffec5e59f4dd7ef2003ad108ddf2`；未保存任何密碼或憑證。
 - 已清理本任務乾淨 worktree／分支並快轉本機 main；其他任務 worktree 保留。
+
+## 首頁粒子效果與可見度
+
+- 舊版 `6ff739c` 的 `frontend/src/components/Home/index.js` 使用 react-tsparticles：淡黃 `#fcffcc` 方形粒子、粒子 opacity 0.5、連線距離 150px／最高 opacity 0.1／寬 0.5px、滑鼠 repulse 距離 200px、點擊 push 四顆。
+- 搜尋前端特效時必須包含 `.mjs`：新版已有 `src/scripts/particles.mjs`，不能因只搜尋 js/ts/astro/css 就判定沒有實作。首頁重構移除了 canvas 與載入點；PR #88 接回 `HomePage.astro`。
+- 特效限中英文首頁的大 Logo 開場背景，是粒子與連線受到游標排斥，並非游標換形或拖尾。裝飾 canvas 不攔截事件，背景容器接收 pointer 事件，Logo／連結點擊不新增粒子。
+- PR #88 的動畫測試通過，但使用者仍看不到：RGBA token alpha 又乘上 canvas globalAlpha，使淺色粒子只剩 7.5–17.5% 不透明度、連線最高 2.5%。只證明有 draw calls 不夠；須以實際尺寸、兩種主題目視確認。
+- PR #89 改為不含 alpha 的色彩 token，透明度只套一次：深色 `--particle-color: #fcffcc`、粒子 0.5、連線最高 0.1；淺色採 `#526326` 深橄欖綠、粒子 0.5、連線最高 0.22，搭配原有黃綠背景。方形大小為 2–6 CSS pixels，排斥距離恢復 200px。
+- 原生 canvas 移植保留舊版視覺元素與主要互動，不宣稱完整複製 tsParticles 的碰撞物理。保留 100 顆上限、手機初始減量、離開視窗／隱藏分頁暫停、prefers-reduced-motion 初始與即時切換。尊重無動畫偏好，不為了可見度強制開啟。
+- `tests/particles-browser.mjs` 接入 `npm run test:browser`；檢查實際 canvas 色彩／alpha、中英文、主題換色、滑鼠排斥、點擊 +4／上限、Logo 重播不誤觸、手機、離開視窗暫停與減少動態設定。新增可見度修正後，两組 CMS 的完整 verify 與粒子專項皆通過；兩主題截圖目視通過。隱藏分頁分支未另以真實背景分頁量測，不要擴大宣稱。
+
+## PR #89 最後確認狀態（2026-09-09 快照）
+
+- PR #88 合併 `7d5e8393f35a605f4c6f0c8a2cb729a5902ae7a1`；PR #89 合併 `bddfc5c4e3b2a179c118ef8dd80383a7c89cc6de`。本次使用者明示略過外部審查、合併上線；不推廣為其他任務的永久偏好。
+- 主站已原子切換至 `releases/20260909-bddfc5c`，保留前一版 `releases/20260909-7d5e839`，未重啟 Caddy。封裝 SHA-256：`362a7d75f302988c87ced71999e15d1156fabd5ef9420f35f12f1cad1f969bfe`。
+- 合併後 CI 與 GitHub Pages 部署成功，主站／備援站各自跑 Brave 粒子專項全數通過；主站淺色正式画面亦已目視確認。相關 docs/architecture.md 已更新，本次乾淨 worktree 已清理，其他任務 worktree 保留。
+- 以上為當時已驗證版本，不代表日後仍是最新；後續操作先查 Git main、兩站資產及 Inari current，避免覆盖其他任務更新。
