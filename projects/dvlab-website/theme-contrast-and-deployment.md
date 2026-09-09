@@ -47,9 +47,22 @@ updated: 2026-09-09
 - 原生 canvas 移植保留舊版視覺元素與主要互動，不宣稱完整複製 tsParticles 的碰撞物理。保留 100 顆上限、手機初始減量、離開視窗／隱藏分頁暫停、prefers-reduced-motion 初始與即時切換。尊重無動畫偏好，不為了可見度強制開啟。
 - `tests/particles-browser.mjs` 接入 `npm run test:browser`；檢查實際 canvas 色彩／alpha、中英文、主題換色、滑鼠排斥、點擊 +4／上限、Logo 重播不誤觸、手機、離開視窗暫停與減少動態設定。新增可見度修正後，两組 CMS 的完整 verify 與粒子專項皆通過；兩主題截圖目視通過。隱藏分頁分支未另以真實背景分頁量測，不要擴大宣稱。
 
-## PR #89 最後確認狀態（2026-09-09 快照）
+## PR #89 歷史確認狀態（後續版本見下節）
 
 - PR #88 合併 `7d5e8393f35a605f4c6f0c8a2cb729a5902ae7a1`；PR #89 合併 `bddfc5c4e3b2a179c118ef8dd80383a7c89cc6de`。本次使用者明示略過外部審查、合併上線；不推廣為其他任務的永久偏好。
 - 主站已原子切換至 `releases/20260909-bddfc5c`，保留前一版 `releases/20260909-7d5e839`，未重啟 Caddy。封裝 SHA-256：`362a7d75f302988c87ced71999e15d1156fabd5ef9420f35f12f1cad1f969bfe`。
 - 合併後 CI 與 GitHub Pages 部署成功，主站／備援站各自跑 Brave 粒子專項全數通過；主站淺色正式画面亦已目視確認。相關 docs/architecture.md 已更新，本次乾淨 worktree 已清理，其他任務 worktree 保留。
 - 以上為當時已驗證版本，不代表日後仍是最新；後續操作先查 Git main、兩站資產及 Inari current，避免覆盖其他任務更新。
+
+## PR #91 淺色版微調與部署（2026-09-09 快照）
+
+- PR #91 合併提交 `cd438873db47f159d6a9e17b25ba40923673f507`；已納入成員資料 PR #90，並保留其 `researchInterests` 驗證與測試。多任務同時更新 CMS 時，重定基底後應合併所有雙語欄位，不能覆蓋另一任務的驗證。
+- 「2025 · October」不清楚的根因是共用 `.badge-muted` 設為 `border: none` 且白色底只有 0.03 alpha。淺色模式改為 1px `--line-strong`（`#a8b38b`）框、`#eef1e2` 實色底與 `#475533` 文字；同時涵蓋學期、年份與成員資訊標籤，保留深色 badge 配色。
+- 使用者接受的微調方向：米白頁面（`#f7f8f2`）、灰綠細框、較小卡片標題、減少柔陰影與圓角；獲獎來源使用文字連結。保留 Logo、原始合照、首頁粒子與深色配色，不把「減少 AI 套版感」解讀成全面重做或移除既有互動。
+- 手機選單線條使用不存在的 `--text-strong`，hover 使用不存在的 `--bg-soft`；改用既有 `--text`、`--surface-1`。光測選單能開關不足，還要驗證入口本身可见。淺色平面控制項保留明確 focus-visible outline。
+- 網路搜尋未找到三場活動的日期／地點佐證，故移除泛用描述，不推測細節。`life.description` 改用既有 `optionalI18nText`，CMS 同步改選填；首頁與活動頁均條件渲染，填寫時仍要求中英文完整。不能只移除 Markdown 欄位而留下必填 schema 或直接索引。
+- Inari 的 `command -v python3` 雖回傳 `/usr/bin/python3`，實際執行會出現 `No developer tools were found`，不能當成 Python 已可用。未安裝額外工具；改用系統 `shasum`、`tar`、`chown`、`chmod`、`ln` 與 BSD `mv -fh`。`mv -h` 可避免將暫存 symlink 移進 current 指向的目錄；須在同目錄執行 rename，切換前再次比對預期舊 symlink。
+- 正式版 `current -> releases/20260909-cd43887`，前版 `releases/20260909-1f78f0b` 保留，未重啟 Caddy。此為當次實測，未來部署仍先讀取 current，不能硬套舊值。
+- 封裝 SHA-256：`5553dd4c4dd20ec668270d2a336b1c75a8daa8e2698e5be5f667ccc8a14f20af`。兩站皆載入 `/_astro/awards.IwBPUfb2.css`，雜湊同為 `c56be4b7cc4f292025229091f0210a06ade59b85cd8c78fc376b29c59732d327`；檔名與雜湊是此次部署證據，不是永久設定。
+- 最終 CMS disabled／enabled verify 各為 7 tests、0 failures，147 頁、2,776 links、708 images；完整 Brave 瀏覽器測試通過。合併後 CI／Pages 成功，兩站再驗證中英文、手機／桌面、深淺色、日期框、活動文案、HTTPS、canonical、靜態資產與 404。兩份相關文件已更新；本次分支、乾淨 worktree 及 preview 程序均清理。
+- 使用者明確同意「同意 直接發佈部署」，授權 PR #91 略過此次無法使用的外部 bot 審查；沒有宣稱 bot 通過，不延伸為未來任務的永久豁免。當次組織安裝清單只有 GitRoll／Cursor，未列 Swear Review、Gemini、Codex；Google Developer Connect 未找到此倉庫連結。整合狀態會變，後續先重新查證。
