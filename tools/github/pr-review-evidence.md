@@ -1,8 +1,8 @@
 ---
-title: GitHub PR review 的 head、scope 與 OR 證據
+title: GitHub PR review 與 CI 診斷的證據邊界
 scope: tools/github
 status: verified
-updated: 2026-09-08
+updated: 2026-09-09
 ---
 
 Swear CheckRun SUCCESS 不一定代表檔案被審查。CPAchecker PR214 的 Markdown-only
@@ -30,3 +30,16 @@ finding 屬於最新 review。PR213 的舊 b81 finding 後來顯示 current c27 
 head、provider terminal response 與舊 finding 修正狀態。Codex summary 的 Completed
 也不等於 clean；有明確「Didn't find any major issues」和相符 reviewed commit 才接受，
 不能在它仍帶 findings 時以完成狀態當通過。
+
+`gh run rerun` 回覆 `job ... cannot be rerun` 只證明該次 CLI 重跑操作失敗，
+不能單憑此訊息就斷言是權限不足。應分開核對 gh 版本與錯誤來源、workflow/job
+狀態、實際 API 回應及官方權限要求。repository API 的 `permissions.push=false`
+是當下 repository 權限證據，不等於已證明上述 CLI 錯誤的直接原因；能更新 fork
+branch 也不代表具備上游 Actions 管理權限。未完成因果核對時，明確標為待查。
+
+HAPI PR1771 的 iOS `concurrentSyncTailCallsCoalesceIntoASingleRun` 曾在
+`MessageWindowControllerTests.swift:106` 回報 requests.count 預期 1、實際 2。
+可確認該次失敗、該檔未被本次修正改動、前一 head 的 package suite 通過；
+這些證據仍不足以把「確定是偶發測試」或「與變更完全無關」寫成根因結論。
+應另核對測試同步方式、Swift 排程契約與可重現結果。此案例的排程根因與
+重跑失敗原因尚未完成調查，不將推測保存成已驗證事實。
