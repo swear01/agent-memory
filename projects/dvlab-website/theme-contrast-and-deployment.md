@@ -12,7 +12,7 @@ updated: 2026-09-09
 - 兩站都以 `PUBLIC_SITE_URL=https://dvlab.ee.ntu.edu.tw` 建置 canonical、hreflang、Open Graph 與 sitemap。不要將主站綁到 GitHub Pages，也不要讓備援重新導向主站。
 - GitHub Pages 隨 main 更新，Inari 則需要獨立部署。PR 合併／Pages 成功不能證明主站已更新。
 - Inari 的 `/Library/WebServer/DVLab/current` 指向 `releases/` 內的版本；部署應新建 release、保留舊版，核對目前版本後原子切換 symlink，不需重啟 Caddy。
-- 2026-09-09 SSH 的 `sudo -n true` 回覆需要密碼。可先將已驗證的封裝與部署腳本放在 `<remote-home>/dvlab-deploy-<commit>/`，核對 SHA-256、路徑安全、canonical 與預期舊版，再請使用者以管理員執行切換。不得將「上傳／預檢成功」記為「上線」。
+- 2026-09-09 早先 SSH 的 `sudo -n true` 需要密碼；19:20 後重新實測已成功，管理員障礙已解除，未來仍先重驗。若之後權限不足，可先將已驗證的封裝與部署腳本放在 `<remote-home>/dvlab-deploy-<commit>/`，核對 SHA-256、路徑安全、canonical 與預期舊版，再請使用者以管理員執行切換。不得將「上傳／預檢成功」記為「上線」。
 
 ## 淺色文字根因與修正
 
@@ -34,5 +34,5 @@ updated: 2026-09-09
 
 - 2026-09-09 主站已觀察到 `current -> releases/20260909-5c9b733`；先前「等待管理員切換」狀態已過期。
 - GitHub Pages 與主站各完成 137 個 URL 的深淺色掃描，無瀏覽錯誤，124 個詳細頁 badge 都是修正後的 8.75:1。主站 HTTPS、英文論文深層路由及不存在路由的 404 狀態亦確認。
-- 該次 release 封裝 SHA-256 為 `619dc7a762cd8c2dc212d6d65e5b7cf28eb0ffec5e59f4dd7ef2003ad108ddf2`；未保存任何密碼或憑證。
+- 本任務預備封裝（非實際啟用封裝的身分證明）SHA-256 為 `619dc7a762cd8c2dc212d6d65e5b7cf28eb0ffec5e59f4dd7ef2003ad108ddf2`；未保存任何密碼或憑證。
 - 已清理本任務乾淨 worktree／分支並快轉本機 main；其他任務 worktree 保留。
