@@ -16,3 +16,6 @@ updated: 2026-09-09
 
 - Counterexample 輸出能力要追完整呼叫鏈，不能只讀 ARG witness options。已驗證 runtime208 的 `PredicateCPARefiner` real-error branch 呼叫 `PathChecker`，後者可透過 `counterexample.export.formula` 與 `counterexample.export.model` 加入 SMT formula / assignment，最後由 `CEXExporter` 內迭代 `counterexample.getAllFurtherInformation()` 的迴圈寫出。原 run 使用 `--no-output-files` 而缺檔，不能推論 exporter 不支援。精確路徑與模型取得成功才有相關輸出；timeout 或 imprecise path 的缺漏要照實記錄。
 - `PathChecker.createCounterexample` 的模型重建是同一 CPA 分析內的既有 SMT 操作；和另行啟用 `analysis.checkCounterexamples` 或啟動第二個 verifier 不同。做 allocator 診斷時兩 arm 必須保持相同的輸出／檢查設定，只改預定的 allocation option。依據：#236 root source review，`<experiments-root>/reports/issue236-allocation-diagnostic-20260909/root-source-export-review.json`；不代表已執行或證實任何 wrong-verdict 根因。
+
+- 讀取 allocator counterexample model 時，不能把 `malloc@k` 直接當成回傳地址。已核對 `DynamicMemoryHandler` 的失敗配置：fresh pointer-typed nondeterministic value 只決定 `ite(value != NULL, successful_alloc_address, NULL)`；必須再追實際程式指標的 SSA 等式及 source dereference 順序。模型中的非零 selector 也不等於分配到的地址。
+- 若編碼反例先對 NULL 解引用／寫入，再觸發 assertion，這能證明該分析模型走過 nullable-allocation 分支，不能單憑它宣稱存在 defined-C assertion counterexample、推定官方 benchmark 假設 allocation 必成功，或更改 frozen label。`memoryAllocationsAlwaysSucceed=true` 後變成 UNKNOWN 也不是修復成功。依據：#236 source／SMT／model 對照與 root acceptance，`<experiments-root>/reports/issue236-counterexample-interpretation-20260909/`。
