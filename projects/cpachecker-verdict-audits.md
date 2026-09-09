@@ -19,3 +19,5 @@ updated: 2026-09-09
 
 - 讀取 allocator counterexample model 時，不能把 `malloc@k` 直接當成回傳地址。已核對 `DynamicMemoryHandler` 的失敗配置：fresh pointer-typed nondeterministic value 只決定 `ite(value != NULL, successful_alloc_address, NULL)`；必須再追實際程式指標的 SSA 等式及 source dereference 順序。模型中的非零 selector 也不等於分配到的地址。
 - 若編碼反例先對 NULL 解引用／寫入，再觸發 assertion，這能證明該分析模型走過 nullable-allocation 分支，不能單憑它宣稱存在 defined-C assertion counterexample、推定官方 benchmark 假設 allocation 必成功，或更改 frozen label。`memoryAllocationsAlwaysSucceed=true` 後變成 UNKNOWN 也不是修復成功。依據：#236 source／SMT／model 對照與 root acceptance，`<experiments-root>/reports/issue236-counterexample-interpretation-20260909/`。
+
+- Counterexample GraphML 預設可能是 gzip：`CEXExporter.compressWitness=true`，`writeErrorPathFile` 會在設定的 `.graphml` 後附加 `.gz`。只 glob `Counterexample.*.graphml` 會把有效 witness 誤報為缺失。#236 三個 FALSE arms 的既有 `.graphml.gz` 已逐檔雜湊、解壓並確認 GraphML XML root；UNKNOWN arms 無 witness。收割時應同時盤點 plain/compressed 檔案，保留原始壓縮位元組與 hash；凍結後才發現漏盤點時加補充 receipt，不改 raw/pattern-specific inventory，也不把 XML 可讀誤稱獨立 witness validation。依據：`<experiments-root>/reports/issue236-allocation-diagnostic-20260909/root-compressed-graphml-correction.json`。
