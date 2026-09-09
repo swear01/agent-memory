@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, parser, smt-lib, bitvector, validation, muse]
 status: active
 created: 2026-08-30
-updated: 2026-09-08
+updated: 2026-09-09
 ---
 
 # 先區分 generation 與 parser representability
@@ -66,3 +66,21 @@ control 可轉譯。Root 核對 fixture hashes、JSON decoded formulas 與兩 ar
 擴充 constant-offset 支援前，要有 typed source/layout 或已知 indexed access 的 stride
 依據；heap value width 本身不足以證明 C object layout。證據不足時保留拒收並改善能力
 診斷，不能猜 stride、放寬 unknown-variable/scope checks 或宣稱修好後一定提升 solve。
+
+# 參考謂詞必須使用 C carrier width
+
+Issue #103 的 bakery setup 使用 BV1 宣告 `main::state_39`，在 abstraction instantiate
+遇到同名符號已有其他型別的 Java `IllegalArgumentException`。原始 C 的
+`SORT_1` 是 `unsigned char`，雖然註解寫「BV with 1 bits」並以 mask 限制值域；
+同任務保留的 production replay log 實際宣告 `main::state_39@3` 為 BV8。
+因此手寫 predmap 要依 C declaration、data model 和實際公式型別決定寬度，
+不能把 masked logical domain 的位數直接當成 SMT carrier width。
+
+例外訊息中的 `T(34)` 是不透明型別標識，不能解讀為 34-bit；recorder 的
+`crash` 分類也不能直接當成 native SIGSEGV。BV1 上「等於 0 或 1」是 tautology，
+改成 BV8 後才是非平凡值域切分，但仍未證明可匯入、對 refinement 有用或能解題。
+保留舊 map 與失敗紀錄，修正 map 必須另行完成實際 import qualification。
+
+來源：`reports/issue103-import-replay-qualification-20260909/outputs/` 的
+`hardware-setup/cpa.log`、`hardware-replay/cpa.log` 與同一 benchmark source；
+frozen code commit `b3ad20052f6c3da7d5ad321f050a4cb0d18fce0c`，修正追蹤 #239。
