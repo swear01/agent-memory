@@ -95,3 +95,18 @@ warnings，再核對實際 retained/exported predicate 內容與型別。分開�
 已觀察到的 SSA/type compatibility、後續 solver outcome；不要用 process exit 或 predmap
 檔案存在代替匯入證據。此行為在 merged source `d195e94cc51f5f14f620d3a1c0c6cb906a12eb2f`
 的 PredicatePrecisionBootstrapper 與 persistence/PredicateMapParser 已逐路徑核對。
+
+# Parser 宣告成功不等於程式變數綁定正確
+
+#241 的 ECA `Problem102_label11` 參考 map 將十一個全域 `a*` 宣告成
+`main::a*`；實際 benchmark 在 file scope 宣告（lines 106–116），`main` 到
+line 171565 才開始。輸出的 predmap 同時保留 `main::a*` 和 bare `a*`，證明
+「有讀入公式」不能代替程式變數對應檢查；#239 報告稱這些是 main locals 的
+敘述錯誤，修正追蹤 #242，舊 map/raw 保持不動。
+
+人工 oracle qualification 要逐一核對 C declaration scope、實際 emitted symbol、
+carrier type 和 SSA 版本；不能替所有符號加上 main::，也不能只比 unqualified
+字串是否出現在 source。初始 SMT declarations 可產生與程式狀態分離的符號。
+另須區分字面比對和內容解讀：輸出 predmap 會有 let bindings、比較式與 bit-vector
+正規化，原始 assert 字串找不到並不證明未匯入；保留 checker unknown，再附具體
+source/retained-formula 證據，不能為通過檢查改寫 raw 或宣稱 solver equivalence。
