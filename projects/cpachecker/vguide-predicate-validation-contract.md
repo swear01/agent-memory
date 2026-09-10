@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, parser, smt-lib, bitvector, validation, muse]
 status: active
 created: 2026-08-30
-updated: 2026-09-10
+updated: 2026-09-11
 ---
 
 # 先區分 generation 與 parser representability
@@ -110,3 +110,22 @@ carrier type 和 SSA 版本；不能替所有符號加上 main::，也不能只�
 另須區分字面比對和內容解讀：輸出 predmap 會有 let bindings、比較式與 bit-vector
 正規化，原始 assert 字串找不到並不證明未匯入；保留 checker unknown，再附具體
 source/retained-formula 證據，不能為通過檢查改寫 raw 或宣稱 solver equivalence。
+
+# 初始 precision 與首次 lookup 的觀察邊界（PR #255）
+
+`PredicateCPA` 既有 `FINEST` 的 `Initial precision is` 透過
+`PredicatePrecision.toString()` 保留 global/function/local/location-instance placement。
+若舊 run 未開該 log，檔案存在或 solver timeout 不能補成已觀察到匯入。
+
+PR #255（merge `b3ce8d90cb0513b65a3ab0bffe5febeba124168a`）在
+`PredicatePrecisionAdjustment.computeAbstraction` 新增一次 INFO：
+`First plain predicate-map precision lookup/handoff`。只有 bootstrap 成功解析非空的
+plain predicate map 才啟用，YAML/GraphML witness 不在此觀察範圍；
+`AtomicBoolean.compareAndSet` 確保共享 adjustment 時仍只記一次。
+
+此 marker 記錄首次 lookup 的數量、位置及 precision 分類數量，不提供每個謂詞的
+身份或 solver 消費證明。local/function map 的早期 lookup 可能尚未選到參考謂詞；
+沒有第二筆 marker 也不能推論後續未使用。應將 parser 接受、初始 placement、
+lookup、下游過濾、solver 使用與候選充分性分開，不因新增紀錄功能就更新舊實驗結論。
+驗證為相關 parser placement/rejection 測試 22/22、build 和 checkstyle；未據此宣稱
+四個 reference run 已完成新的 runtime qualification。
