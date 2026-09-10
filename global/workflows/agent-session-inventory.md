@@ -71,3 +71,23 @@ Before archiving a completed session, preserve its handoff, check owned work and
 review durable-memory needs; synchronize any memory/QMD changes before final
 closeout. Archive preserves the conversation; it is not deletion of research
 artifacts or authorization to remove a shared dirty checkout.
+
+# Nested delegated sessions
+
+Register every successful child-spawn receipt with parent, child and remit IDs,
+including failed and superseded verification attempts. A top-level dispatch
+ledger can omit grandchildren even when every listed parent is archived.
+Closing the later successful test child does not close the earlier failed one.
+Check each known descendant's live lifecycle before accepting parent cleanup.
+
+Preserve failed-run commands and outcomes separately from the later passing
+verification. A changed command and a passing result do not alone establish
+why the earlier attempt failed. Before removing a shared task worktree, verify
+that no parent or child session still depends on its CWD. A runner can remain
+alive with a deleted CWD; do not recreate or rerun completed work merely to
+archive it when root can verify terminal evidence and owned processes directly.
+
+When reconciling omissions, a bounded scan of registered worktree rollouts for
+successful spawn receipts can recover child IDs without enumerating unrelated
+chats. State the dates, stores, matching rules and unsupported receipt forms;
+such a scan is not automatically an exhaustive Hub census.
