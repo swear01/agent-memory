@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-09-06
+updated: 2026-09-10
 tags:
   - hapi
   - supervisors
@@ -92,3 +92,22 @@ HAPI `v0.29.0.6` 已發布並部署到 standalone Hub 與全部 8 台 Runner；m
 Windows 定向升級的 source generation 必須對應正式 release source；artifact SHA-256、offer、實際新 Runner PID/version/generation 都要一致，`started` 回覆不算完成。
 
 Mazu 暫時 source Hub 使用快速本機磁碟與完整 fingerprint inputs，並包含 `hub/dist`、`web/dist`、pinned tunwg platform binaries。WorkingDirectory 設 source tree 的 `hub`，不是 `hub/dist`。ensureCliArtifact 在 cache lookup 前仍檢查／下載 tunwg；唯讀快取缺少該 binary 會先因 EACCES 失敗。完成指定 Windows 升級後，移除本次專用 drop-in、恢復 standalone Hub，保留 DB/env 與其他 drop-ins。
+
+# Reboot PID reuse and stale lock (2026-09-10)
+
+Athena reboot 後，`runner.state.json` 與 `runner.state.json.lock` 的舊 PID
+已被無關的 `deepseek-gateway` 重用，舊 control port 也沒有 listener。HAPI
+0.29.0.6 仍印出 `Runner already running with matching version`，systemd
+反覆 auto-restart，而 Hub 找不到該機器。只看 PID 存在會誤判 runner 存活。
+
+恢復時先確認目前 boot、PID 的 `/proc/<pid>/exe`/argv、控制埠及是否有真正
+runner；不能對 state 記錄的 PID 直接 kill。停止 runner supervisor 後，保留
+並移走已驗證過期的 state **及文字 PID lock**，再啟動 supervisor。這次只移走
+state 不夠，lock 仍會擋啟動。無關程序全程保留；最後實際 runner PID、state PID
+與 systemd MainPID 相同、NRestarts=0、Hub 上線且原 coding sessions 能 resume。
+
+主機重啟前未完成的 capture 仍是中斷，恢復 HAPI 不會恢復 verifier 程序。
+保留原 artifacts 與 RUNNING receipt 的原始 bytes，另外記錄 interruption，再給
+新 attempt/輸出目錄與 prospective admission。主機為何重啟仍未知；此鎖定問題
+只解釋重啟後 runner 無法恢復。永久程式修補另追蹤 CPAchecker issue #252。
+證據：`<experiments-root>/reports/next-parallel-batch-20260910/athena-runner-recovery.json`。
