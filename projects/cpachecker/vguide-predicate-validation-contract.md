@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, parser, smt-lib, bitvector, validation, muse]
 status: active
 created: 2026-08-30
-updated: 2026-09-09
+updated: 2026-09-10
 ---
 
 # 先區分 generation 與 parser representability
@@ -84,3 +84,14 @@ Issue #103 的 bakery setup 使用 BV1 宣告 `main::state_39`，在 abstraction
 來源：`reports/issue103-import-replay-qualification-20260909/outputs/` 的
 `hardware-setup/cpa.log`、`hardware-replay/cpa.log` 與同一 benchmark source；
 frozen code commit `b3ad20052f6c3da7d5ad321f050a4cb0d18fce0c`，修正追蹤 #239。
+
+# 初始謂詞讀取失敗可能繼續分析
+
+`PredicatePrecisionBootstrapper.prepareInitialPredicates()` 會捕捉 IOException 和
+PredicateParsingFailedException，記錄 `Could not read predicate precision from file`
+或 `Could not read predicate map` 後繼續；分析能跑到 refinement 不代表初始 map 已匯入。
+驗證手寫 oracle map 時，先釘住 initialPredicates option 的 exact file/hash，檢查這些
+warnings，再核對實際 retained/exported predicate 內容與型別。分開回報 parser 接受、
+已觀察到的 SSA/type compatibility、後續 solver outcome；不要用 process exit 或 predmap
+檔案存在代替匯入證據。此行為在 merged source `d195e94cc51f5f14f620d3a1c0c6cb906a12eb2f`
+的 PredicatePrecisionBootstrapper 與 persistence/PredicateMapParser 已逐路徑核對。
