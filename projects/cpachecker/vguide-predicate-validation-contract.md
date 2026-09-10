@@ -117,6 +117,14 @@ source/retained-formula 證據，不能為通過檢查改寫 raw 或宣稱 solve
 `PredicatePrecision.toString()` 保留 global/function/local/location-instance placement。
 若舊 run 未開該 log，檔案存在或 solver timeout 不能補成已觀察到匯入。
 
+`log.level` 控制檔案日誌，`log.consoleLevel` 控制 console，預設後者為 INFO。
+只設 `log.level=FINEST` 時，`Initial precision is` 不會出現在 console capture；
+要明確保留 `log.file` 指向的檔案（預設 `CPALog.txt`），並分別記錄檔案與 console
+的 hash、行號及觀察結果。這在 #256 的 runtime256 產生的
+`doc/ConfigurationOptions.txt` 與 `PredicateCPA.java:213` 已核對。
+`log.truncateSize=10000` 是訊息字串的截斷設定，不是整個檔案大小上限；
+不能從日誌總大小推論某筆 precision 是否完整，證據不足仍記 unknown。
+
 PR #255（merge `b3ce8d90cb0513b65a3ab0bffe5febeba124168a`）在
 `PredicatePrecisionAdjustment.computeAbstraction` 新增一次 INFO：
 `First plain predicate-map precision lookup/handoff`。只有 bootstrap 成功解析非空的
