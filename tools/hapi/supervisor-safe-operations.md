@@ -111,3 +111,12 @@ state 不夠，lock 仍會擋啟動。無關程序全程保留；最後實際 ru
 新 attempt/輸出目錄與 prospective admission。主機為何重啟仍未知；此鎖定問題
 只解釋重啟後 runner 無法恢復。永久程式修補另追蹤 CPAchecker issue #252。
 證據：`<experiments-root>/reports/next-parallel-batch-20260910/athena-runner-recovery.json`。
+
+程式修正邊界：HAPI [PR #19](https://github.com/swear01/hapi/pull/19) 已合併於
+`806a39190a83242dc670168f32bd11840a266947`，但此時尚未 release／部署。
+`acquireRunnerLock` 改用既有 `getHapiRunnerProcessIdentity`：只回收 `dead`／
+`foreign` lock owner，`runner`／`unknown` 保留占用，重試仍有界；12 個 focused
+測試、CLI typecheck、兩組 CI 與零 finding review 通過。既有 state same-version
+檢查本來就使用該 identity helper，這次 lock delta 沒有證明原部署為何誤走
+same-version 分支；installed binary／probe unknown 的歸因仍未解。合併不等於
+各機器已安裝修正版，也不代表主機重啟原因已解決。
