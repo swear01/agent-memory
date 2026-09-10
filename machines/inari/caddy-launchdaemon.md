@@ -3,7 +3,7 @@ title: Inari Caddy LaunchDaemon 的日誌權限與安裝驗證
 scope: machines/inari
 machine: inari
 status: active
-updated: 2026-09-09
+updated: 2026-09-10
 ---
 
 # 已驗證的啟動條件
@@ -17,8 +17,9 @@ updated: 2026-09-09
   SHA-256。下載的 macOS arm64 archive 已用 SHA-512 成功核對。
 - 此機實測 Caddy 可由 `_www` 帳號監聽 80／443；不必讓 Web server 以 root
   執行。憑證資料目錄須另設為 `_www` 可寫、mode 700。
-- 常駐網站需要停用 AC 自動睡眠；本次原設定為 1 分鐘。`pmset -c sleep 0`
-  不會停用螢幕睡眠。
+- 常駐網站需要防止系統睡眠。最初將 AC 閒置計時器從 1 分鐘改為
+  `pmset -c sleep 0`，但 2026-09-10 證實這不足以阻止返回維護睡眠；
+  現行修正與驗證邊界見下方「網站睡眠中斷」。
 
 # 驗證邊界
 
@@ -53,3 +54,34 @@ updated: 2026-09-09
 - 發布期間 main 可能有其他提交；同步主站時可下載該次 Pages workflow 的
   `github-pages` artifact，解開內含 `artifact.tar` 部署至 inari，避免兩站
   由不同提交建置。切換前先檢查 archive 不含路徑穿越或符號連結。
+
+# 網站睡眠中斷（2026-09-10）
+
+- DNS 正常但 HTTP/HTTPS 連線逾時。電源日誌顯示 15:42:16 因
+  `Sleep Service Back to Sleep` 睡眠，15:57:26 因 `Enet.Service` 網路事件
+  進入 DarkWake，隨後網站恢復。這支持主機睡眠是此次中斷原因；不能把
+  先後測試的內外網結果誤判為持續性的特定網路路徑故障。
+- `sleep 0`、`standby 0` 已設定時仍有 Maintenance Sleep／Sleep Service
+  返回睡眠紀錄；更早進入該循環的觸發因素未查明。不要宣稱找到 macOS
+  睡眠機制本身的根因，或沿用舊的「sleep 0 已足夠」結論。
+- 在 Inari 執行 `sudo pmset -a disablesleep 1`。16:03 再查
+  `pmset -g` 的 `SleepDisabled 1`、IOPMrootDomain 的 `SleepDisabled = Yes`，
+  並確認 `/Library/Preferences/com.apple.PowerManagement.plist` 中
+  `SystemPowerSettings.SleepDisabled = true`。這是已寫入磁碟且核心生效的
+  防睡眠設定；此機設定檔不在舊的 `SystemConfiguration` 子目錄。
+- Apple PowerManagement 的 `pmset/pmset.m` 設定系統電源鍵，
+  `pmconfigd/PMSettings.m` 將其送到核心；XNU `IOPMrootDomain.cpp` 的
+  `checkSystemSleepEnabled` 會因 `userDisabledAllSleep` 拒絕睡眠。
+  此原始碼證據支持設定機制，但不是本機重開機或長期運作實測。
+- 一般手動睡眠也會停用；螢幕仍保留 10 分鐘休眠。回復命令為
+  `sudo pmset -a disablesleep 0`，只應在不再需要此防睡眠策略時使用。
+- 修正後本機多次 HTTPS 200、成員頁 200，Oracle 海外主機 HTTPS 200，
+  TLS 驗證成功；Caddy 程序不變，無須重啟、重新部署或變更 DNS／防火牆。
+  同日 CERT 精確 IP 查詢無目前違規紀錄，舊事件已在歷史結案清單。
+- 已確認阻止睡眠的設定生效及網站恢復；尚未重開機驗證，也未主動令
+  正式主機睡眠。不要把短期驗證寫成永久不會斷線的保證。
+
+來源：
+- <https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmset/pmset.m>
+- <https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmconfigd/PMSettings.m>
+- <https://github.com/apple-oss-distributions/xnu/blob/main/iokit/Kernel/IOPMrootDomain.cpp>
