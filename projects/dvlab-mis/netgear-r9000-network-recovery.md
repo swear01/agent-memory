@@ -3,7 +3,7 @@ title: DVLab353 NETGEAR R9000 recovery and diagnostic limits
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
-updated: 2026-09-09
+updated: 2026-09-11
 ---
 
 # DVLab353 NETGEAR R9000 網路恢復
@@ -34,3 +34,4 @@ updated: 2026-09-09
 - 使用者決定暫緩 USB 持久日誌與 Zeus 監測；本次未啟用這些功能、未升級韌體、未恢復原廠設定。
 - 下次復發先保存現有 log、診斷包與連線證據；不要先清除日誌或按 Reset。讀取診斷頁不等於已啟用持久收集。
 - 重新處理時必須現場重驗連線、綁定及設備狀態。本筆是 2026-09-09 的歷史結果。
+- 2026-09-11：同學反映變慢時，R9000 管理面仍通、有線 WAN 正常；瓶頸是 `DVLab353` 無線落到 802.11n/40 MHz。見 `netgear-r9000-wifi-slow.md`。
