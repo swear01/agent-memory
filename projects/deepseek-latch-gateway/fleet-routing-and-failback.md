@@ -99,13 +99,14 @@ knowledge cutoff 後迴避作答。
   官方 Go 在週/月/rolling limit 之後若開了 Use balance，會改打 Zen credits；credits 見底就回
   HTTP `401` `{"type":"CreditsError","message":"Insufficient balance..."}`，billing URL 指向
   `opencode.ai/workspace/<workspace>/billing`。Command Code（`api.commandcode.ai`）是另一套帳。
-- Gateway `isRateLimitOrQuotaError` 只認 `429`/`402` 與 `GoUsageLimitError` /
+- 舊 binary 的 `isRateLimitOrQuotaError` 只認 `429`/`402` 與 `GoUsageLimitError` /
   `weekly usage limit` 等字串，**不認** `401` + `CreditsError` / `Insufficient balance`。
-  因此 Account 1 的 401 不會走 1.5 小時 quota cooldown，recovery probe 把它當 network
-  failure（上限 15 分鐘）再探；該次 probe 可把原始 401 轉發給 HAPI/Pi，即使用戶看
-  Command Code 儀表板仍有額度。Live（oracle，同日）：active endpoint 已是 Command Code
-  （約 1800 次成功），但 `lastSwitchReason` 反覆出現 Account 1 → Account 2 的
-  `Status 401 CreditsError`。
+  Account 1 的 401 因此不走 1.5 小時 quota cooldown，recovery probe 把它當 network
+  failure（上限 15 分鐘）再探，並把原始 401 轉發給 HAPI/Pi。Live（oracle，2026-09-11）：
+  active endpoint 已是 Command Code（約 1800 次成功），但 `lastSwitchReason` 反覆出現
+  Account 1 → Account 2 的 `Status 401 CreditsError`。
+- 源碼已補 `creditserror` 與 `insufficient balance`（不把所有 401 當額度，以免誤傷真
+  auth 失敗）。**尚未部署新 binary**；oracle 在部署前仍會 15 分鐘探一次 Account 1。
 - HAPI 在 oracle 上這條路徑是 `hapi pi --model opencode-go/deepseek-v4-flash`，
   Pi `models.json` 的 `opencode-go.baseUrl` 為 loopback `:35001/v1`、`apiKey` 為
   `local-gateway`。不是 OpenCode CLI 直連 Zen。
