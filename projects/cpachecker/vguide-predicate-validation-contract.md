@@ -137,3 +137,24 @@ plain predicate map 才啟用，YAML/GraphML witness 不在此觀察範圍；
 lookup、下游過濾、solver 使用與候選充分性分開，不因新增紀錄功能就更新舊實驗結論。
 驗證為相關 parser placement/rejection 測試 22/22、build 和 checkstyle；未據此宣稱
 四個 reference run 已完成新的 runtime qualification。
+
+# LLM 謂詞首次 passed 仍不等於 solver 使用成功（Issue #254）
+
+PR #250 的第一個匹配 abstraction 診斷可排查注入後是否進入候選處理路徑。
+在 source `7a3df8843a1db50099c650d2adfb2c51c0069bf4` 的
+`PredicateAbstractionManager.computeAbstraction:983`，`passed` 寫在
+`newProverEnvironment` 與 `push(f)` 之前；因此它不證明該 predicate 的 solver
+查詢已成功執行，更不能單獨代表因果有用性。
+
+#254 在同一新 runtime、同一 response replay 的六次 Problem14 實驗中，
+NUMERIC6 兩次 TRUE，LEQ3 與 GT3 各兩次 timeout；這是兩個指定的三元素子集，
+不是任選三個皆失敗。所有 24 個實際注入 binding 的首次 matching use 都在
+abstractionId 4 / N1956 記為 `passed`，沒有 missing/unobserved；NUMERIC6 的
+candidateCount 為 8，兩個三謂詞組為 5。這只排除「在該首次觀察邊界前被忽略或
+trivial 處理」作為這批差異的解釋，後續 abstraction/refinement 的機制仍需證據。
+
+跨 run 比較 formula、head、disposition；`PREDn` 與 identityHashCode 只用於
+同一次 run 的 injection-to-consumer 關聯。GT3 的 raw verdict 為空、CPU/wall 為
+null，保留其 timeout 類別，不能補成成功證明或以缺欄位推論 solver 行為。
+來源：`reports/issue254-problem14-20260911/` 的 `final-check-results.json` 與
+可重跑的唯讀 `root-check-terminal.py`、`root-terminal-verification.json`。
