@@ -3,13 +3,13 @@ title: Codex Luna Reserve — HAPI 控制邊界與條件式 Usage 顯示
 scope: tools/hapi
 project: hapi
 tool: Codex app-server
-status: researched
+status: active
 updated: 2026-09-11
 ---
 
 ## 已確認的產品需求
 
-追蹤：GitHub tiann/hapi issue #1779。Issue 已建立；本次僅研究，尚未實作或驗證真實 Reserve 推論。
+追蹤：GitHub tiann/hapi issue #1779。官方 `v0.29.1` 已合併 PR #1780；fleet 維護版當時仍是 `v0.29.0.6`，尚未部署這段切換。真實帳號 entitlement 與 Reserve 扣額仍未驗證。
 
 Luna Reserve 是一般額度耗盡後，部分合資格帳號可使用的 Luna 備援額度；有獨立上限。不是 Fast/Standard service tier，也不應新增公開的獨立模型選項。
 
@@ -38,6 +38,8 @@ rateLimitsByLimitId 保存多組額度。百分比僅供顯示：有效 usedPerc
 本機生成的 codex-cli 0.153.4 協定有 rateLimitsByLimitId、rateLimitUpsell，但沒有新 supportsLunaReserve／ordinaryUsageAllowed 欄位。官方 main 已包含不等於已發布；尚未確認最小可用 release，亦未驗證帳號 entitlement 或實際扣 Reserve 額度。
 
 2026-09-11 Unix fleet（mazu / cthulhu / athena / valkyrie / zeus / oracle / Mac）的 live CLI 已換成 npm `@openai/codex@0.154.0`。這次只驗證 `codex --version`，沒有重跑 app-server `account/rateLimits/read`，因此不能把 0.154.0 當成已具備 Luna Reserve 協定。HAPI 的 Reserve 切換在官方 `v0.29.1`（PR #1780）；fleet HAPI 當時仍是 `0.29.0.6`。既有 session 進程不會自動換成新 Codex。
+
+官方 `v0.29.1` 的切換是同一條 Codex thread 的 `thread/settings/update`：後端授權時寫入隱藏模型 `gpt-reserve`，HAPI 畫面顯示 `gpt-5.6-luna`，picker 不加選項。進入條件是 `ordinaryUsageAllowed === false` 且 upsell banner 為 `luna_reserve`，不是 ordinary 百分比用盡。恢復後切回進 Reserve 前記住的模型；被擋的那一輪不重送。舊 session 要新 HAPI CLI 進程 resume 同一 thread 才會走這段邏輯。
 
 部署來源 swear01/hapi v0.29.0.5（7a89deefb）已有 Codex Usage：cli/src/codex/utils/codexUsage.ts 正規化、session.ts 合併 metadata、ComposerButtons.tsx 顯示。當時 upstream checkout 與維護分支不同；不能用 upstream 缺少此功能推斷部署版也沒有。
 
