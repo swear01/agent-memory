@@ -81,3 +81,34 @@ restart 必須逐台做。zeus（`<swear02-home>`，port 35002）、oracle（`<u
 HAPI hub 的 `GET /api/machines/:id/pi-models` 可直接讀出每台機器的 effective pi 模型清單，
 是 fleet 級驗證最快的方式（需先 `POST /api/auth` 用 `CLI_API_TOKEN` 換 JWT）；`swop` 這台若
 runner 離線會回 `RPC handler not registered` 或 500，不能用它推論設定未套用。
+
+# 2026-09-11 fleet  rollout 實測結果
+
+七台已註冊機器全部收斂到**只剩** `opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`
+（用 `GET /api/machines/:id/pi-models` 逐台讀 effective 清單）：mazu、cthulhu、athena、valkyrie
+（NFS 共享 home，一次編輯四台）、zeus、oracle、Mac `swairM5`。
+
+Gateway 實測（`POST /v1/chat/completions`，max_tokens 16，`x-opencode-session` 帶固定值）：
+mazu `:35001`、zeus `:35002`、oracle `:35001` 兩個新 id 都回 HTTP 200；Mac 以新 id 開的
+session 能持續推論，代表其 gateway route 生效。舊 id 的 route 仍保留在 `routing.yaml`
+當 fallback（opencode-go 三個帳號當月額度用盡時，全部流量落到 command-code）。
+
+`~/.local/bin/pi` 是 `pi-safe` wrapper（第 4 層），它對 `pi --list-models` 的 stdout 再過濾；
+NFS 群與 zeus 的 wrapper 都已改成兩個新 id，oracle 與 Mac 沒有這層 wrapper。因此
+`pi --list-models` 在 NFS 群現在只列這兩筆。
+
+`swop`（Windows）在這次 rollout 無法處理，三個獨立障礙都已實測：
+1. HAPI hub `GET /api/machines` 只有七台，**沒有** swop → 該 runner 目前未註冊，不能用 hub RPC 讀寫。
+2. mazu 對 LAN `192.168.1.206`（OpenSSH 10.3、開 22 與 5900）SSH 只回
+   `Permission denied (publickey,password,keyboard-interactive)`；Windows 只授權 Mac 的 key。
+3. 唯一有 key 的 Mac 當時在 `10.49.59.0/24`（非家中 LAN），且 `~/.ssh/config` 找不到任何
+   Windows/swop alias。
+要在該機套用同一組改名，需先恢復 Windows 的 HAPI runner（讓 hub 能 spawn），或提供 Mac 上
+可用的 Windows SSH alias／位址。
+
+# 舊 id 的兩個保留理由
+
+- Gateway `models.allow` 與 `routing.yaml` 保留舊 id，讓既有 session 在 allowlist 收斂前後都能續跑，
+  也讓舊 id 的既有 `pi`／opencode／zed／goose 設定在改名過程中不會突然 404。
+- Pi 端則刻意**不**保留舊 id（allowlist 只放兩個新 id）：明確指定舊 id 會直接被擋，避免
+  「檔案改了但實際還在用被 retire 的模型」這種無聲狀態。
