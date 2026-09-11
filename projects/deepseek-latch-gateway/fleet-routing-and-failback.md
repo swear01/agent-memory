@@ -106,7 +106,11 @@ knowledge cutoff 後迴避作答。
   active endpoint 已是 Command Code（約 1800 次成功），但 `lastSwitchReason` 反覆出現
   Account 1 → Account 2 的 `Status 401 CreditsError`。
 - 源碼已補 `creditserror` 與 `insufficient balance`（不把所有 401 當額度，以免誤傷真
-  auth 失敗）。**尚未部署新 binary**；oracle 在部署前仍會 15 分鐘探一次 Account 1。
+  auth 失敗）。2026-09-11 已把合併提交 `4fa6687`（PR #12，fix head `f4d7eb3`）部署到
+  Mac、mazu、athena、cthulhu、valkyrie、oracle、zeus。七台真實推論 HTTP 200，同一
+  request 第 4 次 attempt 落到 Command Code；Linux 核對 `/proc/<pid>/exe` SHA 與磁碟
+  相符。swop 當日不可達（HAPI machine 列表無此機、區網 SSH 無 banner），Windows exe
+  已建置但未安裝。
 - HAPI 在 oracle 上這條路徑是 `hapi pi --model opencode-go/deepseek-v4-flash`，
   Pi `models.json` 的 `opencode-go.baseUrl` 為 loopback `:35001/v1`、`apiKey` 為
   `local-gateway`。不是 OpenCode CLI 直連 Zen。
