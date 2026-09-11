@@ -51,6 +51,14 @@ tags:
 - 學生家目錄仍有 VCS／Verdi／VC Formal `2023.03-sp2`、Innovus `21.17`、Xcelium `22.03`、ModelSim `2024.1`、DC `2024.09`（非 sp4）。Zeus 本機 `eda.bashrc` 仍指向這些路徑。它們不是 fleet launcher 入口。
 - 2026-08-24 審計未刪任何 EDA 檔；Genus 仍需要 Zeus 的 `libpng12-0`。
 
+# NFS 對效能的影響（2026-09-11 Mazu 實測）
+
+- 套件樹是 NFSv4.1，`rsize`／`wsize` 為 32768。當日 Mazu 到 NAS 的鏈路為 1000 Mbps full duplex；這不能外推成永遠 1 Gbps，該介面 2026-09-05 曾降到 100 Mbps。
+- VCS `linux64/bin/vcs1`（約 218 MiB）第一次 buffered 讀約 2.10 s（接近當時 1 Gbps 上限），同一檔立刻再讀 0.03 s，代表 page cache 有效。
+- 小檔數量才是冷啟動成本：VCS `linux64` 的 `bin`+`lib` 約 6477 個檔、Verdi `linux64` 約 939、SpyGlass home 約 3134。第一次開 GUI 會比之後慢，不是模擬器本身變慢。
+- 學生 home 也在同一顆 NAS；預設 `TMPDIR` 未設。真正會拖垮的是把 `csrc`、`simv`、`verdiLog`、FSDB 寫回 NFS home，而不是工具 binary 放 NFS。
+- `/tmp` 是本機 tmpfs、`/var/tmp` 是本機 ext4。EDA 暫存應指向這些本機路徑，不要為了效能把整套商業工具複製到五台本機碟。
+
 # 使用與維運
 
 - VCS 要產生 FSDB 時，同一個 shell 必須同時 source `vcs.sh` 與 `verdi.sh`。只靠 `/usr/local/bin/vcs` 會找不到 Verdi PLI。
