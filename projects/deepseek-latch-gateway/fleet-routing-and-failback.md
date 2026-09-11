@@ -153,3 +153,25 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
 上游 `model` 欄位；同日 swever 上 `deepseek-flash` 的回應 `model` 是
 `deepseek/deepseek-v4.1-flash`（OpenCode Go 額度用盡，實際走 Command Code fallback），
 舊 id 仍可路由，符合「新 id 為主、舊 route 留 fallback」的目標。
+
+# 2026-09-11 Zeus：gateway 端新增 alias route 並切換 client id
+
+Zeus（port `35002`）與 swever 都已完成各自機器的改動；其餘機器仍使用舊 id，逐台 rollout。
+
+- `config.yaml` 的 `models.allow` 同時允許 `deepseek-v4-flash`、`deepseek-v4-pro`、
+  `deepseek-flash`、`deepseek-pro`。
+- `routing.yaml` 新增 `deepseek-flash`（priority 1 = opencode-go-1/2/3 latch；priority 2 =
+  command-code，`upstream_model: deepseek/deepseek-v4.1-flash`）與 `deepseek-pro`
+  （priority 1 = command-code，`upstream_model: deepseek/deepseek-v4-pro`）；舊的
+  `deepseek-v4-flash` / `deepseek-v4-pro` route 保留當 fallback。
+- 只改 route file：gateway binary 與 `server.port` 不變，重啟用
+  `systemctl --user restart deepseek-gateway`，不重啟 HAPI runner。改前後都用
+  `python3 -c "import yaml;yaml.safe_load(open(...))"` 驗兩支 yaml。
+- Zeus 三組 OpenCode Go 帳號當時都因 monthly usage limit 回 429，所以兩個新 id 的 HTTP 200
+  實際都走 priority 2 Command Code；回應的 `model` 欄位分別是
+  `deepseek/deepseek-v4.1-flash` 與 `deepseek/deepseek-v4-pro`。走 fallback 的成功不能當成
+  OpenCode upstream 成功的證據。
+- Zeus 另有 `<remote-home>/.local/bin/pi-safe` wrapper，`--list-models` 會把輸出過濾成
+  opencode-go 的兩個新 id。
+- 備份目錄慣例：`<gateway-config-dir>/backup-<YYYYMMDD-HHMMSS>-pre-deepseek-rename/`，內含
+  `MANIFEST.txt` 記錄備份檔名對應的原始路徑（多個同名 `settings.json` 要加機器與工具前綴）。
