@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-09-10
+updated: 2026-09-11
 tags:
   - hapi
   - supervisors
@@ -120,3 +120,11 @@ state 不夠，lock 仍會擋啟動。無關程序全程保留；最後實際 ru
 檢查本來就使用該 identity helper，這次 lock delta 沒有證明原部署為何誤走
 same-version 分支；installed binary／probe unknown 的歸因仍未解。合併不等於
 各機器已安裝修正版，也不代表主機重啟原因已解決。
+
+# 權限提示重現不能以 runner 重啟結案
+
+歷史對話中，Agent 根據 TCC 已允許、runner 早於權限更新啟動，推測舊程序保留權限狀態，報告已重啟且原 session 仍存活，並預期新 session 不再彈窗。使用者隨後明確回報「還是又跳出來了」。因此舊程序原因仍未確證，重啟也未證明解除症狀。
+
+保留既有 session，針對再次觸發的操作核對實際程序、權限對象與相關 log；用症狀是否重現驗證修補，不以新 PID 或 runner running 代替。這個案例不支持把「先重啟」當成通用處方，也不支持未查原因就重設 TCC。
+
+來源：Issue25 backlog consolidation v1，controller-publication-v1 的 permission-recurrence 對照紀錄；正文與兩則相鄰訊息已核對。此處只記錄歷史失敗與驗證邊界，沒有宣稱當前仍有問題或已修復。
