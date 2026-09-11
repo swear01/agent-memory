@@ -127,11 +127,13 @@ mazu `:35001`、zeus `:35002`、oracle `:35001` 兩個新 id 都回 HTTP 200；M
 session 能持續推論，代表其 gateway route 生效。舊 id 的 route 仍保留在 `routing.yaml`
 當 fallback（opencode-go 三個帳號當月額度用盡時，全部流量落到 command-code）。
 
-`~/.local/bin/pi` 是 `pi-safe` wrapper（第 4 層），它對 `pi --list-models` 的 stdout 再過濾；
-NFS 群與 zeus 的 wrapper 都已改成兩個新 id，oracle 與 Mac 沒有這層 wrapper。因此
-`pi --list-models` 在 NFS 群現在只列這兩筆。
+`~/.local/bin/pi` 在 NFS 群、zeus、Mac 是 `pi-safe` wrapper（Mac 是 `pi` 實體就是 symlink；
+oracle 的 `pi` 是直接指向 pi 的 `cli.js`，wrapper 只在 `.bashrc` 以 alias 生效），它對
+`pi --list-models` 的 stdout 再過濾。這四組的 wrapper 都已改成兩個新 id（Mac 與 oracle 由後續
+session 補做），所以互動式 `pi --list-models` 現在只列這兩筆；但直接呼叫未過濾的 pi binary
+（`command pi`、絕對路徑）仍會列出全部 catalog。
 
-`swop`（Windows）在這次 rollout 無法處理，三個獨立障礙都已實測：
+`swop`（Windows）在這次 rollout 無法處理，三個獨立障礙都已實測（詳見上文「已知未完成項」）：
 1. HAPI hub `GET /api/machines` 只有七台，**沒有** swop → 該 runner 目前未註冊，不能用 hub RPC 讀寫。
 2. mazu 對 LAN `192.168.1.206`（OpenSSH 10.3、開 22 與 5900）SSH 只回
    `Permission denied (publickey,password,keyboard-interactive)`；Windows 只授權 Mac 的 key。
