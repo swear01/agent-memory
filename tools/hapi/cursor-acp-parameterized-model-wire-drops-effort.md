@@ -2,12 +2,14 @@
 title: Cursor ACP parameterizedModelPicker 合成 wire 漏掉 effort，--model 被 Cursor 拒絕
 scope: tools/hapi
 tool: HAPI Cursor ACP launcher
-status: active
+status: fixed-in-pr
 confidence: high
 evidence: >-
   在 swever 以 cursor-agent 2026.09.10-fd3934a 對 HAPI 0.29.0.6 產生的 76 筆
   catalog 逐筆做 initialize + session/new，只有 2 筆 spawn-safe；並用 hapi cli
-  的 runCursorAcpModelProbe + seedCursorModelsCache 重現同一份 catalog。
+  的 runCursorAcpModelProbe + seedCursorModelsCache 重現同一份 catalog。修正後再以
+  真實 ACP session 驗證 36 個 base + 12 個抽樣 sku 可 spawn、effort option 逐模型
+  對照，見 tools/hapi/cursor-acp-parameterized-model-wire-drops-effort.md 後段。
 created: 2026-09-11
 updated: 2026-09-11
 tags:
@@ -23,6 +25,7 @@ source_refs:
   - hapi:cli/src/cursor/utils/cursorStaleModelRemap.ts
   - hapi:shared/src/cursorCliSku.ts
   - hapi:cli/src/modules/common/cursorModelsSharedCache.ts
+  - hapi:cli/src/modules/common/cursorModels.ts
 related:
   - tools/hapi/cursor-acp-protocol-routing.md
 redaction: passed
@@ -113,6 +116,44 @@ HAPI 現有防護都救不了這個值：
    也要 set effort，否則 in-session 切換與 spawn wire 的語意不一致。
 3. spawn 路徑需要安全退路：請求 wire 的參數集合不完整時退回裸 base
    （cursor-agent 接受裸 base，且 ACP 端仍可用 configOptions 套用參數）。
+
+# 修正結果（PR tiann/hapi#1822，2026-09-11）
+
+最後採用的是「不再合成 wire」而非「補齊參數」：每個模型可接受的參數集合是 Cursor 端的知識，
+無法從 `configOptions` 推導（`composer-2.5` 只有 `fast`；`claude-opus-4-8` 有
+`thinking`/`context`/`effort`/`fast`；`grok-4.6` 只有 `effort`/`fast`），所以任何合成 wire 都可能
+對某些模型缺參數。改為原樣輸出 ACP 宣告的裸 base（`--model` 一定接受，預設值由 Cursor 套用），
+由 in-session 的 config option 套用參數。
+
+- `CursorModelsSnapshot`/`CursorModelsResponse` 新增 `parameterized` 旗標（model option 全為裸 base 即為真）。
+  有此旗標時，variant CLI sku 仍會掛回裸 base 底下供 picker 使用，因為參數化路徑可用 config options 表達。
+- `applyParameterizedCursorModel` 在 set 完 base 之後**重新讀取** `configOptions`，依序嘗試
+  `effort` → `reasoning` → `reasoning_effort`（最後才 fallback 到 category `thought_level`，
+  因為該 category 也包含 Claude 的 `thinking` 開關，不可誤寫），再套用 requested 的 effort；
+  模型沒有該軸時直接跳過。pinned wire 只包含真正套用成功的參數。
+- `~/.hapi/cache/cursor-models.json` 改為 `{version: 2, response}` envelope；舊檔直接忽略以強制重探
+  （`listCursorModels` 信任 disk cache，不重探，否則舊的錯誤 catalog 會一直留存）。
+- 裸 base 的 spawn 安全再驗證：36 個非 default base + 12 個抽樣 CLI sku，48/49 可 spawn。
+
+# 實測的 effort 軸對照（cursor-agent 2026.09.10-fd3934a）
+
+| 模型 | effort option id | 值 |
+| --- | --- | --- |
+| `claude-opus-4-8` / `claude-opus-5` / `grok-4.6` / `grok-4.5` / `gemini-3.6-flash` / `gemini-3.7-flash` / `muse-spark-1.3` | `effort` | `low` `medium` `high` `xhigh` `max`（grok 無 `max`） |
+| `gpt-5.5` / `gpt-5.6-sol` / `gpt-5.6-terra` / `gpt-5.6-luna` / `gpt-5.4` / `gpt-5.3-codex` | `reasoning` | `none` `low` `medium` `high` `xhigh`（`gpt-5.5` 用 `extra-high` 而非 `xhigh`） |
+| `gemini-3.8-flash` | `reasoning_effort` | `low` `medium` `high` |
+| `kimi-k3` | `reasoning` | `low` `high` `max` |
+| `glm-5.2` | `reasoning` | `high` `max` |
+| `composer-2.5` / `gemini-3-flash` / `gemini-3.5-flash` / `gemini-3.1-pro` / `gpt-5-mini` / `kimi-k2.7-code` | 無 | 只有 model（部分含 `fast`） |
+
+`thinking`（`false`/`true`）是獨立的 `thought_level` 選項，只出現在 Claude 系列與 `claude-opus-4-8`
+這類模型；`context`（`272k`/`1m`/`300k`）屬 `model_config`。
+
+# 仍未修好的 Cursor 端個案
+
+`gemini-2.5-flash` 在**任何**形式都被 Cursor 拒絕：裸 base、`gemini-2.5-flash[]`
+（Cursor 自己在無 capability catalog 中列出的完整 wire）都不行。這是 Cursor 端缺陷，
+HAPI 只能照實揭露，無法修；picker 仍會顯示該列。
 
 # 重現方式
 
