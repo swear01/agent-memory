@@ -59,6 +59,12 @@ tags:
 - 學生 home 也在同一顆 NAS；預設 `TMPDIR` 未設。真正會拖垮的是把 `csrc`、`simv`、`verdiLog`、FSDB 寫回 NFS home，而不是工具 binary 放 NFS。
 - `/tmp` 是本機 tmpfs、`/var/tmp` 是本機 ext4。EDA 暫存應指向這些本機路徑，不要為了效能把整套商業工具複製到五台本機碟。
 
+# License 環境變數
+
+- 共用 `license.sh` 只 `export` FlexLM 指向變數，不呼叫 `lmstat`、不連授權伺服器、不 checkout。Synopsys SCL 文件把這種變數稱為 pointer，並允許寫進 `.bashrc`；實際 feature checkout 發生在工具啟動時。
+- 現有 `vcs`／`spyglass` launcher 已經會 source 對應 CIC 腳本，因而也會載入 license。預設只載入 `license.sh` 不會多佔席次。
+- 不要把完整 `vcs.sh`／`verdi.sh` 寫進 login profile：那會改 PATH、`LD_LIBRARY_PATH` 與 VCS GCC shim。若其他 FlexLM 軟體也用 `LM_LICENSE_FILE`，它們可能先去問 TSRI 伺服器而 timeout；Synopsys 偏好 `SNPSLMD_LICENSE_FILE` 以降低這種混用。授權伺服器位址不寫入 memory。
+
 # 使用與維運
 
 - VCS 要產生 FSDB 時，同一個 shell 必須同時 source `vcs.sh` 與 `verdi.sh`。只靠 `/usr/local/bin/vcs` 會找不到 Verdi PLI。
