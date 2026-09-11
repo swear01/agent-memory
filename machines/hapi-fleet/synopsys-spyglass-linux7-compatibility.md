@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-09-11
 tags:
   - synopsys
   - spyglass
@@ -44,4 +44,4 @@ tags:
 # 維運規則
 
 - 若同類錯誤重現，先確認 `command -v spyglass`、`command -v sg_shell` 與 kernel major version，再檢查共用 allocator 設定；不要要求學生各自維護 shell profile。
-- 完整操作紀錄與現況仍以 DVLab MIS runbook／HackMD 為準；shared memory 只保存可重用的根因與相容性決策。
+- 完整操作紀錄與現況仍以 DVLab MIS Google Drive runbook 為準；shared memory 只保存可重用的根因與相容性決策。
