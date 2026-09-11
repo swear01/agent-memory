@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-08-25
-updated: 2026-08-25
+updated: 2026-09-11
 tags:
   - synopsys
   - vcs
@@ -44,4 +44,4 @@ tags:
 
 - 遇到同類錯誤時，先確認 `command -v vcs`、`/usr/bin/gcc -dumpfullversion -dumpversion`，再以 VCS smoke test 確認 generated C 實際 compiler；不要只看使用者 shell 的 `gcc --version`。
 - 若 fleet 升級或移除 GCC 12，shared shim 會失效；共用 VCS 設定應 fail closed，不可靜默退回 GCC 15。
-- 完整操作紀錄與現況仍以 DVLab MIS runbook／HackMD 為準；shared memory 只保存可重用的根因與相容性決策。
+- 完整操作紀錄與現況仍以 DVLab MIS Google Drive runbook 為準；shared memory 只保存可重用的根因與相容性決策。

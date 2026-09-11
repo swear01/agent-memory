@@ -78,4 +78,4 @@ schCapture -win $s -file out.png -region 0 0 5000 5000        ;# 匯出 PNG，�
 - 要看 schematic 就是 nSchema；先確定設計已載入（`-dbdir` 或 `-f`），再用 `Tools -> New Schematic from Source`。
 - 排查順序：`command -v verdi`、`echo "$VERDI_HOME"`、`echo "$LM_LICENSE_FILE"`，再用最小 FSDB smoke test 確認 PLI 與 FSDB 產生；不要只看 `verdi -version` 是否印得出來。
 - 若要補上 `/usr/local/bin/verdi` launcher 與修掉 `vcs.sh` 的 `VERDI_PLI` 路徑，需要具備共用安裝寫入權限的帳號執行，屬 fleet 層級的變更。
-- 完整操作紀錄與現況仍以 DVLab MIS runbook／HackMD 為準；shared memory 只保存可重用的環境事實與整合決策。
+- 完整操作紀錄與現況仍以 DVLab MIS Google Drive runbook 為準；shared memory 只保存可重用的環境事實與整合決策。
