@@ -94,7 +94,21 @@ knowledge cutoff 後迴避作答。
 
 - 三個 OpenCode Go account 全部無額度：account 1 `CreditsError Insufficient balance`；
   account 2 `GoUsageLimitError`（3 天後重置）；account 3 `GoUsageLimitError`（8 天後重置）。
-  因此 `deepseek-v4-flash` 的 request 全部落到 Command Code fallback。
+  多數 `deepseek-v4-flash` request 會落到 Command Code fallback，但 **不是全部**。
+- `CreditsError` 是 OpenCode Zen **balance** 帳單，不是 Command Code 額度，也不是 Go 週配額。
+  官方 Go 在週/月/rolling limit 之後若開了 Use balance，會改打 Zen credits；credits 見底就回
+  HTTP `401` `{"type":"CreditsError","message":"Insufficient balance..."}`，billing URL 指向
+  `opencode.ai/workspace/<workspace>/billing`。Command Code（`api.commandcode.ai`）是另一套帳。
+- Gateway `isRateLimitOrQuotaError` 只認 `429`/`402` 與 `GoUsageLimitError` /
+  `weekly usage limit` 等字串，**不認** `401` + `CreditsError` / `Insufficient balance`。
+  因此 Account 1 的 401 不會走 1.5 小時 quota cooldown，recovery probe 把它當 network
+  failure（上限 15 分鐘）再探；該次 probe 可把原始 401 轉發給 HAPI/Pi，即使用戶看
+  Command Code 儀表板仍有額度。Live（oracle，同日）：active endpoint 已是 Command Code
+  （約 1800 次成功），但 `lastSwitchReason` 反覆出現 Account 1 → Account 2 的
+  `Status 401 CreditsError`。
+- HAPI 在 oracle 上這條路徑是 `hapi pi --model opencode-go/deepseek-v4-flash`，
+  Pi `models.json` 的 `opencode-go.baseUrl` 為 loopback `:35001/v1`、`apiKey` 為
+  `local-gateway`。不是 OpenCode CLI 直連 Zen。
 - 待辦風險一：`routing.yaml` 的 fallback 仍寫 `upstream_model: deepseek/deepseek-v4-flash`，
   `config.yaml` 的 `models.allow` 也只有 `deepseek-v4-flash` / `deepseek-v4-pro`。
   別名被官方移除後這條 fallback 會直接壞，而且主路徑換模型時 fallback 會與主路徑不一致。
