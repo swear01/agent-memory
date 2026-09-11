@@ -20,6 +20,8 @@ tags:
 - 瀏覽器 cookie `_SSID` 不是已登入 SID；`SYNO.Core.Desktop.Initdata` 會回 `isLogined=false`。必須重新 login。
 - 2026-09-11 已建立獨立 share `apps`，File Station `real_path` 為 `/volume1/apps`。隱藏網路芳鄰、關閉資源回收筒。NFS 規則只加在這個 share：五台 LAN `.201` `.202` `.203` `.204` `.207`，`rw`、`root_squash=root`（DSM「No mapping」）、`sys`、`crossmnt=true`。客戶端路徑：`192.168.1.200:/volume1/apps`。
 - 沒有改全域 NFS 服務，也沒有寫 `nfs-home` 規則。`showmount -e` 同時列出 `/volume1/apps`（五台）與 `/volume1/nfs-home`（原六台，含既有 `.206`）。
+- 新建 share 的 File Station POSIX 是 `777` 且開著 DSM 預設 ACL。Mazu 以 NFSv4 掛上後，`ls` 仍可能顯示 `drwxrwxrwx`，但 `stat` 是 `000`、`getfacl` 是 `user::--- / group::--- / other::---`，一般使用者 `ls`/`touch` 會 `Permission denied`。這不是 export 漏 IP，也不是 `nfs-home` 問題。
+- 在 Mazu 對掛載點 `sudo chmod 755 /apps`（NFS 規則為 No mapping）會把 POSIX 與 ACL 一併修成 `755` / `user::rwx,group::r-x,other::r-x`。之後其他人可進可讀，寫入要用 sudo。不要為了這件事改 `nfs-home`。
 
 # 實作要點
 
