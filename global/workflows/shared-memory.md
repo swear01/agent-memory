@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-09-05
+updated: 2026-09-11
 tags:
   - shared-memory
   - qmd
@@ -31,3 +31,25 @@ QMD 2.8.3 的 `qmd update` 結尾會用預設 embedding model 計算 pending has
 `QMD_FORCE_CPU=1 QMD_EMBED_PARALLELISM=1 qmd embed` 做單工 CPU retry，完成後再用
 `qmd doctor` 驗證 `embedding freshness` 與 vector sample。不要因 auto-GPU context 失敗而略過
 embedding 或重建 canonical Markdown。
+
+# CI validator 的禁項（寫 note 前先自查）
+
+`.github/workflows/validate-memory.yml` 用 `git ls-files` 掃 tracked files，所以**先
+`git add` 再驗**，否則新檔不會被檢查；它同時掃描完整 Git 歷史（`git log -p`），
+已進入歷史的 secret 無法靠改 working tree 修好。本機重現方式是從 workflow 抽出
+`run:` 區塊當 script 執行（先 `git diff --check`，再跑其中的 python inline 檢查）。
+
+- 非 README 的 `.md` 必須以 `---\n` 開頭並含第二個 `\n---\n`（frontmatter）。
+- 絕對路徑禁：以 `home` 或 `Users` 為第一層的絕對路徑（CI 用「slash 接 home/」與
+  「slash 接 Users/」兩種 regex 擋，連 CI 自己的 workflow 檔都用字串串接繞開），
+  改用 `<remote-home>`、`<worktree-root>` 這類 placeholder。
+- secret regex 不只抓真 key，也抓寫法。實測踩到的例子：把 shell 變數直接接在
+  `Bearer` 後面會命中，因為 `<authorization 或 bearer> + 冒號或等號` 這條規則只把
+  `Bearer <...>` 與 `${...}` 當成可接受的 value；照 repository 慣例寫 angle-bracket
+  placeholder（`Bearer <api-key>`）才通過。
+- 這類檢查是純 regex，不認 Markdown code span：把觸發字串原文寫進 backtick 裡一樣會
+  讓 CI 失敗，只能用改寫或 placeholder。本節自身就是被 validator 退回三次才寫成的。
+- 其他會命中的形式：`sk-` 加 20 字以上、GitHub token 前綴、AWS access key 前綴、
+  Google API key 前綴、PEM private key 的 BEGIN/END 標頭行、JWT、以及
+  「key/token/password/secret/credential/cookie 等關鍵字 + 冒號或等號 + 非 placeholder 值」。
+- 一般 email 形式字串，以及 commit author/committer 的個人信箱都會失敗。
