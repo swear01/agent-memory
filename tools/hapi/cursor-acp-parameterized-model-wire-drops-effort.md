@@ -98,8 +98,9 @@ HAPI 現有防護都救不了這個值：
 
 # 立即 workaround
 
-- New Session 選 Auto：`isDefaultSpawnModel('auto')` 不會傳 `--model`，交由 Cursor CLI 自己的
-  `~/.cursor/cli-config.json` 決定模型（目前是 grok-4.6）。
+- New Session 選 Auto：在 tiann/hapi#1819 之後會 pin CLI `auto`（`agent --model auto`），
+  不再省略 `--model`、也不再套 ACP `default[]`。舊行為把 Auto 當成帳號 default，
+  見 `tools/hapi/cursor-picker-auto-is-cli-auto.md`。
 - 或選 `composer-2.5`：唯一 spawn-safe 的 catalog 列。
 - 需要手動指定時用裸 base 或完整參數：
   `cursor-agent --model 'grok-4.6[effort=high,fast=false]' acp`。
