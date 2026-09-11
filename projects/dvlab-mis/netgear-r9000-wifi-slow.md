@@ -43,6 +43,8 @@ Mac 掃描：5 GHz BSS 23、UNII-1（36–48）11、ch44 上 5 個。ASUS 在 ch
 
 R9000 只當有線交換，Wi‑Fi 由 ASUS 用 SSID `DVLab353` 提供。不要把 R9000 Radio 再開回來（會跟 ASUS 同名互搶）。不要 factory reset。
 
+正式實驗室文件在 Google Drive（`353 network setup manual(private)`、`Notes from DVLab MIS Team`），不是 HackMD。2026-09-11 已依 file ID 增量寫回並讀回。
+
 ## ASUS 改名 / R9000 關無線（已驗證）
 
 - ASUS 網頁從 Mac 登入會 `error_status=4` 鎖幾分鐘；改從 **Mazu 有線** `login.cgi`（完整表單欄位）再 `applyapp.cgi`：`wl0_ssid`/`wl1_ssid`=`DVLab353`、`rc_service=restart_wireless`。回 `{modify:1, run_service:restart_wireless}` 後等約 25 秒。
