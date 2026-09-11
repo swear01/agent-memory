@@ -82,6 +82,40 @@ HAPI hub 的 `GET /api/machines/:id/pi-models` 可直接讀出每台機器的 ef
 是 fleet 級驗證最快的方式（需先 `POST /api/auth` 用 `CLI_API_TOKEN` 換 JWT）；`swop` 這台若
 runner 離線會回 `RPC handler not registered` 或 500，不能用它推論設定未套用。
 
+使用者要的是「以後只剩這兩個」。以 `pi-models` 為準：2026-09-11 七台已註冊機器
+（mazu / athena / cthulhu / valkyrie / zeus / oracle `swever` / Mac `swairM5`）都只回
+`opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`。
+
+# 這一版 pi 的實際過濾行為（0.85.x 實測）
+
+- `pi --list-models` 走的是 CLI 的 listing path，呼叫 `modelRuntime.getAvailable()`；
+  `strict-model-allowlist.ts` 只在 `session_start` hook 內補這個方法，而 `--list-models` 不觸發
+  session，所以**這條路徑的過濾在該 extension 內是不生效的**，真正把它收起來的是 wrapper（第 4 層）。
+- `model-filter.json` 需要 `pi-model-filter` package 才有意義；沒有安裝時它就只是死設定。
+- `settings.json.enabledModels` 只影響 pi 自己的預設／循環選擇，不會過濾 catalog。
+- 因此「picker 只剩兩個」的證據必須來自 HAPI 的 `pi-models` API（它會經過 session pipeline），
+  不能只用 `pi --list-models` 的輸出，兩者可以同時不一致。
+
+`pi --list-models` 在完全沒有 wrapper 的機器上會列出數百個 model（oracle 實測 462 筆）。
+要在 fleet 統一，就得逐台確認有沒有 wrapper，並更新它那份硬編碼清單。
+
+# 已知未完成項：Windows `swop`
+
+2026-09-11 無法處理，三個已實測的原因同時存在：
+
+1. `swop` 沒出現在 hub 的 `GET /api/machines`（只有七台），`spawn-peer` 回
+   `RPC handler not registered: <id>:spawn-happy-session`，代表該 runner 目前未註冊。
+2. mazu → `192.168.1.206:22` 只回 `Permission denied (publickey,password,keyboard-interactive)`；
+   Windows 端只授權 Mac 的 key。
+3. 唯一持有該 key 的 Mac 當時在 `10.49.59.0/24`（外部／熱點網路），並非 `192.168.1.0/24`；
+   `known_hosts` 裡只有 `192.168.1.206` 這個私有位址，`~/.ssh/config` 沒有 Host alias、
+   沒有 ProxyJump，也沒有任何 public WAN 位址或轉埠。Oracle `swever` 本身是 `10.0.0.0/24` 的
+   NAT VM，TCP/22 直接 timeout。
+
+也就是說：要完成 swop，必須等 Mac 回到 `192.168.1.0/24`（或該 runner 重新註冊到 hub），
+不是靠猜測 credentials 或改 sshd 能解決。swop 的 gateway 由 SYSTEM Scheduled Task 管理，
+config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windows-user-home>`。
+
 # 2026-09-11 fleet  rollout 實測結果
 
 七台已註冊機器全部收斂到**只剩** `opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`
