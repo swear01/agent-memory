@@ -15,14 +15,14 @@ tags: [network, netgear, r9000, wifi, zyxel, firmware]
 
 該 Mac 訊號 −43 dBm，卻只關聯 802.11n、頻道 44、40 MHz、MCS 15、PHY 300 Mbps。R9000 管理頁 5 GHz 設為 Up to 1733 Mbps，實際 BSS 沒談到 80 MHz AC。
 
-升到 `V1.0.6.46` **不會**修好 40 MHz；官方釋出說明只有 Security Fixes。速度問題仍要改頻道 / 關 Smart Connect / 請同學走 `DVLab353-2`。
+升到 `V1.0.6.46` **不會**修好 40 MHz；官方釋出說明只有 Security Fixes。
+
+2026-09-11 19:08 已切換：ASUS 主 SSID 改名 `DVLab353`，R9000 2.4 / 5 / 60 GHz **無線關掉**（有線仍在）。這台 Mac 隨即連到 ASUS：802.11ax、ch104、160 MHz、PHY 1921 Mbps。
 
 ## 設備現況
 
-- NETGEAR R9000：`192.168.1.11`，韌體 **`V1.0.6.46WW`**（2026-09-11 18:24 由 Mazu 有線手動升級；先前 `V1.0.5.42WW`）。`currentsetting.htm` 的 `isBlankState=0`。WAN / `InternetConnectionStatus=Down` 在 AP 模式是預期狀態。
-- 升級後設定仍在：LAN `192.168.1.11`、SSID `DVLab353`、DHCP Server 仍關（`LAN_lan.htm` 的 `if ('0' == '1') dhcp_server.checked`）。沒有 factory reset。
-- 2.4 GHz 與 5 GHz SSID 都是 `DVLab353`，Smart Connect 開啟。
-- ASUS TUF AX6000：`192.168.1.10`，SSID `DVLab353-2`。升級重開期間這台 Mac 改連到 802.11ax / ch104 / 160 MHz / Tx ~1921 Mbps（ASUS 特徵）。
+- NETGEAR R9000：`192.168.1.11`，韌體 **`V1.0.6.46WW`**。有線 AP 仍開（LAN `192.168.1.11`、DHCP 仍關）。**無線已關**：`old_endis_wl_radio=0`、`old_endis_wla_radio=0`、`con_endis_wig_radio=0`。設定裡 SSID 名稱仍叫 `DVLab353`，只是沒在播；若有人把 Radio 再打開會跟 ASUS 撞名。
+- ASUS TUF AX6000：`192.168.1.10`，2.4 / 5 GHz SSID 都是 **`DVLab353`**（2026-09-11 19:08 從 `DVLab353-2` 改名，Smart Connect 仍開）。這台 Mac 量到 802.11ax / ch104 / 160 MHz / Tx 1921 Mbps。
 - Zyxel CPU 約 6%、記憶體 39%。session 約 4059 筆，多數是 UDP/111，不是 Wi-Fi 變慢的原因。
 
 ## 干擾
@@ -41,4 +41,9 @@ Mac 掃描：5 GHz BSS 23、UNII-1（36–48）11、ch44 上 5 個。ASUS 在 ch
 
 ## 操作界線
 
-同學日常最好走 `DVLab353-2`。改頻道、關 Smart Connect、拆開 2.4/5 GHz SSID 或關掉 R9000 無線都要另開維護。
+R9000 只當有線交換，Wi‑Fi 由 ASUS 用 SSID `DVLab353` 提供。不要把 R9000 Radio 再開回來（會跟 ASUS 同名互搶）。不要 factory reset。
+
+## ASUS 改名 / R9000 關無線（已驗證）
+
+- ASUS 網頁從 Mac 登入會 `error_status=4` 鎖幾分鐘；改從 **Mazu 有線** `login.cgi`（完整表單欄位）再 `applyapp.cgi`：`wl0_ssid`/`wl1_ssid`=`DVLab353`、`rc_service=restart_wireless`。回 `{modify:1, run_service:restart_wireless}` 後等約 25 秒。
+- R9000：`POST apply.cgi?/WLG_adv.htm timestamp=…`，`submit_flag=wlan_adv`，`wl_enable_router`/`wla_enable_router`/`wig_enable_router`=`0`。不要送 `enable_ap` checkbox。成功後三個 `old_endis_*_radio` 都是 `0`。有線不受影響。
