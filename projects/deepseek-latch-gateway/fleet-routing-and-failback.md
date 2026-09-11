@@ -5,8 +5,8 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-07
-tags: [gateway, opencode-go, routing, failback, hapi, swear-review]
+updated: 2026-09-11
+tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias]
 ---
 
 # 架構
@@ -70,3 +70,38 @@ PR #10 合併提交 `73f0fb5`（review head `ae9963c`）保留既有 priority ro
 Linux 應比對正式 binary 與 `/proc/<pid>/exe` 的 SHA-256；Mac、Windows
 則核對新程序的 executable path、啟動時間與已安裝 binary hash。保留舊版
 備份，等 established 連線清空後只重啟 Gateway，不重啟 HAPI Runner。
+
+# 2026-09-11 model id 已別名到 V4.1 Flash
+
+DeepSeek 於 2026-09-10 發佈 V4.1-Flash（552B MoE、Causal Encoder–Decoder，input 8B /
+output 16B active，原生多模態）。官方 changelog 明確寫：canonical id 改為
+`deepseek-flash`；V4-Flash 與 V4-Flash-Vision-Exp **已 retired**，`deepseek-v4-flash` 與
+`deepseek-v4-flash-vision-exp` 只是**暫時 route 到 V4.1 Flash** 的相容別名；2026-09-14
+04:00 UTC 起至 V4.1-Pro 發佈前，`deepseek-v4-pro` 也 route 到 V4.1 Flash 並以 Flash 價計費。
+
+因此設定裡仍寫 `deepseek-v4-flash` 的 client，現在拿到的是 V4.1 Flash，不是 V4 Flash。
+以 modality budget 指紋實測（方法見 `domains/llm-inference/model-identity-verification.md`）：
+同一張圖送 gateway 路徑與 Command Code 的 `deepseek/deepseek-v4-flash` 都得
+`prompt_tokens=235` 且正確讀出圖中數字，與 `deepseek/deepseek-v4.1-flash` 一致；
+純文字的 `deepseek/deepseek-v4-flash-fast` 只有 18 且回 "I cannot see an image."。
+舊 V4-Flash 是純文字模型，所以能讀圖就已證明 id 被別名。
+
+**不可用模型自述判斷。** 同路徑問 model/version 時 `content` 為空，reasoning 抓到
+system prompt 的日期幻覺（自稱 current date `2026-05-07`）再自行推論出 GPT-4 時代的
+knowledge cutoff 後迴避作答。
+
+## 當時狀態與待辦（swever，2026-09-11）
+
+- 三個 OpenCode Go account 全部無額度：account 1 `CreditsError Insufficient balance`；
+  account 2 `GoUsageLimitError`（3 天後重置）；account 3 `GoUsageLimitError`（8 天後重置）。
+  因此 `deepseek-v4-flash` 的 request 全部落到 Command Code fallback。
+- 待辦風險一：`routing.yaml` 的 fallback 仍寫 `upstream_model: deepseek/deepseek-v4-flash`，
+  `config.yaml` 的 `models.allow` 也只有 `deepseek-v4-flash` / `deepseek-v4-pro`。
+  別名被官方移除後這條 fallback 會直接壞，而且主路徑換模型時 fallback 會與主路徑不一致。
+- 待辦風險二：換 id 不能只改 gateway。Pi 端的 `enabledModels` 與 `model-filter.json`
+  （`defaultAction: block`）都沒有放行 `deepseek-flash`，要三處同步才生效。
+- OpenCode upstream 的 catalog 仍把 `deepseek-v4-flash` 標成 `input:["text"]`，只有
+  `deepseek-flash` 標多模態。額度用盡無法驗證 OpenCode Go 這條路徑是否也已別名；
+  額度重置後須重驗。歷史上此 id 曾名不符實（opencode issue #40409：`deepseek-v4-flash`
+  自稱 V3.2、knowledge cutoff 2025-05，該 issue 已關閉），不能假設 OpenCode 端行為與
+  Command Code 一致。
