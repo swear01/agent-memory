@@ -13,6 +13,8 @@ tags:
   - gateway
   - model-filter
   - fleet
+  - swop
+  - todo
 ---
 
 # 為什麼要改
@@ -115,6 +117,33 @@ runner 離線會回 `RPC handler not registered` 或 500，不能用它推論設
 也就是說：要完成 swop，必須等 Mac 回到 `192.168.1.0/24`（或該 runner 重新註冊到 hub），
 不是靠猜測 credentials 或改 sshd 能解決。swop 的 gateway 由 SYSTEM Scheduled Task 管理，
 config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windows-user-home>`。
+
+## PENDING TODO：swop 補做步驟（2026-09-11 使用者指示「先記著，之後弄」）
+
+解除條件（任一成立即可動工）：Mac 回到 `192.168.1.0/24` 或開 VPN；或 swop runner 重新註冊到 hub；
+或拿到 Windows 可用的 SSH alias／帳號（或把 mazu 的 key 加進 `administrators_authorized_keys`）。
+
+動工方式：從 Mac 開一個 pi session（`hapi spawn-peer --machine <swairM5-id> --dir /Users/swear`）遠端執行；
+或 swop runner 回來後直接對 swop spawn。要改的內容與 Mac/Linux 相同：
+
+1. 備份到同目錄 `backup-<timestamp>-pre-deepseek-rename/`。
+2. `%USERPROFILE%\.pi\agent\models.json`：`providers["opencode-go"]` 加 `models` 兩筆（`deepseek-flash`／
+   `deepseek-pro`，input `["text","image"]`、contextWindow 1000000、maxTokens 384000、
+   compat 含 `thinkingFormat: deepseek`），baseUrl/apiKey 不動。
+3. `settings.json`：default `opencode-go/deepseek-flash`、`enabledModels` 只放兩個新 id、thinking `high`。
+4. `model-filter.json`：只留 opencode-go 兩個新 id、`defaultAction: block`。
+5. `extensions\strict-model-allowlist.ts`：`allowed` 只留兩個新 id，`includes` 移除 meta 特例。
+6. `opencode.jsonc`（若有）：model／small_model／whitelist 改新 id；`.dsh\settings.yaml` 加 models 兩筆。
+7. gateway `config.yaml`：`models.allow` 同時留新舊四個 id；`routing.yaml` 加 `deepseek-flash`
+   （priority 1 = opencode-go-1/2/3，priority 2 = command-code `upstream_model: deepseek/deepseek-v4.1-flash`）
+   與 `deepseek-pro`（priority 1 = command-code `upstream_model: deepseek/deepseek-v4-pro`）。
+8. 用 `Start-ScheduledTask -TaskName "DeepSeek Gateway (SWOP)"` 重啟（不要改成臨時使用者程序）。
+9. 驗證（swop 不在 hub，**不能**用 `GET /api/machines/:id/pi-models`）：在 Windows 本機 dump
+   `ctx.modelRegistry.getAll()`，應只有 `opencode-go/deepseek-flash`、`opencode-go/deepseek-pro`；
+   並各打一次 `/v1/chat/completions` 確認 HTTP 200。
+
+注意：swop 的 HAPI runner 未註冊本身是獨立問題（runner 可能已停），補做時一併確認
+`HAPI Runner (SWOP)` Scheduled Task 狀態，但**不要**在未經同意的情況下改動它的排程 action。
 
 # 2026-09-11 fleet  rollout 實測結果
 
