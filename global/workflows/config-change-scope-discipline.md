@@ -18,6 +18,10 @@ tags:
 
 # 規則
 
+> 關鍵字（方便搜尋）：改名 rename、替換 replace、只換 X only rename one item、保留其他模型 keep other models、
+> 不要順手移除 don't remove unrelated entries、清單類設定 list-type config、allowlist 白名單、enabledModels、
+> whitelist、filter rules、models.allow、range 收斂 scope creep / over-narrowing、fleet 級變更 blast radius。
+
 當任務是「把 X 改名／換成 Y」時：
 
 - 清單類設定（`allowed` / `enabledModels` / `whitelist` / filter `rules` / allow list / route 表 / `models.allow`）
