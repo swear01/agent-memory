@@ -4,7 +4,7 @@ scope: machines/mazu
 machine: mazu
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-12
 tags:
   - nfs
   - apps
@@ -20,5 +20,6 @@ tags:
 
 # 注意
 
-- 剛掛上時若遇 `Permission denied`，先看 `stat`/`getfacl` 是否為 DSM 預設 ACL 造成的 mode `000`。處理方式見 `machines/gaia/dsm-api-apps-share.md`：對 `/apps` 做 `chmod 755`，不要改 `nfs-home`。
+- 剛掛上時若遇 `Permission denied`，先看 `stat`/`getfacl` 是否為 DSM 預設 ACL 造成的 mode `000`。處理方式見 `machines/gaia/dsm-api-apps-share.md`：對 `/apps` 做 `chmod 755`，不要改 `nfs-home`，也不要用 `sudo touch` 當繞過。
+- 2026-09-12 複測：`/apps` 仍是 `192.168.1.200:/volume1/apps` nfs4；四個目錄 `755 root:root`、`getfacl` 為 `user::rwx,group::r-x,other::r-x`；未授權 `swear02` 可 `ls`/`cd`，`touch` 新檔 Permission denied；`/apps/.dvlab-mount-probe` 仍在。未建立 `/usr/cad`。
 - 明確 `mount /apps` 後，`apps.mount` 會是 active，`apps.automount` 可能 inactive；這不代表 fstab 沒有生成 automount unit。

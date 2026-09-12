@@ -4,7 +4,7 @@ scope: machines/gaia
 machine: gaia
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-12
 tags:
   - synology
   - dsm
@@ -22,6 +22,9 @@ tags:
 - 沒有改全域 NFS 服務，也沒有寫 `nfs-home` 規則。`showmount -e` 同時列出 `/volume1/apps`（五台）與 `/volume1/nfs-home`（原六台，含既有 `.206`）。
 - 新建 share 的 File Station POSIX 是 `777` 且開著 DSM 預設 ACL。Mazu 以 NFSv4 掛上後，`ls` 仍可能顯示 `drwxrwxrwx`，但 `stat` 是 `000`、`getfacl` 是 `user::--- / group::--- / other::---`，一般使用者 `ls`/`touch` 會 `Permission denied`。這不是 export 漏 IP，也不是 `nfs-home` 問題。
 - 在 Mazu 對掛載點 `sudo chmod 755 /apps`（NFS 規則為 No mapping）會把 POSIX 與 ACL 一併修成 `755` / `user::rwx,group::r-x,other::r-x`。之後其他人可進可讀，寫入要用 sudo。不要為了這件事改 `nfs-home`。
+- 2026-09-12 核對：`apps` 的 `unite_permission` 本來就是 `false`（進階共用權限未開），不是 empty-deny 的原因。empty-deny 是新建 share 預設 Windows ACL 在 NFSv4 客戶端對應成 `user::---`。`chmod` 之後 File Station `perm.is_acl_mode` 變 `false`（inode UNIX）；`SYNO.Core.ACL` `get` 會回 `403`。
+- DSM 7.2.1 的 `SYNO.Core.Share` `set` 接受 `shareinfo.is_aclmode=false` 並回 success，但後續 `get` 仍是 `true`。沒有可用的 `convert` / Convert-to-UNIX API。GUI 只有 Action → Convert to Windows ACL（反向，不要按）。share 層 `is_aclmode` 維持 `true` 與 `nfs-home` 相同；不要為了關這個旗標重建 share 或改 `nfs-home`。
+- `chmod` 之後在 NFS 新建的檔案 `getfacl` 會跟 POSIX 一致（例如 `644` → `user::rw-`），不會再 empty-deny。
 
 # 實作要點
 
