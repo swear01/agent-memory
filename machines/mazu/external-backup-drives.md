@@ -1,13 +1,36 @@
 ---
 title: Mazu 外接備份硬碟識別
+scope: machines/mazu
 machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-06
+updated: 2026-09-07
 ---
 
 # Mazu 外接備份硬碟識別
+
+## 本次備份暫存的磁碟優先順序（2026-09-07）
+
+使用者指定本次備份／Canonical Home 工作優先使用 Mazu `/usr/2TB-SSD/backup-work`，
+只有該 SSD 空間不足以容納下一批工作時才用系統碟。此 SSD 是獨立 ext4，UUID
+`dfeec5e5-ec9f-40c9-9ede-ec4267106c65`；開始工作前核對掛載與容量，不能把未掛載、
+權限錯誤當成已滿。以完整批次／檔案決定位置，不承諾單檔寫滿後透明跨磁碟續寫。
+
+Mazu 系統碟與此 SSD 各約 2 TB；備份開始時 `/var/tmp` 的大型 staging 集中在系統碟，
+即使系統碟只剩少量空間，第二顆 SSD 仍可能幾乎全空。兩顆是不同 filesystem，
+應分開看 `df`。掛載點保留原 owner 的 0700，僅授予 `swear02` traverse ACL；
+`backup-work` 為 `swear02` 所有、0700，不向其他帳號開放本次資料。
+
+正在執行的 canonical pipeline 有開啟中的 SQLite、FIFO 與輸入檔；不要直接搬移或
+刪除現役 staging。其 `live` 子目錄下的 home 是 NFS 掛載，不能當成本機 payload
+複製／刪除。搬移已停用暫存時保留 metadata，先完整比對，再切換路徑並釋放來源。
+
+2026-09-07 已將 `long-backup-clean-swear02` 的四個檔案（414,930,502,183 bytes）
+移到 `/usr/2TB-SSD/backup-work/long-backup-clean-swear02`；舊
+`/var/tmp/long-backup-clean-swear02` 保留為 symlink。全量 rsync checksum 與
+metadata 比對零差異、確認未被使用後才移除來源，系統碟可用空間由約 166 GB
+回升到約 581 GB。現役 canonical staging 當時仍留在系統碟，未中斷編碼。
 
 以 UUID 識別，不依賴可能變動的 `/dev/sdX`：
 
