@@ -177,3 +177,10 @@ session 補做），所以互動式 `pi --list-models` 現在只列這兩筆；�
   也讓舊 id 的既有 `pi`／opencode／zed／goose 設定在改名過程中不會突然 404。
 - Pi 端則刻意**不**保留舊 id（allowlist 只放兩個新 id）：明確指定舊 id 會直接被擋，避免
   「檔案改了但實際還在用被 retire 的模型」這種無聲狀態。
+
+# 2026-09-11 後續：cost、swear-review、文件來源
+
+- `models.json` 的 `deepseek-flash` cost 已全 fleet 改成官方 V4.1 Flash 價 `0.15 / 0.60 / 0.003`（input / output / cache hit，per 1M tokens）。NFS 四台共用一份直接改；zeus、oracle、Mac 由各自 session 改，都留了 `models.json.bak-costfix`。`deepseek-pro` 的 `0.66 / 1.98 / 0.022` 未變。
+- oracle `/opt/swear-review/data/config.yaml` 的 model 由 `deepseek-v4-flash` 改成 `deepseek-flash`（baseURL 不變，仍是本機 gateway `http://127.0.0.1:35001/v1/chat/completions`），service 重啟後 log 顯示 `"model":"deepseek-flash"`。重啟中斷了一個 in-flight job（殘留 `/tmp/swear-review/job-904/repo` 已清）。Mac 端備份副本 `<mac-home>/Documents/swear-review/.e2e/config.yaml` 也已同步同一值。
+- `transfer_MAC` 的文件與設定來源（`docs/mac/40_AI_Agent_MCP_and_Skills.md`、`docs/notes.md`、`docs/oracle/swear-review-remote.md`、`config/snapshot/home/.pi/agent/{settings.json,model-filter.json,extensions/strict-model-allowlist.ts}`、`stow/config/.config/opencode/opencode.jsonc`）已更新：PR https://github.com/swear01/transfer_MAC/pull/46（分支 `docs/deepseek-model-ids`）。合併後 Mac 要 `git pull`；若 Mac working tree 對 `stow/config/.config/opencode/opencode.jsonc` 已有未 commit 的相同修改（改名當時是直接改 symlink 的實體檔），pull 前先 `git checkout -- <該檔>`。
+- 刻意**不**改的 id：`stow/core/.zshrc`（走 `api.deepseek.com/anthropic`）、`config/snapshot/home/.config/goose/config.yaml` 的 custom_deepseek、`stow/config/.config/zed/settings.json` 的 deepseek official 與 `open_router` slug（`deepseek/deepseek-v4-flash` 等）。那些是官方／OpenRouter 端點的 model 名稱，本機發明的 `deepseek-pro` 在那裡無效；本機 gateway 仍保留舊 id route，這些 client 不會斷。
