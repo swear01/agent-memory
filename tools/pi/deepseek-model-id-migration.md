@@ -200,8 +200,8 @@ session 補做），所以互動式 `pi --list-models` 現在只列這兩筆；�
 
 - Gateway `models.allow` 與 `routing.yaml` 保留舊 id，讓既有 session 在 allowlist 收斂前後都能續跑，
   也讓舊 id 的既有 `pi`／opencode／zed／goose 設定在改名過程中不會突然 404。
-- Pi 端則刻意**不**保留舊 id（allowlist 只放兩個新 id）：明確指定舊 id 會直接被擋，避免
-  「檔案改了但實際還在用被 retire 的模型」這種無聲狀態。
+- Pi 端則刻意**不**保留舊的 DeepSeek id（allowlist 裡只有新的兩個 DeepSeek id，其他非 DeepSeek 模型照舊
+  保留）：明確指定舊 id 會直接被擋，避免「檔案改了但實際還在用被 retire 的模型」這種無聲狀態。
 
 # 2026-09-11 後續：cost、swear-review、文件來源
 
