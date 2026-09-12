@@ -5,13 +5,21 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-07
+updated: 2026-09-12
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
 
+- 2026-09-12 接續執行決策（取代先前僅評估狀態）：使用者已同意「保留原卷＋另做補充」並要求高速設定。工作根目錄為 Mazu `/usr/2TB-SSD/backup-work/canonical-recovery-20260912`；原 48 卷和原 staging 不刪改。`canonical-recovery-readback-20260912.service` 正式讀回，通過 decoder exit/decoded length、逐檔 SHA 與原始已提交 metadata 比對後，以 `OnSuccess=canonical-recovery-supplement-20260912.service` 自動銜接 planner、壓縮、冷讀回、union coverage／歷史 required hashes、分卷 SHA 與還原 metadata。使用者隨後澄清高速必須保留原本壓縮效率；在補壓尚未啟動時已修正為 `-mx=5 -m0=lzma2:d=512m -mmt=16 -v32g`，保留原一般等級與 512 MiB 字典，只把執行緒由 4 增至 16。不得自行把高速解讀成降低等級／字典；未宣稱相同壓縮率或實際大資料加速倍率。修正參數的實際 encode/readback/restore 測試通過，原卷讀回未中斷。依實際 node type 排除 FIFO/socket/char/block device；連結和已選定的 aigfuzz 保留。跨組歷史硬連結記錄 inode 對照並核對內容 SHA；還原 helper 先驗 SHA 再接回硬連結，最後恢復目錄 mtime。新資料庫使用 Python tarfile `stream=True`，避免全體 TarInfo 常駐記憶體。測試通過完整／截斷串流、FIFO、損毀 header、原始 SHA mismatch、高速 7z encode/readback、union、實際還原和跨組硬連結。這是啟動驗證，**不是正式資料已驗證完成**；唯一新完成閘門是工作目錄 `complete.json`，原 runner success/publication markers 不沿用。新補充名稱為 `Canonical-Home.supplement-20260912`，驗證後 metadata 目錄為 `Canonical-Home.recovery-20260912`；任一步失敗保留 evidence，不自動重跑。systemd units 位於 `/run`，重開機不保證自動接續；初始小段讀回為補上完整 tar prefix 邊界而重啟，舊分析目錄保留為 `readback-attempt-before-prefix-checkpoint`。Mazu 該 NFS mount 的臨時 readahead 已由 1024 恢復為原值 128 KiB。補充 service 的 `ExecStopPost` 會核對常備碟 UUID 再 sync/remount-ro。此後查狀態應查新 units 與 SSD `original/progress.json`／`progress.json`／`failure.json`，不能再只看舊壓縮 PID。
+
+- 2026-09-12 查證：原串流於 09-11 19:56 結束，pipeline status 為 tar=141、tee=141、7zz=0、validator=1。validator 拒收歷史 staging 中 `.steam/steam.pipe` FIFO（tar type `6`），不是來源消失錯誤；來源消失使用者於 09-11 已接受不再追查。48 卷共 1,636,490,700,048 bytes，7zz l 能讀取 headers，內含 tar 5,392,407,028,833 bytes，但尚未做完整讀回，不能宣稱 payload 完整。FIFO 位於 history-inputs 第 822,936 筆，current-inputs 不含此路徑；runner 順序表明已走完 current 階段才在 history 中斷。SQLite 最後已提交 rowid=22,220,000；每 10,000 筆提交且 tee 有緩衝，DB 不是精確封存終點。初次調查提出保留原卷、完整串流讀回建立有效成員清單後另建補充 archive；其後使用者已授權，執行狀態見本節 2026-09-12 接續執行決策。特殊節點應按實際類型排除 FIFO/socket/device，保留一般檔案、目錄與連結，不靠副檔名判定。
+
+- 2026-09-06 Canonical Home 分卷要求：一個邏輯壓縮檔切成多個實體 volume，
+  不是按帳號／子樹各建獨立 archive。常備碟的 current、歷史 overlay 與原有檔案
+  納入同一邏輯 Home；短備份碟暫不讀寫。字典大小、實體卷大小、UTF-8 編碼
+  是三個不同概念，不可混淆。
 - 長備份只保留不可替代資料；核心程式碼必須保留。
 - Python／Conda env 改留可重建 dossier，環境本體可在 dossier 驗證後排除。
 - 可復現的編譯輸出可排除；大型 log、dataset、checkpoint、影音由使用者判斷。
@@ -129,6 +137,57 @@ owner，約 8.72 GiB logical／5.60 GiB archive heuristic；再加上 3 個 doss
 logical／6.09 GiB archive heuristic。這仍是重建候選，實際節省以新 archive 完成後為準。
 執行時必須保留 strict-safe manifest 的 `path_scope`；`matched_members_only` 不得誤刪父目錄。
 
+## 原生分卷的已驗證能力（2026-09-06）
+
+使用者已指定正式設定為一般等級、512 MiB 字典：`-mx=5
+-m0=lzma2:d=512m -mmt=4 -v32g`，不執行字典／壓縮效能比較。
+完整性、內容覆蓋與還原驗證仍須執行；以下 128 MiB 是先前功能小測的設定。
+
+官方 7-Zip 26.03 Linux x64 的 `-v` 是原生分卷功能。以合成資料測試 GNU tar
+POSIX/sparse/xattrs stream → `7zz a -siCanonical-Home.tar -t7z -mx=5
+-m0=lzma2:d=128m -mmt=4 -v1m`，產生三個 `.tar.7z.001/.002/.003`，
+整套 `7zz t` 通過；從第一卷 `7zz x -so` 接 GNU tar 還原，逐檔 SHA-256、
+中文檔名、空目錄、mode、symlink、hardlink、sparse、測試用 user xattr 一致。
+缺少後續卷的負向測試回傳 exit 2。這只證明功能，不證明真實 Home 的壓縮率、
+TB 級吞吐量、ACL、跨平台 metadata 或異 UID/GID 還原能力。
+
+此模式是一層 tar 加 7z/LZMA2 壓縮與分卷，不要再先壓縮 tar 再套 7z；
+不必先落地完整 tar，也不必先將所有卷合併成巨大檔案才能串流還原。
+官方隨附 MANUAL 提醒封裝結束時可能改寫任何卷，故不能將已產生的前卷
+提早當成固定、已發布或已驗證結果。Writer 需能 seek 全套輸出卷，不能
+直接沿用 zstd → SSH dd 的單一不可回寫輸出管線。所有卷完成後才產生固定
+卷清單／SHA-256，分卷本身不等於容錯或中斷續壓。
+
+## Canonical 內容過濾的已驗證注意事項（2026-09-07）
+
+只靠敏感路徑或 `BEGIN PRIVATE KEY` 文字搜尋不足以直接定性。實際資料中，
+GitHub token 出現在 Git remote URL、reflog、課程批改 log 與結果檔；保留程式碼與
+成績，對備份副本作 token span redaction，比整份丟棄更少損失。JSON 中的 PEM
+可能以 escaped newline 儲存；解析器的 header 字串又可能完全沒有 key material。
+公開套件的測試私鑰與 README token 範例，已能以 npm/PyPI 官方發佈包及對應
+官方原始碼中的 decoded material SHA-256 精確比對。只有比對成功才作公開 fixture
+處理；不能只因路徑含 `test` 就判為安全，也不向外部服務傳送來源秘密去驗證。
+
+歷史資料中確實存在名稱以 `.o`／`.swp` 結尾、裡面卻包含完整 Qt 原始碼的目錄。
+泛用「副檔名即 build output」規則不能直接套到這類歷史樹；必須保留先前逐項
+審核的清理邊界。同內容 dedup 也必須核對對應 current path 確實在最終選中清單；
+current 檔案存在但被過濾時，仍須保留歷史內容。
+
+`os.walk(followlinks=False)` 不等於完全不讀 symlink target：實際 Python 原始碼
+仍先用 `DirEntry.is_dir()` 分類，才決定不往 symlink directory 遞迴。本次在
+canonical overlay 的絕對 Home symlink 上，這一步觸發 autofs 並卡住；核心 stack
+是 `autofs_wait`，stat syscall flags 為 0。改用 `os.scandir()` 與顯式
+`entry.is_dir(follow_symlinks=False)`，分類和遞迴都不探查連結目標；需讓掃描
+錯誤直接失敗，避免 `os.walk` 預設忽略 scandir error。先停止自己受阻的處理程序，
+保留 partial evidence，再以修正後的 walker 重建清單；不需為這個程式問題重啟
+主機或修改原始 symlink。已留下不允許 target dereference 的 runnable check。
+
+逐檔 archive evidence 應使用 NUL 分隔名稱；SQLite path 用 BLOB 才能保留非 UTF-8
+檔名。串流 validator 要讀到 FIFO EOF，避免 tar 結尾 padding 尚在輸出時提早關閉
+而使 tee 收到 SIGPIPE。GNU tar 的 `--quoting-style=c` 配合 `LC_ALL=C` 可將消失
+路徑的診斷還原成精確 bytes；只接受清單內 current 的 ENOENT，不把讀取中變更
+或其他 tar 錯誤混入已授權例外。
+
 ## 最小 reconstruction dossier
 
 一般 Python venv 至少保留 Python major/minor、平台、每個 package 的名稱與版本、
@@ -235,3 +294,69 @@ Canonical Home 串流平均約 8.6 MB/s，tar 等待 nfs_file_read；進一步�
 後續網路調查：使用者授權重新協商後，`ethtool -r eno2` 成功，2026-09-07 13:03 恢復 1000 Mbps Full Duplex，13:14 複查仍維持，carrier_changes 保持 16。這是恢復連線，尚非根因修復。以 swear02 的 sudo 讀取日誌，確認 9/5 18:36:14 曾報 `exceed max 2 second`；Linux v7.0 `drivers/net/ethernet/intel/igc/igc_main.c` 的 `igc_watchdog_task` 在 1 Gbps 等待 `PHY_1000T_STATUS` 的 `SR_1000T_REMOTE_RX_STATUS`，20 次 100 ms 等待耗盡會報此訊息。它是 Gigabit 接收狀態等待逾時，不能單憑訊息確診線材或 NETGEAR 埠。該時窗先出現 NIC Link Down，NetworkManager 才因 carrier-changed 重連 DHCP；核心沒有 PCIe AER、網卡 watchdog/hang/reset 訊息，所查 sudo 日誌沒有相關網路重設命令，但日誌缺席不代表可排除所有人工操作。I226-V 型號本身也有 Intel 官方 EEE 隨機斷線通報；本機實測 EEE disabled，不應直接套用該根因。
 
 2026-09-07 16:52:23 網路追蹤：重新協商後約 3 小時 49 分鐘仍為 1000 Mbps、full duplex；carrier_changes 仍為 16，13:03 以後的核心日誌無新增斷線或降速。rx_crc_errors 與 rx_errors 均維持原有 1，tx_errors 與 tx_timeout_count 均為 0。這是有時間界線的穩定觀察，不是線材、埠或網卡故障已排除。後續若 NFS 備份仍慢，應重新量測瓶頸，不可繼續沿用已恢復的 100 Mbps 診斷。
+
+2026-09-07 NFS 加速只讀確認：備份掛載 BDI 預讀 128 KiB，rsize/wsize 131072。使用 NFSv4 PUTROOTFH、LOOKUP 到 export、GETATTR maxread/maxwrite，伺服器實際回報兩者均 131072 bytes；因此只改客戶端 rsize 不能突破。RPC 查詢須從保留來源埠發出，否則服務端回 NFS4ERR_PERM，不能誤認成不支援屬性。DSM API 首次登入逾時，重試一次成功並 logout；SYNO.Core.System.Utilization 可取得 NAS 負載（SSH 關閉不代表無監控管道），首次速率欄位可能全零，需多次取樣確認。SYNO.Core.FileServ.NFS read_size/write_size 的原始值未確認單位，不可直接當作 bytes 解讀。只讀檢查未更改伺服器或預讀設定。
+
+2026-09-07 使用者授權後將備份 BDI 的 read_ahead_kb 從 128 暫時調到 1024（當時只有備份掛載共用該 BDI），不中止既有 tar/7zz，也未修改持久設定。調整前 30 秒輸入 50.44 MB/s，後兩個樣本 60.60、58.59 MB/s；READ 在途估計 1.53→5.20/5.09，RTT 3.18→9.59/9.72 ms，重送與逾時 0。表示預讀並行度確實增加；相鄰不同檔案樣本不能當成固定加速比例，延遲同時升高，不宜據此無限加大預讀。BDI 編號不是固定識別，後續必須從實際 mount 重新確認，不能照抄 0:93。原值與測量保存在備份 evidence/readahead-1m-change.json。
+
+使用者決策（2026-09-07）：NFS 預讀不改永久預設，平常維持原本 128 KiB；大型循序讀取／大量傳輸可暫時調到 1024 KiB，工作完成或提前停止後恢復原值。大量小檔案或隨機存取不保證受益，不能只按檔案數自動開啟。切換前確認實際 BDI 及共用掛載；設定影響共用 BDI，並非單檔或單程序專用。目前備份維持 1024 KiB，恢復原值列為收尾必做事項，尚未加入自動切換或自動恢復機制。較高 READ RTT 與較多在途請求同時出現，不代表每個互動操作都慢三倍。
+
+2026-09-08 收尾決策：使用者要求原備份 session 結束，避免兩個 session 同時修改同一 Canonical Home pipeline；這不代表停止壓縮或完成備份。操作交接追加至 `<audit-root>/CANONICAL-HOME-ONE-TOUCH-PLAN.md`。接續者仍須核對完整性／冷讀回／coverage／SHA-256，runner 驗證完成後另有發布步驟；完成或提前停止後恢復 NFS 預讀原值 128 KiB，尚無自動恢復。保留來源及舊 partial、短碟不動。新批次暫存遵循 `<remote-home>/short-backup-handoff/STORAGE.md` 的 SSD 優先規則，不能搬動執行中的 staging／SQLite／FIFO 或把內含 NFS 掛載當本地資料處理。
+
+2026-09-08 約 11:06–11:11 的慢速區段確認為小檔案 NFS 存取：tar 當時讀取
+`aigfuzz/*.aag`，同目錄前 1,000 個 regular files 平均 1,227 bytes、中位數
+1,163.5 bytes、最大 2,545 bytes。30 秒 tar 輸出 0.919 MB/s，網路接收
+0.898 MB/s；短樣本 7zz CPU 約 0.5%，外接碟閒置。三個 5 秒 nfsiostat
+差分區間每秒 1,809–3,120 次 RPC、362–423 次 READ，每次 READ 平均
+2.825–2.890 KiB，READ RTT 1.338–1.675 ms，queue 約 0.013–0.015 ms，
+無新增 READ 重傳或錯誤。nfsiostat 第一份是掛載以來平均，不能當作當下速度。
+
+同一備份 NFS 掛載的一個既有大 tar，以 direct I/O 在 32 GiB offset 循序讀
+256 MiB 到 `/dev/null`，耗時 2.556 秒、105 MB/s；這是單一大檔區段測量，
+不是全 NAS 磁碟 benchmark。網卡當時 1000 Mbps，10 次 ping 零掉包、平均
+0.210 ms，預讀仍為 1024 KiB。這組對照支持當下瓶頸是逐檔 NFS 操作與
+小讀取的延遲，而非整條路徑只有約 1 MB/s 頻寬；未取得 NAS 端磁碟／CPU
+樣本，不能进一步分拆 server metadata 與隨機磁碟耗時。只做有界讀取，未修改
+備份、壓縮參數、NFS 設定或來源內容。
+
+2026-09-08 小檔案分類追加：現役 `current-inputs.nul` 中
+`E-Syn/sym_reg/aigfuzz/` 有 1,034,510 個項目：eqn 534,510、aig／sexpr／data／stats
+各 100,000、aag／txt 各 50,000。專案 `.gitignore` 明列該目錄；
+`sym_reg/data_collect_all.py` 會生成電路、轉換格式、擷取資料並輸出 CSV。
+因此此慢速區段是生成的實驗資料與中間產物，不是 Python／Conda dependency。
+不能以 `.gitignore` 或有 generator 就推論可全刪：所讀隨機生成呼叫沒有傳入
+固定 seed，尚未證明原始樣本可逐 byte 重建。
+
+使用者決策（2026-09-08）：上述 `E-Syn/sym_reg/aigfuzz/` 小檔案原樣保留，
+包含原始電路、轉換結果與統計資料；不因可生成、被 Git 忽略或備份緩慢而排除。
+維持現役備份清單與來源內容，不再把此批資料列為待刪／待排除候選。
+此決策不撤銷既有執行環境 dependency 的排除規則。
+
+2026-09-09 16:14 慢速複查：約 22 小時區間平均 8.8 MB/s 不能當成持續有效
+吞吐。當日 kernel 10:06:36 起有 NFS server not responding，所查 10:00 後日誌
+首批 server OK 在 15:55:23；兩者相隔約 5 小時 49 分，但未以逐秒傳輸紀錄
+證明整段完全零流量。eno2 在 10:51 有四次 down/up、15:55 與 15:56 各一次，
+當下已恢復 1000 Mbps，carrier_changes=28。未判定重連是人工操作或自發故障。
+備份三份 stderr 不能取代 kernel/NFS 健康檢查；tar 的缺檔仍只有原本九筆。
+
+同次 30 秒實測 tar 輸入 2.081 MB/s、網卡接收 2.036 MB/s；短區間 7zz CPU
+約 0.67%。tar 當時等待 NFS readdir，正在讀取 ICC2 2024.09-sp4 安裝樹的
+`doc/LM/man/catn/NDM` 手冊，抽樣檔 590 bytes；NFS 差分 READ 平均
+0.964–1.110 KiB、每秒約 613–634 次，無新增 READ retrans/errors。
+當前小檔案不屬先前原樣保留的 aigfuzz 實驗資料；這不構成移除 EDA 安裝樹
+或修改現役 manifest 的授權。此次未停止備份或修改網路。
+
+2026-09-10 加速調查：tar 讀取 `.pth` 區段時，兩次 30 秒取樣都顯示
+tar／tee 等待 pipe write、validator 等待 pipe read；7zz CPU 約 262.6%／256.4%，
+取樣內沒有新增輸入，取樣間累計輸入仍前進。這是當段下游壓縮限制，不能沿用
+前日 NFS 小檔案診斷。主要壓縮 workers 已在高效能核心，各層 CPU quota=max，
+7zz／validator VmSwap=0，vmstat 差分 si/so=0，MemAvailable 約 83 GiB。
+系統 swap 已用與一次 SSD 忙碌不能直接證明備份換頁；一般使用者 pidstat I/O
+回 -1 時，應以具權限的 /proc counter 確認，不能把 -1 當零。
+
+當次預讀仍 1024 KiB、連線 1 Gbps。提高壓縮執行緒／降低壓縮成本可能改善
+CPU 區段，但現役 7zz 無可用熱切換，需重跑並做同資料測試；尚未執行參數比較。
+NAS 端 tar 主要減少小檔案 NFS 往返，不能解決 Mazu 壓縮限制。提前並行預讀
+僅為未測試候選，不得描述為已證實加速；直接複製全部剩餘輸入到 SSD 也不成立，
+因 SSD 空間有限且剩餘位元組分母未知。細節在 `<remote-home>/short-backup-handoff/`
+的 `PERFORMANCE-20260910.md`。未修改管線、資料保留規則、網路或壓縮設定。
