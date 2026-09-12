@@ -6,7 +6,7 @@ tool: pi
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-12
 tags:
   - pi
   - deepseek
@@ -84,9 +84,31 @@ HAPI hub 的 `GET /api/machines/:id/pi-models` 可直接讀出每台機器的 ef
 是 fleet 級驗證最快的方式（需先 `POST /api/auth` 用 `CLI_API_TOKEN` 換 JWT）；`swop` 這台若
 runner 離線會回 `RPC handler not registered` 或 500，不能用它推論設定未套用。
 
-使用者要的是「以後只剩這兩個」。以 `pi-models` 為準：2026-09-11 七台已註冊機器
-（mazu / athena / cthulhu / valkyrie / zeus / oracle `swever` / Mac `swairM5`）都只回
-`opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`。
+使用者要的是「**只把 DeepSeek 的 id 改名，其餘模型（Codex/ChatGPT、Meta、Qwen）全部保留**」。
+2026-09-11 的 rollout 把 allowlist 錯誤地砍到只剩兩個 DeepSeek id，2026-09-12 已在 `swever` 修正。
+正確的 Pi 端白名單是 8 個 model：`opencode-go/deepseek-flash`、`opencode-go/deepseek-pro`、
+`openai-codex/gpt-5.6-luna`、`openai-codex/gpt-daybreak-blue-latest`、`openai-codex/gpt-5.6-sol`、
+`openai-codex/gpt-5.6-terra`、`valkyrie-ninfer/qwen3.8-27b`，外加 `includes` 特例
+`meta/muse-spark-1.2-contributor`（在 `enabledModels`／`model-filter.json` 內是實體條目）。
+
+`includes` 的 meta 特例是關鍵：`allowed` Set 只有 7 筆，`meta/muse-spark-1.2-contributor` 靠
+`includes` 裡的 `model.provider === "meta"` 判斷放行，所以 `model-filter.json` 也必須有 meta 的
+allow 條目，否則 `defaultAction: block` 會把它擋掉。
+
+## 還原時要挑對備份（2026-09-12 實證）
+
+`~/.config/deepseek-gateway/backup-<timestamp>-pre-deepseek-rename/` 裡的 `agent__*.json`
+**不是** rename 前的內容：它是 rename 之後、白名單被砍之後才複製的，`enabledModels` 與 `rules`
+已只剩兩個 DeepSeek id，拿它還原會把錯誤狀態再蓋一次。真正 pre-rename 的權威副本在 pi 目錄內：
+
+- `~/.pi/agent/settings.json.backup-deepseek-rename-20260911-113603`
+- `~/.pi/agent/model-filter.json.backup-deepseek-rename-20260911-113603`
+- `~/.pi/agent/extensions/strict-model-allowlist.ts.backup-deepseek-rename-20260911-113603`
+
+還原方式就是拿這三份做 `sed -e 's|deepseek-v4-pro|deepseek-pro|g' -e 's|deepseek-v4-flash|deepseek-flash|g'`
+後覆蓋，不做其他改動。pre-rename 的預設是 `defaultProvider: valkyrie-ninfer`、
+`defaultModel: qwen3.8-27b`、`defaultThinkingLevel: high`（rename 順手把預設改成 opencode-go，
+那不算「改名結果」，要一併還原）。
 
 # 這一版 pi 的實際過濾行為（0.85.x 實測）
 
@@ -118,6 +140,7 @@ runner 離線會回 `RPC handler not registered` 或 500，不能用它推論設
 不是靠猜測 credentials 或改 sshd 能解決。swop 的 gateway 由 SYSTEM Scheduled Task 管理，
 config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windows-user-home>`。
 
+<<<<<<< Updated upstream
 ## PENDING TODO：swop 補做步驟（2026-09-11 使用者指示「先記著，之後弄」）
 
 解除條件（任一成立即可動工）：Mac 回到 `192.168.1.0/24` 或開 VPN；或 swop runner 重新註冊到 hub；
@@ -146,10 +169,14 @@ config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windo
 `HAPI Runner (SWOP)` Scheduled Task 狀態，但**不要**在未經同意的情況下改動它的排程 action。
 
 # 2026-09-11 fleet  rollout 實測結果
+=======
+# 2026-09-11 fleet rollout 實測結果（其中白名單收斂是錯的）
+>>>>>>> Stashed changes
 
-七台已註冊機器全部收斂到**只剩** `opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`
-（用 `GET /api/machines/:id/pi-models` 逐台讀 effective 清單）：mazu、cthulhu、athena、valkyrie
-（NFS 共享 home，一次編輯四台）、zeus、oracle、Mac `swairM5`。
+2026-09-11 七台已註冊機器（mazu、cthulhu、athena、valkyrie（NFS 共享 home，一次編輯四台）、
+zeus、oracle、Mac `swairM5`）的 effective 清單被收斂到只剩兩個 DeepSeek id。這是**過度收斂的
+錯誤狀態**，不是使用者要的結果；2026-09-12 在 `swever` 已還原成 8 個 model（Codex 4 個 ＋ meta
+＋ valkyrie-ninfer ＋ 2 個 DeepSeek）。其餘機器若還停在兩個 id，比照上面的備份還原流程處理。
 
 Gateway 實測（`POST /v1/chat/completions`，max_tokens 16，`x-opencode-session` 帶固定值）：
 mazu `:35001`、zeus `:35002`、oracle `:35001` 兩個新 id 都回 HTTP 200；Mac 以新 id 開的
