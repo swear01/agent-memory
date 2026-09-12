@@ -140,7 +140,6 @@ allow 條目，否則 `defaultAction: block` 會把它擋掉。
 不是靠猜測 credentials 或改 sshd 能解決。swop 的 gateway 由 SYSTEM Scheduled Task 管理，
 config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windows-user-home>`。
 
-<<<<<<< Updated upstream
 ## PENDING TODO：swop 補做步驟（2026-09-11 使用者指示「先記著，之後弄」）
 
 解除條件（任一成立即可動工）：Mac 回到 `192.168.1.0/24` 或開 VPN；或 swop runner 重新註冊到 hub；
@@ -153,30 +152,29 @@ config/routing 位於 `<program-data>/DeepSeekGateway`，pi 設定位於 `<windo
 2. `%USERPROFILE%\.pi\agent\models.json`：`providers["opencode-go"]` 加 `models` 兩筆（`deepseek-flash`／
    `deepseek-pro`，input `["text","image"]`、contextWindow 1000000、maxTokens 384000、
    compat 含 `thinkingFormat: deepseek`），baseUrl/apiKey 不動。
-3. `settings.json`：default `opencode-go/deepseek-flash`、`enabledModels` 只放兩個新 id、thinking `high`。
-4. `model-filter.json`：只留 opencode-go 兩個新 id、`defaultAction: block`。
-5. `extensions\strict-model-allowlist.ts`：`allowed` 只留兩個新 id，`includes` 移除 meta 特例。
+3. `settings.json`：把 DeepSeek 兩個 id 換成新名（`opencode-go/deepseek-flash`／`deepseek-pro`），**其他模型的 `enabledModels` 與 default provider/model/thinking 保持原樣**（只換 DeepSeek）。
+4. `model-filter.json`：保留原有四條 allow rule（openai-codex / opencode-go / meta / valkyrie-ninfer），只把 opencode-go 的 DeepSeek id 換新名；`defaultAction: block` 不變。
+5. `extensions\strict-model-allowlist.ts`：保留原 `allowed`（Codex 各 id ＋ `valkyrie-ninfer/qwen3.8-27b` ＋ 兩個 DeepSeek id）與 `includes` 的 meta 特例，只改 DeepSeek id。
 6. `opencode.jsonc`（若有）：model／small_model／whitelist 改新 id；`.dsh\settings.yaml` 加 models 兩筆。
 7. gateway `config.yaml`：`models.allow` 同時留新舊四個 id；`routing.yaml` 加 `deepseek-flash`
    （priority 1 = opencode-go-1/2/3，priority 2 = command-code `upstream_model: deepseek/deepseek-v4.1-flash`）
    與 `deepseek-pro`（priority 1 = command-code `upstream_model: deepseek/deepseek-v4-pro`）。
 8. 用 `Start-ScheduledTask -TaskName "DeepSeek Gateway (SWOP)"` 重啟（不要改成臨時使用者程序）。
 9. 驗證（swop 不在 hub，**不能**用 `GET /api/machines/:id/pi-models`）：在 Windows 本機 dump
-   `ctx.modelRegistry.getAll()`，應只有 `opencode-go/deepseek-flash`、`opencode-go/deepseek-pro`；
+   `ctx.modelRegistry.getAll()`，確認清單＝原本的模型集合但 DeepSeek 換成新 id（**不是**只剩兩個模型）；
    並各打一次 `/v1/chat/completions` 確認 HTTP 200。
 
 注意：swop 的 HAPI runner 未註冊本身是獨立問題（runner 可能已停），補做時一併確認
 `HAPI Runner (SWOP)` Scheduled Task 狀態，但**不要**在未經同意的情況下改動它的排程 action。
 
-# 2026-09-11 fleet  rollout 實測結果
-=======
 # 2026-09-11 fleet rollout 實測結果（其中白名單收斂是錯的）
->>>>>>> Stashed changes
 
-2026-09-11 七台已註冊機器（mazu、cthulhu、athena、valkyrie（NFS 共享 home，一次編輯四台）、
-zeus、oracle、Mac `swairM5`）的 effective 清單被收斂到只剩兩個 DeepSeek id。這是**過度收斂的
-錯誤狀態**，不是使用者要的結果；2026-09-12 在 `swever` 已還原成 8 個 model（Codex 4 個 ＋ meta
-＋ valkyrie-ninfer ＋ 2 個 DeepSeek）。其餘機器若還停在兩個 id，比照上面的備份還原流程處理。
+七台已註冊機器（mazu、cthulhu、athena、valkyrie 這四台共用 NFS home、zeus、oracle、Mac `swairM5`）
+的 DeepSeek id 都換成 `opencode-go/deepseek-flash` 與 `opencode-go/deepseek-pro`；其他非 DeepSeek
+模型**保留**（`GET /api/machines/:id/pi-models` 逐台驗證：NFS 組／zeus／oracle 各 8 個、Mac 9 個）。
+
+> 更正（2026-09-11 當天稍晚）：這裡一度被收斂成「只剩兩個 DeepSeek id」——那是**過度收斂的錯誤狀態**，
+> 不是使用者要的結果。2026-09-12 已從各機 pre-rename 備份還原，只保留 DeepSeek 的改名；詳見文末更正段。
 
 Gateway 實測（`POST /v1/chat/completions`，max_tokens 16，`x-opencode-session` 帶固定值）：
 mazu `:35001`、zeus `:35002`、oracle `:35001` 兩個新 id 都回 HTTP 200；Mac 以新 id 開的
@@ -217,3 +215,25 @@ session 補做），所以互動式 `pi --list-models` 現在只列這兩筆；�
 - PR #46 已 merge（merge commit `f0453d4`）。CI 在最新 head `0ac6630` 全綠：`Secret and code scan` pass、`Swear Review` pass（0 findings，log 顯示 `Model: deepseek-flash` — 順帶證明剛改完的 swear-review 設定可用）。Gemini Code Assist 對 opencode.jsonc 的 `deepseek-flash` 留了一條 high-priority finding（聲稱 V4.1 Flash 非推理模型、帶 `thinking`/`reasoning_effort` 會 400）；實測兩個參數打 gateway 都回 HTTP 200 且回應含 `reasoning_content`，已在該 thread 回覆反證並 resolve。
 - Mac 的 `/Users/swear/Documents/transfer_MAC` 當時 `main` 是 ahead 1 / behind 3：先前 session 把 opencode.jsonc 的改名直接 commit 成 `fb843dc`。處理方式：以 origin/main 版本覆蓋該檔（`6b5bf73`）→ `git merge --no-ff origin/main`（`29a8c00`，無衝突）→ 推回 `main`。使用者自己的未提交變更 ` M stow/core/.zshrc` 全程未動。
 - 遺留物：mazu 上的 task worktree `~/.agent-worktrees/transfer_MAC-deepseek-docs-20260911`（branch `docs/deepseek-model-ids`，內容已全部 merge 進 origin/main）因 `.skillshare/skills` submodule scaffold 殘留，`git worktree remove` 需要 `-f` 才能刪；依「不用 force 清 worktree」原則保留未刪，下次清理時需人工判斷。
+
+# 2026-09-12 更正：Pi allowlist 要保留非 DeepSeek 模型
+
+第一次改名（2026-09-11）時，我把 Pi 的三層 allowlist／`enabledModels` 一起收斂成「只有兩個 DeepSeek
+id」，把 `openai-codex/*`（Luna/Sol/Terra/Daybreak，Mac 另有 Astra）、`meta/muse-spark-1.2-contributor`、
+`valkyrie-ninfer/qwen3.8-27b` 全部擋掉，連 HAPI 選單都只剩兩個模型。使用者指出這是錯的：**只換 DeepSeek
+的 id，其他模型要保留**。
+
+修正方式（2026-09-12）：從各機自己的 pre-rename 備份 `~/.config/deepseek-gateway/backup-*-pre-deepseek-rename/`
+還原這三個檔案，**只**把兩個 DeepSeek id 換成新名：
+
+- `~/.pi/agent/settings.json`（`enabledModels`、`defaultProvider`、`defaultModel`、`defaultThinkingLevel`
+  都回復原值，例如 NFS 組的 `valkyrie-ninfer/qwen3.8-27b` + `xhigh`）
+- `~/.pi/agent/model-filter.json`（四條 allow：openai-codex / opencode-go / meta / valkyrie-ninfer + `defaultAction: block`）
+- `~/.pi/agent/extensions/strict-model-allowlist.ts`（`allowed` 含 Codex 各 id + `valkyrie-ninfer/qwen3.8-27b`
+  + 兩個新 DeepSeek id，`includes` 保留 `meta` 的 `muse-spark-1.2-contributor` 特例）
+
+驗證：`GET /api/machines/:id/pi-models` 應重新出現非 DeepSeek 模型（NFS 組、zeus、oracle 各 8 個；
+Mac 9 個，因為多一個 `openai-codex/gpt-6-astra`）。
+
+教訓：使用者說「把 X 改名」時，清單類設定（allowlist / enabledModels / filter rules）的職責是保留其他
+項目、只改 X；不要順手收斂範圍。要移除其他模型必須先問。
