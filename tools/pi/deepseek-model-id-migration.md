@@ -237,3 +237,11 @@ Mac 9 個，因為多一個 `openai-codex/gpt-6-astra`）。
 
 教訓：使用者說「把 X 改名」時，清單類設定（allowlist / enabledModels / filter rules）的職責是保留其他
 項目、只改 X；不要順手收斂範圍。要移除其他模型必須先問。
+
+# 2026-09-12 修正收尾：PR #47 合併與 fleet 復原驗證
+
+- **PR #47**（`fix/pi-keep-non-deepseek-models`）已 merge：merge commit `f39fc75`。內容 = 文件更正（`40_AI_Agent_MCP_and_Skills.md`、`30_Dotfiles_and_Config_Restore.md`、`notes.md`）＋ 用 Mac 上已還原的 live 檔覆蓋 `config/snapshot/home/.pi/agent/` 三個 snapshot 檔（commit `1221113`）。分支已刪除。
+- Reviewer 兩家（Swear Review、Gemini Code Assist）都建議把 `meta/muse-spark-1.2-contributor` 併進 `allowed` Set、移除 `includes` 的 inline 特例。**這次不改**：那是改名前的既有寫法、行為相同，本 PR 只做還原；已回覆說明並 resolve，重構留給獨立 cleanup（要同時改 snapshot 與 7 台 live 檔）。
+- **Fleet 復原驗證**（`GET /api/machines/:id/pi-models`）：mazu、cthulhu、athena、valkyrie、zeus、oracle 各 8 個（2 DeepSeek 新 id + `gpt-5.6-luna`、`gpt-5.6-sol`、`gpt-5.6-terra`、`gpt-daybreak-blue-latest`、`qwen3.8-27b`、`muse-spark-1.2-contributor`）；Mac 9 個（多 `gpt-6-astra`）。無任何 `deepseek-v4-*` 殘留。
+- **Mac 的 transfer_MAC 尚未 pull**：`origin/main` 已是 `f39fc75`，Mac 本地仍在 `29a8c00`。2026-09-12 多次 spawn pi session 都得到 `Request timed out`（Mac 在手機熱點、推論路徑不穩），所以沒做。恢復後一行即可：`git -C ~/Documents/transfer_MAC pull --ff-only`（Mac 上只有使用者自己的 `M stow/core/.zshrc`，fast-forward 不會衝突）。Mac 的**live 設定已正確**，這只是 repo 工作區同步。
+- 遺留 worktree：`~/.agent-worktrees/transfer_MAC-deepseek-docs-20260911` 與 `~/.agent-worktrees/transfer_MAC-keep-models-20260912`（內容都已 merge）因 `.skillshare/skills` submodule scaffold 需 `-f` 才能移除，未刪。
