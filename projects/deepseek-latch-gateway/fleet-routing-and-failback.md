@@ -114,11 +114,17 @@ knowledge cutoff 後迴避作答。
 - HAPI 在 oracle 上這條路徑是 `hapi pi --model opencode-go/deepseek-v4-flash`，
   Pi `models.json` 的 `opencode-go.baseUrl` 為 loopback `:35001/v1`、`apiKey` 為
   `local-gateway`。不是 OpenCode CLI 直連 Zen。
-- 已解決（2026-09-11 複驗）：先前 `routing.yaml` 沒有 canonical id、`config.yaml` 的
+- 已解決（2026-09-11 複驗，2026-09-12 校正）：先前 `routing.yaml` 沒有 canonical id、`config.yaml` 的
   `models.allow` 只有舊 id、Pi 端三層 allowlist 也只放行 `deepseek-v4-flash`。現在
 gateway 兩個檔都已補 `deepseek-flash` / `deepseek-pro`（`models.allow` 共四個 id），
-  Pi 的 `enabledModels`、`model-filter.json` 與 `strict-model-allowlist.ts` 都只放行兩個新
-  id，且 gateway process 啟動時間晚於 config mtime，證明已重載。舊 route 是**刻意保留**
+  Pi 端則**只把兩個 DeepSeek id 改名**，其餘 allow 條目保留：`enabledModels` 與
+  `model-filter.json` 各 8 個 model（Codex 四個 ＋ `meta/muse-spark-1.2-contributor` ＋
+  `valkyrie-ninfer/qwen3.8-27b` ＋ 兩個新 DeepSeek id），`strict-model-allowlist.ts` 的
+  `allowed` 為 7 筆、`includes` 保留 `meta/muse-spark-1.2-contributor` 特例。
+  2026-09-11 曾把這三層錯砍到只剩兩個 DeepSeek id（連 `includes` 的 meta 特例也刪），
+  2026-09-12 在 swever 已還原；備份來源與還原指令見
+  `tools/pi/deepseek-model-id-migration.md`。gateway process 啟動時間晚於 config mtime，
+  證明已重載。舊 route 是**刻意保留**
   給尚未改名的 client，其 fallback 仍寫 `upstream_model: deepseek/deepseek-v4-flash`，不是漏改。
 - 仍未解除：`deepseek-v4-flash` 只是官方**暫時**別名，被移除後舊 route 的 fallback 會壞；
   開著舊 route 的機器要記得一起收掉或改指 `deepseek/deepseek-v4.1-flash`。
@@ -150,6 +156,7 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
 
 - Pi `<remote-home>/.pi/agent/models.json`：`opencode-go.models` 只留 `deepseek-flash`
   與 `deepseek-pro`（`baseUrl` 保持 loopback `:35001/v1`）。
+<<<<<<< Updated upstream
 - Pi `extensions/strict-model-allowlist.ts`：**只把 `allowed` 裡兩個 DeepSeek id 換名**
   （`opencode-go/deepseek-v4-pro` → `opencode-go/deepseek-pro`、
   `opencode-go/deepseek-v4-flash` → `opencode-go/deepseek-flash`），其餘六筆 id 與
@@ -162,6 +169,21 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
   ＋ Codex 四筆 ＋ `meta/muse-spark-1.2-contributor` ＋ `valkyrie-ninfer/qwen3.8-27b`），
   `defaultProvider` / `defaultModel` / `defaultThinkingLevel` 沿用備份原值
   （`valkyrie-ninfer` / `qwen3.8-27b` / `max`）。三層要一起改；只改其中一處會被另一層過濾掉。
+=======
+- Pi `extensions/strict-model-allowlist.ts`：只把 `allowed` 裡的 `deepseek-v4-pro` /
+  `deepseek-v4-flash` 換成 `deepseek-pro` / `deepseek-flash`，**其餘條目一個都不能刪**：
+  `openai-codex/gpt-5.6-luna`、`gpt-daybreak-blue-latest`、`gpt-5.6-sol`、`gpt-5.6-terra`、
+  `valkyrie-ninfer/qwen3.8-27b` 都要留著（共 7 筆），且 `includes` 必須保留
+  `(model.provider === "meta" && model.id === "muse-spark-1.2-contributor")` 特例，
+  否則 meta 那條 allow rule 形同虛設。這個允許清單同時 patch `ModelRegistry.prototype`、
+  `ModelRuntime.prototype`（CLI `--model` 解析在 `session_start` 之前）與 `getAuth`，
+  所以少改一處就會出現「列得出來但送不出去」或反過來的情況。
+- Pi `model-filter.json`（`defaultAction: block`）的四條 allow rule（openai-codex、
+  opencode-go、meta、valkyrie-ninfer）與 `settings.json` 的 `defaultProvider` /
+  `defaultModel` / `enabledModels` / `defaultThinkingLevel` 要一起改；
+  只改其中一處會被另一層過濾掉。`defaultProvider` / `defaultModel` 不是 DeepSeek 的一部分時
+  （pre-rename 是 `valkyrie-ninfer/qwen3.8-27b`）不要順手改掉。
+>>>>>>> Stashed changes
 - OpenCode CLI `<remote-home>/.config/opencode/opencode.jsonc`：`model`、`small_model`
   與 `provider["opencode-go"].whitelist`。
 - dsh `<remote-home>/.dsh/settings.yaml`：`llm-deepseek.models` 是 advisory catalog
