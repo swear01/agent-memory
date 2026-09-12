@@ -114,11 +114,29 @@ knowledge cutoff 後迴避作答。
 - HAPI 在 oracle 上這條路徑是 `hapi pi --model opencode-go/deepseek-v4-flash`，
   Pi `models.json` 的 `opencode-go.baseUrl` 為 loopback `:35001/v1`、`apiKey` 為
   `local-gateway`。不是 OpenCode CLI 直連 Zen。
-- 待辦風險一：`routing.yaml` 的 fallback 仍寫 `upstream_model: deepseek/deepseek-v4-flash`，
-  `config.yaml` 的 `models.allow` 也只有 `deepseek-v4-flash` / `deepseek-v4-pro`。
-  別名被官方移除後這條 fallback 會直接壞，而且主路徑換模型時 fallback 會與主路徑不一致。
-- 待辦風險二：換 id 不能只改 gateway。Pi 端的 `enabledModels` 與 `model-filter.json`
-  （`defaultAction: block`）都沒有放行 `deepseek-flash`，要三處同步才生效。
+- 已解決（2026-09-11 複驗）：先前 `routing.yaml` 沒有 canonical id、`config.yaml` 的
+  `models.allow` 只有舊 id、Pi 端三層 allowlist 也只放行 `deepseek-v4-flash`。現在
+gateway 兩個檔都已補 `deepseek-flash` / `deepseek-pro`（`models.allow` 共四個 id），
+  Pi 的 `enabledModels`、`model-filter.json` 與 `strict-model-allowlist.ts` 都只放行兩個新
+  id，且 gateway process 啟動時間晚於 config mtime，證明已重載。舊 route 是**刻意保留**
+  給尚未改名的 client，其 fallback 仍寫 `upstream_model: deepseek/deepseek-v4-flash`，不是漏改。
+- 仍未解除：`deepseek-v4-flash` 只是官方**暫時**別名，被移除後舊 route 的 fallback 會壞；
+  開著舊 route 的機器要記得一起收掉或改指 `deepseek/deepseek-v4.1-flash`。
+- 仍未解除：`deepseek-flash` **不在** Pi 取得的 upstream catalog 裡（2026-09-11 抓到的
+  `opencode-go` catalog 只有 `deepseek-v4-flash`、`deepseek-v4-flash-vision-exp`、
+  `deepseek-v4-pro`、`deepseek-v4.1-flash`），但 OpenCode Zen 的 live `/v1/models`
+  仍有 `deepseek-flash`。所以 `models.json` 的手寫 override 是**必要**的，不能因為
+  picker 顯示得出來就以為 catalog 裡有這筆。
+- 仍未解除：`deepseek-pro` 是 local alias，不是任何 provider catalog 的 id；路由把它指到
+  Command Code 的 `deepseek/deepseek-v4-pro`。2026-09-14 04:00 UTC 起官方把
+  `deepseek-v4-pro` 也 route 到 V4.1 Flash 並改以 Flash 價計費，屆時這條 route 的
+  upstream id 不變，但實際模型與價格都會變。
+- 價格 metadata 待修：`<remote-home>/.pi/agent/models.json` 的 `deepseek-flash` 寫
+  `input 0.22 / output 0.66 / cacheRead 0.007`，那是 V4-Flash-Vision-Exp 在 2026-09-10
+  降價**前**的價；V4.1-Flash 現價是 `0.15 / 0.60 / 0.003`（Pi catalog 的
+  `deepseek-v4.1-flash` 與 `deepseek-v4-flash` 一致，Command Code 頁面 off-peak 亦同）。
+  改名時只換 id 沒換 cost，pi 的成本顯示會高估約 47%。同檔 `deepseek-pro` 的
+  `0.66 / 1.98 / 0.022` 目前正確。
 - OpenCode upstream 的 catalog 仍把 `deepseek-v4-flash` 標成 `input:["text"]`，只有
   `deepseek-flash` 標多模態。額度用盡無法驗證 OpenCode Go 這條路徑是否也已別名；
   額度重置後須重驗。歷史上此 id 曾名不符實（opencode issue #40409：`deepseek-v4-flash`
