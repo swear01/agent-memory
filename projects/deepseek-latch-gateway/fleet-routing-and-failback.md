@@ -6,7 +6,7 @@ tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
 updated: 2026-09-12
-tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias]
+tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
 # 架構
@@ -156,7 +156,6 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
 
 - Pi `<remote-home>/.pi/agent/models.json`：`opencode-go.models` 只留 `deepseek-flash`
   與 `deepseek-pro`（`baseUrl` 保持 loopback `:35001/v1`）。
-<<<<<<< Updated upstream
 - Pi `extensions/strict-model-allowlist.ts`：**只把 `allowed` 裡兩個 DeepSeek id 換名**
   （`opencode-go/deepseek-v4-pro` → `opencode-go/deepseek-pro`、
   `opencode-go/deepseek-v4-flash` → `opencode-go/deepseek-flash`），其餘六筆 id 與
@@ -169,21 +168,6 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
   ＋ Codex 四筆 ＋ `meta/muse-spark-1.2-contributor` ＋ `valkyrie-ninfer/qwen3.8-27b`），
   `defaultProvider` / `defaultModel` / `defaultThinkingLevel` 沿用備份原值
   （`valkyrie-ninfer` / `qwen3.8-27b` / `max`）。三層要一起改；只改其中一處會被另一層過濾掉。
-=======
-- Pi `extensions/strict-model-allowlist.ts`：只把 `allowed` 裡的 `deepseek-v4-pro` /
-  `deepseek-v4-flash` 換成 `deepseek-pro` / `deepseek-flash`，**其餘條目一個都不能刪**：
-  `openai-codex/gpt-5.6-luna`、`gpt-daybreak-blue-latest`、`gpt-5.6-sol`、`gpt-5.6-terra`、
-  `valkyrie-ninfer/qwen3.8-27b` 都要留著（共 7 筆），且 `includes` 必須保留
-  `(model.provider === "meta" && model.id === "muse-spark-1.2-contributor")` 特例，
-  否則 meta 那條 allow rule 形同虛設。這個允許清單同時 patch `ModelRegistry.prototype`、
-  `ModelRuntime.prototype`（CLI `--model` 解析在 `session_start` 之前）與 `getAuth`，
-  所以少改一處就會出現「列得出來但送不出去」或反過來的情況。
-- Pi `model-filter.json`（`defaultAction: block`）的四條 allow rule（openai-codex、
-  opencode-go、meta、valkyrie-ninfer）與 `settings.json` 的 `defaultProvider` /
-  `defaultModel` / `enabledModels` / `defaultThinkingLevel` 要一起改；
-  只改其中一處會被另一層過濾掉。`defaultProvider` / `defaultModel` 不是 DeepSeek 的一部分時
-  （pre-rename 是 `valkyrie-ninfer/qwen3.8-27b`）不要順手改掉。
->>>>>>> Stashed changes
 - OpenCode CLI `<remote-home>/.config/opencode/opencode.jsonc`：`model`、`small_model`
   與 `provider["opencode-go"].whitelist`。
 - dsh `<remote-home>/.dsh/settings.yaml`：`llm-deepseek.models` 是 advisory catalog
@@ -245,3 +229,37 @@ Zeus（port `35002`）與 swever 都已完成各自機器的改動；其餘機�
   但這個目錄名只是命名，**不代表裡面真的是改名前狀態**（Zeus 那份已含 2026-09-11 的
   回歸縮減，見上方同名章節）；真正 pre-rename 快照是 client 端的
   `*.backup-deepseek-rename-<timestamp>`，還原前先比對 mtime 與內容。
+
+# 2026-09-12 exhaust-route + OpenRouter on deepseek-flash
+
+PR #14 合併提交 `9507d17`（fix head `9addc3d`）修正「priority 被當成額度牆」：
+同一 request 必須依序走完該 route 剩餘 source，circuit 全開時 last-resort
+再打一次。另一個 request 若正擁有 half-open recovery probe，concurrent
+traffic 不得 bypass 到正在 probe 的 group 0。`extra_body` 現在會轉給上游，
+但 `model` / `response_format` 仍由 route remap 與 compat strip 決定。
+全 source 都是 network failure 時回 502 `upstream_unreachable`，不能因為
+`maxRetries > routeSize` 就改報 429。
+
+live routing 變更（binary-only 不夠）：
+
+- `deepseek-flash` 補 priority 3 `openrouter-fallback`，
+  `upstream_model: deepseek/deepseek-v4.1-flash`。
+- 舊 id `deepseek-v4-flash` 的 OpenRouter 仍用 `deepseek/deepseek-v4-flash-0731`。
+- OpenRouter `extra_body.provider.max_price` 改為 prompt `0.15` / completion `0.60`
+  （V4.1 Flash 官價）；舊 cap `0.08` / `0.18` 會擋掉所有 V4.1 provider。
+- Mac 原本就有 OpenRouter endpoint；NFS 四台、Oracle、Zeus 的 `config.yaml`
+  先前沒有這個 endpoint。各機 systemd/launchd process env 已有
+  `OPENROUTER_API_KEY`，所以新增 endpoint 時用 `${OPENROUTER_API_KEY}`，
+  不要把 key 寫進檔案或 memory。
+
+2026-09-12 已部署至 Mac、mazu、athena、cthulhu、valkyrie、oracle、zeus。
+55 tests、typecheck、四平台建置；Linux 磁碟 SHA 與 `/proc/<pid>/exe` 相符，
+Mac 為新 PID + 簽章後 SHA。真實 `deepseek-flash` 推論皆 HTTP 200、
+`X-Gateway-Active-Endpoint: command-code`。Go 月額仍盡，這證明 failover
+到 Command Code，不證明 OpenCode 成功，也不證明 OpenRouter 被打到
+（CC 成功所以沒有走到第三組）。不要重啟 HAPI Runner。
+
+swop 仍未部署：HAPI machine 列表無此機；Mac 不在舊 `192.168.1.0/24`，
+已知 Windows OpenSSH `192.168.1.206` 與 mDNS `Swear01_PC` 無回應。
+Windows exe 已建置，SHA-256
+`e5b960e10bae928ab12b0de957fc9da334d3df9fa898947ac85a0107198c40b7`。
