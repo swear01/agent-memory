@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-11
+updated: 2026-09-12
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias]
 ---
 
@@ -150,20 +150,47 @@ Gateway route 補上 canonical id 後，還要同步每個 client 的 allowlist�
 
 - Pi `<remote-home>/.pi/agent/models.json`：`opencode-go.models` 只留 `deepseek-flash`
   與 `deepseek-pro`（`baseUrl` 保持 loopback `:35001/v1`）。
-- Pi `extensions/strict-model-allowlist.ts`：`allowed` 只放這兩個 id，且 `includes`
-  必須是單純的 `allowed.has(...)`；原本夾帶的 `meta/muse-spark-*` 例外要一起移除，
-  否則 registry 不會只剩兩筆。這個允許清單同時 patch `ModelRegistry.prototype`、
-  `ModelRuntime.prototype`（CLI `--model` 解析在 `session_start` 之前）與 `getAuth`，
-  所以少改一處就會出現「列得出來但送不出去」或反過來的情況。
-- Pi `model-filter.json`（`defaultAction: block`）的 allow rule 與 `settings.json` 的
-  `defaultProvider` / `defaultModel` / `enabledModels` / `defaultThinkingLevel` 要一起改；
-  只改其中一處會被另一層過濾掉。
+- Pi `extensions/strict-model-allowlist.ts`：**只把 `allowed` 裡兩個 DeepSeek id 換名**
+  （`opencode-go/deepseek-v4-pro` → `opencode-go/deepseek-pro`、
+  `opencode-go/deepseek-v4-flash` → `opencode-go/deepseek-flash`），其餘六筆 id 與
+  `includes` 的 `meta` / `muse-spark-1.2-contributor` 特例**必須原樣保留**。這個允許清單
+  同時 patch `ModelRegistry.prototype`、`ModelRuntime.prototype`（CLI `--model` 解析在
+  `session_start` 之前）與 `getAuth`，所以少改一處就會出現「列得出來但送不出去」或反過來的情況。
+- Pi `model-filter.json`（`defaultAction: block`）：改名是把 opencode-go 那條 rule 的
+  `ids` 換成 `deepseek-flash` / `deepseek-pro`；`openai-codex`、`meta`、`valkyrie-ninfer`
+  三條 allow rule 不能刪。`settings.json` 的 `enabledModels` 是**八筆**（兩個新 DeepSeek id
+  ＋ Codex 四筆 ＋ `meta/muse-spark-1.2-contributor` ＋ `valkyrie-ninfer/qwen3.8-27b`），
+  `defaultProvider` / `defaultModel` / `defaultThinkingLevel` 沿用備份原值
+  （`valkyrie-ninfer` / `qwen3.8-27b` / `max`）。三層要一起改；只改其中一處會被另一層過濾掉。
 - OpenCode CLI `<remote-home>/.config/opencode/opencode.jsonc`：`model`、`small_model`
   與 `provider["opencode-go"].whitelist`。
 - dsh `<remote-home>/.dsh/settings.yaml`：`llm-deepseek.models` 是 advisory catalog
   （`@deepseek-ai/dsh-llm-deepseek` 的 schemastery `catalogModel`，必填只有 `id`，可選
   `name`/`contextWindow`/`maxTokens`），預設值是**已被 retire 的** `deepseek-v4-flash`
   / `deepseek-v4-pro`，所以要明寫新 id；`baseURL` 與 `apiKeyEnv` 不動。
+
+## 2026-09-11 回歸：改名不得砍掉其他模型（Zeus 已修復）
+
+有人把改名操作誤做成「白名單縮到只剩 `opencode-go/deepseek-flash` / `deepseek-pro`」，
+把 Codex 四筆、`meta/muse-spark-1.2-contributor`、`valkyrie-ninfer/qwen3.8-27b` 全部刪掉。
+**改名（rename）與縮減（narrow）是兩件事**：原始需求是只換兩個 DeepSeek id，其他模型必須
+保留。Zeus 上受影響的三個檔案與還原來源：
+
+- `~/.pi/agent/settings.json`、`~/.pi/agent/model-filter.json`、
+  `~/.pi/agent/extensions/strict-model-allowlist.ts` 皆由
+  `~/.pi/agent/*.backup-deepseek-rename-20260911-193728`（真正的改名前備份，mtime 19:38，
+  id 仍是 `deepseek-v4-*`）整檔還原後只做 id 字串替換。先確認備份與 live 的非目標欄位完全
+  相同，再整檔安裝，可避免手抄清單漏筆。
+- 還原後 `ctx.modelRegistry.getAll()` dump 共 **8 筆**：`opencode-go/deepseek-flash`、
+  `opencode-go/deepseek-pro`、`openai-codex/gpt-5.6-luna`、`openai-codex/gpt-5.6-sol`、
+  `openai-codex/gpt-5.6-terra`、`openai-codex/gpt-daybreak-blue-latest`、
+  `meta/muse-spark-1.2-contributor`、`valkyrie-ninfer/qwen3.8-27b`。
+- 備份目錄陷阱：`<gateway-config-dir>/backup-<ts>-pre-deepseek-rename/` 這個名字**不可信**。
+  Zeus `backup-20260911-195056-pre-deepseek-rename/` 裡的 `pi-agent-settings.json` 與
+  `pi-agent-model-filter.json` 已經是縮減後的狀態（`enabledModels` 只剩兩筆），只有
+  `pi-agent-extensions-strict-model-allowlist.ts` 還留著七筆。真正的改名前快照在
+  `~/.pi/agent/` 的 `*.backup-deepseek-rename-<timestamp>`。還原前先比對 mtime 與內容，
+  不要只信目錄名。
 
 驗證不能只看檔案內容：用 `pi -e <extension>` 在 `session_start` dump
 `ctx.modelRegistry.getAll()`，確認輸出的 provider/id 清單就是預期那幾筆，才證明三層
@@ -193,3 +220,6 @@ Zeus（port `35002`）與 swever 都已完成各自機器的改動；其餘機�
   opencode-go 的兩個新 id。
 - 備份目錄慣例：`<gateway-config-dir>/backup-<YYYYMMDD-HHMMSS>-pre-deepseek-rename/`，內含
   `MANIFEST.txt` 記錄備份檔名對應的原始路徑（多個同名 `settings.json` 要加機器與工具前綴）。
+  但這個目錄名只是命名，**不代表裡面真的是改名前狀態**（Zeus 那份已含 2026-09-11 的
+  回歸縮減，見上方同名章節）；真正 pre-rename 快照是 client 端的
+  `*.backup-deepseek-rename-<timestamp>`，還原前先比對 mtime 與內容。
