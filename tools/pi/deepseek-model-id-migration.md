@@ -218,6 +218,8 @@ session 補做），所以互動式 `pi --list-models` 現在只列這兩筆；�
 
 # 2026-09-12 更正：Pi allowlist 要保留非 DeepSeek 模型
 
+> 這件事的一般化通則已寫進 `global/workflows/config-change-scope-discipline.md`「改名／替換任務只改目標項目，清單類設定必須保留其他項目」——改名任務不要順手收斂 allowlist 範圍。
+
 第一次改名（2026-09-11）時，我把 Pi 的三層 allowlist／`enabledModels` 一起收斂成「只有兩個 DeepSeek
 id」，把 `openai-codex/*`（Luna/Sol/Terra/Daybreak，Mac 另有 Astra）、`meta/muse-spark-1.2-contributor`、
 `valkyrie-ninfer/qwen3.8-27b` 全部擋掉，連 HAPI 選單都只剩兩個模型。使用者指出這是錯的：**只換 DeepSeek
