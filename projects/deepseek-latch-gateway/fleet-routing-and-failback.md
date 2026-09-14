@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-12
+updated: 2026-09-14
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -258,6 +258,16 @@ Mac 為新 PID + 簽章後 SHA。真實 `deepseek-flash` 推論皆 HTTP 200、
 `X-Gateway-Active-Endpoint: command-code`。Go 月額仍盡，這證明 failover
 到 Command Code，不證明 OpenCode 成功，也不證明 OpenRouter 被打到
 （CC 成功所以沒有走到第三組）。不要重啟 HAPI Runner。
+部署紀錄 PR #15 已合進 `caa23fd`。
+
+舊 binary **完全不 parse `extra_body`**。Mac live config 裡即使早已寫了
+OpenRouter `max_price`，PR #14 之前也不會送到上游；只改 yaml、不換 binary，
+OpenRouter 仍等於沒掛。NFS／Oracle／Zeus 連 endpoint 都沒有，即使 process
+env 已有 `OPENROUTER_API_KEY`。
+
+`/status` 的 `circuitState: open` 看的是 `consecutiveFailures > 0`，不是
+`blockedUntil`。cooldown 到期後畫面仍可能顯示 open；要以 `blockedUntil`
+對現在時間，或看下一筆 request 會不會 probe。
 
 swop 仍未部署：HAPI machine 列表無此機；Mac 不在舊 `192.168.1.0/24`，
 已知 Windows OpenSSH `192.168.1.206` 與 mDNS `Swear01_PC` 無回應。
