@@ -20,7 +20,7 @@ tags:
 - Login 檔與 Mazu 相同：`Z20-dvlab-apps.sh`（TMPDIR + source `/apps/etc/env.sh`）、`/etc/environment` 把 `/apps/bin` 放在 `/usr/local/bin` 前、`/etc/zsh/zshenv` emulate-sh source Z20。四台都有 `dvlab-env.sh` 會把 `/usr/local/bin` 插回 PATH 最前，所以也需要 `zz-dvlab-apps-path.sh`。fish 可省略。
 - 不要 source 完整 `vcs.sh` / `verdi.sh` / `spyglass.sh`。不要印 license 值，不要 cat `license.sh`。不要建 `/usr/cad` symlink。
 - 四台 login shell `command -v vcs` / `verdi` 都是 `/apps/bin/...`。VCS 最小 sim（`/tmp/dvlab-apps-smoke`、本機 tmpfs、`TMPDIR=/tmp`）compile+sim 結束碼 0，日誌路徑在 `/apps/cad`。測完刪 smoke 目錄。
-- `/usr/local/bin/vcs` 已在後續任務從五台刪除；login 仍解析到 `/apps/bin/vcs`。
+- `/usr/local/bin/vcs` 已在後續任務從五台刪除；login 仍解析到 `/apps/bin/vcs`。同學不用手動 source：launcher 子行程會 source CIC。ICC2／3DIC／VC Formal 尚無 `/apps/bin` 入口；`/apps/bin/vcs` 尚未同時 source `verdi.sh`（FSDB）。詳見 `eda-install-inventory.md`。
 - Zeus 本機 `/cad` 與 `/usr/cad` → `/cad` 已於 2026-09-14 刪除（約 7.2G Genus／Conformal 舊樹）。沒有重建 `/usr/cad`。細節見 `machines/zeus/local-cad-removed.md`。
 
 # 注意
