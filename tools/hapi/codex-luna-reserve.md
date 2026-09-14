@@ -4,7 +4,7 @@ scope: tools/hapi
 project: hapi
 tool: Codex app-server
 status: active
-updated: 2026-09-12
+updated: 2026-09-14
 ---
 
 ## 已確認的產品需求
@@ -75,7 +75,13 @@ CLI 全套測試使用共用 `/tmp/hapi-test-config.json`；同時跑另一個 C
 
 真實帳號的 `model/list(includeHidden=true)` 未列出 `gpt-reserve`，但可直接建立該模型 thread。推論後 account usage 同時回傳普通 `codex` 與 `base_model_inference`（`limitName=gpt-reserve`、`normalModelSlug=gpt-5.6-luna`）週額度。一般額度未耗盡、沒有 luna_reserve banner，不代表原生模型一定拒絕請求。也不能因模型可直接推論就跳過 HAPI 既定的條件式選單政策。
 
-新 HAPI PR #1836 已實作手動選單、獨立額度、原生通知確認、設定派送期限、自訂 collaboration instructions 保留，以及不阻塞事件投影的每回合一次提示。最新程式 head `9db722a58` 的 CI 全數通過，HAPI Bot 無 actionable issue；本機全套 7,506 passed / 7 skipped。
+新 HAPI PR #1836 已實作手動選單、獨立額度、原生通知確認、設定派送期限、自訂 collaboration instructions 保留，以及不阻塞事件投影的每回合一次提示。2026-09-12 驗證 head `9db722a58` 的 CI 全數通過，HAPI Bot 無 actionable issue；本機全套 7,506 passed / 7 skipped。
 
 
 兩次最小真實請求均完成，每次 native token usage 為 input 49,181 / output 7。第二次請求前後，一般週額度 usedPercent 均為 13，Reserve 週額度均為 2；可確認 Reserve 模型推論及獨立 quota bucket，但百分比未變，不能宣稱本次扣額增量已被量測。不可為了製造可見百分比差異而無限重試或刻意耗盡一般額度。
+
+## 2026-09-14 整合驗收
+
+#1836 head `3fe0ec50` 已整合當時 main，最新 CI／review 與本機 19 項瀏覽器測試通過；沒有合併或部署。使用真實 Codex 0.154.0 的 HAPI read-only probe 回傳 `supported=true`、`reserveAvailable=false`。這只證明該次帳號狀態未開放 HAPI 條件式選單，不能推論原生 Reserve 推論一定不可用。
+
+尚缺符合條件帳號的 HAPI 選單→原生設定確認→實際 Reserve 額度變化驗證。不能用 mock、CLI 版本、成功原生推論或 CI 綠燈替代，也不要刻意耗盡額度來製造資格。延遲確認測試須讓 settings RPC 先 ACK、但不自動送 native settings event，才能驗證真正等待通知，而不是只等待 RPC。

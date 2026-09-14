@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-09-12
+updated: 2026-09-14
 tags:
   - shared-memory
   - qmd
@@ -59,3 +59,11 @@ embedding 或重建 canonical Markdown。
   Google API key 前綴、PEM private key 的 BEGIN/END 標頭行、JWT、以及
   「key/token/password/secret/credential/cookie 等關鍵字 + 冒號或等號 + 非 placeholder 值」。
 - 一般 email 形式字串，以及 commit author/committer 的個人信箱都會失敗。
+
+## 已授權的歷史隱私清理
+
+先查實際 repository visibility，不因名稱是 personal memory 就假設 private。一般同步不得 force-push；只有使用者明確授權歷史清理時，才另行備份、在隔離 clone 重寫命中文件，逐一核對歷史 tree 只改允許的路徑。
+
+備份包含本機 refs、staged／unstaged patch 與 untracked 檔，放在不會被 QMD 索引的私有位置，不推送備份。發布時僅更新受影響分支，以明確的遠端舊 SHA 作 force-with-lease；遠端變動就停止，不能用一般 force 或 mirror push 覆蓋。
+
+同步其他 checkout 時，先保留本地工作，再以新的 remote main 為基底重套；不得 merge 或推回舊歷史。驗證新 tracked files、完整歷史、CI 與 remote SHA 後才刷新 QMD；索引清理不能代替 Git 清理。GitHub 的 unreachable objects／快取是否已清除，不能由 branch history 乾淨就斷言。提交使用與既有紀錄一致的公開 noreply 身分，避免把個人信箱重新帶進 metadata。
