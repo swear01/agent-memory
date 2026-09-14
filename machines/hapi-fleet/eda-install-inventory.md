@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-14
 tags:
   - eda
   - synopsys
@@ -18,7 +18,7 @@ tags:
 
 - 五台 Ubuntu 26.04（Mazu、Cthulhu、Athena、Valkyrie、Zeus）共用同一份 NFS TSRI 安裝樹 `<lab-eda-root>`。該樹在實驗室 NAS 的 NFS home 上，五台都能掛載。
 - Fleet 只為 VCS、SpyGlass GUI、SpyGlass CLI 提供 `/usr/local/bin` launcher。Verdi、DC、ICC2、Innovus、JasperGold、VC Formal 必須 source 對應 CIC 腳本。
-- Zeus 另有本機 `<zeus-cad-root>`（`/usr/cad` 指向它），只含 Cadence Genus `21.12.000` 與 Conformal `21.20.100`。其他四台沒有這個目錄。
+- Zeus 曾有本機 `<zeus-cad-root>`（`/usr/cad` 指向它），只含 Cadence Genus `21.12.000` 與 Conformal `21.20.100`。2026-09-14 已刪 `/cad` 與 `/usr/cad`；沒有遷到 `/apps`，也沒有重建 symlink。其他四台本來就沒有這個目錄。
 
 # 共用樹已確認 binary
 
@@ -35,7 +35,7 @@ tags:
 | JasperGold | `jaspergold/JASPER/jasper_2025.03` | 無 |
 
 - PrimeRail 的 CIC 腳本指向 `<lab-eda-root>/primerail/primerail`，該目錄不存在。
-- Cadence CIC 多數 cshrc 仍假設 `/usr/cad/$VENDOR/$TOOL`。除 Zeus 的 Genus／Conformal 外，這些路徑沒有安裝樹。
+- Cadence CIC 多數 cshrc 仍假設 `/usr/cad/$VENDOR/$TOOL`。Zeus 本機 Genus／Conformal 已刪，這些路徑現在五台都沒有安裝樹。
 - 單元庫在 `<lab-eda-root>/cell_library`：CBDK45、IC Contest、TSMC 018／40／90、SAED32／90。
 
 # 開放源碼（host-local，版本不一致）
@@ -48,8 +48,8 @@ tags:
 
 # 舊安裝仍在 NFS
 
-- 學生家目錄仍有 VCS／Verdi／VC Formal `2023.03-sp2`、Innovus `21.17`、Xcelium `22.03`、ModelSim `2024.1`、DC `2024.09`（非 sp4）。Zeus 本機 `eda.bashrc` 仍指向這些路徑。它們不是 fleet launcher 入口。
-- 2026-08-24 審計未刪任何 EDA 檔；Genus 仍需要 Zeus 的 `libpng12-0`。
+- 學生家目錄仍有 VCS／Verdi／VC Formal `2023.03-sp2`、Innovus `21.17`、Xcelium `22.03`、ModelSim `2024.1`、DC `2024.09`（非 sp4）。它們不是 fleet launcher 入口。Zeus 本機 `eda.bashrc` 已隨 `/cad` 刪除。
+- Zeus 的 `libpng12-0` 仍安裝（舊 Genus 依賴）；工具樹已刪，套件可留到另案。
 
 # NFS 對效能的影響（2026-09-11 Mazu 實測）
 
