@@ -53,7 +53,7 @@ tags:
 # 舊安裝
 
 - 三份閒置學生家目錄舊 EDA 樹（clare 的 `eda_tools`、HugoChen 的 `eda_tools`、eedave 的 `synthesis_2024.09_linux`）已於 2026-09-14 改名 `.retired-20260914`。觀察期過後才能 `rm -rf`。
-- jack0716 的 `tsri` 仍在：Valkyrie Docker 容器 `opentitan_bug8729` 仍 bind-mount 該樹。不要宣稱已退役，也不要殺該容器。
+- jack0716 的 `tsri` 已於 2026-09-14 改名 `tsri.retired-20260914`（Valkyrie `opentitan_bug8729` 已 `docker stop`，未 `rm`）。觀察期同日，不要 `rm -rf`。
 - 那些舊樹不是 fleet launcher 入口。Zeus 本機 `eda.bashrc` 已隨 `/cad` 刪除。
 - Zeus 的 `libpng12-0` 仍安裝（舊 Genus 依賴）；工具樹已刪，套件可留到另案。
 
