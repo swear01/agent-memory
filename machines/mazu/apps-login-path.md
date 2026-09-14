@@ -4,7 +4,7 @@ scope: machines/mazu
 machine: mazu
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-14
 tags:
   - apps
   - login
@@ -19,6 +19,7 @@ tags:
 - 因此多了一個較晚執行的 `/etc/profile.d/zz-dvlab-apps-path.sh`，在其他 profile.d 之後再 `export PATH="/apps/bin:$PATH"`。`run-parts` 順序上它在 `dvlab-env.sh` 之後。使用者 `~/.profile` 仍可能把 `~/.local/bin` 等插更前面，只要 `/apps/bin` 在 `/usr/local/bin` 之前即可。
 - fish 可省略：launcher 自己 source license；PATH 由 PAM `/etc/environment` 處理。
 - 不要印 license 值，不要 cat `license.sh`。Login 後 `VCS_HOME` 應為空，PATH 不應出現 `/apps/cad/...` tool bin。
+- 2026-09-14：Cthulhu／Athena／Valkyrie／Zeus 都有同一份 `dvlab-env.sh`，因此四台也都需要 `zz-dvlab-apps-path.sh`。見 `machines/hapi-fleet/apps-nfs-login.md`。
 
 # 驗證帳號
 
