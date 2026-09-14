@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-08-25
-updated: 2026-09-11
+updated: 2026-09-14
 tags:
   - synopsys
   - vcs
@@ -30,14 +30,14 @@ tags:
 # 已部署解法
 
 - 共用 VCS Bash 設定在 PATH 最前面加入一個共享 `vcs-gcc12` shim directory；其中 `gcc`、`g++` 分別指向各主機的 `/usr/bin/gcc-12`、`/usr/bin/g++-12`，並讓 `VCS_CC` 指向 shim。
-- 五台各自提供 `/usr/local/bin/vcs` Bash launcher。任何正常 login PATH 的 Bash、zsh 或 fish 帳號都可直接執行 `vcs`；launcher 在子程序內載入共用 VCS 設定後 exec vendor binary，不會改變使用者 shell 的全域 compiler。
+- 2026-09-14 起五台入口是 `/apps/bin/vcs`（舊 `/usr/local/bin/vcs` 已刪）。任何正常 login PATH 的 Bash、zsh 或 fish 帳號都可直接執行 `vcs`；launcher 在子程序內 source `vcs.sh`（含 vcs-gcc12 shim）後 exec vendor binary，不會改變使用者 shell 的全域 compiler。
 - Valkyrie 原本缺少 license hostname resolution；補齊主機解析後，授權連線與 smoke test 均恢復。記憶不保存授權伺服器 IP、帳密或 license 內容。
 
 # 驗證邊界
 
-- Mazu、Cthulhu、Athena、Valkyrie、Zeus 均以代表性 NIS 學生帳號，不手動 source 設定，直接透過 `/usr/local/bin/vcs` 完成 `-full64` 編譯、連結與模擬。
+- Mazu、Cthulhu、Athena、Valkyrie、Zeus 均以代表性 NIS 學生帳號，不手動 source 設定，直接透過 `/apps/bin/vcs` 完成 `-full64` 編譯、連結與模擬。
 - 五台 VCS compile path 均實際使用 GCC 12.5；五台 `/usr/bin/gcc` 仍為 15.2。
-- Bash、zsh、fish login shell 均解析到 `/usr/local/bin/vcs`。
+- Bash、zsh、fish login shell 均解析到 `/apps/bin/vcs`。
 - 目前只證明最小 Verilog end-to-end smoke test。Synopsys 的 X Foundation 支援矩陣未列 Ubuntu 26.04，較大型 flow 仍可能遇到 shell 或平台相容性問題；license 同時使用量仍受席次限制。
 
 # 維運規則
