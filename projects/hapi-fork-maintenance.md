@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-12
+updated: 2026-09-14
 tags:
   - hapi
   - fork
@@ -104,3 +104,7 @@ The maintained `swear01/hapi` fork is a separate repository boundary. Updating a
 # PR #1607 Delete Group failure
 
 On 2026-09-04, production Hub logs and a rollback-only database reproduction confirmed that group deletion returned HTTP 500 even when every target session was stopped and archived. Bun SQLite counted foreign-key cascade deletions in `Statement.run().changes`, so deleting five direct session rows with existing child data reported a much larger change count and tripped the transaction's exact-count guard. The minimal fix on the existing PR head uses `DELETE ... RETURNING id` and counts only returned session rows; the regression test adds a child message and verifies both sessions and the cascaded message are removed. Commit `f6cb2324fddb8bf3062faa6d077bcd0917311384` passed the upstream PR's `test`, `integration`, `drift-gate`, and latest-head review with no findings. The PR remained open for an upstream maintainer; no merge was authorized.
+
+On 2026-09-14, #1607 head `311e55bb` also closed a separate live-state race: a reconnecting archived session can be active in SessionCache while SQLite still says inactive. Immediately before synchronous transactional bulk deletion, validate both live cache activity/lifecycle and database namespace/archived/inactive state. One invalid member must reject the whole group without deleting histories or emitting removal events. The regression failed before the cache guard and passed afterward; current-head CI and review passed without merging.
+
+Project-group keyboard handlers must ignore events whose target is a child control rather than the group header; otherwise Enter/Space on Copy Path or New Session can be swallowed. Retain full group membership across sidebar search and pinned/hidden rows when applying bulk actions.
