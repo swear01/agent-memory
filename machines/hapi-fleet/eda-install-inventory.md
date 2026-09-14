@@ -73,7 +73,7 @@ tags:
 
 # 使用與維運
 
-- 學生登入即可打 `vcs`／`verdi`／`spyglass`（以及 `sg_shell`、`dc_shell`、`innovus`、`jg`）。`command -v` 應為 `/apps/bin/...`。
+- 學生登入即可打 `vcs`／`verdi`／`spyglass`（以及 `sg_shell`、`dc_shell`、`innovus`、`jg`）。`command -v` 應為 `/apps/bin/...`。學生講義：[DVLab 商業 EDA 使用說明](https://hackmd.io/ap5l9P9-Rp2bWEujO9htcw)（HackMD `ap5l9P9-Rp2bWEujO9htcw`，`signed_in` 可讀、owner 可寫）。
 - FSDB 仍須同一行程／launcher 內部同時帶 VCS 與 Verdi CIC。`/apps/bin/verdi` 已 source `verdi.sh`；`/apps/bin/vcs` 只 source `vcs.sh`。先執行 `verdi` 再執行 `vcs` 無效：那是兩個子行程，不會把 Verdi PLI 留給後面的 `vcs`。
 - Task 6 沒有測 `$fsdbDumpfile`，因此沒有改 `/apps/bin/vcs` 去同時 source `verdi.sh`。若之後實測 VCS dump FSDB 仍缺 PLI，另開任務把 `/apps/bin/vcs` 改成同時 source `vcs.sh` 與 `verdi.sh`。那是 launcher 內部，不是 login。
 - 2026 年 TSRI 使用权改 10 月申請。現有 2025.06 目錄名稱不是明年門戶版本的證據。不等 10 月 TSRI 新包；本計畫只搬現有 2025.06 樹。
