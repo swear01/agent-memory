@@ -32,6 +32,9 @@ tags:
   不要把腳本本體當 `bash -s` 的 stdin 再跑 `--version`。
 - 只殺卡住的本機 `hapi-ctl`／`ssh`，不要對 `--started-by runner` children 發 TERM。
 
+截至 2026-09-15，skill 的 `hapi-ctl.sh` / `install-github-release.sh` 仍是這個寫法，尚未修。
+`EXPECTED_HAPI_VERSION` 預設仍是 `0.29.0.6`；部署 `0.30.4.1` 必須顯式覆寫。gist／skill 的 expected baseline 也還停在舊版，與 live Unix 7 機不一致。這不擋 `v0.30.4.1` 結案，但下次 `update all` 還會再踩。
+
 # 核 checksum
 
 `grep darwin-arm64 checksums.txt` 會同時命中 `hapi-darwin-arm64.tar.gz` 與
