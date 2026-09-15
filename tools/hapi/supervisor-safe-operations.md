@@ -44,7 +44,7 @@ Use `set -o pipefail`; nested update or restart failures must propagate non-zero
 
 On shared-filesystem hosts, publish a shared binary once, then verify each runner before restarting the hub.
 
-`printf script | ssh host bash -s` 結尾若呼叫 `hapi --version`，compiled binary 會讀剩餘 stdin 並把 SSH 掛住；遠端其實可能已裝完。細節見 `tools/hapi/remote-install-stdin-hang.md`。Hub 健康檢查的 `curl` 必須設 `--max-time`，否則半開的 `:3006` 會讓 SSH 連十數小時。
+`printf script | ssh host bash -s` 結尾若呼叫 `hapi --version`，compiled binary 會讀剩餘 stdin 並把 SSH 掛住；遠端其實可能已裝完。細節見 `tools/hapi/remote-install-stdin-hang.md`。Hub 健康檢查的 `curl` 必須設 `--max-time`，否則半開的 `:3006` 會讓 SSH 連十數小時。腳本與 gist 預設仍是 `0.29.0.6`，尚未跟著 `0.30.4.1` 改。
 
 共享 NFS binary 換檔後，仍在跑的 `hapi hub` 會繼續用 `.nfs*` inode。HTTP 200 不夠；要看 `/proc/<pid>/exe` 是否已指向 `<remote-home>/.local/bin/hapi`，以及 served JS 是否含新版號。Hub DB 約 4.5–4.8 GiB，不要在長 SSH 上 `cp -a`；用 SQLite online backup，見 `tools/hapi/hub-sqlite-lock-crash.md`。
 
