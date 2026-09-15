@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-14
+updated: 2026-09-15
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -39,6 +39,33 @@ Quota failure 會先依序耗盡三個 OpenCode Go account，再進入低優先�
 Cooldown 從 1.5 小時開始，failed recovery probe 後倍增，最高 24 小時。
 到期後由一個真實 request 擁有 half-open probe；其他 concurrent request
 繼續使用 fallback。Probe 成功便恢復到可用的最高 priority。
+
+# 2026-09-15 OpenCode key 輪替與槽位對調
+
+使用者要求淘汰舊第二把 key，並將替換後的新第二把與原第三把對調。
+最終 `OPENCODE_API_KEY_1` 保留原值、`OPENCODE_API_KEY_2` 使用原第三把、
+`OPENCODE_API_KEY_3` 使用本次新增 workspace 的 key。endpoint 的 account 編號
+現在表示槽位，不能再依舊帳號名稱推定其持有的 key。
+
+- 已完成並驗證 **7／8 台**：Mac、mazu、athena、cthulhu、valkyrie、Zeus、Oracle。
+  swop 尚未完成本次 key 輪替；最後已知 SSH 位址不可達，恢復連線後需補做，
+  不能把七台成功當作整個 fleet 完成。
+- 憑證來源為 `<remote-home>/.secrets`；已存在的
+  `<remote-home>/.dsh/.credentials.yaml` 同步第二、第三槽，缺少第三槽時補齊。
+  第一把及其他 provider 憑證保持不變；key 不寫入 gateway config、文件或記憶。
+- 七台均核對磁碟與運行中程序的三把 key 對應關係，並實際透過
+  `opencode-go-3` 推論取得 HTTP 200 與 `OK`。本次證據包含 OpenCode 上游成功，
+  不只是 Command Code fallback；不代表未來配額或所有模型永遠可用。
+- Mac、mazu、Zeus、Oracle 等 gateway established 連線清空後重啟 gateway，
+  HAPI session roots 分別保留 5／5、1／1、2／2、12／12。沒有重啟 HAPI Runner。
+  Athena、Cthulhu、Valkyrie 恢復連線時，NFS 憑證及既有 gateway 程序均已載入
+  新順序，因此只驗證、不再重啟；當時三台沒有 runner-started session roots。
+
+驗證陷阱：`POST /switch?index=2` 只切換 `routing.yaml` 的第一個 model route，
+各機第一條可能是 `deepseek-flash` 或 `deepseek-v4-flash`。測試必須使用該
+route 的 model，核對 `X-Gateway-Active-Endpoint: opencode-go-3`，完成後恢復
+測試前的 index。單看 HTTP 200 可能其實仍在使用第一把 key。只更新
+`.secrets` 也不等於程序已重載；先看 runtime，再決定是否需要 gateway restart。
 
 # 歷史 rollout（七台，非現行清單）
 
