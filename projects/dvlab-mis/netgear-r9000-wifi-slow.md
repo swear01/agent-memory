@@ -1,13 +1,17 @@
 ---
-title: DVLab353 變慢是 R9000 Wi-Fi 而非 WAN
+title: DVLab353 2026-09-11 R9000 Wi-Fi 瓶頸與 ASUS 切換
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
-updated: 2026-09-11
+updated: 2026-09-15
 tags: [network, netgear, r9000, wifi, zyxel, firmware]
 ---
 
 # DVLab353 同學反映變慢：瓶頸在 R9000 無線
+
+## 後續事件
+
+2026-09-15 的多人手機開網頁慢另有 DNS 線索；防火牆已改用臺大校級上游並通過解析測試，手機體感仍待確認。參見 [Zyxel DNS 上游](firewall-dns-school-upstreams.md)，不要把本頁 9/11 的 R9000 根因套用到後續事件。
 
 ## 現場結論（2026-09-11）
 
