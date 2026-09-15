@@ -12,6 +12,8 @@ updated: 2026-09-15
 
 ## 使用者原則
 
+- 2026-09-15 壓縮決策追加：使用者取消樣本壓縮 benchmark，要求依網路權威資料直接選參數。本次對新重建組選定 `-t7z -mx=5 -m0=lzma2:d=256m -mmt=16 -v32g`，維持一般模式，原 512 MiB 字典減為 256 MiB；這是折衷設定，沒有實測速度或體積保證，先前「體積增加不超過 3%」不再作為經驗證門檻。依據 7-Zip 官方 `C/LzmaEnc.c`、`C/Lzma2Enc.c` 與 FAQ，不能把參數選擇描述為官方保證最適值。已保存到 Mazu SSD `canonical-repack-20260915/compression-plan.json`，重壓尚未啟動；不修改已完成的舊復原組設定。取消的是效能比較，逐檔內容／metadata、分卷 CRC／SHA 與實際還原驗證仍需執行。
+
 - 2026-09-15 重建規劃與 EDA 排除：使用者要求將已驗證的原備份與補備份重建成一個完整 tar、再做一組分卷壓縮，並要求跳過 EDA 軟體。本輪只完成排除盤點，尚未啟動重壓或壓縮參數 benchmark。保守範圍是已辨識的軟體安裝樹與安裝包；PDK／cell library、RTL／專案、OpenROAD 原始碼與研究流程、模擬結果、個人設定／腳本、已決定保留的 aigfuzz 仍保留。不能用 `eda`、`synopsys`、`cadence` 等名稱全域排除：同名命中包含 Cadence_Project、cell library、Git submodule 和研究資料。實際安裝包父目錄也混有 `jgproject`、`vcst_rtdb`、`novas.rc`／`novas.conf`、`eda.bashrc`，須只選精確安裝子樹。從兩組已驗證 SQLite inventory 核對的首批 33 個非重疊目錄／檔案共 4,663,298 筆、538,181,697,903 logical bytes；這不是壓縮容量節省值，也不是完整 EDA 窮盡盤點。具體帳號路徑留在 Mazu SSD 的 `/usr/2TB-SSD/backup-work/canonical-repack-20260915/eda-exclusion-plan.json`，不公開散佈原始清單。排除規則必須在新串流與驗證預期清單同時套用；保留路徑若硬連結指向排除路徑，需另保存 payload／重建有效連結，不能產生懸空硬連結。新組完成讀回驗證並獲准清理前，原 48 卷、補 11 卷與還原 metadata 保留。工作資料優先 SSD，容量不足不得默默填滿系統碟。
 
 - 2026-09-15 完成查證：2026-09-12 啟動的復原組於 09-13 12:54 完成，兩個 systemd service 均 exit success；SSD `complete.json`、已發布 metadata `COMPLETE.json` 與 `union-verified.json` 一致，備份碟當下為唯讀。驗證覆蓋 94 帳號、29,144,212 個保留項目、6,340,730 個歷史 required payload hashes；原備份覆蓋 22,229,770 筆，補備份 6,914,442 筆，接受消失路徑 13,268 筆、特殊節點 2 筆。原 tar 尾端不完整項目是 Steam `ubuntu12_32/steam`；已保存完整 prefix 邊界 5,392,406,976,512 bytes，並由補備份補足所需資料。這是兩組合用的完整復原集，不是一個正常收尾的 tar；以下 09-12「尚未驗證完成」是當日歷史狀態。原壓縮卷共 1,636,490,700,048 bytes、補卷共 359,624,214,017 bytes，合計約 2.00 TB。當日 SSD 可用約 1.42 TB、常備碟約 1.13 TB；不能假設任一處獨自能容納同體積的新組，也不能把壓缩率樣本視為容量保證。
