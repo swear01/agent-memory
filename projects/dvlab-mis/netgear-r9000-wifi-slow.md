@@ -7,7 +7,7 @@ updated: 2026-09-15
 tags: [network, netgear, r9000, wifi, zyxel, firmware]
 ---
 
-# DVLab353 同學反映變慢：瓶頸在 R9000 無線
+# DVLab353 2026-09-11 R9000 Wi-Fi 瓶頸與 ASUS 切換
 
 ## 後續事件
 
