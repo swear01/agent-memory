@@ -12,6 +12,8 @@ updated: 2026-09-15
 
 ## 使用者原則
 
+- 2026-09-15 容量解釋盤點：使用兩組已驗證的 members.sqlite，完整聚合一般檔案 size，原組為 5,353,375,667,585 logical bytes、補組 771,400,860,793 bytes，合計 6,124,776,528,378 bytes；33 個 EDA 排除範圍的 538,181,697,903 bytes 全在原組，扣除後為 5,586,594,830,475 bytes。這是檔案邏輯內容總量，不是新壓縮檔大小；進度的原 tar 分母 5,392,407,028,833 bytes 還包含 header／padding／待略過項目，原壓縮卷僅約 1.64 TB。大宗為研究輸出、benchmark、資料集及實驗版本；部分資料集同時存在 tar 與展開目錄，僅確認共存，未逐檔證明等價，不得自行去重或排除。已明確保留的 aigfuzz 也占顯著容量。包含帳號／檔名的詳表只存 SSD `canonical-repack-20260915/content-size-audit.json`、`content-size-details.json`、`content-size-details-deep.json`，不將完整個人檔案清單發布到記憶庫。本輪是唯讀容量分析，重壓範圍與設定不變。
+
 - 2026-09-15 17:20 再次接續：第二輪於 13:58:57 因主機再次重開而停止，開機時間 13:59:37；最後讀入 14,336,458,752 bytes，新卷目錄同樣為空。使用者再次授權繼續後，按 UUID 掛回常備碟，核對原 48＋補 11 卷的序號、總大小與舊 COMPLETE metadata，保留本輪證據到 SSD `interrupted-20260915-1358/`，空 overflow 改名留存。已於 17:20:46 啟動第三輪，仍用同一程式（SHA-256 `c38ba5150221b3cbba4f393fc92ea387df419241f342a518e4c46ff1e9a5f128`）、EDA 清單及 `mx=5/d256m/mmt16/v32g`，無重新 benchmark、無刪除原備份。重開後 SSD 裝置名稱由 nvme0n1 變成 nvme1n1，UUID 與 `/usr/2TB-SSD` 掛載一致；不可依裝置編號判定磁碟。查進度仍讀主工作目錄，不得沿用前兩輪進度；目前架構在重開機中斷後不能續寫同一壓縮串流。
 
 - 2026-09-15 13:52 接續：Mazu 13:24 關機、13:25 開機中斷第一輪重壓；journal 為正常停止，7zz encoder 顯示 `Break signaled`，沒有 `failure.json` 或 `complete.json`，新卷目錄已空。不能把 inactive/result=success 或最後 280.85 GB 的進度檔當成完成，也無新壓縮卷可續接。原常備碟仍連線但未掛載，已按 UUID 唯讀重新掛載；原 48 卷共 1,636,490,700,048 bytes、補 11 卷共 359,624,214,017 bytes 均符合先前卷數／大小，舊 recovery COMPLETE metadata 仍在，此檢查不冒稱重新通過全卷 SHA。使用者要求繼續，故保留第一輪狀態／log／directory headers 到 SSD `interrupted-20260915-1324/`，空的舊 overflow 目錄改名留存，原備份不刪改，以同一已測試程式和參數從頭重壓。`canonical-repack-20260915.service` 於 13:52:40 重新啟動；unit 改存 `/etc/systemd/system` 並在 SSD 留副本，避免定義隨 reboot 消失，但沒有啟用開機自動重跑，仍需保留中斷 evidence、確認磁碟與輸出後再啟動。進度仍查 SSD 主目錄 `progress.json`，不能讀 archived attempt 的舊進度。
