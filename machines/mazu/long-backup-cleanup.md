@@ -5,12 +5,16 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-12
+updated: 2026-09-15
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
+
+- 2026-09-15 重建規劃與 EDA 排除：使用者要求將已驗證的原備份與補備份重建成一個完整 tar、再做一組分卷壓縮，並要求跳過 EDA 軟體。本輪只完成排除盤點，尚未啟動重壓或壓縮參數 benchmark。保守範圍是已辨識的軟體安裝樹與安裝包；PDK／cell library、RTL／專案、OpenROAD 原始碼與研究流程、模擬結果、個人設定／腳本、已決定保留的 aigfuzz 仍保留。不能用 `eda`、`synopsys`、`cadence` 等名稱全域排除：同名命中包含 Cadence_Project、cell library、Git submodule 和研究資料。實際安裝包父目錄也混有 `jgproject`、`vcst_rtdb`、`novas.rc`／`novas.conf`、`eda.bashrc`，須只選精確安裝子樹。從兩組已驗證 SQLite inventory 核對的首批 33 個非重疊目錄／檔案共 4,663,298 筆、538,181,697,903 logical bytes；這不是壓縮容量節省值，也不是完整 EDA 窮盡盤點。具體帳號路徑留在 Mazu SSD 的 `/usr/2TB-SSD/backup-work/canonical-repack-20260915/eda-exclusion-plan.json`，不公開散佈原始清單。排除規則必須在新串流與驗證預期清單同時套用；保留路徑若硬連結指向排除路徑，需另保存 payload／重建有效連結，不能產生懸空硬連結。新組完成讀回驗證並獲准清理前，原 48 卷、補 11 卷與還原 metadata 保留。工作資料優先 SSD，容量不足不得默默填滿系統碟。
+
+- 2026-09-15 完成查證：2026-09-12 啟動的復原組於 09-13 12:54 完成，兩個 systemd service 均 exit success；SSD `complete.json`、已發布 metadata `COMPLETE.json` 與 `union-verified.json` 一致，備份碟當下為唯讀。驗證覆蓋 94 帳號、29,144,212 個保留項目、6,340,730 個歷史 required payload hashes；原備份覆蓋 22,229,770 筆，補備份 6,914,442 筆，接受消失路徑 13,268 筆、特殊節點 2 筆。原 tar 尾端不完整項目是 Steam `ubuntu12_32/steam`；已保存完整 prefix 邊界 5,392,406,976,512 bytes，並由補備份補足所需資料。這是兩組合用的完整復原集，不是一個正常收尾的 tar；以下 09-12「尚未驗證完成」是當日歷史狀態。原壓縮卷共 1,636,490,700,048 bytes、補卷共 359,624,214,017 bytes，合計約 2.00 TB。當日 SSD 可用約 1.42 TB、常備碟約 1.13 TB；不能假設任一處獨自能容納同體積的新組，也不能把壓缩率樣本視為容量保證。
 
 - 2026-09-12 接續執行決策（取代先前僅評估狀態）：使用者已同意「保留原卷＋另做補充」並要求高速設定。工作根目錄為 Mazu `/usr/2TB-SSD/backup-work/canonical-recovery-20260912`；原 48 卷和原 staging 不刪改。`canonical-recovery-readback-20260912.service` 正式讀回，通過 decoder exit/decoded length、逐檔 SHA 與原始已提交 metadata 比對後，以 `OnSuccess=canonical-recovery-supplement-20260912.service` 自動銜接 planner、壓縮、冷讀回、union coverage／歷史 required hashes、分卷 SHA 與還原 metadata。使用者隨後澄清高速必須保留原本壓縮效率；在補壓尚未啟動時已修正為 `-mx=5 -m0=lzma2:d=512m -mmt=16 -v32g`，保留原一般等級與 512 MiB 字典，只把執行緒由 4 增至 16。不得自行把高速解讀成降低等級／字典；未宣稱相同壓縮率或實際大資料加速倍率。修正參數的實際 encode/readback/restore 測試通過，原卷讀回未中斷。依實際 node type 排除 FIFO/socket/char/block device；連結和已選定的 aigfuzz 保留。跨組歷史硬連結記錄 inode 對照並核對內容 SHA；還原 helper 先驗 SHA 再接回硬連結，最後恢復目錄 mtime。新資料庫使用 Python tarfile `stream=True`，避免全體 TarInfo 常駐記憶體。測試通過完整／截斷串流、FIFO、損毀 header、原始 SHA mismatch、高速 7z encode/readback、union、實際還原和跨組硬連結。這是啟動驗證，**不是正式資料已驗證完成**；唯一新完成閘門是工作目錄 `complete.json`，原 runner success/publication markers 不沿用。新補充名稱為 `Canonical-Home.supplement-20260912`，驗證後 metadata 目錄為 `Canonical-Home.recovery-20260912`；任一步失敗保留 evidence，不自動重跑。systemd units 位於 `/run`，重開機不保證自動接續；初始小段讀回為補上完整 tar prefix 邊界而重啟，舊分析目錄保留為 `readback-attempt-before-prefix-checkpoint`。Mazu 該 NFS mount 的臨時 readahead 已由 1024 恢復為原值 128 KiB。補充 service 的 `ExecStopPost` 會核對常備碟 UUID 再 sync/remount-ro。此後查狀態應查新 units 與 SSD `original/progress.json`／`progress.json`／`failure.json`，不能再只看舊壓縮 PID。
 
