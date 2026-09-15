@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-14
+updated: 2026-09-15
 tags:
   - hapi
   - fork
@@ -39,7 +39,17 @@ Keep tokens, signing material, runner environments, and deployment configuration
 
 # Latest verified release
 
-`v0.29.0.5` was rebuilt from upstream `980a921ba15665c54998a6ddb658103d467ff4cb` after auditing 154 open PRs (`54 carry / 96 defer / 4 drop`). The exact release commit is `7a89deefb2cbca900ba54eed1f4e399fada52bb2` with source tree `85ad6564dc84c759099523e80d522fd38df2b371`; PR #16, exact-main review and CI, release workflow `33793933802`, tag test `33793933807`, all eight payload digests, and macOS signing passed. All eight active Runners were then verified live at `0.29.0.5`, including systemd, launchd, and PM2 ownership; Hub/Tunnel and local/public Web behavior; served asset version; schema V29 `quick_check`; and workspace-root guard `403`/`200` behavior with the test row removed. The Mac kept seven session roots and its pre-rollout long-running jobs through handoff. Canonical HAPI Skillshare guidance was published in `shared-skills` commit `913d618fce329ab6832abfce722b56225a3370e2` and transfer repository pointer `7abe2ff5c7ed3ffd077bf843bb144bdae86b7b15`, then sync-verified on the seven non-Windows hosts.
+`v0.30.4.1` 於 2026-09-14 發布、2026-09-15 完成 Unix 7 機與 standalone Hub 驗證。官方 pin 是 GitHub Release `v0.30.4` / `8cefb0f04c413d4f47cd364bcf556e03af6b4073`，可為當時 `upstream/main` 的 ancestor，不必等於 tip。維護 SHA / tag / `origin/main` 為 `76d578dcaa6c8dd7cc0d3a6ce56eb2513da397c7`。`cli/package.json` 的 `optionalDependencies` 維持官方 `0.30.4`，不要改成維護版號。
+
+新鮮稽核 156 個 open PR：`27 carry / 125 defer / 4 drop`。Carry 集合與 `v0.29.1.1` 相同；`PERSONAL_PR_POLICY_EXCEPTION` 為 `#1771` `#1635`；`#1320` drop 不 replay。tag 當下的 release notes 仍寫 155/124，以 `pr-audit.tsv` 為準。frozen lockfile 曾因 `tar@7.5.2` 變成 `7.5.22` 秒敗，已重產 `bun.lock`。巨大 PR 上 Swear Review 可能 timeout；此次 latest-head Gemini 0 inline 作為過關證據。
+
+Release Actions `34822868886` 與 tag Test `34822868907` success；8 條 payload checksum 與 macOS `xyz.hapi.cli` / `HAPI Local Release Signing` 通過。核 `checksums.txt` 時不要用子字串 `darwin-arm64`，它會連 `hapi-desktop-darwin-arm64.zip` 一起抓到；應對單一檔名。
+
+Unix 7 機（mazu / cthulhu / athena / valkyrie / zeus / Mac `swairM5` / oracle）binary 與 runner state 均為 `0.30.4.1`；Linux `KillMode=process` 且 `MainPID` 等於 state PID、`NRestarts=0`；Mac launchd `AbandonProcessGroup` / `maxfiles=65536`；oracle PM2 `online` / `treekill=false`。standalone Hub 已離開 9/12 舊 inode，served `index-*.js` 含 `0.30.4.1`，公開與 LAN HTTP 200、`Cache-Control: no-store`，`/cli/upgrade` 無 token 回 401 而非 404。schema `user_version=29`、`quick_check=ok`。Windows `swop` 此輪未部署。
+
+改寫 `origin/main` 用 `--force-with-lease="main:<old-sha>"`；此輪舊 SHA 為 `69ae92524b01bedafe505f2161c54091b425915c`。不要 force-push `upstream`。部署陷阱見 `tools/hapi/supervisor-safe-operations.md`、`tools/hapi/remote-install-stdin-hang.md`、`tools/hapi/hub-sqlite-lock-crash.md`。
+
+先前 `v0.29.0.5` 是從 upstream `980a921ba15665c54998a6ddb658103d467ff4cb` 重建，稽核 154 個 open PR（`54 carry / 96 defer / 4 drop`）。當時 release commit 為 `7a89deefb2cbca900ba54eed1f4e399fada52bb2`，source tree `85ad6564dc84c759099523e80d522fd38df2b371`；PR #16、exact-main review and CI、release workflow `33793933802`、tag test `33793933807`、八條 payload digest 與 macOS signing 通過。當時 8 台 Runner 都驗證到 `0.29.0.5`。Canonical HAPI Skillshare 曾發布於 `shared-skills` commit `913d618fce329ab6832abfce722b56225a3370e2` 與 transfer pointer `7abe2ff5c7ed3ffd077bf843bb144bdae86b7b15`。
 
 The `v0.29.0.5` app shell returned no `Cache-Control: no-store` header through either the Hub-local or public route during rollout verification. Treat this as an unresolved Web-cache observation, not as a failed Runner deployment or a confirmed regression, until compared with the intended header contract and a previous release.
 

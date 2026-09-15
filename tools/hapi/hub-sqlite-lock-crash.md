@@ -6,7 +6,7 @@ tool: hapi
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-15
 tags:
   - hapi
   - hub
@@ -29,8 +29,15 @@ systemd 依 `Restart=always` 重新拉起。崩潰時正對應到直接讀 DB �
   診斷需求，且不影響 hub process。
 - `readonly: true` 不代表安全：WAL 模式下 reader 仍需要 `-shm` 檔與共享鎖；hub 端若遇到
   無法取得的鎖，會把它當致命錯誤往上拋而不是重試。
-- 若真的非得看 DB，只能在 hub 停止時讀，或先做 `VACUUM INTO` 複本再讀複本，
-  絕不在 hub 執行中直接開正式檔。
+- 若真的非得看 DB，只能在 hub 停止時讀，或先做線上備份再讀複本，
+  絕不在 hub 執行中用 `bun:sqlite` 直接開正式檔。
+- 2026-09-15 驗證：live Hub 仍在跑時，Python `sqlite3.Connection.backup`
+  （`pages=500`）把 `/var/tmp/hapi-hub/hapi.db`（約 4.5 GiB）備到
+  `hapi.db.bak-0.30.4.1-20260915-125240`，約 34 秒，hub 未崩潰。這是部署前備份路徑。
+  不要在長 SSH session 上對同檔做 `cp -a`：4.8 GiB 複本曾把 `hapi-ctl` Hub 重啟
+  卡住約 18 小時，舊 hub PID 一直沒換掉。
+- 線上 `PRAGMA quick_check` 在這份庫上約 50 秒；機器列表現在仍優先走 HTTP API。
+  一次 Python `SELECT` 沒炸掉 hub，不能當成之後可反覆直開正式檔的許可。
 - 已知 `messages` 表把 payload 以 zstd blob 儲存；用 `Bun.zstdDecompressSync` 才能解出內容，
   `gunzip`/`inflate`/`brotli` 都會失敗（header `28 b5 2f fd`）。這也是為什麼用 API 比讀 DB 省事。
 - `hapi inspect-peer <id>` 對「自己這個 runner 上、由 runner 啟動」的 session 可能回

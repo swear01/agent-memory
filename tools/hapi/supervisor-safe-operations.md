@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-09-11
+updated: 2026-09-15
 tags:
   - hapi
   - supervisors
@@ -44,6 +44,12 @@ Use `set -o pipefail`; nested update or restart failures must propagate non-zero
 
 On shared-filesystem hosts, publish a shared binary once, then verify each runner before restarting the hub.
 
+`printf script | ssh host bash -s` 結尾若呼叫 `hapi --version`，compiled binary 會讀剩餘 stdin 並把 SSH 掛住；遠端其實可能已裝完。細節見 `tools/hapi/remote-install-stdin-hang.md`。Hub 健康檢查的 `curl` 必須設 `--max-time`，否則半開的 `:3006` 會讓 SSH 連十數小時。
+
+共享 NFS binary 換檔後，仍在跑的 `hapi hub` 會繼續用 `.nfs*` inode。HTTP 200 不夠；要看 `/proc/<pid>/exe` 是否已指向 `<remote-home>/.local/bin/hapi`，以及 served JS 是否含新版號。Hub DB 約 4.5–4.8 GiB，不要在長 SSH 上 `cp -a`；用 SQLite online backup，見 `tools/hapi/hub-sqlite-lock-crash.md`。
+
+zeus 的 canonical machine id 是 `aa6fb76d-ca35-46c1-aaea-42a5b1c04d06`（不是 `aa6fb76b-...`）。
+
 # Cleanup safety
 
 Operate only on the exact registered machine identity and back up the hub database first. For connected sessions:
@@ -77,6 +83,12 @@ active-session handoff.
 # Platform checks
 
 Verify the loaded supervisor configuration, signing identity where applicable, protected-folder probes, and the platform's restart command after every rollout.
+
+# Verified maintained-release baseline (2026-09-15)
+
+HAPI `v0.30.4.1` 已發布；Unix 7 機與 standalone Hub 於 2026-09-15 驗證為該版。維護 SHA / tag / `origin/main` 為 `76d578dcaa6c8dd7cc0d3a6ce56eb2513da397c7`，官方 pin `v0.30.4` = `8cefb0f04c413d4f47cd364bcf556e03af6b4073`。Release run `34822868886`、tag Test `34822868907`、8 payload SHA-256、macOS `xyz.hapi.cli` 通過。Windows `swop` 此輪未部署。這是部署完成紀錄，未來操作仍應重新讀取 live 狀態。
+
+NFS 四機加 zeus / oracle / Mac 都在 binary mtime handoff 後進入 `Runner already running with matching version` 迴圈。只看 binary `--version` 或 Hub `running` 不夠。先確認 state PID argv 是主 `runner start-sync` 且沒有 `--started-by runner`，再 stop supervisor、只 TERM 該 PID、start；Linux 要 `MainPID` 等於新 state PID 且 `NRestarts=0`，Mac launchd 要 `running` 且 job PID 等於 state PID，oracle 要 PM2 wrapper 為 Runner 父程序、`treekill=false`、`pm2 save`。
 
 # Verified maintained-release baseline (2026-09-06)
 
