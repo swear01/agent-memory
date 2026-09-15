@@ -12,6 +12,8 @@ updated: 2026-09-15
 
 ## 使用者原則
 
+- 2026-09-15 17:20 再次接續：第二輪於 13:58:57 因主機再次重開而停止，開機時間 13:59:37；最後讀入 14,336,458,752 bytes，新卷目錄同樣為空。使用者再次授權繼續後，按 UUID 掛回常備碟，核對原 48＋補 11 卷的序號、總大小與舊 COMPLETE metadata，保留本輪證據到 SSD `interrupted-20260915-1358/`，空 overflow 改名留存。已於 17:20:46 啟動第三輪，仍用同一程式（SHA-256 `c38ba5150221b3cbba4f393fc92ea387df419241f342a518e4c46ff1e9a5f128`）、EDA 清單及 `mx=5/d256m/mmt16/v32g`，無重新 benchmark、無刪除原備份。重開後 SSD 裝置名稱由 nvme0n1 變成 nvme1n1，UUID 與 `/usr/2TB-SSD` 掛載一致；不可依裝置編號判定磁碟。查進度仍讀主工作目錄，不得沿用前兩輪進度；目前架構在重開機中斷後不能續寫同一壓縮串流。
+
 - 2026-09-15 13:52 接續：Mazu 13:24 關機、13:25 開機中斷第一輪重壓；journal 為正常停止，7zz encoder 顯示 `Break signaled`，沒有 `failure.json` 或 `complete.json`，新卷目錄已空。不能把 inactive/result=success 或最後 280.85 GB 的進度檔當成完成，也無新壓縮卷可續接。原常備碟仍連線但未掛載，已按 UUID 唯讀重新掛載；原 48 卷共 1,636,490,700,048 bytes、補 11 卷共 359,624,214,017 bytes 均符合先前卷數／大小，舊 recovery COMPLETE metadata 仍在，此檢查不冒稱重新通過全卷 SHA。使用者要求繼續，故保留第一輪狀態／log／directory headers 到 SSD `interrupted-20260915-1324/`，空的舊 overflow 目錄改名留存，原備份不刪改，以同一已測試程式和參數從頭重壓。`canonical-repack-20260915.service` 於 13:52:40 重新啟動；unit 改存 `/etc/systemd/system` 並在 SSD 留副本，避免定義隨 reboot 消失，但沒有啟用開機自動重跑，仍需保留中斷 evidence、確認磁碟與輸出後再啟動。進度仍查 SSD 主目錄 `progress.json`，不能讀 archived attempt 的舊進度。
 
 - 2026-09-15 11:42 使用者明確要求啟動後，已建立並啟動 Mazu `canonical-repack-20260915.service`（runtime unit，沒有自動重啟）。工作目錄 `/usr/2TB-SSD/backup-work/canonical-repack-20260915` 的 `repack.py` 以原組與補組的完整 tar member 區段串流重建；保留原始 PAX／ACL／xattr／sparse 編碼，略過已確認 EDA 範圍與特殊節點，尾端追加 19,853 筆歷史硬連結及目錄 metadata 重播，再正常結束 tar。預計保留 24,480,914 個唯一項目；重複的收尾 link／directory records 是標準 tar 可處理的最終狀態更新，不需舊 recovery helper。功能測試已實際涵蓋截斷原串流、精確排除、長 PAX 路徑、稀疏檔、xattr、ACL、數字 UID/GID、跨組硬連結、目錄奈秒時間、分卷搬移與選定參數的 round-trip；沒有做效能 benchmark。這是啟動紀錄，並非新組完成。
