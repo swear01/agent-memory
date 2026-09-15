@@ -2,7 +2,7 @@
 title: Google Photos 全量 HEIC 範圍與 API 批次回驗流程
 scope: domains/media
 status: active
-updated: 2026-09-11
+updated: 2026-09-15
 tags: [Google Photos, Takeout, HEIC, Drive API, rclone, SHA256, Motion Photo, in-app-browser]
 ---
 
@@ -26,7 +26,7 @@ tags: [Google Photos, Takeout, HEIC, Drive API, rclone, SHA256, Motion Photo, in
 - 2026-09-10 實測：API `baseUrl=d` 回傳 PNG（1,282,574 bytes），但 Takeout → Drive API 取得 HEIC（254,414 bytes），與上傳檔 SHA256 完全一致。證據位於 `<project-root>/work/cloud-pilot-takeout-20260910/verified.json`、`download-receipt.json` 與 `<project-root>/outputs/google-photos-download-verification.md`。僅證明這一張；其餘每張仍須回驗，不能宣稱全部已替換。
 - Library API 與 Picker 的 `baseUrl=d` 未承諾原始容器或逐位元組相同，且排除位置 EXIF。API 回應變 PNG 不代表 Photos 儲存原件被轉掉。只有下載檔 SHA256 與上傳檔相同，才可證明容器、影像與全部內嵌中繼資料未改；回應的 MIME、原始畫質標示、尺寸或下載完成提示都不足。
 - 內建瀏覽器 `Invalid InterceptionId` 在本次下載事件工具重現；根因未確認。不要盲目反覆重試、任意改安全設定、接管使用者滑鼠，或聲稱升級 Playwright 一定修復。優先用上述 Takeout → Drive API 的已驗證路徑。
-- 瀏覽器只處理公開 API 不支援的必要步驟，例如 Takeout 範圍／匯出、歷史原相簿、原件身分與可恢復垃圾桶操作。Library API 沒有原件二進位覆寫或照片刪除功能。
+- 瀏覽器主要處理 Takeout 範圍／匯出及必要登入；原件身分、相簿與可恢復垃圾桶可沿用下節已實測的網頁 API 批次路徑。官方 Library API 沒有原件二進位覆寫或照片刪除功能。
 - API productUrl、網頁與 Takeout 的 URL 表示可能不同；本次以同一個只有一張照片的專用相簿、完整檔案雜湊、日期與可見資訊核對。保存別名與證據，不能泛化成只憑 SHA 合併多個原照片身分；同名也不證明同一張。
 - SHA 相同的回下載也不能單獨授權刪原件：原始 ICC 位元組或缺省狀態、實際色彩、動態部分、重要中繼資料須先在轉檔端通過；歷史身分、日期、原相簿、共享狀態與容量計費仍須核對。完整通過才將精確舊項目移入可恢復垃圾桶，不清空。
 - Takeout 有快照延遲與非固定處理時間，漏項不得算通過；Drive ZIP 會占配額，按批次與可用空間安排。預設不恢復已被使用者關閉的定時任務。
@@ -53,3 +53,23 @@ tags: [Google Photos, Takeout, HEIC, Drive API, rclone, SHA256, Motion Photo, in
 - [Data Portability API 授權時效](https://developers.google.com/data-portability/user-guide/time-based)
 - [完整支援 scopes](https://developers.google.com/data-portability/user-guide/scopes)
 - [支援地區與帳號限制](https://support.google.com/accounts/answer/14452558)
+
+
+## 精確批次清理：2026-09-15 實測與更正
+
+- 使用者要一次連續完成已授權清單，不能每 50／100 張就停下等待。官方上傳每次請求上限、網頁刪除 payload 批量與任務總量是三件事。刪除採每次 250 張、檢查點自動續做；以腳本保存完整回條，只回報摘要，避免逐張 UI 操作與反覆輸出大型 JSON 消耗 token。
+- 可沿用經檢視的 Google Photos Toolkit／google_photos_web_client 網頁 API：GetItemInfoExt 的實際回應建立 mediaKey → dedupKey，MoveToTrash 使用 `XwAOJf` 的 dedupKey 陣列。這是未公開接口，250 為實測批量而非 Google 保證上限；須依当前工具、授權及協定重新核對可用性。
+- Takeout 的 HEIC 網址 ID 與主圖庫 canonical mediaKey 可以不同。本次 21,173 張皆透過實際 dedupKey 對應成功；不能直接拿官方 API ID、照片 URL、檔名或 SHA 當成可互換的刪除 ID，也不能因 URL 不同就判定 HEIC 不存在。
+- Python client 原始 parser 每個 JSON 行只取第一個 `wrb.fr`；實際 250 個請求、250 個 frame 曾被錯解析成 225 筆。須展開同一行所有 frame，再核對回應數、request ID 集合與逐筆項目 ID，不依回應順序配對。
+- 本次使用內建瀏覽器受支援的目前來源 CDP 能力更新既有登入，僅供本機 Photos API 使用；暫存登入檔限制權限、限定 Google Photos 來源、設定 HTTP 逾時與停止未預期重新導向。任務結束移除暫存登入檔，絕不寫入記憶或 Git。這不代表其他環境自動具有相同能力或可繞過安全挑戰。
+- 即使逐次保存 Google 更新的 cookies，本次 API 工作階段仍曾失效；瀏覽器登入當時仍有效，更新目前工作階段後可從回條續做。不把缺少登入頁資料、空 RPC 回應直接當成照片遺失、刪除成功或 bot 封鎖；沒有驗證固定失效時限或並行造成失效的根因。
+- 刪除前確認來源／HEIC 逐張證據與清單不相交、HEIC 仍存在，保留來源的自訂相簿、最愛與封存狀態。本次 4 張先保留封存並回讀。每批先落盤刪除意圖，再送 API；結果不明先查垃圾桶，不盲目重送。回讀精確 mediaKey／dedupKey 與對應 HEIC，收尾核對垃圾桶前後差集精確等於清單。
+- 日期不可只用完全相等的 epoch 毫秒作為硬門檻，也不可把所有失敗概括成時區錯誤。先計算每張的實際差值、時區與既有容差。本次兩張 pilot 分別差 8 小時與 0.481 秒；先前報告錯說兩張均差 8 小時，已更正。0.481 秒是使用者允許的微小差異，不能僅因此擋下；8 小時仍待釐清，不能因牆鐘畫面一致就宣稱絕對時間相同。ICC 原始位元組或缺省狀態仍嚴格保留，不套用數值容差。
+- Drive 暫存清理不能只掃 `Takeout`。本次另漏了 `Google Photos HEIC staging 2026-09`，內含兩卷舊 ZIP、進度文件與索引，共 6 檔、4,304,438,890 bytes。先核對本機 ZIP 大小／MD5並另存小檔快照，再把精確檔案與空資料夾移入垃圾桶並回讀；不能把 FileProvider 路徑顯示當作完整獨立本機備份。
+- `rclone lsjson <remote:folder> --stat` 在此得到虛擬根目錄、空 Name 且無 ID；不要據此聲稱資料夾 ID 已驗。從父資料夾列舉並對照已知 ID，另確認檔案 ID、大小／MD5。雲端清理不等於永久刪除或配額已釋放；不清空垃圾桶，不重新啟用停用的定時任務。
+
+### 已核對收尾快照（後續操作前仍須回讀）
+
+本輪新增清理 21,063 張原件，先前 360 張重新確認，已核對累計 21,423 張；不是全庫每張都完成轉檔。當時仍保留 3 張：一張雲端 1393×972 與備份 1958×972 不同、一張時間差 8 小時、一張僅差 0.481 秒且不應再以此單一差異阻擋後續清理。這次記憶更正沒有新增雲端刪除。185 個 Takeout 匯出檔以及額外 staging 資料夾 6 檔均已回讀在可還原垃圾桶；HEIC 與本機備份保留。
+
+可復用程式：`<project-root>/work/photos_web_cleanup.py`、`photos_bulk_trash.py`、`photos_pilot_trash.py`。後者日期完全相等檢查尚未改成已接受的微小差異規則，續做前先修正與驗證，不能把此筆記當成程式已修好。具體身分与回條僅留本機：`<project-root>/work/photos-web-cleanup-20260915/cleanup-goal-result.json`、`pilot-held.json`、`trash-batches/`、`<project-root>/work/heic-staging-cleanup-result-20260915.json`；讀取原始數值而非泛化文字原因。
