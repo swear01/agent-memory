@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-08-25
-updated: 2026-09-14
+updated: 2026-09-16
 tags:
   - synopsys
   - vcs
@@ -13,6 +13,8 @@ tags:
   - ubuntu
   - eda
 ---
+
+> 2026-09-16 操作介面更新：本文保留舊版部署與驗證紀錄；當時「登入直接執行、launcher 自動 source CIC」已不是現行學生流程。現在於 Bash 手動 `source /apps/eda/<vendor>/<tool>.sh <version>`，工具入口、nWave、文件偏好及原生相容性未完成項目以 [EDA 安裝盤點](eda-install-inventory.md) 為準。
 
 # 已確認根因
 
