@@ -5,7 +5,7 @@ project: dvlab-mis
 tags: [hackmd, google-drive, google-docs, documentation]
 status: active
 created: 2026-08-25
-updated: 2026-09-11
+updated: 2026-09-16
 ---
 
 # DVLab MIS HackMD to Google Docs migration
@@ -13,7 +13,7 @@ updated: 2026-09-11
 ## 正式架構
 
 - 私有網管文件的正式入口是共用網管帳號所擁有、維持 `Restricted` 的 `DVLab-MIS` Google Drive 資料夾。
-- 最終集合是 19 份獨立正式文件加 1 份 `00 - DVLab MIS 文件索引`，全部為 Google 原生文件；索引取代 HackMD tags。
+- 2026-08 遷移當時是 19 份獨立正式文件加 1 份 `00 - DVLab MIS 文件索引`，全部為 Google 原生文件；索引取代 HackMD tags。這是歷史數量，後續新增服務文件應查即時清單。
 - 2026-08-25 追加納入 `DVLab 本地 LLM：Valkyrie NInfer + Zeus Bifrost` 與 `DVLab 伺服器無主帳號清理公告`。
 - 2026-09-11 起：canonical 已在 Google Drive。使用者確認後，HackMD 只保留給實驗室同學看的公開文件；其餘網管／私有 note 已用 CLI `notes delete`／`team-notes delete` 丟進垃圾桶（可還原，不是清空垃圾桶）。
 - 仍留在 HackMD 的公開／成員文件：`Notes from DVLab MIS Team`、`DVLab Server Usage Policy`、`DVLab VPN 安裝指南`、`DVLab personal profile instruction`、`DVLab 伺服器無主帳號清理公告`、`GPU and CUDA`。
@@ -41,3 +41,15 @@ updated: 2026-09-11
 - 每次操作必須以 Google 畫面顯示的帳號身分確認共用網管帳號，不可把 URL 的 `u/N` 當成固定身分。
 - 更新既有文件時依 file ID 寫回並讀回驗證，不建立同名副本。
 - 記憶不得保存密碼、API key、文件正文、帳號資料、HackMD note ID、Google file ID 或受限文件 URL；精確對照以受控遷移包的 mapping 檔為準。
+
+## 文件歸位與格式（2026-09-16 使用者糾正）
+
+- 「文件要整理，不要全部放同一份」不是為每台主機另建一本混合筆記。先讀 `DVLab MIS Notes(private)` 的用途導覽及各正式文件現有章節，再按原架構更新。
+- `DVLab Overview` → 設備、硬體規格、本機救援管理帳號及受限帳密紀錄；實體位置未確認時不得猜測設備區。
+- `353 network setup manual(private)` → `device MAC and IP bindings` 內的主機紀錄，以及 `Firewall configuration` 內的 NAT／port forwarding。不要在文件頂端堆一段涵蓋所有主題的更新紀錄。
+- `New Server Setup(private)` → 主機加入 NIS／NFS 的流程、實作結果、救援路徑與尚未完成的切換。新主機案例放在現有適用章節。
+- Minecraft 這類獨立服務可有專用 runbook，集中版本、遊戲設定、白名單、服務操作、備份與還原；網路與主機資料連回原文件。
+- 索引沿用「原生項目符號＋文件名稱本身帶 hyperlink」。不要寫成「名稱：完整 URL」，不要把裸網址或 Markdown 星號塞進原生 bullet。文字連結、段落樣式和項目符號必須一致；只有真實連結使用藍色底線，一般說明與標題不應繼承連結外觀，並清除空白 bullet。
+- Docs `insertText` 會繼承插入點的 paragraph/list/text style；只比對 plain-text export 不足以驗收。回讀並檢查 `paragraphStyle`、`bullet`、`textStyle.link`，確認標題層級及內容位置；必要時匯出 PDF 做視覺驗證。
+- 調整分類前保留受限快照；先寫入正確目的地並核對內容、權限，再移除錯位重複段落。舊文件連結可保留精簡導引，不能留下第二份帳密或設定來源。
+- 使用者要求更新記憶與 QMD 時，必須真正完成 Markdown、同步、索引、embedding 及搜尋驗證，不能只更新 Google 文件便宣稱已記住。
