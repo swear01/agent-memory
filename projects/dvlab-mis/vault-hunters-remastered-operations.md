@@ -19,3 +19,4 @@ updated: 2026-09-16
 - 本機與 NAS 各保留 7 份 daily、4 份 weekly；NAS 缺失時保留本機備份並重啟遊戲，但備份工作回報失敗。完成真人登入、拒絕非白名單、Vault 體驗與多人負載，仍需另外驗收。
 - 主機的共享家目錄正式切換及整機重開機是另一項尚未完成的工作。不能因 Minecraft 或備份成功，就把 NIS/NFS 完整重開機驗證標成完成。
 - 正式文件為獨立的 Minecraft 維運 runbook；帳密／硬體回到 Overview、IP/MAC/NAT 回到 network manual、主機 NIS/NFS 實作回到 New Server Setup。
+- 2026-09-16 已透過共用網管帳號 Token 與 Docs API 增量寫回 Google Drive 正式文件《utux Minecraft 維運：Vault Hunters Remastered (private)》：包含版本映射、BCC 2.0.3 修正、MOTD (dvlab server)、DVLab 官方圖示與狀態驗收，並完成 text/plain 讀回校驗。
