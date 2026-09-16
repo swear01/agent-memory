@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-05
-updated: 2026-09-14
+updated: 2026-09-16
 tags:
   - synopsys
   - spyglass
@@ -13,6 +13,8 @@ tags:
   - linux
   - eda
 ---
+
+> 2026-09-16 操作介面更新：本文保留舊版部署與驗證紀錄；當時「登入直接執行、launcher 自動 source CIC」已不是現行學生流程。現在於 Bash 手動 `source /apps/eda/<vendor>/<tool>.sh <version>`，工具入口、nWave、文件偏好及原生相容性未完成項目以 [EDA 安裝盤點](eda-install-inventory.md) 為準。
 
 # 已確認根因
 
@@ -30,7 +32,7 @@ tags:
 # 學生使用方式
 
 - GUI 使用小寫命令 `spyglass`；CLI 或批次執行使用 `sg_shell`。
-- 正常 login shell 不需先 `source` 設定，不需自行設定 `SPYGLASS_HOME`、授權環境或 compiler；Bash、zsh、fish 都會解析到 `/apps/bin` 的 launcher。
+- 現在先於 Bash 執行 `source /apps/eda/synopsys/spyglass.sh <version>`，再使用 `spyglass` 或 `sg_shell`；可用版本以 `@ver` 查詢。環境脚本一併載入授權設定。
 - GUI 仍需既有的圖形桌面、VNC 或 X11 forwarding；純文字 SSH 不會自行產生顯示環境。這是遠端 GUI 的一般條件，不是額外的 SpyGlass 設定。
 - 若舊 shell 曾快取失效路徑，開新 shell 即可；也可在 Bash/zsh 執行 `hash -r`，或在 tcsh 執行 `rehash`。
 
