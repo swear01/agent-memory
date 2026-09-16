@@ -3,7 +3,7 @@ title: 四台實驗室主機掛 /apps 與 Mazu 相同 login
 scope: machines/hapi-fleet
 status: active
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-16
 tags:
   - nfs
   - apps
@@ -11,6 +11,9 @@ tags:
   - fstab
   - vcs
 ---
+
+> 2026-09-16 操作介面更新：本文保留舊版部署與驗證紀錄；當時「登入直接執行、launcher 自動 source CIC」已不是現行學生流程。現在於 Bash 手動 `source /apps/eda/<vendor>/<tool>.sh <version>`，工具入口、nWave、文件偏好及原生相容性未完成項目以 [EDA 安裝盤點](eda-install-inventory.md) 為準。
+> 特別注意：下列將 `/apps/bin` 放入 `/etc/environment`、在 `/etc/zsh/zshenv` 存取 NFS 的歷史設定已撤回，禁止恢復。
 
 # 結果
 

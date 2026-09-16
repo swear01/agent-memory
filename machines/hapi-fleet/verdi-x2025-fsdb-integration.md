@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-14
+updated: 2026-09-16
 tags:
   - synopsys
   - verdi
@@ -14,6 +14,8 @@ tags:
   - vcs
   - eda
 ---
+
+> 2026-09-16 操作介面更新：本文保留舊版部署與驗證紀錄；當時「登入直接執行、launcher 自動 source CIC」已不是現行學生流程。現在於 Bash 手動 `source /apps/eda/<vendor>/<tool>.sh <version>`，工具入口、nWave、文件偏好及原生相容性未完成項目以 [EDA 安裝盤點](eda-install-inventory.md) 為準。
 
 # 已確認環境
 
@@ -74,8 +76,8 @@ schCapture -win $s -file out.png -region 0 0 5000 5000        ;# 匯出 PNG，�
 
 # 維運規則
 
-- 學生要用 FSDB／Verdi 時必須同時載入 VCS 與 Verdi 環境；不要假設 `/apps/bin/vcs` 已經帶上 Verdi PLI。修法是改 launcher 內部同時 source `vcs.sh` 與 `verdi.sh`，不是 login、也不是先開 `verdi` 再開 `vcs`。
+- 現在學生要用 FSDB 時，在同一 shell 分別 source `/apps/eda/synopsys/vcs.sh` 與 `verdi.sh` 的指定版本；只開 Verdi／nWave 時 source `verdi.sh` 即可。不要再依本篇舊規劃改成固定版本自動載入。
 - 要看 schematic 就是 nSchema；先確定設計已載入（`-dbdir` 或 `-f`），再用 `Tools -> New Schematic from Source`。
-- 排查順序：`command -v verdi`、`echo "$VERDI_HOME"`、`echo "$LM_LICENSE_FILE"`，再用最小 FSDB smoke test 確認 PLI 與 FSDB 產生；不要只看 `verdi -version` 是否印得出來。
-- `/apps/bin/verdi` 已存在。不要改共用 `vcs.sh` 的 `VERDI_PLI` 字串當第一修法；等價且較小的修法是 `/apps/bin/vcs` 同時 source `verdi.sh`。尚未部署。
+- 排查順序：`command -v verdi`、`echo "$VERDI_HOME"`，再用最小 FSDB smoke test 確認 PLI 與 FSDB 產生；不要只看 `verdi -version` 是否印得出來。
+- 舊版「修改 launcher 同時 source」是歷史方案，現行做法是由使用者明確選擇兩個工具版本。
 - 完整操作紀錄與現況仍以 DVLab MIS Google Drive runbook 為準；shared memory 只保存可重用的環境事實與整合決策。
