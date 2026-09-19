@@ -5,12 +5,14 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-15
+updated: 2026-09-19
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
+
+- 2026-09-19 完成查證：第三輪重壓已於 2026-09-17 20:17:41（台灣時間）完成，service 正常退出；主工作目錄 `complete.json` 與 `progress.json` 為 `complete-awaiting-consolidation`，不是仍在壓縮。完整新 tar 為 5,633,580,095,488 bytes，SHA-256 `b22023d8007ed0aa71b94477281434b3dc3290a3ecefad5b1dcdf8b577a058fa`；冷讀回核對 24,480,914 個唯一項目、19,853 筆硬連結重播及 2,602,168 筆目錄重播，decoder 成功後完成逐卷 SHA。54 卷共 1,841,566,237,633 bytes，21 卷已搬到常備碟、33 卷仍在 SSD；SSD volumes 目錄以 symlink 串起完整組。此次重新核對全部 54 卷序號、實際路徑、大小及總量符合 `volumes.json`，沒有重新讀取全部 payload 計算 SHA。常備碟為唯讀，原組與補組仍保留；新組驗證完成不等於歸位完成。待確認清理舊組並將新卷集中到常備碟，禁止看到 service inactive 就重啟，也不能只複製常備碟目前的 21 卷當成完整備份。
 
 - 2026-09-15 容量解釋盤點：使用兩組已驗證的 members.sqlite，完整聚合一般檔案 size，原組為 5,353,375,667,585 logical bytes、補組 771,400,860,793 bytes，合計 6,124,776,528,378 bytes；33 個 EDA 排除範圍的 538,181,697,903 bytes 全在原組，扣除後為 5,586,594,830,475 bytes。這是檔案邏輯內容總量，不是新壓縮檔大小；進度的原 tar 分母 5,392,407,028,833 bytes 還包含 header／padding／待略過項目，原壓縮卷僅約 1.64 TB。大宗為研究輸出、benchmark、資料集及實驗版本；部分資料集同時存在 tar 與展開目錄，僅確認共存，未逐檔證明等價，不得自行去重或排除。已明確保留的 aigfuzz 也占顯著容量。包含帳號／檔名的詳表只存 SSD `canonical-repack-20260915/content-size-audit.json`、`content-size-details.json`、`content-size-details-deep.json`，不將完整個人檔案清單發布到記憶庫。本輪是唯讀容量分析，重壓範圍與設定不變。
 
