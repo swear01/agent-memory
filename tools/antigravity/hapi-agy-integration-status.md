@@ -46,6 +46,33 @@ tags:
   #1642（失敗回合把答案當錯誤理由，應讀 `error` 欄位）。目前 fork 不含這兩個
   修復，且上游也未合併。
 
+## ACP：agy CLI 沒有，但 Google 另有官方 ACP server
+
+- **agy CLI 本身沒有 ACP**：`agy --help` 沒有 `--acp` / `agent acp`，binary 沒有
+  `agent-client-protocol` 字串，changelog 到 1.2.7 也無 ACP；上游 feature request
+  #31 / #195 / #704 仍 open（社群指出 Gemini CLI 有 ACP、agy 沒有，block/buzz
+  因此無法支援 agy）。因此 HAPI 只能走 print-mode NDJSON。
+- **但 Google 另有官方獨立的 ACP server**：ACP registry id `antigravity-acp`，
+  執行檔 `agy_acp_server.par`（建於 Antigravity Python SDK），Zed 的 ACP registry
+  頁面有列；平台為 linux-x64/arm64、win-x64/arm64、mac-arm64（darwin-x64 未發佈，
+  issue #951）；registry 1.1.1，build tag `agy_acp_server_20260818_01_RC01`，支援
+  initialize / authenticate / session/new / session/prompt / session/load /
+  session/close / session/set_config_option。
+- **HAPI 完全沒接**：repo 內 0 筆 `agy_acp_server` / antigravity+acp 參照，agy 仍是
+  print-mode；HAPI 已有的通用 ACP backend（`cli/src/agent/backends/acp/`）目前只用於
+  Cursor / Grok / Copilot / Kimi / OpenCode / DSH。
+- RC 已知缺陷（多為 open issue）：checkpoint 後重啟 session 無法恢復、live update
+  缺 diff、session/prompt 不回、Windows 每次 spawn 冷啟約 16s、不報 token
+  usage/quota、dotted MCP 名稱被拒。
+- 同生態已有先例：pi 的 `pi-antigravity-acp-provider` /
+  `@estebanforge/pi-antigravity-bridge` 把 `agy_acp_server` 當第二個 turn engine
+  （stream-json 仍是預設）。踩雷：ACP binary 不吃 model flags、RC01 的
+  kill+reload 失敗、無 usage 回報。
+- 對 HAPI 的含義：要讓 agy 走 ACP，需新增 ACP launcher，並處理
+  `agy_acp_server.par` 的取得、認證與模型選擇（ACP 端目前沒有 model flag）；
+  在那之前 print-mode 是唯一可行路徑，也解釋了沒有雙向 permission 審批、
+  plan/todo、question UI、ACP model catalog、`session/load`、usage 計量的原因。
+
 ## MCP：agy 原生支援，HAPI 不注入
 
 - agy CLI 自己有 MCP 管理：`agy mcp add/remove/list/enable/disable`（stdio 與
