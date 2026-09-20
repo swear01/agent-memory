@@ -25,10 +25,16 @@ Checker 僅 Python standard library + Z3 CLI。YoWASP Yosys 可隔離安裝在 `
 
 重跑介面：`python3 -m unittest discover -s tests -v`；`python3 -m rtl_relate demo --out results/<new-run>`。每次用新目錄，保存 hashes、SMT queries、raw logs、RTL exports、traces 與成本。
 
-目前 accepted gold 的 J 都是 true。下一個最有判別力的 fixture 是 P2 one-hot → binary，搭正確且非平凡的 inductive invariant；不先擴 LLM 預算。
+目前 accepted gold 的 J 都是 true，one-hot → binary 搭非平凡 inductive invariant 仍是必要控制案例。2026-09-21 使用者已擴大範圍：公開 skidbuffer 8/32-bit、pipeline32 及人工 FSM；固定 C/A 找 certificate 與 joint RTL＋certificate 兩個 LLM pilots 都是必要交付，各最多 4 次／15 分鐘。這些新工作仍未執行，不可混入既有 tiny 成功結果。
 
 ## 外部 benchmark 接入陷阱
 
 - `aman-goel/avr` 固定 `9a76dc632066c4416cebccda3a4974a4f8adede8`：`tests/opensource/h_Arbiter/main.v` 的 client 把 `rand_choice=0`，且 `req=0`、`state=NO_REQ` 初始化，請求永不發生；不可當作非平凡正例。改為自由輸入會改變 benchmark，須另標變體。
 - 同版 AVR pipeline 的實際檔案是 `tests/opensource/pipeline/pipeline.v`：96-bit datapath 加 64-bit monitor。保留原生 assertion 的現有 export 因 `$check` 失敗，尚未接通；不能刪除 assertion 後冒稱已驗證原 property。
 - `ZipCPU/wb2axip` 固定 `2e8d3bc2d26ddc33d1881022a2a2b9d3f0c16b9b`：原始 `rtl/skidbuffer.v`、預設 `DW=8, OPT_OUTREG=1, OPT_INITIAL=1`、未定義 `FORMAL` 時，現有 frontend 匯出 18 state bits，`i_reset` 為普通 public input。這只證明 frontend 接入；原 `FORMAL` assumptions、reset contract、certificate 與 property 都未因此獲證。原始 `rtl/sfifo.v` 則為 `UNSUPPORTED: $memwr_v2`；預設非同步讀取配置的 memory 未初始化，不可補零來讓接入通過。
+
+## 公開專案與協作入口
+
+公開 repo 為 `swear01/rtl-relate`；首次 push 前已完成 Gemini Code Assist linking。`docs/wednesday_plan.md` 是新排程，issues #1–#12 保存依賴／檔案責任／驗收證據；#1 總追蹤、#2 固定來源與 contracts、#12 為不計入必要里程碑的 FIFO。
+
+GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與完整 8 列 demo，保存 `verification-evidence` artifact；不是只有本機 3.14 結果。用 `unittest ... | tee ...` 保存輸出時，job 明設 `defaults.run.shell: bash` 以啟用 pipefail，避免 tee 遮住測試失敗。
