@@ -45,3 +45,10 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - 正式 run 的 good workflow 約 1.43–1.92 秒，正常 B0 約 0.54–0.60 秒，單次結果沒有加速；人工準備時間未量測。失敗 attempts、reverse certificate、cover/strictness/replay 都算 machine cost，但工程開發回歸不混入該正式矩陣。
 - Yosys Witness `bits` 字串須反向對應 LSB-first signal IDs。由 actual input witness 與 typed model 還原輸出後，仍須重新檢查 A-prefix SAT 與 frozen P 違反，再 exact replay C；缺漏 input bit 的 zero completion 必須顯式記錄且重新驗證。
 - SMTBMC `requested_depth` 不代表已完成檢查深度；CEX 保留實際 failure step。frontend／formal 子程序用總 deadline，timeout 要終止整個 process group，不能每個階段重領完整總預算。
+
+## Codex pilot 的實際結果與隔離教訓
+
+- `codex sandbox` 的 OS probe 通過，不代表真正 `codex exec` 的 Code Mode 工具也能啟動。CLI 0.154.0 在本次環境的巢狀 bwrap loopback 出現 `Failed RTM_NEWADDR: Operation not permitted`；停用 Code Mode 又令依賴它的工具不可用。固定 C/A 的四次全部耗在 infrastructure，零有效證書探索，不能歸因模型不會找 mapping，也不能重置 attempt ledger 隱藏失敗。
+- 可用較小權限的替代傳輸：將同一份經審核 bundle 與 canonical hashes inline 放入 fresh prompt，停用工具，只接收嚴格 JSON schema 的 RTL／certificate 字串；parent 原樣 materialize，再由 frozen verifier 獨立檢查。這是 transport amendment，不是人類提供 h/J/w。原 ledger bytes 保留，修訂與人工介入可另用 sidecar 綁其 hash。
+- 此 joint pilot 兩次內成功，約 86.784 秒。第一份 RTL 已有 10 state bits，但證書 abstract hash 錯；模型依真實 export feedback 自行修正證書，同 RTL 經 gate ACCEPTED 與自由 z 的 SAFE proof。A 保留 r_valid/o_valid、刪 r_data，h 是保留 state 的 projection，J=true、w=r_data；並非人工 occupancy 重編碼。原始兩候選獨立重驗重現同分類，不能因此主張 feedback 因果效果、普遍自動改寫或加速。
+- 凍結 evaluator v3 的 Python API 需要 absolute Paths；relative output 會因 worker cwd 被重新解讀。新版 evaluate 在共同入口 resolve snapshot/candidate/out；不要覆寫已用於實驗的舊 snapshot。親自 recheck 時應驗證具體 phase／reason，不能僅看到預期 ERROR 就算重現。
