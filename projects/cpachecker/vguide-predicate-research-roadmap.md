@@ -5,15 +5,31 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-08
+updated: 2026-09-21
 ---
 
-# 核心目標
+# 目前研究目標：固定小組端到端決策（2026-09-21）
 
-先證明至少一組生成 predicate 能在原本 UNKNOWN 的 case 中，經既有
-PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；再用同一機制
-挑選 held-out case。不要從單一 predicate 的表面 novelty、初始 precision、solve count
-或 timing 直接推論整體有效。
+使用者明確接受收斂：不再以更多diagnostics、injected predicates、單题解释或準備完成
+代替可重複新增正確解題。#182是唯一管理入口；#269比較同一runtime的Stock、一次生成、
+分輪refinement回饋，使用相同總模型/驗證預算。先固定約12題development面板（2正例加
+10個既有hard218失敗，精確ID/eligibility另行凍結），不事後換題、不動Reserved44。
+已知正例或多次replay不算新的hard218收益，repair計入模型總額度。
+
+#259/#103僅支援能改變下一步決策的代表性生成/資訊/表示/reference診斷；
+不要求每一題先有完整proof-adequate oracle才准整批進行。reference缺乏就標unknown。
+固定pilot沒有收益時，交付負結果/限制並停止該輪；不能自動追加draw、換題或instrumentation。
+至少兩個不同題族的開發失敗有預先規劃的重複淨增益且無未解釋新wrong後，才考慮擴大。
+
+#139的深層Problem14歸因、#151已飽和affine cue、#173compiler矩陣與#101歷史差異暫緩。
+#170大型compiler/IR、多agent/model sweep、舊224/Flash/DeepSeek與全維度ablation計畫
+明確取消或整併，不宣稱那些假說已驗收成功。既有程式和原始證據不刪。
+#54/#56的11個wrong、#197/#215 native/interpolation和#201工具問題保持獨立追蹤，
+原hold不變；不把全部修好作為無關小型pilot的前置條件。
+
+這次整理沒有新的付費/solver launch授權。平台舊goal若仍usageLimited且拒絕覆寫，
+不得假標完成或宣稱已恢復；操作目標由Wiki Research-Convergence/DR-022及#182控制。
+舊目標與下面的日期化研究內容是歷史，不自動形成新的執行佇列。
 
 # 已確認的 base case 與 generation gap
 
@@ -32,7 +48,7 @@ PredicateCPA/CEGAR lifecycle 造成可重現的 trajectory 或 verdict 改變；
   zero rejection。這證明該 cue 在 HH2012 base case 有 generation 與 consumer utility，
   但 `2/3` 也顯示輸出不是 deterministic，不能外推 population hit rate。
 
-# 目前 hard218 的兩個成功案例研究（2026-09-08）
+# 歷史 hard218 的兩個成功案例研究（2026-09-08）
 
 #208 的完整凍結配對結果為 Stock 16 correct、Augmented 18 correct，官方 wrong 都是
 同一組 11 題；兩個新增正確題為 `c/systemc/token_ring.06.cil-2.yml` 與
@@ -52,9 +68,9 @@ validated/injected head bindings；Problem14 有 12 個 items/bindings。
 比較 full-response 與 suppressed-injection，先群組移除再逐項移除。後續 trajectory
 自然改變屬於實驗結果，不能要求它永遠等於原始 empty trace。
 
-# 後續工作佇列
+# 歷史工作佇列（2026-09-21優先序已被上文取代）
 
-- #170：新主線是把 proof failure 編譯成 abstraction vocabulary 的 CFA-native precision
+- #170（擴建計畫已取消，實作/證據保留）：當時的新主線是把 proof failure 編譯成 abstraction vocabulary 的 CFA-native precision
   compiler。MVP 由 exact `ARGPath`、native `AssumeEdge` formula、`EdgeDefUseData` 與 exact
   loop-head placement 產生 `(antecedent_formula, consequent_head, preserved_variables)`，只走
   `PRECISION_ONLY`。完整研究階梯含 symbolic transport、join-aware placement、semantic
@@ -93,7 +109,8 @@ validated/injected head bindings；Problem14 有 12 個 items/bindings。
 
 # 實驗邊界
 
-每條研究線都先凍結 consumer-positive base case、gold-free prompt、scoring 與 stop rule；
+單題機制claim仍需其對應的consumer/counterfactual證據；主線pilot先固定比較規則，
+不以所有題先達consumer-positive作前置。凍結gold-free prompt、scoring與stop rule；
 generation、validation、trajectory、verdict、cost 分開記錄。完整生成 response 必須原樣 replay，
 不能只挑成功 atom。正式 model call 必須重用 Java `PredicateProposalClient` transport；參見
 `vguide-experiment-transport.md`。研究規格以 GitHub Issues/Wiki 為準，artifact 在
