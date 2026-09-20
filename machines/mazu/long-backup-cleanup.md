@@ -5,12 +5,14 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-19
+updated: 2026-09-20
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
+
+- 2026-09-20 最終歸位完成：`canonical-consolidate-20260919.service` 於 03:28:58（台灣時間）正常成功退出，`consolidation-progress.json` 為 `complete`，SSD `consolidation-complete.json` 與常備碟 `backup/home/Canonical-Home.repacked-20260915/COMPLETE.json` 一致，沒有 failure marker。新 54 卷共 1,841,566,237,633 bytes 已全部集中在該最終目錄，附 SHA256SUMS、volumes.json 與還原 README；SSD volumes 現為指向最終位置的 symlink，不再占一份分卷容量。刪除前的新 54 卷 SHA 驗證於 09-19 23:27:40 完成，授權的舊 59 卷於 23:27:41 刪除；後續 SSD 33 卷均經複製、fsync、與既有 manifest SHA 比對後才釋放來源。17:22 現場核對全 54 卷序號／目的路徑／大小／總量／SSD 連結、兩份完成標記及 54 行校驗清單通過，沒有另外重算全部 payload SHA；舊原組、補組與新組 incomplete 目錄均已不存在。常備碟 UUID 正確且已恢復唯讀。此項重壓、授權舊卷清理與新卷歸位已完成；後續查證以 consolidation 完成標記和最終目錄為準，下列分散儲存／待歸位狀態均為歷史紀錄。
 
 - 2026-09-19 21:04 歸位啟動：使用者已明確同意刪除舊原組 48 卷及補組 11 卷（合計 1,996,114,914,065 bytes），完成新組歸位，無須再次詢問同一刪除授權。`canonical-consolidate-20260919.service` 與 SSD 主工作目錄 `consolidate.py` 已部署並啟動；先逐卷重新比對新 54 卷的既有 SHA-256，全部通過後才刪除精確列入 `consolidation-plan.json` 的舊 59 卷。其他備份、partial 與原 recovery metadata 不在刪除範圍。再把剩餘 SSD 33 卷複製到常備碟，每卷 fsync 後讀回符合原 manifest 的 SHA，才以 symlink 替換 SSD 副本；不是只比對本次 copy 自己產生的 hash。雜湊不符保留來源、拒絕覆蓋既有目標及搬移後 relink 的小型功能檢查均通過，unit verify 通過。此時只是已啟動，尚未刪除或完成歸位。查狀態應改讀 `consolidation-progress.json`／`consolidation-failure.json`／`consolidation-complete.json` 與新 service，不沿用已完成的 repack service。全部歸位後目的地為常備碟 `backup/home/Canonical-Home.repacked-20260915`，附 `COMPLETE.json`、`SHA256SUMS`、`volumes.json` 及還原 README；新程式會更新 SSD symlink／manifest，sync 並恢復唯讀，再寫 consolidation 完成標記。ExecStopPost 同樣按 UUID 恢復唯讀；無自動重跑，遇 partial copy 要先檢查，不能把服務停止當成完成。
 
