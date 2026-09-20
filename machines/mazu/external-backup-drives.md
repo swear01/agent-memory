@@ -5,10 +5,18 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-07
+updated: 2026-09-20
 ---
 
 # Mazu 外接備份硬碟識別
+
+## 成品位置與主機的區別（2026-09-20）
+
+Mazu 是連接與管理外接硬碟的主機；`/mnt/one-touch` 是長期備份硬碟 Seagate One Touch（約 4 TB、UUID `001D-7DC1`）的掛載點。對使用者應說「已存入長期備份硬碟，目前接在 Mazu」，並附掛載路徑；只說「成品位於 Mazu」會讓人誤以為仍在系統碟或工作 SSD。
+
+Canonical Home 最終成品已於 2026-09-20 03:28 歸位到該硬碟的 `backup/home/Canonical-Home.repacked-20260915/`，54 卷合計 1,841,566,237,633 bytes，全部在外接硬碟；SSD 的 volumes 僅保留指向成品的 symlink。完整 tar 與分卷已驗證，授權舊 59 卷已刪除，硬碟為唯讀；目錄內有 COMPLETE.json、SHA256SUMS、volumes.json 與還原 README。詳細驗證與操作沿革見 [長備份紀錄](long-backup-cleanup.md)。
+
+2026-09-20 現場用量為 2,715,980,922,880 bytes，可用 1,284,510,580,736 bytes（約 1.28 TB）；以下較早的容量數字是歷史狀態。系統碟、`/usr/2TB-SSD` 工作碟、`/mnt/one-touch` 長期備份碟必須分別描述。
 
 ## 本次備份暫存的磁碟優先順序（2026-09-07）
 
@@ -45,7 +53,7 @@ metadata 比對零差異、確認未被使用後才移除來源，系統碟可�
 /dev/sdb2 /mnt/ultra-touch exfat ro
 ```
 
-## 實際使用量
+## 早期使用量（歷史紀錄）
 
 - 長備份碟加入精簡 qsyn archive 後，filesystem used 465,196,285,952 bytes（433.248 GiB）；
   根目錄只剩 `backup/`。
@@ -54,7 +62,7 @@ metadata 比對零差異、確認未被使用後才移除來源，系統碟可�
   1,808,648,730,588 bytes（1.645 TiB）；另有 76,204,875,019-byte 的
   `jonathan.tar.zst` 與 83-byte SHA-256 sidecar。「短備份」描述保留週期／用途，不代表容量較小。
 
-因此長備份碟目前是四百多 GB allocated；短備份碟實際保存約 1.885 TB。
+上述是當時的用量；長備份碟最新容量見本文件開頭，短備份後續清理見下節。
 
 ## 2026-09-05 長備份提交後狀態
 
