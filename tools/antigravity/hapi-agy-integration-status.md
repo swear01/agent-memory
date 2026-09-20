@@ -46,6 +46,28 @@ tags:
   #1642（失敗回合把答案當錯誤理由，應讀 `error` 欄位）。目前 fork 不含這兩個
   修復，且上游也未合併。
 
+## MCP：agy 原生支援，HAPI 不注入
+
+- agy CLI 自己有 MCP 管理：`agy mcp add/remove/list/enable/disable`（stdio 與
+  HTTP）。**CLI 讀的是 `~/.gemini/config/mcp_config.json`**（或 workspace
+  `<workspace>/.agents/mcp_config.json`）；`~/.gemini/antigravity/mcp_config.json`
+  是 Antigravity IDE 的檔案，CLI 不讀（本機該檔有 context7，但 `agy mcp list`
+  仍顯示 `No MCP servers configured`，因為 CLI 檔是 0 bytes）。
+- HAPI **不會**把 HAPI 自己的 MCP bridge 注入 agy session（upstream
+  `docs/guide/agents.md` 明講 "no HAPI injection"）。因此 agy session 沒有
+  `hapi_change_title`、`display_image/video/media`、`skill_lookup`、
+  `ping_peer`/`inspect_peer`/`spawn_peer` 這些其他 flavor 有的工具；標題改由
+  agy 原生 conversation title 同步（#1476），session 控制改用 fork carry 的
+  `hapi-session-runtime` skill（安裝在
+  `~/.gemini/antigravity-cli/skills/hapi-session-runtime`）。
+- agy 的權限沒有 hook bridge：用 agy 自己的 `settings.json` allow/deny 規則
+  （`request-review`）或 `--dangerously-skip-permissions`
+  （`always-proceed`）；沒有 allow rule 的 tool call（含 MCP）會被 agy 自動
+  拒絕並在 chat 顯示提示。
+- 要在 agy + HAPI 用 MCP：把 server 寫進共用 home 的
+  `~/.gemini/config/mcp_config.json`（一次覆蓋所有 Linux runner）或 workspace 的
+  `.agents/mcp_config.json`，並補 allow rule。遠端不能打 TUI 的 `/mcp`。
+
 ## 機隊操作前提：agy 必須在共用 NFS home 登入
 
 - Linux runner 的 `$HOME` 是 NFS 共享（`192.168.1.200:/volume1/nfs-home`）。
