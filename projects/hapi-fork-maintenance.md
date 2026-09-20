@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-15
+updated: 2026-09-21
 tags:
   - hapi
   - fork
@@ -127,3 +127,15 @@ Project-group keyboard handlers must ignore events whose target is a child contr
 - Published release `v0.30.7.1` on `swear01/hapi` with 9 release assets and sha256 checksums.
 - Deployed across the fleet (`mazu`, `cthulhu`, `athena`, `valkyrie`, `zeus`, `oracle`, `mac`). Preserved all running child sessions across systemd (`KillMode=process`), macOS launchd (`AbandonProcessGroup=true`), and PM2 (`--no-treekill`).
 
+# v0.30.7.2 release
+
+- 修復 Web 對話滑動時 React 崩潰：`Maximum update depth exceeded. The result of getSnapshot should be cached to avoid an infinite loop.`。
+- 根因分析：
+  - `@assistant-ui/react@0.14.29` 宣告之依賴 `"@assistant-ui/tap": "^0.9.6"` 在構建 `v0.30.7.1` 更新 lockfile 時自動解析漂移至 `0.9.18`。
+  - `tap >= 0.9.14` 引入了嚴格的 React 18 `useSyncExternalStore` snapshot 引用一致性檢查（PR #5897）。
+  - 而被搭配的 `@assistant-ui/core@0.2.23` 屬於已凍結的 0.14/0.2 系列，未被 backport 該修復。其 `ThreadListRuntimeImpl.subscribe` 錯誤訂閱至 `_core` 而非 `_stateBinding`，導致 `LazyMemoizeSubject.getState()` 在未連接狀態下每次皆回傳新建的 `{ mainThreadId }` 物件。
+  - 官方 `v0.30.7` 預編譯二進位因鎖定在 `tap@0.9.8` 故暫時未爆發，但任何從原始碼安裝或 lockfile 更新者皆會受影響。
+  - 觸發時機為上游 PR #1809（冷啟動 20 則小分頁與滾動 coverage 載入），使用者滑動時頻繁 re-render 撞上 snapshot 死循環。
+- 補丁修復：透過 pnpm patch 建立 `@assistant-ui/core` 補丁（針對 0.2.23 版），修正訂閱對象並在 `LazyMemoizeSubject.getState()` 加入 `shallowEqual` 快取。
+- 自動化驗證：Playwright 對線上 Production Session 進行 40 次快速滾動測試，確認 0 page errors。
+- 部署驗證：發布 `v0.30.7.2`（9 項 release assets），平滑滾動更新全 fleet 8 節點（`mazu`, `cthulhu`, `athena`, `valkyrie`, `zeus`, `oracle`, `mac`, `swop`）與 `mazu-hub`，100% 保留所有運作中工作 session。
