@@ -12,9 +12,14 @@ updated: 2026-09-21
 
 使用者明確接受收斂：不再以更多diagnostics、injected predicates、單题解释或準備完成
 代替可重複新增正確解題。#182是唯一管理入口；#269比較同一runtime的Stock、一次生成、
-分輪refinement回饋，使用相同總模型/驗證預算。先固定約12題development面板（2正例加
-10個既有hard218失敗，精確ID/eligibility另行凍結），不事後換題、不動Reserved44。
+分輪refinement回饋，使用相同總模型/驗證預算。已固定12題development面板（2正例加
+10個既有hard218失敗；eligible116題，以完整hash排序選其他8題族），不事後換題、不動Reserved44。
 已知正例或多次replay不算新的hard218收益，repair計入模型總額度。
+
+PR #270 已修正首輪K被忽略、ensemble union過早截斷與失敗不扣round；
+兩臂可關閉repair，詳見 [budget accounting](vguide-proposal-budget-accounting.md)。
+固定兩次重複/三臂共72 verifier slots，最多192 HTTP（每次最多1024 completion tokens，
+prompt tokens另計）；該有限付費階段仍未放行，沒有新的benchmark收益可宣稱。
 
 #259/#103僅支援能改變下一步決策的代表性生成/資訊/表示/reference診斷；
 不要求每一題先有完整proof-adequate oracle才准整批進行。reference缺乏就標unknown。
