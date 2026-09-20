@@ -39,6 +39,20 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 - 提升管理員權限後，`Get-NetIPsecQuickModeSA` 讀到入站與出站 `IdleDurationSeconds=300`、`LifetimeSeconds=3600`；Main Mode lifetime 為 28800 秒。應區分 idle timeout 與密鑰 lifetime。
 - `Get-NetFirewallSetting -PolicyStore ActiveStore` 原為 `MaxSAIdleTimeSeconds=300`；PersistentStore 原為 `NotConfigured`。
 - 經使用者要求，執行 `Set-NetFirewallSetting -PolicyStore PersistentStore -MaxSAIdleTimeSeconds 3600`。讀回 PersistentStore、ActiveStore 均為 3600；此設定影響全局 IPsec，不是單一 VPN profile。
-- **未完成事項**：修改後既有入站／出站 SA 仍顯示 300 秒，未斷線重連，也未驗證一小時閒置存活。因此只能宣稱全局設定修改成功，不能宣稱 VPN 斷線已修復，亦不能保證新 SA 會採用 3600。下次先重連後讀取實際 SA，再做閒置與內網流量對照測試。
+- **當時驗證範圍**：修改後既有入站／出站 SA 仍顯示 300 秒；後續已完成重連與服務重啟驗證，結果仍為 300 秒，詳見下方。尚未驗證一小時閒置存活，不能宣稱 VPN 斷線已修復。
 - 微軟 `Set-NetFirewallSetting` 的 MaxSAIdleTimeSeconds 文件列出支援範圍 300–3600 秒，沒有列出「永不」；不要把此參數設 0 當成已確認的關閉方式，也不要把延長時間描述為永久保活。
 - 非提升權限下讀 Quick Mode SA 會 Access is denied；此次 `netsh advfirewall show global` 即使提升權限仍回報 0x2，但 PowerShell 的 SA 與全局設定查詢成功。不要僅靠 netsh 失敗判定資料無法取得。
+
+### 同日重連後追查
+
+- 後續管理員唯讀檢查確認：重新建立的 IKEv2 入站與出站 SA 仍為 `IdleDurationSeconds=300`，而 ActiveStore 與 PersistentStore 的 `MaxSAIdleTimeSeconds` 都是 3600。因此不能再把差異僅歸因於修改前既有 SA；全局設定寫入不代表 RAS IKEv2 通道採用。
+- 一次連線持續約 28 分鐘後，事件依序為 Quick Mode SA ended、約兩秒後 Main Mode terminated 與 RasClient 828。828 是閒置逾時，不能解讀成每次連線總壽命固定五分鐘；未取得最後資料封包時間，不能宣稱已量測該次精確閒置區間。
+- 本機 `HKLM\SYSTEM\CurrentControlSet\Services\RemoteAccess\Parameters\Ikev2` 的 `idleTimeout` 當時為 300；RemoteAccess 服務為 Disabled/Stopped，RasMan 與 IKEEXT 為 Running。Microsoft MS-RRASM 的 Other Miscellaneous Configuration Information 有此值的 RRAS 說明，但不能僅憑數值相同就宣稱根因已確定；後續修改測試見下方。
+- 後續已完成服務重啟；系統重開及閒置／流量對照實驗仍未進行，不可保證重開機能解決。
+
+### 同日用戶授權修改與服務重啟結果
+
+- Windows 11 Home build 26200 上，提升權限執行 `netsh ras set ikev2connection idletimeout=60` 回報 `The parameter is incorrect.`；加上原值 `nwoutagetime=30` 仍失敗，登錄值未變。不要把官方文件列出語法視為本機成功證據。
+- 將上述 IKEv2 登錄值 `idleTimeout` 由 300 改為 3600 後，`netsh ras show ikev2connection` 顯示 60 分鐘；但以 `rasdial` 斷線重連後，新入站與出站 SA 仍為 `IdleDurationSeconds=300`。
+- 隨後斷開 VPN，成功重啟 RasMan 與 IKEEXT，再成功重連；又一組新 SA 的 idle 值仍為 300。這排除了單純重連或重啟這兩個服務即可套用的假說；尚未驗證系統重開、其他快取或保活方案。
+- 修改後 IKEv2 登錄設定保留 3600，全局設定仍為 3600，實際 SA 仍為 300；VPN 已恢復 Connected。不可宣稱五分鐘問題修好。
