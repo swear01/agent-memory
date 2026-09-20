@@ -3,12 +3,20 @@ title: CPAchecker #170 CFA-native precision compilation
 scope: project
 project: cpachecker
 tags: [vguide, cegar, predicate-abstraction, precision-compilation, cfa, issue170]
-status: active
+status: deferred
 created: 2026-09-03
-updated: 2026-09-06
+updated: 2026-09-21
 ---
 
-# 研究決策
+# 目前優先序（2026-09-21）
+
+使用者接受研究收斂：#170的大型compiler/IR/多backend/learned-pass擴建計畫取消，
+不是主線或其他實驗的前置。既有frame implementation與證據保留，未完utility問題留在
+暫緩的#173。只有固定#269比較出現明確需要時才評估窄修補，不因本文件重啟架構建設。
+當前目標以vguide-predicate-research-roadmap.md、Wiki Research-Convergence/DR-022及#182為準。
+下文保留當時研究設計與技術理由，不把未驗證假說當成已證實結果。
+
+# 歷史研究決策
 
 Issue #170 將 VGuide 的新主線定義為 **CFA-native precision compiler**：不再把
 predicate formula 與 loop-head placement 一起交給 LLM 猜，而是把 program semantics、
