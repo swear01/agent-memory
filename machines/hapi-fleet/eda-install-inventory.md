@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-16
+updated: 2026-09-20
 tags:
   - eda
   - synopsys
@@ -14,7 +14,62 @@ tags:
   - yosys
 ---
 
-# 目前使用介面與學生文件（2026-09-16）
+# 安裝結案與維運基線（2026-09-20）
+
+此節取代下方歷史進度；數字與測試為 2026-09-20 收據，不是永久即時狀態。接手先讀結案紀錄，不要重跑舊下載、搬移或解壓佇列。
+
+- 保留的 **37 組目錄項目**已下載、安裝到正式路徑並發布；含既有版本共 **46 個唯一版本**，不重複計算 `cur`。剩餘解壓清單 **24/24** 完成；`continuation-state.json` 的 `next` 為空，`unpublishedCanonical` 為空。
+- 明確排除 Windows Tanner／PADS（含文件）、新裝 Assura，以及完整 standalone Questa Sim 的兩卷。保留下載、部分檔與拒絕證據；不要重試。ModelSim、Questa VIP 與 ADMS 內含的 Questa 元件仍保留。Assura 是舊流程的範圍決策，不是整個產品 EOL 的宣告。
+- 正式位置仍為 `/apps/eda/<vendor>/<package>/<full-version>`；`source /apps/eda/<vendor>/<tool>.sh @ver` 列版，指定完整版本載入。工具腳本會載入 vendor license，獨立 `license.sh` 保留。同工具換版需乾淨 shell；不要自動載入完整工具環境。
+- `.eda-installed`／`cur` 只在正式路徑功能驗證後發布。保留舊版本與 `/apps/cad` 供既有容器；不要修改共用 hardlink inode。
+- 五台 Mazu／Athena／Cthulhu／Valkyrie／Zeus 已讀回相同 README、env、docker-shell 與 vManager helper SHA256；本輪測試服務均 MainPID 0，其他使用者容器保留。
+
+## 最後六組版本的功能證據
+
+下列六組皆通過五台公開 source 入口測試；不能外推為所有 GUI、PDK 或 signoff 流程皆驗證。
+
+| 工具與版本 | 已驗證範圍 |
+|---|---|
+| PrimeSim 2026.03 | Pro／SPICE 分壓 0.5 V，license checkout／checkin |
+| VC Formal 2026.03 | counter FPV proven 且 non_vacuous；舊 2023.12 保留 |
+| IC Validator 2026.03-sp1-1 | 合格 GDS 0 違規，刻意窄線 GDS 1 違規 |
+| IC Workbench 2026.03 | GDS 讀取、編輯、旋轉 90 度、儲存、重開與尺寸；官方範例須先 `cell edit_state 1` |
+| ADMS 2026_1_1 | AFS 126 點、Eldo opamp、混合訊號反相器、官方 Solido Wave GUI 範例 |
+| vManager VMANAGERAGILE_24.03.004 | Xcelium 25.03.005 兩筆回歸皆 passed，鎖定／拒絕 NFS／停止後關閉 ports |
+
+## 容器修復與相容性選擇
+
+- `/apps/eda/docker-shell` 用 `--cidfile` 追蹤自己建立的容器，EXIT／TERM／INT 只清理該容器與私有暫存。Docker CLI 背景執行並保留 stdin，再由 Bash builtin `wait` 等待，確保 signal trap 能及時執行。stdin、UID、SIGTERM 143 與容器移除已驗證；只殺 Docker CLI 會留下耗用授權的容器。
+- host-network 容器內以 `--add-host "$(hostname):127.0.0.1"` 修正短主機名解析。先前 ADMS 用公開 DNS／NAT 位址作 RPC bind，造成 `cannot assign requested address` 及 Wave 等待；修復後混合訊號與 Wave 五台通過。未改主機 DNS、NFS 或開機設定。
+- X11 只複製目前 DISPLAY 的 xauth cookie 到私有 mode 600 檔並唯讀掛入；不使用 `xhost +`。五台真實 Mac XQuartz → SSH → 容器 draw/readback 通過；Custom Compiler 的實際轉送 GUI／OA 儲存重開亦通過，不代表每個工具 GUI 皆通過。
+- 預設容器維持 r7。另有 r8-modelsim 32-bit libraries、r9-catapult、r10-virtuoso，以及 `dvlab-eda:rocky8-20260920-r11-icv`。r11 在 r10 加 `snappy`／`libglvnd-opengl`，修復 ICV 的 libsnappy／Workbench 的 libOpenGL 依賴。選工具版本與選相容容器是兩個步驟。
+- 測試 harness 若透過 `bash -s` heredoc 輸入，vendor 命令應使用 `</dev/null`，避免 VC Formal 吃掉後續 assertions；process exit 0 不足以证明測試通過。
+
+## vManager 專案服務入口
+
+在相容容器的本機磁碟專案中執行：
+
+```bash
+source /apps/eda/cadence/vmanager.sh VMANAGERAGILE_24.03.004
+source /apps/eda/cadence/xcelium.sh 25.03.005
+/apps/eda/cadence/vmanager-session -exec regression.tcl
+```
+
+- helper 使用官方工具建立專案資料庫；狀態放 `$PWD/.vmanager-VMANAGERAGILE_24.03.004`，mode 700、owner 檢查、拒絕 symlink、NFS／CIFS／SMB；file lock 阻止同專案並行。狀態綁版本與主機，不跨主機共用。
+- PostgreSQL 僅監聽 localhost；**vManager 的 profile host 設 localhost 不代表服務只綁 loopback**，Jetty 仍 wildcard。helper 使用隨機主密碼與官方 `vmgrconf` 產生的 hash 啟用客戶端認證；錯誤密碼拒絕測試通過。私有密碼、wizard logs 與資料庫不寫入共享記憶。
+- helper 自動供應 client 認證，退出停止 server／DB，不建立開機或登入服務。五台鎖定、NFS 拒絕與停止檢查通過；Mazu 兩次生命週期後直接查 DB 得 2 sessions／4 runs，確認真正持久化。初始化失敗的例外不洩露密碼，已有負向測試。
+- 本機專案狀態仍需備份；`/var/tmp` 不是永久保存承諾。舊 `-local` 模式自 23.09 移除，不再建議。
+
+## 尚存限制與證據位置
+
+- ADMS 新 Solido SPICE `--spice` 模式缺 LFK；AFS／Eldo／混合訊號／Wave 已可用。沒有繞過授權。
+- vManager 24.03 配 Xcelium 25 有 GCC 12.4／libimc fallback 提示，batch 回歸通過，但 GUI／coverage merge 未驗證。PrimeSim 7 個 GDB auto-load 連結指向不可用廠商建置路徑，未盲目補回；核心模擬已通過。
+- 其他邊界：Verdi／Verisium 產品 GUI 未驗證；Tessent scan insertion／ATPG、Modus 完整 DFT、Voltus dynamic／IR drop、Sigrity 非 PowerSI II 子工具仍未驗證。source 成功不等於原生 Ubuntu 或所有進階功能可用。
+- `/apps` 必須留在早期開機與非登入 shell 之外；五台已確認 `/etc/environment` 與非登入 zshenv 無 `/apps`。本輪未 reboot／remount／改 boot 設定，不因結案重做掛載。
+- 結案工作目錄中：`outputs/eda-rollout-status.md`、`outputs/eda-student-guide.md`、`work/eda-rollout/{continuation-state,scope-audit-20260920,deployment-receipt-20260920,live-install-status-20260920}.json`。學生指南同步於 `/apps/eda/README.md`。
+- 功能 logs 位於同一 `work/eda-rollout/` 下的 `primesim-vcf-fleet-evidence`、`icv-adms-fleet-evidence`、`adms-wave-fleet-evidence`、`vmanager-fleet-evidence`、`vmanager-session-evidence`、`x11-fleet-evidence`；正式搬移與備份收據於 `/apps/eda/.admin/rollout-20260915/`。不要把原始認證檔案帶入記憶。
+
+# 歷史使用介面與學生文件（2026-09-16）
 
 - 新工具採 `/apps/eda/<vendor>/<package>/<full-version>/`。在 Bash 執行 `source /apps/eda/<vendor>/<tool>.sh <version>`；`@ver` 列已發布版本，`cur` 是可能變動的預設。工具腳本一併載入廠商 license pointer；不要恢復自動選版或把完整工具環境寫入登入檔。
 - VCS 與 Verdi 分別使用 `source /apps/eda/synopsys/vcs.sh 2026.03`、`source /apps/eda/synopsys/verdi.sh 2026.03`。需要 FSDB 時在同一 shell 載入兩者；另開 Verdi 行程不會把環境傳給 VCS。這組版本使用 `-debug_access+all`，不要混加舊式 `-P novas.tab pli.a`。
@@ -24,7 +79,7 @@ tags:
 - 同學的正常使用方式是主機上的工具；容器是相容性與測試環境，不能因先前測試在容器通過，就把容器寫成所有學生的必要步驟。但原生相容性未完成也不能宣稱可用。
 - HackMD 原有學生筆記已就地精簡更新，讀回 API `content` 與本機稿完全相同。閱讀權限為 `signed_in`、編輯權限為 `owner`。重新編輯前先匯出比對，更新後再讀回；不另建重複文件，也不把受限筆記識別碼或連結保存到共享記憶。
 
-## 本輪驗證與未完成項目
+## 當時驗證與未完成項目（歷史快照；不可當作現況）
 
 - 28 條已發布 source 指令在 Mazu 原生 Bash 的獨立 subshell 載入成功；這只證明入口與環境載入，不代表所有功能、授權 checkout 或 GUI 通過。Design Compiler 2026.03 與 Catapult 2026.1 在本輪後段已出現在 `@ver`，不要沿用較早的未發布清單；版本仍需即時查核。
 - Mazu Rocky 8 r7 使用公開 source 入口完成 VCS／Verdi 2026.03 反相器測試，印出 `PASS: inverter` 並產生非空 FSDB；輸出保有原使用者 UID／GID。這不是原生 Ubuntu 測試。
