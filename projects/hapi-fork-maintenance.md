@@ -118,3 +118,12 @@ On 2026-09-04, production Hub logs and a rollback-only database reproduction con
 On 2026-09-14, #1607 head `311e55bb` also closed a separate live-state race: a reconnecting archived session can be active in SessionCache while SQLite still says inactive. Immediately before synchronous transactional bulk deletion, validate both live cache activity/lifecycle and database namespace/archived/inactive state. One invalid member must reject the whole group without deleting histories or emitting removal events. The regression failed before the cache guard and passed afterward; current-head CI and review passed without merging.
 
 Project-group keyboard handlers must ignore events whose target is a child control rather than the group header; otherwise Enter/Space on Copy Path or New Session can be swallowed. Retain full group membership across sidebar search and pinned/hidden rows when applying bulk actions.
+
+# v0.30.7.1 release
+
+- Policy update: PRs authored by `swear01` are permanent auto-carries (`carry`) in the maintenance release pipeline and must never be deferred or dropped.
+- PR #1436 (`feat/web-persist-voice-input-session-switch`) rebased onto upstream `main`, tests passed, and pushed to `swear01/hapi`. Restores the voice dictation direct-send button (`dictationCanDirectSend`) in `HappyComposer.tsx` and `ComposerButtons.tsx`.
+- Upstream release lineage: `sync-from-upstream.sh` updated so that release tags whose parent commit is an ancestor of `upstream/main` (e.g. `v0.30.7` at `0239edf38`) are accepted.
+- Published release `v0.30.7.1` on `swear01/hapi` with 9 release assets and sha256 checksums.
+- Deployed across the fleet (`mazu`, `cthulhu`, `athena`, `valkyrie`, `zeus`, `oracle`, `mac`). Preserved all running child sessions across systemd (`KillMode=process`), macOS launchd (`AbandonProcessGroup=true`), and PM2 (`--no-treekill`).
+
