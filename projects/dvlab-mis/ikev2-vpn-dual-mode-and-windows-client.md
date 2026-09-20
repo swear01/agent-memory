@@ -3,7 +3,7 @@ title: DVLab IKEv2 VPN 雙軌架構與 Windows 用戶端排查
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
-updated: 2026-09-17
+updated: 2026-09-21
 tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 ---
 
@@ -31,3 +31,14 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 
 - 公開說明文件保留給成員閱讀之安裝指引，不直接列出明文認證帳密，引導成員透過驗證帳號由內部伺服器取得包含設定與認證資訊的安裝包。
 - 排查同學詢問「是否有帳號密碼」時，需先區分作業系統：Apple/Android 無帳密，Windows 需填入安裝包隨附之共用認證。
+## Windows IPsec 300 秒閒置斷線：已驗證設定與未完成驗證
+
+2026-09-21 在 Swear01_PC 的 Windows 原生 IKEv2 EAP 連線觀察到兩次相同序列：建立 IPsec Quick Mode SA 後整整 300 秒結束，再約 2 秒由 RasClient 記錄 20226、reason code 828（ERROR_IDLE_TIMEOUT）。同期檢查未見 Wi-Fi 斷線或休眠事件；這支持閒置回收假說，但不代表已排除所有其他原因。
+
+- VPN profile 的 `IdleDisconnectSeconds=0`，不等於底層 IPsec SA 永不閒置回收。
+- 提升管理員權限後，`Get-NetIPsecQuickModeSA` 讀到入站與出站 `IdleDurationSeconds=300`、`LifetimeSeconds=3600`；Main Mode lifetime 為 28800 秒。應區分 idle timeout 與密鑰 lifetime。
+- `Get-NetFirewallSetting -PolicyStore ActiveStore` 原為 `MaxSAIdleTimeSeconds=300`；PersistentStore 原為 `NotConfigured`。
+- 經使用者要求，執行 `Set-NetFirewallSetting -PolicyStore PersistentStore -MaxSAIdleTimeSeconds 3600`。讀回 PersistentStore、ActiveStore 均為 3600；此設定影響全局 IPsec，不是單一 VPN profile。
+- **未完成事項**：修改後既有入站／出站 SA 仍顯示 300 秒，未斷線重連，也未驗證一小時閒置存活。因此只能宣稱全局設定修改成功，不能宣稱 VPN 斷線已修復，亦不能保證新 SA 會採用 3600。下次先重連後讀取實際 SA，再做閒置與內網流量對照測試。
+- 微軟 `Set-NetFirewallSetting` 的 MaxSAIdleTimeSeconds 文件列出支援範圍 300–3600 秒，沒有列出「永不」；不要把此參數設 0 當成已確認的關閉方式，也不要把延長時間描述為永久保活。
+- 非提升權限下讀 Quick Mode SA 會 Access is denied；此次 `netsh advfirewall show global` 即使提升權限仍回報 0x2，但 PowerShell 的 SA 與全局設定查詢成功。不要僅靠 netsh 失敗判定資料無法取得。
