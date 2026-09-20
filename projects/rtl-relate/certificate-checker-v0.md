@@ -3,7 +3,7 @@ title: RTL relation checker v0 的已驗證界線
 scope: project
 project: rtl-relate
 status: active
-updated: 2026-09-20
+updated: 2026-09-21
 ---
 
 # RTL relation checker v0
@@ -26,3 +26,9 @@ Checker 僅 Python standard library + Z3 CLI。YoWASP Yosys 可隔離安裝在 `
 重跑介面：`python3 -m unittest discover -s tests -v`；`python3 -m rtl_relate demo --out results/<new-run>`。每次用新目錄，保存 hashes、SMT queries、raw logs、RTL exports、traces 與成本。
 
 目前 accepted gold 的 J 都是 true。下一個最有判別力的 fixture 是 P2 one-hot → binary，搭正確且非平凡的 inductive invariant；不先擴 LLM 預算。
+
+## 外部 benchmark 接入陷阱
+
+- `aman-goel/avr` 固定 `9a76dc632066c4416cebccda3a4974a4f8adede8`：`tests/opensource/h_Arbiter/main.v` 的 client 把 `rand_choice=0`，且 `req=0`、`state=NO_REQ` 初始化，請求永不發生；不可當作非平凡正例。改為自由輸入會改變 benchmark，須另標變體。
+- 同版 AVR pipeline 的實際檔案是 `tests/opensource/pipeline/pipeline.v`：96-bit datapath 加 64-bit monitor。保留原生 assertion 的現有 export 因 `$check` 失敗，尚未接通；不能刪除 assertion 後冒稱已驗證原 property。
+- `ZipCPU/wb2axip` 固定 `2e8d3bc2d26ddc33d1881022a2a2b9d3f0c16b9b`：原始 `rtl/skidbuffer.v`、預設 `DW=8, OPT_OUTREG=1, OPT_INITIAL=1`、未定義 `FORMAL` 時，現有 frontend 匯出 18 state bits，`i_reset` 為普通 public input。這只證明 frontend 接入；原 `FORMAL` assumptions、reset contract、certificate 與 property 都未因此獲證。原始 `rtl/sfifo.v` 則為 `UNSUPPORTED: $memwr_v2`；預設非同步讀取配置的 memory 未初始化，不可補零來讓接入通過。
