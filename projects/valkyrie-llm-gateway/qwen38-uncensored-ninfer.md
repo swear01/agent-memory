@@ -52,3 +52,9 @@ updated: 2026-08-26
 
 - 模型替換後依序核對 source commit、artifact SHA256、conversion report、systemd/Compose 狀態、`/v1/models` provider-prefixed ID、authenticated chat 與 MTP telemetry。
 - 記憶與文件不得保存 API key、token、後端憑證或敏感測試內容。
+
+## Reasoning effort 支援邊界（2026-09-20 驗證）
+
+- 生產 chat template（uncensored 版）只接受 `reasoning_effort: none | minimal | low | medium`；`high`/`xhigh`/`max` 全部被 Bifrost 擋下，上游錯誤為 `reasoning_effort_not_supported: reasoning effort 'high' is not supported by the loaded chat template`（Bifrost 把 xhigh/max 映射成 high 後丟回 NInfer 拒絕）。
+- Pi 端對策：`~/.pi/agent/models.json` 的 `valkyrie-ninfer/qwen3.8-27b` 必須帶 `reasoning: true` 加上 `thinkingLevelMap: {off: none, minimal, low, medium, high/xhigh/max: null}` 與 `compat.requiresReasoningContentOnAssistantMessages: true`（回傳體用 `message.reasoning` 而非 `reasoning_content`，replay 時補空字串避免 NInfer 400 Invalid request payload）。Pi 會對不可用 level 自動向下 clamp（xhigh→medium），因此 `defaultThinkingLevel: xhigh` 不需改。
+- 沒有這組 `thinkingLevelMap` 時，pi 對本模型送出高階 effort 就會收到 400；UI 上也看不到可用的 effort 選項。若要解鎖 high，需重訓/替換 NInfer chat template，不是 pi 或 Bifrost 設定能救。
