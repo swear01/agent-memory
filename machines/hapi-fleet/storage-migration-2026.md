@@ -5,10 +5,14 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-06
+updated: 2026-09-21
 ---
 
 # DVLab persistent storage migration inventory
+
+## 2026-09-21 冷備份位置更新
+
+Jonathan 唯一 canonical 已完整搬至長備份 One Touch（UUID `001D-7DC1`）的 `backup/home/jonathan.tar.zst` 與 SHA sidecar；目的檔 76,204,875,019 bytes，完整 SHA-256 與既有 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf` 相符，解壓及 257,533-member tar 讀回通過後才刪短碟來源。兩顆短備份碟均已依使用者授權清空；4 TB 短碟的全量內容比對在 10/21 檔通過後按要求停止，勿宣稱全量比對完成。下方 09-04／09-06 的 Ultra Touch 保存位置及來源保留狀態為歷史紀錄；現況與證據見 [外接備份碟](../mazu/external-backup-drives.md)。Jonathan 仍為永久保護項，且獨立於 Canonical Home 54 卷之外。
 
 ## 已驗證的暫存邊界
 
