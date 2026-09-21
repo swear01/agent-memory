@@ -167,3 +167,7 @@ null，保留其 timeout 類別，不能補成成功證明或以缺欄位推論 
 Legacy simple-name resolution 依 encoded set 首次匹配，可能挑 foreign scope；ArrayTermTranslator 的 basename first-template 可能綁 foreign array base 且 exempt scope guard。Legacy repeated head 的 SSA 取首筆、block 取末筆，native path 已對齊最後 occurrence。以上均有 synthetic reproduction；不能歸因給所有歷史 scope errors，亦不能忽略預設 PRECISION_ONLY／uninstantiate 而直接宣稱 verifier 不 sound。當次167份回答全為 c:，這些 legacy 問題不是該批結果原因。
 
 LoopHeadPrecisionInjector 使用 head+formula.hashCode 去重且可跳過 predicate creation failure；bridge 在實際 inject 前先標成功。synthetic collision／fault 都重現 reported2／actual1，需 formula equality 與 actual successful bindings 回傳，再由 dump／owned keys 共用。相同調查對真實1,411筆的 local precision readback 全通過，必須區分潛在缺陷和實際掉落。JSON extraction 的 brace counter 不辨引號也可拒合法 role 值；另有合法空 candidates 被當 parse failure 的真實 telemetry case。證據：reports/conversion-gap-audit-20260921/；上述項目均待修補，沒有新 solve。
+
+# 原生 lexical scope 修復與解題結果（PR272）
+
+Native C 的shadowing缺口已由PR272修復；JSON＋c:不變，使用frontend lexical declaration map而非放寬origName歧義guard。固定完整回答的zero_sum4對照每次actual precision34→36，原版／修補版各兩次均timeout，Stock也兩次timeout；140/140接受bindings由實際precision回讀確認。4個bare／generated-alias拼法只對應2個distinct predicates，不可把歷史24筆拒收或4個拼法當作新增24／4個公式。這是已修consumer缺口與未見solve gain的分離證據；不修飾為模型已提出足夠關係，亦不影響上列legacy SMT與accounting待辦。資源讀取需保留原始標籤：generic collector的memory_mb可為null，Used heap memory的peak MiB可另行精確讀出，但不能當作全process RSS；predicate refinements與CEGAR refinements也不可混成同一counter。來源：reports/issue271-native-shadowing-20260921/。
