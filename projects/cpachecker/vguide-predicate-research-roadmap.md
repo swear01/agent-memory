@@ -60,7 +60,7 @@ slot均已被核帳：62個terminal-qualified、10個raw interrupted、0個unlau
 usage未知；observed-only tokens為prompt 2,043,416、completion 80,207、total 2,123,623。
 Stock為20 records/2 official-correct/0 wrong，one-shot為20/3/0，feedback為22/2/0且2個
 parse failure；沒有provider failure或unexplained new official-wrong。完整task comparison
-沒有相對Stock與matched one-shot的重複跨題族Feedback gain；三個未完整task group保持
+沒有相對Stock與matched one-shot的重複跨題族Feedback gain；四個未完整task group保持
 unresolved，不當成失敗。
 
 因此本輪決定是**stop、不可自動擴大**：這是all-slot-accounted但evidence-incomplete的
@@ -68,6 +68,29 @@ limited result，不是complete negative science result，也不是positive gain
 completion/pivot都要新的prospective admission與fresh host qualification。完整核帳與出版
 結果在 `cpachecker-experiments/reports/issue269-fixed-panel-20260921/successor-final-audit.md`；
 plan/runtime/source commit hashes維持原凍結值。
+
+## #269 後續：context 落地不等於 reference adequate（2026-09-21）
+
+重查固定 packet：12 個 task groups 中 8 個完整（2 controls 加 6 development failures），
+4 個不完整為 t03/t06/t09/t12；不能沿用交接中過期的「3 組」。usage 147 observed 加
+1 unknown 是 terminal response usage 計數，未涵蓋中斷／失敗 request 的全部用量。
+
+兩次 sorting Feedback 都在 refinement 2 取得 N32/i，接受並注入 native
+`c:a[i-1] <= a[i]`，帶有 CE history 與前輪 outcome，最後仍 timeout。因此舊
+FIRST_SPURIOUS 沒看到 N32 的診斷不能單獨解釋新政策。t05 array_init_pair_symmetr2
+的首輪陣列式因 selected occurrence 缺少 state 被 native SSA/pointer-target guard
+拒絕，兩次 Feedback 第 2 輪都已注入 N59 `c:c[i] > 0`，仍 timeout；不能當模型
+沒有提出陣列關係，也不能為此刪掉 state guard。
+
+t05 的 source-level reference 是初始化 prefix 的 `-100000 < b[k] < a[k] < 100000`，
+接差值 prefix `c[k]=a[k]-b[k]`／`1<=c[k]<=199998`，再保留全陣列正值到 assertion
+loop。固定 N=100000 的數學歸納與 120 個有限範例分開記錄；尚未建立可用的 production oracle
+map，不宣稱 solver 證明或 backend ceiling。下一步只核對既有 initial-predicate 路徑能否
+忠實表示／放置此 reference，不能自動追加 draws 或泛用 translator。
+原生 PredicateMapParser 已接受 local SMT assertion map 並交給 fmgr.parse／makePredicate，
+不走 production prompt／native C 限制；但 parse failure 及無效 node 可只留下 warning，
+正常 exit 不足以驗收匯入。量詞／heap binding／consumer 的 live 資格仍未建立。
+證據及可重跑 checker：`cpachecker-experiments/reports/issue269-feedback-diagnosis-20260921/`。
 
 # 已確認的 base case 與 generation gap
 
