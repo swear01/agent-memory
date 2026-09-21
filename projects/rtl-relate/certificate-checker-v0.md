@@ -35,7 +35,7 @@ Checker 僅 Python standard library + Z3 CLI。YoWASP Yosys 可隔離安裝在 `
 
 ## 公開專案與協作入口
 
-公開 repo 已依工作資料夾名改為 `swear01/AIsimpV`；舊名會 redirect，remote／active links 已更新，改名後也成功 `gemini-link swear01/AIsimpV`。本機子目錄與 Python package `rtl_relate` 沒有為此做無關改名。`docs/wednesday_plan.md` 是新排程，issues #1–#12 保存依賴／檔案責任／驗收證據；#1 總追蹤、#2 固定來源與 contracts、#12 為不計入必要里程碑的 FIFO。
+公開 repo 已依工作資料夾名改為 `swear01/AIsimpV`；舊名會 redirect，remote／active links 已更新，改名後也成功 `gemini-link swear01/AIsimpV`。本機子目錄與 Python package `rtl_relate` 沒有為此做無關改名。`docs/wednesday_plan.md` 是新排程，issues #1–#12 保存依賴／檔案責任／驗收證據；#1 總追蹤、#2 固定來源與 contracts、#12 為不計入原四題分母的 FIFO。
 
 GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與完整 8 列 demo，保存 `verification-evidence` artifact；不是只有本機 3.14 結果。用 `unittest ... | tee ...` 保存輸出時，job 明設 `defaults.run.shell: bash` 以啟用 pipefail，避免 tee 遮住測試失敗。
 
@@ -61,3 +61,10 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - Network probe 只接受 PermissionError 的 EPERM/EACCES；timeout、connection refusal 或 offline 都不能證明 sandbox 拒絕連線。
 - 一旦 generation 偵測到 trusted input 篡改，該 attempt 永久只能接受 infrastructure-error feedback；外部稍後還原檔案，也不能改報 SUCCESS。有 candidate hash 時仍必須核對原始輸出。
 - Runtime 修正使用另一個經審核的 snapshot 路徑，保留舊 snapshot。`load()` 先核對全部舊 trusted hashes，再把新 snapshot 加入 ledger；不需也不應提供 skip-validation。Synthetic ledger 驗證新路徑可加入且原四次 attempts／費用不變，修改舊 snapshot 則先被拒絕，ledger bytes 保持不變。
+
+## 固定 pair 跟進與有限 FIFO 評估
+
+- 在保留原四次 infrastructure failures 後，另行於生成前預註冊 `skid8-certificate-inline-20260921`，使用 merged `9dd8e24` 與相同人工 occupancy C/A/contract、既有 gpt-5.6-sol/high。首個原始候選即 ACCEPTED，free-z property SAFE，charged 38.610 秒；乾淨 git archive 重驗六份 query hashes 與 property artifacts 全相符。h.n 為 r_valid ? 2 : (output_valid ? 1 : 0)，J 為 r_valid ⇒ output_valid，w.z 為 r_data。這是固定人工 A 的對應發現，不是自主產生 occupancy RTL；沒有 repair，不證明 feedback 因果收益。詳見專案 `docs/reports/data/llm-certificate-followup*.json`。
+- CLI JSONL 的 `item.type=error` 不必然是工具執行失敗。本次兩項出現在 turn.started 前，內容分別為 skip_host_skill_discovery 實驗功能警告與刻意關閉 Code Mode；後續 exit 0、turn.completed、正確 structured output、無 actual tool items。應按事件與實際輸出分類，不能把所有 error item 當 tool call；原誤判保留，另用綁 hash 的 diagnosis 更正，沒有追加模型呼叫。
+- `evaluate` 雖會 resolve absolute paths，仍要求輸出目錄的 parent 存在；離線包重驗範例應先 `out.parent.mkdir(parents=True, exist_ok=True)`，並選新的 out。缺 parent 是 gate 前的操作錯誤，不是 candidate 或證書失敗。
+- sfifo 固定 4×8、async read 的有限 memory_map 實測 42 state bits，32 memory bits 無 init、10 control bits 有 init。原前端拒 `$memwr_v2`；展開後先拒 disabled-write X branches，BTOR `-x` 引出的匿名 input 又先觸發命名拒絕，尚未走到既有 missing-init 限制。`opt_clean -purge` 可刪 `r_empty` 名稱，留下同 bit 的 `o_empty`；初值審核須看所有 physical-bit aliases，不能只查偏好的 net name。不得補零、聲稱 normalization 等義或 FIFO ordering 已證；本輪只完成 UNSUPPORTED assessment，獨立 script 為 `scripts/assess_fifo.py`。
