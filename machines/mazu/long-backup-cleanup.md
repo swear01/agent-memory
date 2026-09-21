@@ -5,12 +5,14 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-20
+updated: 2026-09-21
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
+
+- 2026-09-21 Jonathan 歸位完成：長碟新增獨立 `backup/home/jonathan.tar.zst` 與 SHA sidecar，76,204,875,019 bytes；完整 SHA-256 對照既有基準與 257,533-member 解壓／tar 讀回通過後，才移除短碟原件。它沒有重新封裝進本節的 Canonical Home 54 卷。兩顆短備份碟皆已按授權清空，長碟與 5 TB 短碟已安全卸載；詳細核對與較早中斷記錄見 [外接備份碟](external-backup-drives.md)。下方 Jonathan 尚留短碟的記載均為歷史狀態。
 
 - 2026-09-20 最終歸位完成：`canonical-consolidate-20260919.service` 於 03:28:58（台灣時間）正常成功退出，`consolidation-progress.json` 為 `complete`，SSD `consolidation-complete.json` 與常備碟 `backup/home/Canonical-Home.repacked-20260915/COMPLETE.json` 一致，沒有 failure marker。新 54 卷共 1,841,566,237,633 bytes 已全部集中在該最終目錄，附 SHA256SUMS、volumes.json 與還原 README；SSD volumes 現為指向最終位置的 symlink，不再占一份分卷容量。刪除前的新 54 卷 SHA 驗證於 09-19 23:27:40 完成，授權的舊 59 卷於 23:27:41 刪除；後續 SSD 33 卷均經複製、fsync、與既有 manifest SHA 比對後才釋放來源。17:22 現場核對全 54 卷序號／目的路徑／大小／總量／SSD 連結、兩份完成標記及 54 行校驗清單通過，沒有另外重算全部 payload SHA；舊原組、補組與新組 incomplete 目錄均已不存在。常備碟 UUID 正確且已恢復唯讀。此項重壓、授權舊卷清理與新卷歸位已完成；後續查證以 consolidation 完成標記和最終目錄為準，下列分散儲存／待歸位狀態均為歷史紀錄。
 
