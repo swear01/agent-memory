@@ -34,8 +34,18 @@ prompt tokens另計）；2026-09-21使用者明確同意此192次上限，root�
 原hold不變；不把全部修好作為無關小型pilot的前置條件。
 
 最初issue整理本身沒有付費/solver授權；後續僅#269這一輪取得上述明確有限額度。
-平台舊goal若仍usageLimited且拒絕覆寫，
-不得假標完成或宣稱已恢復；操作目標由Wiki Research-Convergence/DR-022及#182控制。
+平台舊goal仍usageLimited且拒絕同thread覆寫，不得假標完成。使用者已要求新thread接手；
+2026-09-21已建立獨立HAPI/Codex root，並在該thread成功建立新的active Goal。
+新Goal只負責既有#269固定pilot的完整核帳、剩餘範圍判定與go/pivot/stop決策；
+沒有自動追加draw、換題或擴大full218的權限。實際thread/session與tool回執保留在
+實驗report的successor-goal-receipt.json及successor-acceptance.json，不能用任務標題代替Goal回執。
+操作目標仍由Wiki Research-Convergence/DR-022及#182控制。
+
+交接時自動彙整為INCOMPLETE：56/72 terminal-qualified、143 observed HTTP starts，
+Athena SSH exit255且boot identity已改變；兩個中斷slot與14個未啟動slot均保留。
+這不是完整負結果；不得將unknown usage視為零，或覆寫中斷slot後宣稱沒有重跑。
+接手先按新boot核對程序、slot與已用HTTP，再決定既有額度內尚可執行的明確範圍。
+Cthulhu的唯一未啟動續跑已結束，不得再次啟動原host script或continuation。
 舊目標與下面的日期化研究內容是歷史，不自動形成新的執行佇列。
 
 # 已確認的 base case 與 generation gap
