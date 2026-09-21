@@ -5,13 +5,14 @@ tool: Brave Browser
 machine: swairM5
 status: active
 created: 2026-08-29
-updated: 2026-08-30
+updated: 2026-09-21
 tags:
   - brave
   - cdp
   - chrome-devtools-protocol
   - cookie
   - automation
+  - flatten-session
 ---
 
 # 啟動（使用者 Mac，Apple Silicon）
@@ -35,6 +36,15 @@ tags:
 - E 站自動登入：刪掉 `ipb_member_id`/`ipb_pass_hash` 後下次載入會自動重新登入並重寫 cookie（含 `star`/`hath_perks`），所以「登出」狀態留不住；重新登入會拿到最新捐款旗標
 - 搜尋結果表 selector 不穩（新版 UI 不一定有 `#gt`）→ 改用 `a[href*="/g/"]` 抓標題樣本驗證
 - 用畢 ⌘Q 再正常重開即可，cookie/登入狀態全保留
+
+# 多 tab 自動化卡死的處置（2026-09 驗證）
+
+- **attach 用 browser-level WS**：連 `/json/version` 的 `webSocketDebuggerUrl`，`Target.attachToTarget {targetId, flatten:true}` 拿 `sessionId`，後續指令都帶 `sessionId`。每 tab 自己的 `webSocketDebuggerUrl` 在 tab 多 / 重開後常連上但 `Runtime.evaluate` timeout。
+- **sid 不要錯位**：attach 回傳的 sessionId 必須原樣用在後續指令；attach 兩次會拿兩個不同 sid，用錯的會 `Session with given id not found`。
+- **browser-level WS 沒有 `Target.reload`**（`wasn't found`）；reload 要 attach 後對該 session 用 `Page.reload`。
+- **`Target crashed` / eval 全部 timeout**：該 tab renderer 掛了或主執行緒被鎖（常見於頁面有未處理的 JS dialog、或重載中）。處置：`Page.enable` 後監聽 `Page.javascriptDialogOpening` 自動 `handleJavaScriptDialog {accept:true}`；不行就 `Target.closeTarget` 關掉、`Target.createTarget` 開新 tab 重來。
+- **`Network.getAllCookies` 是 session-scoped**：browser-level WS 直接叫會 `wasn't found`；先 attach 一個活著的 tab 再對它的 session 叫，可拿到整個 browser 的 cookie。
+- 卡住的分頁**不會自己好**；同 tab 連重載都解不開，開新 target 最穩。多個卡死 tab 累積會讓 browser-level attach 也變慢，該關就關。
 
 # HAPI Standard 語音卡在 connecting（2026-08-30，swairM5）
 
