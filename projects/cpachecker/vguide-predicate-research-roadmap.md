@@ -19,7 +19,8 @@ updated: 2026-09-21
 PR #270 已修正首輪K被忽略、ensemble union過早截斷與失敗不扣round；
 兩臂可關閉repair，詳見 [budget accounting](vguide-proposal-budget-accounting.md)。
 固定兩次重複/三臂共72 verifier slots，最多192 HTTP（每次最多1024 completion tokens，
-prompt tokens另計）；該有限付費階段仍未放行，沒有新的benchmark收益可宣稱。
+prompt tokens另計）；2026-09-21使用者明確同意此192次上限，root已對固定packet放行。
+這不是後續研究的無限付費授權；benchmark結果尚未完成，沒有新收益可宣稱。
 
 #259/#103僅支援能改變下一步決策的代表性生成/資訊/表示/reference診斷；
 不要求每一題先有完整proof-adequate oracle才准整批進行。reference缺乏就標unknown。
@@ -32,7 +33,8 @@ prompt tokens另計）；該有限付費階段仍未放行，沒有新的benchma
 #54/#56的11個wrong、#197/#215 native/interpolation和#201工具問題保持獨立追蹤，
 原hold不變；不把全部修好作為無關小型pilot的前置條件。
 
-這次整理沒有新的付費/solver launch授權。平台舊goal若仍usageLimited且拒絕覆寫，
+最初issue整理本身沒有付費/solver授權；後續僅#269這一輪取得上述明確有限額度。
+平台舊goal若仍usageLimited且拒絕覆寫，
 不得假標完成或宣稱已恢復；操作目標由Wiki Research-Convergence/DR-022及#182控制。
 舊目標與下面的日期化研究內容是歷史，不自動形成新的執行佇列。
 
