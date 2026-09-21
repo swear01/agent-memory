@@ -10,6 +10,13 @@ updated: 2026-09-21
 
 # DVLab persistent storage migration inventory
 
+## 2026-09-21 本機舊資料盤點注意事項
+
+- 清理候選必須逐子樹核對，不能只看頂層目錄時間。這次使用完整子樹的最新 mtime 與 ctime 均超過 90 天、既有備份整合或可重建證據、程序 inode/path 引用及容器 mount 檢查；不使用會被盤點讀取影響的 atime 判定歷史閒置。
+- Zeus 多數主要 G2 帳號的 `.git` 目錄在 2026-09-05 有 metadata 更新；即使帳號根目錄顯示 2024，也不能直接宣稱整個帳號多年未動。帳號整體與其中獨立環境/cache 必須分開判定，且容量不可重複加總。
+- `jasminehsu/anaconda3` 的 Bazel `A-server.jar` 帶 2032 年 mtime，但 ctime 為 2023 年；這是時間資料不一致，不能把未來 mtime 直接描述為近期使用，也不能未釐清就通過嚴格閒置篩選。
+- 273 個候選逐樹檢查完成，248 個不重疊項目通過：Zeus 一個完整舊帳號加 93 個環境/cache、Valkyrie 122 個 G1 環境/cache 加 31 個隱藏本地 home 環境/cache、Cthulhu 一個孤立 buildx volume。扣除外部硬連結後估計 1,120,344,932,352 bytes；這是可清理候選容量，未刪除任何項目。詳細現場證據、`REPORT.md` 與 `eligible-paths.tsv` 留在 Zeus `/var/tmp/old-data-audit-20260921/`，是有日期的盤點而非永久刪除授權。現行 NFS home、其內 G3/G4 archive、scratch、現役服務與未證明可重建的工作資料不在本次清理候選範圍。實際移除前重查引用及保存副本，清單本身不證明未來仍無使用。
+
 ## 2026-09-21 冷備份位置更新
 
 Jonathan 唯一 canonical 已完整搬至長備份 One Touch（UUID `001D-7DC1`）的 `backup/home/jonathan.tar.zst` 與 SHA sidecar；目的檔 76,204,875,019 bytes，完整 SHA-256 與既有 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf` 相符，解壓及 257,533-member tar 讀回通過後才刪短碟來源。兩顆短備份碟均已依使用者授權清空；4 TB 短碟的全量內容比對在 10/21 檔通過後按要求停止，勿宣稱全量比對完成。下方 09-04／09-06 的 Ultra Touch 保存位置及來源保留狀態為歷史紀錄；現況與證據見 [外接備份碟](../mazu/external-backup-drives.md)。Jonathan 仍為永久保護項，且獨立於 Canonical Home 54 卷之外。
