@@ -4,13 +4,16 @@ scope: tools
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-04
+updated: 2026-09-21
 tags:
   - docx
   - word
   - python-docx
   - libreoffice
   - drivefs
+  - google-drive
+  - resource-deadlock
+  - on-demand-files
 sources:
   - verified template-based DOCX assembly and PDF export
 ---
@@ -38,3 +41,14 @@ sources:
 
 - 將檔案建立或覆蓋到本機 Google Drive 同步資料夾後，DriveFS 的 item-id extended attribute 可能短暫消失再出現。
 - 先比對來源與目的檔 SHA-256、確認檔案能重新開啟，再輪詢 `com.google.drivefs.item-id#S` 是否恢復；不要在 attribute 尚未出現時宣稱已同步，也不要輸出實際 item ID。
+
+## DriveFS on-demand 檔案讀取死鎖（`Resource deadlock avoided`）
+
+- 本機 Google Drive 同步（Drive for desktop）的 **on-demand / 未水合**檔案，用 `open().read()`、`cat`、`cp`、`ditto`、`dd` 讀取時可能全部 `OSError: [Errno 11] Resource deadlock avoided`，即使 `stat` 顯示完整大小、其他小檔案讀得到。
+- 這是 macOS FileProvider 對**大檔案 pread** 的已知問題（本輪 76MB PDF 卡住，300KB 的檔案正常），跟網路無關。
+- 修法：
+  1. **用 Preview 開啟該檔案**（`open -a Preview <檔案>`）強制觸發完整水合，約 20–30 秒後就能正常讀。
+  2. 或用能正常讀的 Python（不同 interpreter 時而定）讀；同一台機上 `cp`/`cat` 卡住但某個 python `read()` 成功、或反過來，都見過。
+  3. 重啟 Google Drive app（`pkill -9 -f "Google Drive"` 後 `open -a`）不一定立刻好，file provider 要重新註冊，且重啟後大檔案可能更卡——優先用 Preview 水合。
+  4. 水合後**先 `cp` 到本地（如 `/tmp`）再處理**，後續操作都對本地副本做，別再碰 DriveFS 路徑。
+- 判定：`file <檔案>` 或 `dd` 直接回 `Resource deadlock avoided` 就是 DriveFS 沒水合，不是檔案真的壞掉。
