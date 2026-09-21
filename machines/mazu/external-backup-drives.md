@@ -10,7 +10,15 @@ updated: 2026-09-21
 
 # Mazu 外接備份硬碟識別
 
-## 4 TB 短碟已清空；Jonathan 搬移未完成（2026-09-21）
+## Jonathan 已移至長碟；兩顆短碟均已清空（2026-09-21）
+
+- 最新完成狀態取代下方同日中斷紀錄：Jonathan 唯一 canonical 現在是長備份 One Touch（UUID `001D-7DC1`）的 `backup/home/jonathan.tar.zst` 與 `.sha256`，76,204,875,019 bytes。它是獨立封存，不是納入先前 Canonical Home 的 54 卷。
+- 接續原 15,015,608,320-byte partial 後，完整目的檔 SHA-256 與原已驗證值 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf` 一致；`zstd -dc` 與完整 tar traversal 都成功，257,533 members 與原記錄相同。正式改名、複製並比對 SHA sidecar、sync 並恢復長碟唯讀後，才按既有清空授權刪除短碟原檔。
+- 5 TB Ultra Touch（UUID `84CE-326E`）的 `copy.tgz`、Jonathan 原檔及 sidecar 已刪除，空 `backup/home` 與 `backup` 也已移除，根目錄使用者檔案為零；used 3,145,728 bytes、可用 5,000,666,284,032 bytes。長碟 used 2,792,186,183,680 bytes、可用 1,208,305,319,936 bytes。兩碟均已 sync、恢復唯讀並安全卸載，原 partial 已不存在。
+- 本次實讀 `copy.tgz` 開頭確認 `copy/cthulhu_home/chinyi0523.tgz`（28,697,200,734 bytes）及 gzip trailer ISIZE `67942400`，與既有完整掃描與 G4 帳本一致。內容覆蓋結論沿用下節已驗證的 19-account 整合鏈；未重跑整個 272.5 GB gzip 串流，不宣稱本次重新驗證已知 CRC 損壞的封存。
+- SSD `backup-work/jonathan-transfer-20260921.uddQz3/` 留有 `sha256-check.txt`、`readback-member-count.txt`、`VERIFIED.txt`、`move-and-cleanup-complete.json`。永久保護的是長碟上的 Jonathan canonical，不得再依較早記錄到已清空短碟尋找。
+
+## 4 TB 短碟清理與較早 Jonathan 中斷紀錄（2026-09-21）
 
 - 第二顆短碟已現場識別：Seagate `One Touch w/PW`，4 TB，整碟 ext4，UUID `937f406b-e6e0-421c-a3ed-fbb52652adc2`。它不是長備份 One Touch（exFAT、UUID `001D-7DC1`）；不能只靠品牌、容量或 `/dev/sdX` 判定角色。
 - 此短碟只有 `cthulhu_home/` 的 19 份 `.tgz` 與兩個搬移輔助檔，共 21 檔、279,240,796,251 bytes，檔名與大小全部符合既有 G4 來源帳本；另有空的 `lost+found`。逐 byte 比對 NAS G4 來源通過 10/21 檔後，使用者明確要求直接清除；故停止剩餘比對，不能宣稱全量內容比對完成。
