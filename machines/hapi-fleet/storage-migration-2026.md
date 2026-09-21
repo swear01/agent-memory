@@ -10,12 +10,16 @@ updated: 2026-09-21
 
 # DVLab persistent storage migration inventory
 
-## 2026-09-21 本機舊資料盤點注意事項
+## 2026-09-21 本機舊資料清理結案
+
+- 使用者在檢閱 248 項精確清單後明確授權移除，現已全部完成，失敗 0、跳過 0。Zeus 94 項釋放 511,352,344,576 bytes；Valkyrie 153 項合計釋放 593,244,368,896 bytes；Cthulhu 單一孤立 buildx volume 釋放 15,747,387,392 bytes，三台磁碟淨用量共下降 1,120,344,100,864 bytes（約 1.12 TB）。系統碟背景活動可能使 df 差額與原估值有微小差異。
+- 刪除前 248 項重新逐樹核對檔案數、容量、mtime/ctime、filesystem 與程序 inode 引用，均符合前次盤點；各主機執行前重查程序／容器引用，逐項核對 root inode、時間、實際路徑及 mount。只刪精確核准的目錄；Cthulhu 使用 `docker volume rm buildx_buildkit_qsyn-builder0_state`，未做廣泛 prune。完成後 248 路徑均確認不存在、Docker volume 已消失，23 個同機保留路徑仍存在，Zeus 歷史整合 staging 保留。現行 NFS home 未清理；Mazu、Athena、外接碟及 scratch 均不在此批範圍。
+- 完成紀錄在 Zeus `/var/tmp/old-data-audit-20260921/removal-20260921/RESULT.md` 與 `complete.json`，各主機另保留 root 保護的 `/var/tmp/old-data-removal-20260921-<host>/receipt.jsonl`，遠端／本機回執 SHA 已核對一致。原盤點報告與原校驗清單已封存；不能再假設 09-05 exact-duplicate 對照表指定的 Zeus canonical 路徑全部仍存在，後續清理須重新核對保存來源。
 
 - 清理候選必須逐子樹核對，不能只看頂層目錄時間。這次使用完整子樹的最新 mtime 與 ctime 均超過 90 天、既有備份整合或可重建證據、程序 inode/path 引用及容器 mount 檢查；不使用會被盤點讀取影響的 atime 判定歷史閒置。
 - Zeus 多數主要 G2 帳號的 `.git` 目錄在 2026-09-05 有 metadata 更新；即使帳號根目錄顯示 2024，也不能直接宣稱整個帳號多年未動。帳號整體與其中獨立環境/cache 必須分開判定，且容量不可重複加總。
 - `jasminehsu/anaconda3` 的 Bazel `A-server.jar` 帶 2032 年 mtime，但 ctime 為 2023 年；這是時間資料不一致，不能把未來 mtime 直接描述為近期使用，也不能未釐清就通過嚴格閒置篩選。
-- 273 個候選逐樹檢查完成，248 個不重疊項目通過：Zeus 一個完整舊帳號加 93 個環境/cache、Valkyrie 122 個 G1 環境/cache 加 31 個隱藏本地 home 環境/cache、Cthulhu 一個孤立 buildx volume。扣除外部硬連結後估計 1,120,344,932,352 bytes；這是可清理候選容量，未刪除任何項目。詳細現場證據、`REPORT.md` 與 `eligible-paths.tsv` 留在 Zeus `/var/tmp/old-data-audit-20260921/`，是有日期的盤點而非永久刪除授權。現行 NFS home、其內 G3/G4 archive、scratch、現役服務與未證明可重建的工作資料不在本次清理候選範圍。實際移除前重查引用及保存副本，清單本身不證明未來仍無使用。
+- 273 個候選逐樹檢查完成，248 個不重疊項目通過：Zeus 一個完整舊帳號加 93 個環境/cache、Valkyrie 122 個 G1 環境/cache 加 31 個隱藏本地 home 環境/cache、Cthulhu 一個孤立 buildx volume。扣除外部硬連結後估計 1,120,344,932,352 bytes；這是移除前候選估值，後續已依授權完成，上方為實際結案結果。詳細現場證據、`REPORT.md` 與 `eligible-paths.tsv` 留在 Zeus `/var/tmp/old-data-audit-20260921/`，是有日期的盤點而非永久刪除授權。現行 NFS home、其內 G3/G4 archive、scratch、現役服務與未證明可重建的工作資料不在本次清理候選範圍。實際移除前重查引用及保存副本，清單本身不證明未來仍無使用。
 
 ## 2026-09-21 冷備份位置更新
 
