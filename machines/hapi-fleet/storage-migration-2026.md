@@ -10,6 +10,14 @@ updated: 2026-09-21
 
 # DVLab persistent storage migration inventory
 
+## Zeus 舊備份分割區已清空（2026-09-21）
+
+- 使用者進一步授權「確認資料在備份或新位置後即可刪除」。Zeus `<remote-home>.bak` 剩餘 33 個頂層目錄現已全部移除，釋放 975,239,655,424 bytes（975.24 GB），失敗 0；完成後剩餘項目 0、filesystem 用量 12,288 bytes、可用 3,286,104,711,168 bytes。`/dev/sda4` ext4 掛載保留，沒有格式化。現行共享 home 未清理，NIS 核心私有備份的雜湊／檔案集合／0700 與 0600 權限重查均未變。
+- 16 個剩餘主要 G2 帳號依封印的 final-disposition ledger 處置。先核對 22,329 個 G2 historical payload，再套用最終 `overlay-map.jsonl`，將全部 143,954 個 sealed overlay 檔案逐項比對既有冷碟讀回資料庫的 SHA-256 與最終 54 卷成品 member 清單，全部通過。整合會將同路徑衝突移到 `.archive/conflicts/canonical-overlay-20260905/`；不能直接用舊 overlay 路徑判成備份缺失，必須套用 authoritative mapping。主要帳號的 current-exact、可重建環境及敏感狀態仍依既定整合規則處置，不代表所有原始 bytes 都在長碟。
+- 13 個小帳號與 3 個整理工作目錄另外完整保存到 Mazu `/usr/2TB-SSD/backup-work/zeus-homebak-retained-20260921/preserved.tar.zst`，134,911,736,531 bytes；SHA-256 `73bf96ddfc2b1d6d83a36242c4981ddf0e061f6b02bb2f438f7b7518fcd4a034`。完整 zstd 解壓、GNU tar 來源內容／metadata 比對與 exact member-set 驗證均通過，共 755,239 個項目、零差異。目錄 0700、archive 0600，保留原 numeric owner、mode、mtime、symlink/hardlink 及 tar ACL/xattr；舊帳號私有狀態可能在內，不應直接加入未加密外接 Home archive。
+- 這份 SSD 封存檔是受保護的保存副本，不能因父目錄叫 `backup-work` 就當可重建暫存刪掉。三個原 Zeus 工作目錄（含 `.work`）與 13 個小帳號的整棵原始內容均由此副本保存；後續查找舊整理證據應到此檔或維運 audit，不能再假設 Zeus 舊路徑存在。恢復時先解到隔離位置，核對帳號名與歷史 numeric ownership。
+- 刪除前核對 exact root identity、ext4 mount、無巢狀掛載及 process/container/config references 為 0；主要 G2 檔案在整合後沒有新 mtime/ctime，例外僅已知 2023 ctime 的 Bazel 未來 mtime。33 個 root 回執與空目錄 live check 全部通過。持久證據在 `<admin-home>/playground/storage-audit-20260903/homebak-final-cleanup-20260921/RESULT.md` 與同目錄 JSON、SHA、logs；原始現場紀錄在 Zeus `/var/tmp/homebak-final-cleanup-20260921/`。下方較早的 NIS 批次與分割區盤點為移除前歷史，不再表示整個舊分割區仍有資料。
+
 ## 2026-09-21 本機舊資料清理結案
 
 - 使用者在檢閱 248 項精確清單後明確授權移除，現已全部完成，失敗 0、跳過 0。Zeus 94 項釋放 511,352,344,576 bytes；Valkyrie 153 項合計釋放 593,244,368,896 bytes；Cthulhu 單一孤立 buildx volume 釋放 15,747,387,392 bytes，三台磁碟淨用量共下降 1,120,344,100,864 bytes（約 1.12 TB）。系統碟背景活動可能使 df 差額與原估值有微小差異。
@@ -25,9 +33,9 @@ updated: 2026-09-21
 
 - 使用者授權保留 NIS 核心於現行 home 並刪除其餘內容。已保存至 Zeus 管理帳號的 `<admin-home>/private-system-backups/nis-core-20260921/`；目錄 0700、六個備份／metadata 檔案均為管理帳號持有且 0600，其他一般使用者不可讀。`nis-core.tar.gz` 167,169 bytes，保存 59 個一般檔、8 目錄、1 symlink；含原 numeric owner/mode/time 與 tar 可保存的 ACL/xattr。`source-manifest.json`、`SHA256SUMS`、`VERIFIED.json`、`README.md` 與 `RELOCATION-COMPLETE.json` 同目錄保留。這是含舊密碼雜湊／NIS maps 的私有系統備份，不是可納入一般未加密 Home 成品的新 payload。
 - 完整逐檔 SHA-256、archive 成員集合、owner/group/mode metadata、實際隔離解壓後內容／檔案 mtime／symlink 比對均通過；原始絕對 `securenets` link 保留，未跟隨去複製現行設定。移除前再次核對來源 inode/mtime/ctime/hash、backup SHA、引用、ext4 mount 及無巢狀掛載，才刪除兩個精確來源 `nis_transfer` 與 `backup-nis-2604`（包含不保留的 shell 設定／歷史／補完資料），釋放 11,849,728 bytes。最後確認兩目錄不存在、私有備份仍完整；root 回執在 Zeus `/var/tmp/nis-core-relocation-complete-20260921.json`。
-- 此批實際只處理兩個 NIS 來源。其餘舊帳號與三個大型備份工作目錄仍在，約 975 GB，不能把這次操作記成已清空整個分割區，也不能由這份結案紀錄推定整碟刪除已獲授權。下方兩個 NIS 路徑仍存在的敘述均為移除前盤點。
+- NIS 批次當時只處理兩個來源，尚留約 975 GB 舊帳號與整理工作目錄；之後使用者另行授權整個舊分割區清空，已依上方「Zeus 舊備份分割區已清空」完成。下方兩個 NIS 路徑仍存在的敘述均為移除前盤點。
 
-## Zeus 整個舊備份分割區的清空邊界（2026-09-21）
+## Zeus 整個舊備份分割區的移除前盤點（2026-09-21）
 
 - 第一批移除後，`<remote-home>.bak` 仍是 `/dev/sda4` 的獨立 ext4 掛載，用量 975,251,517,440 bytes；不等於現行 NFS home。
 - 頂層另含兩份系統帳號／NIS 備份：`nis_transfer`（11,268,096 allocated bytes，含 `yp` 與 `sysfiles`）、`backup-nis-2604`（581,632 bytes，含 passwd/group/shadow/yp）。兩份合計約 11.85 MB；檢查只讀名稱與 metadata，未輸出敏感檔案內容。兩者未列入已讀取的 single-home 帳號計畫或 G2 最終帳本，不能由 Canonical Home 完成標記推論已覆蓋，整碟清空前須另外保存或確認去向。
