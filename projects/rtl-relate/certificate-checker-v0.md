@@ -68,3 +68,12 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - CLI JSONL 的 `item.type=error` 不必然是工具執行失敗。本次兩項出現在 turn.started 前，內容分別為 skip_host_skill_discovery 實驗功能警告與刻意關閉 Code Mode；後續 exit 0、turn.completed、正確 structured output、無 actual tool items。應按事件與實際輸出分類，不能把所有 error item 當 tool call；原誤判保留，另用綁 hash 的 diagnosis 更正，沒有追加模型呼叫。
 - `evaluate` 雖會 resolve absolute paths，仍要求輸出目錄的 parent 存在；離線包重驗範例應先 `out.parent.mkdir(parents=True, exist_ok=True)`，並選新的 out。缺 parent 是 gate 前的操作錯誤，不是 candidate 或證書失敗。
 - sfifo 固定 4×8、async read 的有限 memory_map 實測 42 state bits，32 memory bits 無 init、10 control bits 有 init。原前端拒 `$memwr_v2`；展開後先拒 disabled-write X branches，BTOR `-x` 引出的匿名 input 又先觸發命名拒絕，尚未走到既有 missing-init 限制。`opt_clean -purge` 可刪 `r_empty` 名稱，留下同 bit 的 `o_empty`；初值審核須看所有 physical-bit aliases，不能只查偏好的 net name。不得補零、聲稱 normalization 等義或 FIFO ordering 已證；本輪只完成 UNSUPPORTED assessment，獨立 script 為 `scripts/assess_fifo.py`。
+
+## 固定候選的重複驗證時間
+
+2026-09-21 timing runner 在 source `de5898204580b40b3237f2f7f9d1077f7f7d6f91` 預註冊後固定執行；報告為 `docs/reports/verification_timing.md`，issue #17、PR #18。五個候選各 2 暖機、8 正式配對；所有 50 pairs 都 gate ACCEPTED 且 C/A SAFE，獨立資料審核 8,171 checks、零差異。
+
+- 公平比較需兩邊都取各自已驗 certificate export 的 normalized RTL，再經同一正常 property preparation。舊人工矩陣部分任務從 raw 開始，不能與新八次結果混算。C/A 執行順序各半，候選順序輪換；每輪模型／contract／證書 hashes 與工具版本固定，失敗不能從 median 分母刪除。
+- 分開記錄完整 property wall、base＋induction subprocess wall（包含 SMTBMC／Z3 啟動，非純 solver CPU）、已知候選驗證流程。後者取 pair wall 減 C property 實際呼叫時間，包含前端／證書／A proof 及協調；僅加各 stage 小計會漏計協調成本。per-record 報表 I/O 另保留在 suite wall。既有候選的發現／失敗成本仍須另列，不能當成免費生成。
+- C→A property medians 秒：FSM .587→.572、人工 skid8 .578→.592、skid32 .592→.611、pipeline32 .618→1.070、保存 LLM skid8 .579→.590。FSM 差異僅約 .016 秒且分散範圍重疊；本輪不支持可靠加速。40 個正式完整驗證流程全部慢於同輪直接 C proof；不應只展示 state-bit 減少。
+- Pipeline 前處理 state bits 257→225，但 base subprocess .114→.564 秒、induction .094→.097 秒；完整 property 約慢 73%。兩邊 base 深度與 induction 成功步一致，cells 同為 20，A 新增 subtraction、SMT bytes 稍增。這定位慢點於 base 求解，尚未隔離自由分解／算術表示的因果，不能斷言單一 subtraction 為全部根因。後续優先挑正常 B0 仍困難的 properties，並用實際 proof cost 評估候選。
