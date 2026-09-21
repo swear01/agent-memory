@@ -89,7 +89,21 @@ map，不宣稱 solver 證明或 backend ceiling。下一步只核對既有 init
 忠實表示／放置此 reference，不能自動追加 draws 或泛用 translator。
 原生 PredicateMapParser 已接受 local SMT assertion map 並交給 fmgr.parse／makePredicate，
 不走 production prompt／native C 限制；但 parse failure 及無效 node 可只留下 warning，
-正常 exit 不足以驗收匯入。量詞／heap binding／consumer 的 live 資格仍未建立。
+正常 exit 不足以驗收匯入。
+
+後續有限 importer 資格已實測：相同固定 runtime/JDK/MathSAT5 5.6.15，t05 真實 CFA
+heads 29/53/59；scalar control 各 3 bindings 並 SAT。量化 prefix map 在 makePredicate
+需要的 uninstantiate 階段拋出 `Symbols can't start with the "'" character`。独立
+stage check 確認 raw SMT parse 成功，但 JavaSMT Mathsat5 visitor 把 bound k 呈現為
+free name `'k`，CPAchecker 的 visitFreeVariable 重建名字時遭拒；QuantifiedFormulaManager
+亦回報 `Solver does not support quantification`。這是可解析文字和可用 consumer
+representation 的區別，不能靠刪 apostrophe／跳過 uninstantiate 假裝修好。
+
+兩個 bounded standalone JVM、僅 1 次 scalar SAT query、0 CEGAR／模型請求；原始
+map/stack/hash 皆保留。此量化 reference route STOP，不跑長 reference/control pair，
+也不自動換 solver／建 quantifier framework。這不證明所有有限 predicate basis 皆不可行，
+不構成模型能力或整體 backend ceiling 結論。相同目錄的 `reference-import/RESULT.md`
+和 `check_results.py` 是決定性證據；前面的 production oracle unknown 已縮小到此具體限制。
 證據及可重跑 checker：`cpachecker-experiments/reports/issue269-feedback-diagnosis-20260921/`。
 
 # 已確認的 base case 與 generation gap
