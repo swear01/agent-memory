@@ -48,6 +48,27 @@ Athena SSH exit255且boot identity已改變；兩個中斷slot與14個未啟動s
 Cthulhu的唯一未啟動續跑已結束，不得再次啟動原host script或continuation。
 舊目標與下面的日期化研究內容是歷史，不自動形成新的執行佇列。
 
+## #269 successor final disposition（2026-09-21）
+
+Successor在不重跑任何terminal/interrupted slot、不換題、不增加panel的前提下，使用原本
+192 HTTP授權內真正未啟動的slot；Athena連續三次reboot/transport interruption後，所有72
+slot均已被核帳：62個terminal-qualified、10個raw interrupted、0個unlaunched。中斷的
+`run_meta.json`、CPA log、cache/dump與缺少terminal evidence均保留；不得把它們當成timeout
+或negative solver outcome，也不得再重跑。
+
+最終observed HTTP starts為167/192（包含中斷request），147個usage response可觀測、1個
+usage未知；observed-only tokens為prompt 2,043,416、completion 80,207、total 2,123,623。
+Stock為20 records/2 official-correct/0 wrong，one-shot為20/3/0，feedback為22/2/0且2個
+parse failure；沒有provider failure或unexplained new official-wrong。完整task comparison
+沒有相對Stock與matched one-shot的重複跨題族Feedback gain；三個未完整task group保持
+unresolved，不當成失敗。
+
+因此本輪決定是**stop、不可自動擴大**：這是all-slot-accounted但evidence-incomplete的
+limited result，不是complete negative science result，也不是positive gain。任何後續
+completion/pivot都要新的prospective admission與fresh host qualification。完整核帳與出版
+結果在 `cpachecker-experiments/reports/issue269-fixed-panel-20260921/successor-final-audit.md`；
+plan/runtime/source commit hashes維持原凍結值。
+
 # 已確認的 base case 與 generation gap
 
 - `c/loop-lit/hh2012-ex1b.yml` 的完整 delayed oracle policy 在 matched replay 中把
