@@ -10,6 +10,15 @@ updated: 2026-09-21
 
 # Mazu 外接備份硬碟識別
 
+## copy.tgz 已達內容替代門檻（2026-09-21）
+
+短碟 `backup/home/copy.tgz`（272,522,182,543 bytes）對應 G4 舊搬家世代。此次串起來源帳本與最終完成證據後，確認依既有授權精簡／敏感內容／EDA 排除規則，它已可列入精確刪除批次；不是逐 byte 保存整個原封存，也不是因 CRC 損壞就可刪。使用者本次只詢問能否刪除，尚未執行刪檔。
+
+- 本機 `nfs-g4-final-disposition-20260905.tsv` 核對 19/19 帳號：16 個 verified fragment、2 個與 current 相同而不另留 fragment、1 個 alumni canonical；來源共 279,240,795,714 bytes。
+- sealed overlay manifest 的 SHA-256 `d4c61f00aa4719356cc9002f4245d76cc7aff6e9da73ec85e0907cc1c763eed2` 與 143,954 筆數本次重驗通過。Mazu 現場 `final-input-summary.json` 確認這 143,954 個 overlay 檔納入 6,340,730 筆 required hashes；planner 明確將每筆 overlay hash 寫入 required manifest。
+- 現場 recovery `union-verified.json` 與完成標記確認 94 帳號、6,340,730 筆 required hashes 全數通過；validator 對缺少歷史內容或 hash 不符會失敗。後續重壓按上述既定排除規則逐檔核對原已驗證清單，最終 54 卷的 `COMPLETE.json` 與 `consolidation-complete.json` 一致，已於 09-20 歸位長碟。本次查核既有驗證證據與實體卷清單，未重讀全部約 1.84 TB payload。
+- `jonathan.tar.zst` 及其 SHA sidecar 仍是另外的永久保護項；不得把 copy.tgz 可刪推廣成短碟可整顆清空。下方「不能直接刪除」與 delta 尚未合併的記載是完成長備份前的歷史狀態。
+
 ## 實體盤點與已連接磁碟不可混同（2026-09-21）
 
 實驗室維運文件 `DVLab Overview` 的設備櫃盤點記載：短備份碟為 4 TB、5 TB 各一顆，長期備份碟為 4 TB 一顆。使用者確認兩顆短碟中有一顆未連接；下方 One Touch／Ultra Touch 掛載紀錄只是當時已連接設備，不是全部備份碟清單。此次核對的是 2026-08-23 本機維運文件副本，未核對 Google Drive 最新版，也未取得離線短碟的內容清單；不能據長碟封裝完成便認定兩顆短碟的資料皆已涵蓋。
