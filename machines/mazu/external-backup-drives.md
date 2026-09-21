@@ -10,9 +10,16 @@ updated: 2026-09-21
 
 # Mazu 外接備份硬碟識別
 
+## 4 TB 短碟已清空；Jonathan 搬移未完成（2026-09-21）
+
+- 第二顆短碟已現場識別：Seagate `One Touch w/PW`，4 TB，整碟 ext4，UUID `937f406b-e6e0-421c-a3ed-fbb52652adc2`。它不是長備份 One Touch（exFAT、UUID `001D-7DC1`）；不能只靠品牌、容量或 `/dev/sdX` 判定角色。
+- 此短碟只有 `cthulhu_home/` 的 19 份 `.tgz` 與兩個搬移輔助檔，共 21 檔、279,240,796,251 bytes，檔名與大小全部符合既有 G4 來源帳本；另有空的 `lost+found`。逐 byte 比對 NAS G4 來源通過 10/21 檔後，使用者明確要求直接清除；故停止剩餘比對，不能宣稱全量內容比對完成。
+- 刪除前重新核對 UUID、根目錄、21 檔完整名稱／大小及無其他資料後，已刪除這 21 檔與空的 `cthulhu_home/`。完成後僅剩空 `lost+found`，使用者檔案為零，filesystem used 28,672 bytes，可用 3,736,764,571,648 bytes，已 sync 並安全卸載。SSD `backup-work/short-4tb-compare-20260921.LISze8/cleanup-complete.json` 保存清理收據；NAS 原來源未刪。
+- 5 TB Ultra Touch（UUID `84CE-326E`）未清空，`copy.tgz`、`jonathan.tar.zst` 與 SHA sidecar 仍保留。先前授權 Jonathan 搬到長碟的作業已按使用者要求停止：長碟 `backup/home/jonathan.tar.zst.partial` 僅 15,015,608,320 bytes，沒有完成 SHA／archive 讀回，不能取代短碟唯一 canonical。來源完整保留；停止時長碟恢復唯讀、短碟卸載。使用者之後拔掉長碟並換接上述 4 TB 短碟；不得因舊掛載點殘留便視為長碟仍在線，也不得把未完成搬移當成 5 TB 短碟可清空。
+
 ## copy.tgz 已達內容替代門檻（2026-09-21）
 
-短碟 `backup/home/copy.tgz`（272,522,182,543 bytes）對應 G4 舊搬家世代。此次串起來源帳本與最終完成證據後，確認依既有授權精簡／敏感內容／EDA 排除規則，它已可列入精確刪除批次；不是逐 byte 保存整個原封存，也不是因 CRC 損壞就可刪。使用者本次只詢問能否刪除，尚未執行刪檔。
+短碟 `backup/home/copy.tgz`（272,522,182,543 bytes）對應 G4 舊搬家世代。此次串起來源帳本與最終完成證據後，確認依既有授權精簡／敏感內容／EDA 排除規則，它已可列入精確刪除批次；不是逐 byte 保存整個原封存，也不是因 CRC 損壞就可刪。此項內容替代查核未執行刪檔；後續實際磁碟狀態見上節。
 
 - 本機 `nfs-g4-final-disposition-20260905.tsv` 核對 19/19 帳號：16 個 verified fragment、2 個與 current 相同而不另留 fragment、1 個 alumni canonical；來源共 279,240,795,714 bytes。
 - sealed overlay manifest 的 SHA-256 `d4c61f00aa4719356cc9002f4245d76cc7aff6e9da73ec85e0907cc1c763eed2` 與 143,954 筆數本次重驗通過。Mazu 現場 `final-input-summary.json` 確認這 143,954 個 overlay 檔納入 6,340,730 筆 required hashes；planner 明確將每筆 overlay hash 寫入 required manifest。
