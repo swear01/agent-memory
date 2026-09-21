@@ -77,3 +77,13 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - 分開記錄完整 property wall、base＋induction subprocess wall（包含 SMTBMC／Z3 啟動，非純 solver CPU）、已知候選驗證流程。後者取 pair wall 減 C property 實際呼叫時間，包含前端／證書／A proof 及協調；僅加各 stage 小計會漏計協調成本。per-record 報表 I/O 另保留在 suite wall。既有候選的發現／失敗成本仍須另列，不能當成免費生成。
 - C→A property medians 秒：FSM .587→.572、人工 skid8 .578→.592、skid32 .592→.611、pipeline32 .618→1.070、保存 LLM skid8 .579→.590。FSM 差異僅約 .016 秒且分散範圍重疊；本輪不支持可靠加速。40 個正式完整驗證流程全部慢於同輪直接 C proof；不應只展示 state-bit 減少。
 - Pipeline 前處理 state bits 257→225，但 base subprocess .114→.564 秒、induction .094→.097 秒；完整 property 約慢 73%。兩邊 base 深度與 induction 成功步一致，cells 同為 20，A 新增 subtraction、SMT bytes 稍增。這定位慢點於 base 求解，尚未隔離自由分解／算術表示的因果，不能斷言單一 subtraction 為全部根因。後续優先挑正常 B0 仍困難的 properties，並用實際 proof cost 評估候選。
+
+## 有求解成本的公開 B0 篩選
+
+2026-09-21，issue #19 與 `docs/reports/baseline_screen.md` 保存 17 個參數化 tasks、26 attempts，包含失敗／timeout／BOUNDED；獨立資料審核 1,200 checks 通過。這次僅 native B0 qualification，沒有抽象或證書，不能宣稱加速。
+
+- 同一 pinned wb2axip `sfifo.v`，保留 SFIFO define、同步讀、BW=32、LGFLEN=6/8、無 empty/full bypass；沿用上游 prove depth 4，以 SMTBMC/Z3 base＋induction 完整證明。64×32 與 256×32 的三次 fresh-process proof medians 分別 5.772／7.313 秒，induction medians 5.439／6.925 秒。這是同家族兩個容量实例，不是兩個家族；其他 engine 尚未比較。
+- 原生 28 assert cells 保留（同步配置有 2 個 A constant）、0 assumptions，5 covers 未執行。Memory 只初始化 mem[0]，其餘 2,016／8,160 bits 保持未知；不得補零。原生 proof 路徑的成功不解決 certificate frontend 的 symbolic/partial init、memory 與 formal monitor 接入限制。
+- Current Yosys 對 edge-triggered `$check` 要先 `async2sync` 再 `chformal -lower`。第一次三筆 prep ERROR 保留；修正後使用 clocked assertion 的 SAFE/CEX/no-assert 真實工具回歸。獨立 runner `scripts/screen_baselines.py` 預設從 catalog 取深度，FIFO 4、AVR 20；不要為湊時間提高 FIFO unroll depth。
+- AVR `s1269b` 的 README top file 是 `_mod.v`；`Huffman_dec` 的 plain lookup 無 255，原 assert 組合恆真，不能當成困難成功題。正常 SAFE 過快的設計與 BOUNDED／CEX 也必須記錄；不能只保留符合目標時間的數據。
+- Native timing 包含 copy/prep/base/induction，尾端 artifact hashes 與 result 寫入在 suite wall。不能把它直接與舊 contract-harness abstract timing 拼成加速比。下一關是凍結原有 properties 並接通人工 FIFO rewrite＋certificate，完整計費。
