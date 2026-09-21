@@ -5,10 +5,14 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-20
+updated: 2026-09-21
 ---
 
 # Mazu 外接備份硬碟識別
+
+## 實體盤點與已連接磁碟不可混同（2026-09-21）
+
+實驗室維運文件 `DVLab Overview` 的設備櫃盤點記載：短備份碟為 4 TB、5 TB 各一顆，長期備份碟為 4 TB 一顆。使用者確認兩顆短碟中有一顆未連接；下方 One Touch／Ultra Touch 掛載紀錄只是當時已連接設備，不是全部備份碟清單。此次核對的是 2026-08-23 本機維運文件副本，未核對 Google Drive 最新版，也未取得離線短碟的內容清單；不能據長碟封裝完成便認定兩顆短碟的資料皆已涵蓋。
 
 ## 成品位置與主機的區別（2026-09-20）
 
