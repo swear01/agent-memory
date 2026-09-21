@@ -21,6 +21,12 @@ updated: 2026-09-21
 - `jasminehsu/anaconda3` 的 Bazel `A-server.jar` 帶 2032 年 mtime，但 ctime 為 2023 年；這是時間資料不一致，不能把未來 mtime 直接描述為近期使用，也不能未釐清就通過嚴格閒置篩選。
 - 273 個候選逐樹檢查完成，248 個不重疊項目通過：Zeus 一個完整舊帳號加 93 個環境/cache、Valkyrie 122 個 G1 環境/cache 加 31 個隱藏本地 home 環境/cache、Cthulhu 一個孤立 buildx volume。扣除外部硬連結後估計 1,120,344,932,352 bytes；這是移除前候選估值，後續已依授權完成，上方為實際結案結果。詳細現場證據、`REPORT.md` 與 `eligible-paths.tsv` 留在 Zeus `/var/tmp/old-data-audit-20260921/`，是有日期的盤點而非永久刪除授權。現行 NFS home、其內 G3/G4 archive、scratch、現役服務與未證明可重建的工作資料不在本次清理候選範圍。實際移除前重查引用及保存副本，清單本身不證明未來仍無使用。
 
+## Zeus 整個舊備份分割區的清空邊界（2026-09-21）
+
+- 第一批移除後，`<remote-home>.bak` 仍是 `/dev/sda4` 的獨立 ext4 掛載，用量 975,251,517,440 bytes；不等於現行 NFS home。
+- 頂層另含兩份系統帳號／NIS 備份：`nis_transfer`（11,268,096 allocated bytes，含 `yp` 與 `sysfiles`）、`backup-nis-2604`（581,632 bytes，含 passwd/group/shadow/yp）。兩份合計約 11.85 MB；檢查只讀名稱與 metadata，未輸出敏感檔案內容。兩者未列入已讀取的 single-home 帳號計畫或 G2 最終帳本，不能由 Canonical Home 完成標記推論已覆蓋，整碟清空前須另外保存或確認去向。
+- 三個備份工作目錄 `single-home-build-20260905`、`canonical-home-one-touch-20260906`、`nfs-canonical-20260905` 合計 164,573,159,424 allocated bytes，含 manifests、差異整合 payload 與 `.work`；不能把它們當成舊使用者帳號。其餘主要為約 810.67 GB 舊帳號資料。90 天閒置條件只用於第一批篩選，9 月備份整理更新過 metadata 不代表永久不可清；是否可整批清除應依保存內容覆蓋與工作紀錄去向核對。此輪只有檢查，沒有擴大刪除。
+
 ## 2026-09-21 冷備份位置更新
 
 Jonathan 唯一 canonical 已完整搬至長備份 One Touch（UUID `001D-7DC1`）的 `backup/home/jonathan.tar.zst` 與 SHA sidecar；目的檔 76,204,875,019 bytes，完整 SHA-256 與既有 `c5fc01e0405696dd75468d80a7d84ea5630890b1c4a2b19a3659c0df036d9cdf` 相符，解壓及 257,533-member tar 讀回通過後才刪短碟來源。兩顆短備份碟均已依使用者授權清空；4 TB 短碟的全量內容比對在 10/21 檔通過後按要求停止，勿宣稱全量比對完成。下方 09-04／09-06 的 Ultra Touch 保存位置及來源保留狀態為歷史紀錄；現況與證據見 [外接備份碟](../mazu/external-backup-drives.md)。Jonathan 仍為永久保護項，且獨立於 Canonical Home 54 卷之外。
