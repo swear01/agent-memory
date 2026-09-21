@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, parser, smt-lib, bitvector, validation, muse]
 status: active
 created: 2026-08-30
-updated: 2026-09-11
+updated: 2026-09-21
 ---
 
 # 先區分 generation 與 parser representability
@@ -158,3 +158,12 @@ trivial 處理」作為這批差異的解釋，後續 abstraction/refinement 的
 null，保留其 timeout 類別，不能補成成功證明或以缺欄位推論 solver 行為。
 來源：`reports/issue254-problem14-20260911/` 的 `final-check-results.json` 與
 可重跑的唯讀 `root-check-terminal.py`、`root-terminal-verification.json`。
+
+
+# Legacy SMT 與 precision accounting 的已重現缺口（#271）
+
+固定 main 64d5888 的 standalone production-API probes 確認：自訂 VocabularyGuide 把 chain equality `(= x y z)` 截成前兩項；`bvneg` 透過32-bit zero subtraction 錯改寬度，使 `(= (bvneg #x80) #x80)` 變 false。兩者與 native SMT parser 的 XOR 可滿足；非法三元 bvslt 又被默默接受。應在共用邊界處理 arity／chain semantics／operand width，不靠 prompt 隱藏問題。bvand、bvsrem、bvule 等歷史字串仍超出自訂子集；新 C 關係優先走現有 c:，不因此自建完整 SMT interpreter。
+
+Legacy simple-name resolution 依 encoded set 首次匹配，可能挑 foreign scope；ArrayTermTranslator 的 basename first-template 可能綁 foreign array base 且 exempt scope guard。Legacy repeated head 的 SSA 取首筆、block 取末筆，native path 已對齊最後 occurrence。以上均有 synthetic reproduction；不能歸因給所有歷史 scope errors，亦不能忽略預設 PRECISION_ONLY／uninstantiate 而直接宣稱 verifier 不 sound。當次167份回答全為 c:，這些 legacy 問題不是該批結果原因。
+
+LoopHeadPrecisionInjector 使用 head+formula.hashCode 去重且可跳過 predicate creation failure；bridge 在實際 inject 前先標成功。synthetic collision／fault 都重現 reported2／actual1，需 formula equality 與 actual successful bindings 回傳，再由 dump／owned keys 共用。相同調查對真實1,411筆的 local precision readback 全通過，必須區分潛在缺陷和實際掉落。JSON extraction 的 brace counter 不辨引號也可拒合法 role 值；另有合法空 candidates 被當 parse failure 的真實 telemetry case。證據：reports/conversion-gap-audit-20260921/；上述項目均待修補，沒有新 solve。
