@@ -160,14 +160,19 @@ null，保留其 timeout 類別，不能補成成功證明或以缺欄位推論 
 可重跑的唯讀 `root-check-terminal.py`、`root-terminal-verification.json`。
 
 
-# Legacy SMT 與 precision accounting 的已重現缺口（#271）
+# Legacy SMT、context 與 injection 完整性修補（#273）
 
-固定 main 64d5888 的 standalone production-API probes 確認：自訂 VocabularyGuide 把 chain equality `(= x y z)` 截成前兩項；`bvneg` 透過32-bit zero subtraction 錯改寬度，使 `(= (bvneg #x80) #x80)` 變 false。兩者與 native SMT parser 的 XOR 可滿足；非法三元 bvslt 又被默默接受。應在共用邊界處理 arity／chain semantics／operand width，不靠 prompt 隱藏問題。bvand、bvsrem、bvule 等歷史字串仍超出自訂子集；新 C 關係優先走現有 c:，不因此自建完整 SMT interpreter。
+#271 在固定 main 64d5888 的 probes 重現的缺口，已由 PR274–277 修復，最終 merge 11a35f3787c3e8a8aa311c838b45c2abd7094824。保留 JSON＋c:，不擴建通用 SMT interpreter。
 
-Legacy simple-name resolution 依 encoded set 首次匹配，可能挑 foreign scope；ArrayTermTranslator 的 basename first-template 可能綁 foreign array base 且 exempt scope guard。Legacy repeated head 的 SSA 取首筆、block 取末筆，native path 已對齊最後 occurrence。以上均有 synthetic reproduction；不能歸因給所有歷史 scope errors，亦不能忽略預設 PRECISION_ONLY／uninstantiate 而直接宣稱 verifier 不 sound。當次167份回答全為 c:，這些 legacy 問題不是該批結果原因。
+- 共用 parser 保留 equality chain／加乘的所有 operands，拒絕錯誤 arity，bvneg 保留 operand width。SMTINTERPOL 的 integer replacement 不能用來斷言 bitvector modular negation；此語意回歸明確使用 MathSAT5。
+- Legacy scalar 按 head function vocabulary 解析；generic resolver 不猜不同 function 的同名 symbol。可用的 aligned PathFormula 提供當前 SSA；array template 保留 encoded address，選 active function，foreign address 不可豁免 scope。Array 與 native 共用最後 aligned occurrence，最後 context 缺失不退回首筆 SSA。
+- Injection 以完整 head/formula equality 去重，回傳成功建立並寫入 precision 的 bindings，供 dump／count／owned keys 共用。Hash 只協助集合查找，不是公式身分；部分失敗不可預先標成功。
+- JSON 邊界交給既有 Jackson 處理；引號中的 braces／escapes 不再造成截斷。有效 v1 空 candidates 是 parse_ok=true、empty_candidates；blank／malformed／wrong-schema 仍分開分類。
 
-LoopHeadPrecisionInjector 使用 head+formula.hashCode 去重且可跳過 predicate creation failure；bridge 在實際 inject 前先標成功。synthetic collision／fault 都重現 reported2／actual1，需 formula equality 與 actual successful bindings 回傳，再由 dump／owned keys 共用。相同調查對真實1,411筆的 local precision readback 全通過，必須區分潛在缺陷和實際掉落。JSON extraction 的 brace counter 不辨引號也可拒合法 role 值；另有合法空 candidates 被當 parse failure 的真實 telemetry case。證據：reports/conversion-gap-audit-20260921/；上述項目均待修補，沒有新 solve。
+110 個 combined focused tests、qualified build／Checkstyle 通過；167 份完整回答的 1,687 candidates 與 rejection metadata 不變，1 份有效空回答正確分類。原 audit 的真實 1,411/1,411 precision membership 與 synthetic defects 必須分開：沒有把潛在 bug 冒充已觀察掉落，也没有重跑那些歷史 trajectories。
+
+實測 deterministic work：1,000-binding injection flags 保持一致，formula equality 500,500→1,000，另2,000 hash calls；全失敗 batch 不掃 reached precision。Native-only batch 不做用不到的 legacy block serialization/template extraction，真實 CFA 控制例1次→0次，mixed batch仍1次。這是處理工作減少，不是整體 verifier speedup／新增 solve；0新provider calls／benchmark runs，原holds不變。45筆missing-state與quantified/global-array表示仍有證據界限，留#259/#103；bvand、bvsrem等額外legacy operators沒有因此擴充。證據：reports/essential-conversion-fixes-20260921/；default strict build的既有IdentityHashMapUsage問題仍需明說，不能把qualified build稱作全檢查通過。
 
 # 原生 lexical scope 修復與解題結果（PR272）
 
-Native C 的shadowing缺口已由PR272修復；JSON＋c:不變，使用frontend lexical declaration map而非放寬origName歧義guard。固定完整回答的zero_sum4對照每次actual precision34→36，原版／修補版各兩次均timeout，Stock也兩次timeout；140/140接受bindings由實際precision回讀確認。4個bare／generated-alias拼法只對應2個distinct predicates，不可把歷史24筆拒收或4個拼法當作新增24／4個公式。這是已修consumer缺口與未見solve gain的分離證據；不修飾為模型已提出足夠關係，亦不影響上列legacy SMT與accounting待辦。資源讀取需保留原始標籤：generic collector的memory_mb可為null，Used heap memory的peak MiB可另行精確讀出，但不能當作全process RSS；predicate refinements與CEGAR refinements也不可混成同一counter。來源：reports/issue271-native-shadowing-20260921/。
+Native C 的shadowing缺口已由PR272修復；JSON＋c:不變，使用frontend lexical declaration map而非放寬origName歧義guard。固定完整回答的zero_sum4對照每次actual precision34→36，原版／修補版各兩次均timeout，Stock也兩次timeout；140/140接受bindings由實際precision回讀確認。4個bare／generated-alias拼法只對應2個distinct predicates，不可把歷史24筆拒收或4個拼法當作新增24／4個公式。這是已修consumer缺口與未見solve gain的分離證據；不修飾為模型已提出足夠關係，後續legacy SMT與accounting修補見上一節。資源讀取需保留原始標籤：generic collector的memory_mb可為null，Used heap memory的peak MiB可另行精確讀出，但不能當作全process RSS；predicate refinements與CEGAR refinements也不可混成同一counter。來源：reports/issue271-native-shadowing-20260921/。
