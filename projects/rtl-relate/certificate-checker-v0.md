@@ -52,3 +52,12 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - 可用較小權限的替代傳輸：將同一份經審核 bundle 與 canonical hashes inline 放入 fresh prompt，停用工具，只接收嚴格 JSON schema 的 RTL／certificate 字串；parent 原樣 materialize，再由 frozen verifier 獨立檢查。這是 transport amendment，不是人類提供 h/J/w。原 ledger bytes 保留，修訂與人工介入可另用 sidecar 綁其 hash。
 - 此 joint pilot 兩次內成功，約 86.784 秒。第一份 RTL 已有 10 state bits，但證書 abstract hash 錯；模型依真實 export feedback 自行修正證書，同 RTL 經 gate ACCEPTED 與自由 z 的 SAFE proof。A 保留 r_valid/o_valid、刪 r_data，h 是保留 state 的 projection，J=true、w=r_data；並非人工 occupancy 重編碼。原始兩候選獨立重驗重現同分類，不能因此主張 feedback 因果效果、普遍自動改寫或加速。
 - 凍結 evaluator v3 的 Python API 需要 absolute Paths；relative output 會因 worker cwd 被重新解讀。新版 evaluate 在共同入口 resolve snapshot/candidate/out；不要覆寫已用於實驗的舊 snapshot。親自 recheck 時應驗證具體 phase／reason，不能僅看到預期 ERROR 就算重現。
+
+## 執行邊界的後續驗證
+
+2026-09-21，程式 head `788dce811f420dd64cd53e1fe672e94afe6600f5` 的 163 項本機測試與 GitHub CI 通過；工程回歸不算研究 attempts。
+
+- 殺掉 process group 後，無期限 `communicate()` 仍可能卡住：新 session 的 descendant 可持有 stdout/stderr pipe。真實回歸重現約 15 秒等待；修正是立即記 timeout、kill 後最多再收集 1 秒、保留 TimeoutExpired 的累積 bytes、關 pipe 並 poll direct child。不要把真正的 PermissionError 一律吞掉。原始 stdout/stderr 要先以 bytes 保存，再嚴格解碼，避免格式錯誤消失於記錄之外。
+- Network probe 只接受 PermissionError 的 EPERM/EACCES；timeout、connection refusal 或 offline 都不能證明 sandbox 拒絕連線。
+- 一旦 generation 偵測到 trusted input 篡改，該 attempt 永久只能接受 infrastructure-error feedback；外部稍後還原檔案，也不能改報 SUCCESS。有 candidate hash 時仍必須核對原始輸出。
+- Runtime 修正使用另一個經審核的 snapshot 路徑，保留舊 snapshot。`load()` 先核對全部舊 trusted hashes，再把新 snapshot 加入 ledger；不需也不應提供 skip-validation。Synthetic ledger 驗證新路徑可加入且原四次 attempts／費用不變，修改舊 snapshot 則先被拒絕，ledger bytes 保持不變。
