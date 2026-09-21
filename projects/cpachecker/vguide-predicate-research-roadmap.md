@@ -56,8 +56,14 @@ slot均已被核帳：62個terminal-qualified、10個raw interrupted、0個unlau
 `run_meta.json`、CPA log、cache/dump與缺少terminal evidence均保留；不得把它們當成timeout
 或negative solver outcome，也不得再重跑。
 
-最終observed HTTP starts為167/192（包含中斷request），147個usage response可觀測、1個
-usage未知；observed-only tokens為prompt 2,043,416、completion 80,207、total 2,123,623。
+最終observed HTTP starts為167/192（包含中斷request）。原 collector 的147個usage
+response可觀測、1個usage未知及2,123,623 tokens只涵蓋terminal slots，並非全部成本。
+後續逐筆核對全部72 slots的HTTP start/end、request/content hash與raw response，
+恢復中斷slots的19個回答（18有usage、1unknown）。全packet為167個completed HTTP／
+165 observed usage加2 unknown；observed-only tokens為prompt 2,224,506、completion
+90,313、total 2,314,819。unknown為t06-r2-one_shot call4與t10-r2-feedback call2，
+皆有HTTP終局但missing usage object；不得算零。相同prompt的不同付費請求保留multiplicity，
+reasoning不重複加總。成本可恢復不代表中斷solver已完成，62/10/0與STOP均不變。
 Stock為20 records/2 official-correct/0 wrong，one-shot為20/3/0，feedback為22/2/0且2個
 parse failure；沒有provider failure或unexplained new official-wrong。完整task comparison
 沒有相對Stock與matched one-shot的重複跨題族Feedback gain；四個未完整task group保持
@@ -72,8 +78,8 @@ plan/runtime/source commit hashes維持原凍結值。
 ## #269 後續：context 落地不等於 reference adequate（2026-09-21）
 
 重查固定 packet：12 個 task groups 中 8 個完整（2 controls 加 6 development failures），
-4 個不完整為 t03/t06/t09/t12；不能沿用交接中過期的「3 組」。usage 147 observed 加
-1 unknown 是 terminal response usage 計數，未涵蓋中斷／失敗 request 的全部用量。
+4 個不完整為 t03/t06/t09/t12；不能沿用交接中過期的「3 組」。`reconcile_cost.py`
+和 `cost-reconciliation.json` 保留全packet的165 observed加2 unknown usage對帳。
 
 兩次 sorting Feedback 都在 refinement 2 取得 N32/i，接受並注入 native
 `c:a[i-1] <= a[i]`，帶有 CE history 與前輪 outcome，最後仍 timeout。因此舊
