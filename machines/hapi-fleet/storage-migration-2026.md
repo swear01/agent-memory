@@ -21,6 +21,12 @@ updated: 2026-09-21
 - `jasminehsu/anaconda3` 的 Bazel `A-server.jar` 帶 2032 年 mtime，但 ctime 為 2023 年；這是時間資料不一致，不能把未來 mtime 直接描述為近期使用，也不能未釐清就通過嚴格閒置篩選。
 - 273 個候選逐樹檢查完成，248 個不重疊項目通過：Zeus 一個完整舊帳號加 93 個環境/cache、Valkyrie 122 個 G1 環境/cache 加 31 個隱藏本地 home 環境/cache、Cthulhu 一個孤立 buildx volume。扣除外部硬連結後估計 1,120,344,932,352 bytes；這是移除前候選估值，後續已依授權完成，上方為實際結案結果。詳細現場證據、`REPORT.md` 與 `eligible-paths.tsv` 留在 Zeus `/var/tmp/old-data-audit-20260921/`，是有日期的盤點而非永久刪除授權。現行 NFS home、其內 G3/G4 archive、scratch、現役服務與未證明可重建的工作資料不在本次清理候選範圍。實際移除前重查引用及保存副本，清單本身不證明未來仍無使用。
 
+## NIS 核心另存現行 home 完成（2026-09-21）
+
+- 使用者授權保留 NIS 核心於現行 home 並刪除其餘內容。已保存至 Zeus 管理帳號的 `<admin-home>/private-system-backups/nis-core-20260921/`；目錄 0700、六個備份／metadata 檔案均為管理帳號持有且 0600，其他一般使用者不可讀。`nis-core.tar.gz` 167,169 bytes，保存 59 個一般檔、8 目錄、1 symlink；含原 numeric owner/mode/time 與 tar 可保存的 ACL/xattr。`source-manifest.json`、`SHA256SUMS`、`VERIFIED.json`、`README.md` 與 `RELOCATION-COMPLETE.json` 同目錄保留。這是含舊密碼雜湊／NIS maps 的私有系統備份，不是可納入一般未加密 Home 成品的新 payload。
+- 完整逐檔 SHA-256、archive 成員集合、owner/group/mode metadata、實際隔離解壓後內容／檔案 mtime／symlink 比對均通過；原始絕對 `securenets` link 保留，未跟隨去複製現行設定。移除前再次核對來源 inode/mtime/ctime/hash、backup SHA、引用、ext4 mount 及無巢狀掛載，才刪除兩個精確來源 `nis_transfer` 與 `backup-nis-2604`（包含不保留的 shell 設定／歷史／補完資料），釋放 11,849,728 bytes。最後確認兩目錄不存在、私有備份仍完整；root 回執在 Zeus `/var/tmp/nis-core-relocation-complete-20260921.json`。
+- 此批實際只處理兩個 NIS 來源。其餘舊帳號與三個大型備份工作目錄仍在，約 975 GB，不能把這次操作記成已清空整個分割區，也不能由這份結案紀錄推定整碟刪除已獲授權。下方兩個 NIS 路徑仍存在的敘述均為移除前盤點。
+
 ## Zeus 整個舊備份分割區的清空邊界（2026-09-21）
 
 - 第一批移除後，`<remote-home>.bak` 仍是 `/dev/sda4` 的獨立 ext4 掛載，用量 975,251,517,440 bytes；不等於現行 NFS home。
