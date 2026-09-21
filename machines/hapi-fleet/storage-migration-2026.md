@@ -25,6 +25,9 @@ updated: 2026-09-21
 
 - 第一批移除後，`<remote-home>.bak` 仍是 `/dev/sda4` 的獨立 ext4 掛載，用量 975,251,517,440 bytes；不等於現行 NFS home。
 - 頂層另含兩份系統帳號／NIS 備份：`nis_transfer`（11,268,096 allocated bytes，含 `yp` 與 `sysfiles`）、`backup-nis-2604`（581,632 bytes，含 passwd/group/shadow/yp）。兩份合計約 11.85 MB；檢查只讀名稱與 metadata，未輸出敏感檔案內容。兩者未列入已讀取的 single-home 帳號計畫或 G2 最終帳本，不能由 Canonical Home 完成標記推論已覆蓋，整碟清空前須另外保存或確認去向。
+- 後續內容確認：`nis_transfer/sysfiles` 是 2023 年遷移用 passwd/group/shadow/gshadow 匯出，`nis_transfer/yp` 是 NIS maps、Makefile 與 binding；`backup-nis-2604` 為 2026-08-22 的 passwd/group/shadow/yp 快照。三個核心範圍共 1,025,578 logical bytes（一般檔占用約 1.09 MB），其餘主要為舊 shell 設定、歷史與補完資料。適合另存為受限權限的系統歷史備份，不必因此保留整個舊備份分割區。
+- 僅在主機內比較並輸出統計：2023 的 51 帳號與 2026 的 150 帳號皆存在現行 `/etc/passwd`，UID/GID 全同；兩代群組也無缺漏或 GID 改變，但各有 1 筆成員不同。舊 shadow 的密碼欄位與現行分別有 4／1 筆不同，未輸出或保存任何 hash／欄位值。因此沒有發現尚未搬入現行的帳號 identity，主要保留價值是歷史認證／權限狀態，不是唯一研究資料；不可把舊快照當成現行設定。
+- `backup-nis-2604/yp/securenets` 是指向 `/etc/ypserv.securenets` 的絕對 symlink，並非獨立保存的舊設定內容；封存／還原時須區分連結與歷史檔案本體。含 shadow 與 NIS maps 的備份按系統憑證資料保護，不應因體積小就併入一般未加密 Home 備份。
 - 三個備份工作目錄 `single-home-build-20260905`、`canonical-home-one-touch-20260906`、`nfs-canonical-20260905` 合計 164,573,159,424 allocated bytes，含 manifests、差異整合 payload 與 `.work`；不能把它們當成舊使用者帳號。其餘主要為約 810.67 GB 舊帳號資料。90 天閒置條件只用於第一批篩選，9 月備份整理更新過 metadata 不代表永久不可清；是否可整批清除應依保存內容覆蓋與工作紀錄去向核對。此輪只有檢查，沒有擴大刪除。
 
 ## 2026-09-21 冷備份位置更新
