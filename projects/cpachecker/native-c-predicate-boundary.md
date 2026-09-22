@@ -2,7 +2,7 @@
 title: 原生 C 謂詞接入的純度、scope 與 trace context 邊界
 scope: projects/cpachecker
 status: verified
-updated: 2026-09-21
+updated: 2026-09-22
 ---
 
 CPAchecker 原生 CParser／PathFormulaManager 可以重用，但一般 statement fragment helper 不等於純 expression parser：x++ 可被 ASTConverter 降成暫存 expression，副作用留在 Sideassignments。外部候選須先檢查 CDT 原始 AST，再確認沒有 pre/post/conditional side assignments；empty include provider 加上 preprocessing 拒絕可防止 fragment 讀取 include 檔案。既有 witness helper 不應為此改變語意。
@@ -31,3 +31,12 @@ PR272 的重要 frontend 邊界：compound block、for loop 與 statement expres
 #271 後續固定回答對照已完成：zero_sum4 的 Stock／原 consumer／修補 consumer 各兩次、每次600CPU上限，六次皆UNKNOWN／timeout，predicate refinements為18／4／2（另列CEGAR counter19／5／3）。四份完整歷史回答在四個augmented runs的request/content hashes皆一致，16個response reads全為真replay、0新增provider calls。每次原版4個shadowing拒收拼法恢復為2個distinct formulas，actual injection34→36；跨四次共140/140公式經原生parse／uninstantiate確認actual precision membership，原版是修補版子集，新增公式都綁inner main::i__1。這修復轉換能力但沒有新增正確解題，不能把refinement較少當速度或解題收益；一題固定回答不支持population結論。reports/issue271-native-shadowing-20260921/保存獨立runtime、protocol、原始logs與read-only checker；#269停止格未改；其後PR274–277已修復#271選定的其餘轉換缺口，見vguide-predicate-validation-contract.md。
 
 #273 的原生熱路徑修補只略過 native-only candidate batches 用不到的 legacy array template extraction。既有 encoder 的 lexical scope、最後 aligned PathFormula、SSA／pointer-target guards 沒有放寬；含 legacy 的 mixed batches 仍抽 template。真實 CFA 的 native-only／mixed 控制分別0／1次 block serialization且接受結果正確，最終110 focused tests通過。167份保留回答的parser結果全相同；沒有新verifier或provider run，不能以減少內部工作推定solve或timing收益。
+
+
+2026-09-22 #278／PR279 證明陣列 relation 可走現有 scalar witness 抽象，但必須區分表示與生成：原始 array_doub_access_init_const（N=100000）經修補 ArrayAbstraction 自動匯出 C，再 normal reparse 取得真實 scope，人工投影既存 slot06 的 forall-prefix 關係到 JSON+c: 後 TRUE 兩次、各1 refinement；保留相同三個 bounds 但移除 prefix 則60CPU timeout兩次、各86 refinements。14/14公式在actual precision；小型原始 safe／odd-write-1 controls為TRUE／FALSE。這是原始程式自動轉換＋人工reference的單案例機制證據，0新模型呼叫；不是raw prose自動轉換、fresh LLM generation、整體速度或population收益。證據在reports/predicate-representation-goal-20260922/，只讀check.py。
+
+修補關鍵：多subscript初始化loop不能粗略collapse，須保留迭代及每次write，並依arbitrary tracked index守衛純assignment；不guard掉函式呼叫。local loop bound僅接受automatic、unaddressed、nonvolatile、loop內不變、unique constant reaching definition且signed-int comparison；常數須先cast到宣告型別（unsigned char260為4），subscript equality須經CBinaryExpressionBuilder作integer promotion，否則窄索引可能錯把tracked index截斷。global/static/changing/addressed bounds不擴張。7 focused tests、qualified build/Checkstyle通過；default strict inherited警告不冒充修好。
+
+投影前綴不能丟掉tracked-index domain：缺domain時k=200002／N=100000／i=100001／negative value仍满足prefix與exit但破壞safety。當前pure-expression contract明確拒&&／||／?:；手工reference一開始用了&&是違反既有契約，不是新resolver缺口。此案例的total scalar comparisons回0/1，可用&／|組合；不要把它泛化成會求值partial／side-effect expressions的字串替換器。
+
+直接將VGuide嵌入ArrayAbstraction產生的CFA仍缺重建AstCfaRelation scope；最小已驗證路徑為既有C export＋normal reparse，不可放寬native scope/SSA guards假裝整合完成。短CPU export後nested ARGStatistics可能因null root在DOT visualization拋NPE；既有cpa.arg.export=false保留C export及analysis語意，fresh export exit0且與standalone export byte-identical。此export-stage UNKNOWN不當solve，之後同一scalar program的consumer對照才是解題證據。#269 STOP、#197/#215 holds、Reserved44維持。
