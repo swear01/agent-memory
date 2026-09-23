@@ -10,6 +10,14 @@ updated: 2026-09-23
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie 非 cache 舊副本盤點（2026-09-23）
+
+- 使用者後續明確表示 cache 暫不處理、研究 log 風險較高先保留；改找已保存的舊資料。本輪只盤點，沒有新增刪除授權或執行刪除，現行 home 仍不動。
+- 舊跨機 exact 配對 28,159 路徑重新 lstat：14,554 尚存在、13,605 已消失。不可再引用原 441.79／83.77 GiB 作剩餘可回收量。
+- 第一批 143 個精確檔案通過完整來源 SHA-256 重算，並逐一對上長碟原組／補組冷讀回雜湊及最終 54 卷 member 存在性；解析 hardlink、套用最終 overlay mapping。沒有重新讀取外接碟全部 payload。候選為 HugoChen 兩個舊壓縮檔（5.097 GB）、三份 GloVe 課程資料六檔（23.469 GB）、arttr1521 的 133 個舊 QASM 輸入（30.117 GB）、jasminehsu 兩個舊安裝包（2.486 GB）。QASM 是已保存的研究輸入，不是 log，不能把整個目錄當純輸出刪除。
+- 合計 logical 61,169,130,898 bytes、allocated 61,169,553,408 bytes；所有 nlink=1、realpath 未跳轉，mtime/ctime 最晚為 2023-09-05。讀取前後及最後重查來源 metadata 一致，fuser 無引用、全部 Docker 容器無覆蓋候選的 mount。實際刪除前仍須重新查使用及保存狀態。
+- 精確來源→長碟 member→SHA 對應、查核結果與報告保存在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-duplicates-20260923/`。其他配對尚未完成本輪重驗，不列本批；此報告只允許判斷列名檔案，不支持整帳號或整樹刪除。
+
 ## 系統快取容量須扣除 Snap 硬連結（2026-09-23）
 
 - 使用者優先尋找低風險清理項目，研究 raw log 暫留；本次只讀盤點，沒有刪除。現行 home 與受保護備份仍不在清理範圍。
