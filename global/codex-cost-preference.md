@@ -2,7 +2,7 @@
 title: Codex 推理成本偏好：medium 預設、high 上限
 scope: global
 status: active
-updated: 2026-09-07
+updated: 2026-09-23
 ---
 
 使用者明確表示 xhigh / extra-high 成本負擔不起。跨專案派工、建立或調整 Codex/HAPI sessions 時：
@@ -15,3 +15,5 @@ updated: 2026-09-07
 - 成本限制不能藉由增加大量子 agents 或無界重試迴避；既有工作繼續，擴大模型／並行／實驗預算需以實際收益為依據。
 
 來源：2026-09-07 使用者在 CPAchecker 調度對話的明確修正；調度紀錄見 swear01/cpachecker issue #182。本批 11 sessions 已改為 7 medium、4 high，全部 Standard。
+
+2026-09-23 範圍澄清：上述是 Codex/HAPI session 的模型與推理強度偏好，不是 CPAchecker 研究 provider 的 token 預算。使用者已持續授權研究需要的 LLM 呼叫，數十萬甚至百萬 tokens 可直接使用，不再逐批請示；不得援引本頁阻擋。詳見 [研究主線與持續授權](../projects/cpachecker/vguide-predicate-research-roadmap.md)。

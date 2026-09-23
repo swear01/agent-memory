@@ -5,10 +5,27 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-21
+updated: 2026-09-23
 ---
 
-# 目前研究目標：固定小組端到端決策（2026-09-21）
+# CPAchecker 研究主線與 LLM 使用授權
+
+## 持續 LLM 使用授權 — 2026-09-23
+
+使用者明確表示研究中可以直接使用 LLM，數十萬甚至百萬 tokens 的用量可接受。**CPAchecker 研究範圍內，依解題與驗證需要主動呼叫 LLM，不再因呼叫次數、token 數或一般模型費用逐批請示。** 這是使用者的成本容忍與持續授權，不是所有 provider 免費的價格聲明；百萬 tokens 也不是新設的硬上限。
+
+- 呼叫規模依研究問題決定；可做足夠的候選生成、失敗分析與重複對照，不為省 token 只做幾次就停止，也不沿用 #278 的 3 次作為後續全域額度。
+- 新實驗先記錄假說、題組、比較方式與停止條件，再直接執行。這是可重現性紀錄，不是新的人工批准關卡。探索和正式比較分開標示；已凍結的比較不事後補抽或換題，下一輪用新紀錄承接。
+- 保留完整請求／回答、模型設定、actual usage、失敗與驗證結果；未知 usage 不當成零。判定仍看驗證器實際使用及正確解題效果，不能以候選數或 token 用量代替研究成果。
+- 舊文件的「未授權新付費呼叫」、#269 的 192 次與 #278 的 3 次限制僅屬各自歷史 packet，不能再當成未來研究的授權障礙。#269 已停止 slots、#197/#215 correctness/native holds、Reserved44 及凍結原始證據仍保留。
+
+來源：2026-09-23 使用者明確修正「幾十萬 甚至百萬 token 幾乎都是沒有成本 可以直接用」，並要求同步記憶、文件、QMD、issue。研究主索引為 #182／Wiki Research-Convergence。此授權針對研究用 LLM 呼叫；Codex/HAPI session 的 reasoning effort／Fast 偏好另見 [成本偏好](../../global/codex-cost-preference.md)。
+
+#278 的單例必要關係 Goal 已完成：3 份原始 LLM 回答直接消費為 TRUE／UNKNOWN／TRUE，固定第一份完整回答兩次 TRUE、移除三個索引關係兩次 timeout，62/62 actual precision members。詳細限制見 [native C 邊界](native-c-predicate-boundary.md)。跨題可重複收益仍由 #182 追蹤。
+
+以下為日期化決策與結果；當時的付費授權限制已由上方持續授權取代，不形成新的執行佇列。
+
+# 歷史固定小組端到端決策（2026-09-21）
 
 使用者明確接受收斂：不再以更多diagnostics、injected predicates、單题解释或準備完成
 代替可重複新增正確解題。#182是唯一管理入口；#269比較同一runtime的Stock、一次生成、
