@@ -23,6 +23,14 @@ updated: 2026-09-23
 
 #278 的單例必要關係 Goal 已完成：3 份原始 LLM 回答直接消費為 TRUE／UNKNOWN／TRUE，固定第一份完整回答兩次 TRUE、移除三個索引關係兩次 timeout，62/62 actual precision members。詳細限制見 [native C 邊界](native-c-predicate-boundary.md)。跨題可重複收益仍由 #182 追蹤。
 
+## 開放突破研究：方案先於 predicates（2026-09-23）
+
+使用者要求跨越目前表示法思考。研究建議（尚未證實解題增益）：LLM 先提出證明分解、需保留的關係與落地路徑，再產生 precision predicates 或待證 lemmas。首批深度案例為 pair-symmetr2 的同索引 a/b/c tuple／跨階段關係，以及 sorting 的 guarded last-pass＋adjacent-to-all-pairs lemma；checked fusion／tiling、auxiliary deductive/CHC、full-program induction 是替代路線。原表示／新表示 × 直接生成／證明方案與局部失敗修復的 2×2 才能分開歸因。不是開發通用 IR 的承諾，也沒有新原題 verdict。
+
+已核對的關鍵界限：pair-symmetr2 的 N 是 global，local-bound 修補未覆蓋；現成 abstraction 是否遺失跨陣列關係仍為假說，不可直接判定。排序安全性只需到達終點時有序，不必額外證 termination／permutation；inner-loop 的前綴必須帶 swapped==0 條件，[1,2,0] 是無條件前綴的反例。小型 SMT／有限枚舉僅核對局部推理，未證明整個 C 轉換。62/62 是七次 verifier runs 的 precision membership 合計，第一份成功回答只有10候選，不能寫成62個predicates的解法。
+
+資料：`cpachecker-experiments/reports/representation-breakthrough-20260923/REPORT.md`、`check_ideas.py`；Wiki Representation-Breakthrough／issue #182。精度提示不必先是 invariant；要作 assumption 的 lemma 則必須證明有效及足夠。獨立 solver 檢查 LLM 自寫的 SMT，仍不能證明該 SMT 忠實編碼原始 C；需要可信 frontend／可檢查的轉換義務。
+
 以下為日期化決策與結果；當時的付費授權限制已由上方持續授權取代，不形成新的執行佇列。
 
 # 歷史固定小組端到端決策（2026-09-21）
