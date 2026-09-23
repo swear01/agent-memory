@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-15
+updated: 2026-09-23
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -300,3 +300,26 @@ swop 仍未部署：HAPI machine 列表無此機；Mac 不在舊 `192.168.1.0/24
 已知 Windows OpenSSH `192.168.1.206` 與 mDNS `Swear01_PC` 無回應。
 Windows exe 已建置，SHA-256
 `e5b960e10bae928ab12b0de957fc9da334d3df9fa898947ac85a0107198c40b7`。
+
+# 2026-09-23 Cloudflare Error 1010 封鎖與 User-Agent 正規化（PR #16 / #17）
+
+## 原因分析
+- OpenCode Go（`https://opencode.ai/zen/go/v1`）前端 Cloudflare WAF 會在 API key 驗證前，直接對帶有 `Python-urllib`（如 AIsimpV / Python caller）之 User-Agent 回應 HTTP 403 / Error 1010。
+- 舊版 gateway 僅單純轉發 client 端 headers，且 403 未納入 failover 判斷，導致 request 卡死在 `opencode-go-1`。
+
+## 修正實作（PR #16 / commit `9861158`）
+1. **Outbound User-Agent 預設與正規化**：預設帶上 `User-Agent: aisimpv-gateway/1.0`；當 client UA 為空或為 generic 函式庫簽章（如 `python-urllib/*`、`python-requests/*` 等）時予以替換，但保留自定義 agent UA 與 endpoint 設定之 `extraHeaders`。
+2. **Session Identifier 轉發**：保留並正規化 `x-opencode-session`，支援 `x-conversation-id` 與 `conversation_id` 轉譯。
+3. **JSON Body Content-Type 保證**：對帶有 parsed JSON body 之請求自動補齊 `Content-Type: application/json`。
+4. **Cloudflare 1010 專用 Failover**：精確識別 Cloudflare Error 1010 / WAF 封鎖特徵，將其視為 endpoint failure 觸發暫時 cooldown（基礎 30 秒 backoff）並立即 failover 至下一組 endpoint；一般權限 403 則直接透傳，不誤判為 failover。
+
+## Fleet 部署與驗證
+- **已部署 7／8 台**：Mac（LaunchAgent，35001）、mazu/athena/cthulhu/valkyrie（NFS 共用 binary，各自 systemd，35001）、Oracle（systemd，35001）、Zeus（`swear02` systemd，35002）。swop 因離線未安裝。
+- **Zeus 注意事項**：Zeus 正式運行由 `swear02` 擁有，監聽 `35002`，home 目錄權限 `700`；更新時須從 `<remote-home>` 跨帳號暫存或透過 SSH alias `su_zeus` 操作。
+- **SHA-256**：
+  - Mac arm64：`725ab7956b7aadc873aac54d7206537431d736a05254b83a3e27815960ac5cc1`
+  - Linux x64：`a99874c9cc6ff47b00c4c18fd6efeb1c49a47d341e91653e7c72373cd57e79f8`
+  - Linux ARM64：`1a02f1eee445c08fc2a419d55404cfc4464a6a56bc82f38b9e1b3852976eeba3`
+  - Windows x64：`09132180fb53a08999ef22a0ae282155c0080eda0847faca2c2711f7f3731a37`（已建置未安裝）
+- **真實驗證**：七台主機以 `User-Agent: Python-urllib/3.14` 送出真實 `deepseek-flash` 推論，皆成功穿透 Cloudflare，HTTP 200 回應於 `opencode-go-1`（`X-Gateway-Attempt: 1`）。
+
