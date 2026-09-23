@@ -2,7 +2,7 @@
 title: 原生 C 謂詞接入的純度、scope 與 trace context 邊界
 scope: projects/cpachecker
 status: verified
-updated: 2026-09-22
+updated: 2026-09-23
 ---
 
 CPAchecker 原生 CParser／PathFormulaManager 可以重用，但一般 statement fragment helper 不等於純 expression parser：x++ 可被 ASTConverter 降成暫存 expression，副作用留在 Sideassignments。外部候選須先檢查 CDT 原始 AST，再確認沒有 pre/post/conditional side assignments；empty include provider 加上 preprocessing 拒絕可防止 fragment 讀取 include 檔案。既有 witness helper 不應為此改變語意。
@@ -40,3 +40,10 @@ PR272 的重要 frontend 邊界：compound block、for loop 與 statement expres
 投影前綴不能丟掉tracked-index domain：缺domain時k=200002／N=100000／i=100001／negative value仍满足prefix與exit但破壞safety。當前pure-expression contract明確拒&&／||／?:；手工reference一開始用了&&是違反既有契約，不是新resolver缺口。此案例的total scalar comparisons回0/1，可用&／|組合；不要把它泛化成會求值partial／side-effect expressions的字串替換器。
 
 直接將VGuide嵌入ArrayAbstraction產生的CFA仍缺重建AstCfaRelation scope；最小已驗證路徑為既有C export＋normal reparse，不可放寬native scope/SSA guards假裝整合完成。短CPU export後nested ARGStatistics可能因null root在DOT visualization拋NPE；既有cpa.arg.export=false保留C export及analysis語意，fresh export exit0且與standalone export byte-identical。此export-stage UNKNOWN不當solve，之後同一scalar program的consumer對照才是解題證據。#269 STOP、#197/#215 holds、Reserved44維持。
+
+
+2026-09-23 #278 補上 direct-generation 證據：使用者明確授權後，以相同實際first-spurious prompt／自動exported source，production Muse client生成3份新完整JSON+c:回答，不人工改寫；原樣消費為TRUE／UNKNOWN60CPU／TRUE，注入10／10／8且零拒收。第二份48refinements timeout，不能把全部候選接受當作必然解題，也不能忽略這份失敗。恰3HTTP starts、0重試，usage prompt4131＋completion2198＝6329tokens。新證據在reports/predicate-representation-goal-20260922/next-generation/，check_fresh.py只讀查核。
+
+固定第一份回答的另行預登記因果對照：完整10候選兩次TRUE／1refinement；僅移除2*i<=__array_index_a、2*i==__array_index_a、2*i+1==__array_index_a這3個索引關係，其他7個不變，兩次UNKNOWN60CPU／54refinements。三個主執行加四個replay對照共62/62公式確認actual precision，皆PRECISION_ONLY並有consumer事件；replay0外部呼叫。這證明關係組在固定回答／預算下改變解題，不證明每條各自必要、跨題泛化或校準後加速。
+
+表示路線的關鍵是讓LLM看自動array abstraction／export／reparse後的真實scalar witness source，原始回答便能直接用c:表達progress／cell-value splits，無須新quantifier resolver。原始benchmark N=100000未改；LLM的prompt表示有改，故不能把整條路線的收益只歸因成resolver微修補，也不能說舊自然語言forall回答已被自動翻譯成功。先前人工reference與本次新生成分開保存。此單案例完成必要關係→可用predicates→解題對照驗收；廣泛研究收益仍由#182承接，既有holds不解除。
