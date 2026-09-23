@@ -10,6 +10,11 @@ updated: 2026-09-23
 
 # DVLab persistent storage migration inventory
 
+## 整個 md1 的用量與後續盤點邊界（2026-09-23）
+
+- 當日 live df：Valkyrie `/mnt/md1` 的 ext4 分割區 total 7,938,325,508,096、used 3,464,056,266,752、available 4,074,174,582,784 bytes（df 顯示 46%）。這是檔案系統用量，非完成的新整樹 du。全 md1 與 dvlab/backup 的兩個只讀 du 因大量小檔耗時而主動停止；不可把部分輸出當完整盤點，也沒有刪除資料。
+- 下一個值得核對的非 log 區域為 `/mnt/md1/dvlab/backup`：09-04 原始 du 表為 335,848,894,464 bytes；已確認移除 ro3289/anaconda2 的 17,647,038,464 bytes，扣除後約 318.2 GB 僅是歷史估計，尚非本輪完整現況容量。LKY880154、chengyin、ro3289、hschiang、SillyDuck、yihong、music960633、kbearXD、markchang 九個重映射帳號，當日已確認都存在於最終 54 卷 readback-seen 清單，且原／補組冷讀回資料庫有對應檔案；這證明有保存來源，不證明目前 G1 整棵樹全被涵蓋，仍須內容差異核對後才可清。
+
 ## Valkyrie 非 cache 舊副本盤點（2026-09-23）
 
 - 後續使用者要求查看更大的資料夾集合，仍只讀、未刪。15 個目標樹盤點 205,302 項；可直接列完整資料夾候選為 HugoChen `Course`、`Research` 和 arttr1521 `QFT`，合計 17,774,272,512 allocated bytes。三個 ADL21-HW1 與 qft-mapping/benchmark 另有 49,429,151,744 bytes，尚須補存 28 檔、56,379 logical bytes（15 個 Git 狀態檔、11 個 Python bytecode、2 個 QFT 產生腳本）；本輪沒有建立該補存副本。七棵樹共 67,203,424,256 bytes，與原 143 檔合併去重後為 75,287,998,464 bytes，比原批次增加 14,118,445,056 bytes，不能直接相加。
