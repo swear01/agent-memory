@@ -10,12 +10,22 @@ updated: 2026-09-23
 
 # DVLab persistent storage migration inventory
 
-## 整個 md1 的用量與後續盤點邊界（2026-09-23）
+## 三批授權清理完成（2026-09-23）
+
+- 使用者明確授權三批「驗證可移除後即移除」。已完成，共釋放 **400,975,224,832 bytes（400.98 GB）**：7 個完整資料夾及原 143 檔中的樹外 93 檔為 75,287,998,464 bytes；dvlab/backup 九帳號已驗證部分為 316,497,027,072 bytes；yochi／ML 重複檔為 9,190,199,296 bytes。這些數量是實際淨釋放，不能再當成待清候選。md1 現在 used 3,063,081,041,920、available 4,475,149,807,616 bytes，與清理前用量差額精確相符。
+- 28 個差異檔已先補存至 Zeus `<admin-home>/private-system-backups/valkyrie-cleanup-delta-20260923/preserved.tar.gz`；28/28 成員集合、內容 SHA 及實際解壓讀回通過，目錄 0700、archive 0600。archive SHA `c69bc33ad1c2c30d38312c6d1080453849730efefbf8d2d6862a2a01dbaa20c6`，此小檔副本必須保留。第一批刪前 156,327 項重新檢查 identities、member-set、mount 與程序／容器引用，沿用同日已完整驗證且未變更的來源 SHA。
+- dvlab/backup 九帳號完成全樹盤點；對上保存候選的一般檔重新計算完整 SHA，symlink 比較 target，並對照原組／補組冷讀回資料庫與最終 54 卷 member presence。實際移除 1,446,064 個檔案／連結；整個目錄並未清空，目前仍留 **1,704,828,928 bytes（1.70 GB）**、22,122 個檔案／連結及 5,584 個目錄。22,107 項未對上該帳號保存路徑，另外 15 個封存檔大小不同；包括快取、瀏覽器／歷史狀態與封存差異，未證明可移除者均留原處。最終 exact remaining-set 與所有保留檔 identities 檢查通過。
+- 路徑不同不代表未保存：chengyin 的 `OpenSPARCT2.1.3.tar` 比其原 canonical member 大，但完整 SHA `06406bd7939c2764b81166bb4340502375ff33399193a4490eb00347d675eb1a` 對上長碟 `home/jack0716/OpenSPARC/OpenSPARCT2/OpenSPARCT2.1.3.tar`，故另驗證後移除 2,079,457,280 allocated bytes，已包含在上述九帳號總量。恢復舊 chengyin 路徑須使用回執的來源→member mapping。其他封存容器大小不同不等於資料必定遺失，但也不能直接當內容相同刪除；本輪保留 15 檔。
+- yochi／部分 ML 的 29 組資料重新完整 SHA 比對，保留每組一份並刪除 65 個多餘檔；刪後與最終重查，保留檔 identities 不變，刪除路徑均不存在。ML canonical 選 Pinchun；yochi canonical 與精確 restore mapping 在回執內。不可再沿用歷史 9.2 GB 當剩餘候選。
+- 現行 NFS home 未清理，只新增授權的小檔私有備份；ff945、sam031023、tyyywei 先前保留的研究 log 區與獨立 cache 清理未處理。本輪依既有冷讀回證據核對來源，沒有重新讀取外接長碟全部 payload。最初 reference checker 被既有 systemd 失效 symlink 的 ENOENT 擋下，確認 link 指向候選外缺失服務後才續行；不可忽略候選相關引用。
+- 持久結案、逐檔雜湊／member 對應、壓縮回執、保留清單、現場驗證與 SHA256SUMS 在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-cleanup-20260923/RESULT.md` 及同目錄。原始 root 保護回執在 Valkyrie `/var/tmp/valkyrie-cleanup-20260923/`；`/var/tmp` 有 age 清理，不可只靠原始現場副本。下列本日盤點段落是執行前快照，其中「未刪／未補存」不再描述這三批現況。
+
+## 整個 md1 的用量與後續盤點邊界（2026-09-23 清理前）
 
 - 當日 live df：Valkyrie `/mnt/md1` 的 ext4 分割區 total 7,938,325,508,096、used 3,464,056,266,752、available 4,074,174,582,784 bytes（df 顯示 46%）。這是檔案系統用量，非完成的新整樹 du。全 md1 與 dvlab/backup 的兩個只讀 du 因大量小檔耗時而主動停止；不可把部分輸出當完整盤點，也沒有刪除資料。
 - 下一個值得核對的非 log 區域為 `/mnt/md1/dvlab/backup`：09-04 原始 du 表為 335,848,894,464 bytes；已確認移除 ro3289/anaconda2 的 17,647,038,464 bytes，扣除後約 318.2 GB 僅是歷史估計，尚非本輪完整現況容量。LKY880154、chengyin、ro3289、hschiang、SillyDuck、yihong、music960633、kbearXD、markchang 九個重映射帳號，當日已確認都存在於最終 54 卷 readback-seen 清單，且原／補組冷讀回資料庫有對應檔案；這證明有保存來源，不證明目前 G1 整棵樹全被涵蓋，仍須內容差異核對後才可清。
 
-## Valkyrie 非 cache 舊副本盤點（2026-09-23）
+## Valkyrie 非 cache 舊副本盤點（2026-09-23 清理前）
 
 - 後續使用者要求查看更大的資料夾集合，仍只讀、未刪。15 個目標樹盤點 205,302 項；可直接列完整資料夾候選為 HugoChen `Course`、`Research` 和 arttr1521 `QFT`，合計 17,774,272,512 allocated bytes。三個 ADL21-HW1 與 qft-mapping/benchmark 另有 49,429,151,744 bytes，尚須補存 28 檔、56,379 logical bytes（15 個 Git 狀態檔、11 個 Python bytecode、2 個 QFT 產生腳本）；本輪沒有建立該補存副本。七棵樹共 67,203,424,256 bytes，與原 143 檔合併去重後為 75,287,998,464 bytes，比原批次增加 14,118,445,056 bytes，不能直接相加。
 - 巢狀封存是重要保存來源：HugoChen Course.tgz／Research.tgz 的完整成員集合與旁邊展開目錄相同。146,938 一般檔全部重算 SHA、907 symlink target 與 7,751 目錄，共 155,596 項全部通過；兩個 tgz 另通過 gzip -t，且其 identity/size/mtime/ctime 與同日已對上長碟的完整 SHA 紀錄一致。僅查長碟外層 members.sqlite 會漏掉已由 tgz 保存的展開內容，不能據此斷言未備份。
