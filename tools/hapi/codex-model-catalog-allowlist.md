@@ -6,7 +6,7 @@ tool: Codex app-server
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-09-04
+updated: 2026-09-23
 tags:
   - hapi
   - codex
@@ -31,12 +31,15 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 
 每個獨立 home 都要保留 canonical allowlist，並讓 `model_catalog_json` 指向該 host 的絕對路徑。更新 catalog 後先比較各 host 檔案內容，再實際呼叫 app-server `model/list` 或 HAPI machine Codex-models API，比對可見 ID。
 
-2026-09-03 驗證的可見集合為：
+2026-09-23 驗證的可見集合為：
 
-- `gpt-5.6-sol`
+- `gpt-6-astra`
+- `gpt-6-sol`
+- `gpt-6-luna`
 - `gpt-5.6-terra`
 - `gpt-daybreak-blue-latest`
-- `gpt-5.6-luna`
+
+（固定例外 `codex-auto-review` 保持 hidden；`gpt-5.6-sol` 與 `gpt-5.6-luna` 被 6 代同 tier 取代，各機預設模型設為 `gpt-6-sol`；API 查詢需 `client_version >= 0.155.0`，全 fleet 升級至 `@openai/codex@0.156.1`）。
 
 不要用 allowlist JSON 的 entry 數量代替有效驗證；canonical 檔案也可包含不會出現在一般選單的 hidden/internal models。
 
