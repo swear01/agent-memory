@@ -12,6 +12,11 @@ updated: 2026-09-23
 
 ## Valkyrie 非 cache 舊副本盤點（2026-09-23）
 
+- 後續使用者要求查看更大的資料夾集合，仍只讀、未刪。15 個目標樹盤點 205,302 項；可直接列完整資料夾候選為 HugoChen `Course`、`Research` 和 arttr1521 `QFT`，合計 17,774,272,512 allocated bytes。三個 ADL21-HW1 與 qft-mapping/benchmark 另有 49,429,151,744 bytes，尚須補存 28 檔、56,379 logical bytes（15 個 Git 狀態檔、11 個 Python bytecode、2 個 QFT 產生腳本）；本輪沒有建立該補存副本。七棵樹共 67,203,424,256 bytes，與原 143 檔合併去重後為 75,287,998,464 bytes，比原批次增加 14,118,445,056 bytes，不能直接相加。
+- 巢狀封存是重要保存來源：HugoChen Course.tgz／Research.tgz 的完整成員集合與旁邊展開目錄相同。146,938 一般檔全部重算 SHA、907 symlink target 與 7,751 目錄，共 155,596 項全部通過；兩個 tgz 另通過 gzip -t，且其 identity/size/mtime/ctime 與同日已對上長碟的完整 SHA 紀錄一致。僅查長碟外層 members.sqlite 會漏掉已由 tgz 保存的展開內容，不能據此斷言未備份。
+- 擴大盤點的其餘十個樹完成 16,095 非目錄項目核對；同日已驗證且 metadata 未變的 139 個大檔沿用雜湊，其餘重算。最後七棵樹 156,234 項及樹外原 93 檔重新檢查，無新增、缺失或 metadata 改變；fd/cwd/exe/maps 依 inode 核對無程序引用，全部 Docker 容器無相交 mount，所有候選一般檔 nlink=1。並未重新讀取外接長碟全部 payload。
+- 不可擴大至整帳號：HugoChen 其他三棵樹仍有 8,673 項、約 2.633 GB allocated 未對上本輪保存來源，多為 .o/.a/build 產物，未另外證明完整可重建；arttr1521 整個 qft-mapping/pyzx/qsyn 等也有差異。整資料夾報告、28 檔精確差異清單、壓縮證據在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-directory-audit-20260923/`。資料夾門檻仍需於實際刪除前重查，未補存的四棵樹不能先清。
+
 - 使用者後續明確表示 cache 暫不處理、研究 log 風險較高先保留；改找已保存的舊資料。本輪只盤點，沒有新增刪除授權或執行刪除，現行 home 仍不動。
 - 舊跨機 exact 配對 28,159 路徑重新 lstat：14,554 尚存在、13,605 已消失。不可再引用原 441.79／83.77 GiB 作剩餘可回收量。
 - 第一批 143 個精確檔案通過完整來源 SHA-256 重算，並逐一對上長碟原組／補組冷讀回雜湊及最終 54 卷 member 存在性；解析 hardlink、套用最終 overlay mapping。沒有重新讀取外接碟全部 payload。候選為 HugoChen 兩個舊壓縮檔（5.097 GB）、三份 GloVe 課程資料六檔（23.469 GB）、arttr1521 的 133 個舊 QASM 輸入（30.117 GB）、jasminehsu 兩個舊安裝包（2.486 GB）。QASM 是已保存的研究輸入，不是 log，不能把整個目錄當純輸出刪除。
