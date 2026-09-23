@@ -5,7 +5,7 @@ scope: projects/cpachecker
 tags: [vguide, PredicateProposalClient, experiments, deepseek]
 status: active
 created: 2026-08-20
-updated: 2026-09-08
+updated: 2026-09-23
 ---
 
 # VGuide 實驗 transport 邊界
@@ -83,3 +83,9 @@ provider 或完整 verifier 的驗證。
 cache 整份 JSON 檔案的 SHA 另計。不能把跨案例抄錯的 response hash 解釋成未證實的
 「正規化差異」。#229 準備曾誤填 token_ring.06 的 hash 到 token_ring.11；直接讀取
 原始 token_ring.11 round 後，其 response hash 與該 cache content SHA 完全相同。
+
+## Research prompt 與 wire schema 必須一致（2026-09-23）
+
+目前 Meta 的 `PredicateProposalClient.addMetaResponseFormat` 在 wire request 固定加入 `loop-head-candidate-v1` json_schema。研究 prompt 即使要求開放文字／更高 token cap，也不會取消這項 response_format。一次8-call研究批次因此得到候選／空列表，不能拿來判斷模型是否會做架構推理。先檢查實際 request，不只看 system/user text。
+
+研究專用 memo 可明示用自由文字欄位承載而永不注入；這不是 production predicate 能力測試。該研究的後12個回答只有4份完整JSON、8份不完整；HTTP/client返回成功不等於內容完整，usage缺失照記unknown，不能猜補JSON或以重播補造原始回答。沒有證據將截斷原因確定歸於token cap／timeout。完整來源：`cpachecker-experiments/reports/representation-breakthrough-20260923/ACCOUNTING.json`。production A/B仍重用本client；一般研究意見與production效果必須分別標示。
