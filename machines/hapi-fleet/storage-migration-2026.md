@@ -5,10 +5,17 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-21
+updated: 2026-09-23
 ---
 
 # DVLab persistent storage migration inventory
+
+## 系統快取容量須扣除 Snap 硬連結（2026-09-23）
+
+- 使用者優先尋找低風險清理項目，研究 raw log 暫留；本次只讀盤點，沒有刪除。現行 home 與受保護備份仍不在清理範圍。
+- Mazu、Cthulhu、Athena、Valkyrie 的 Snap cache 一般檔全部仍有其他 hard link；單刪 `/var/lib/snapd/cache` 的檔案，預估資料區塊回收為 0。不能把 cache 的 `du` 和 disabled revision 大小直接相加。應將候選依 `(st_dev, st_ino)` 分組，只有候選名稱數涵蓋 `st_nlink` 才計入可回收區塊。
+- 當次 `snap list --all` 共 48 個 disabled revisions；cache 加這些舊 revision 的聯合候選，扣除清單外 hard link 後估計 10,405,912,576 bytes。舊 revision 應由 Snap 管理器移除，保留現用 revision；代價是失去該本機舊版回退副本。五台 APT archives 另占 2,450,141,184 bytes。這些是當日估值，不是永久有效的刪除清單。
+- Docker 當次顯示可回收 build cache 約 25.655 GB，但 image、container writable layer、volume 必須分開判斷；尤其不能把 unused volume 或 stopped container 當成可重建快取。本次沒有將它們列入確定可刪的資料。
 
 ## Zeus 舊備份分割區已清空（2026-09-21）
 
