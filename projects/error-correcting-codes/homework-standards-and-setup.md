@@ -5,10 +5,10 @@ project: error-correcting-codes
 status: active
 confidence: high
 evidence: >-
-  完成台大碩一錯誤更正碼第二週週五題推導與 XeLaTeX 排版，實測驗證 Rust 數值積分；
-  解決 macOS BasicTeX user-mode 補包與 CJK 字型 fallback 問題，確立像人類好學生的寫作風格。
+  完成台大碩一錯誤更正碼第二週與第三週週五題推導與 XeLaTeX 排版；
+  確立得分導向、禁止論文式冗長總結與背景的極簡精準風格，使用標準英文術語與精準頁數控制。
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-25
 tags:
   - error-correcting-codes
   - latex
@@ -57,6 +57,12 @@ tags:
 7. **編碼參數與糾錯能力敘述必須數學精確**：
    * 最小距離 $d$ 與錯誤更正能力 $t = \lfloor (d-1)/2 \rfloor$ 不可混淆。例如 $d=4$ 時 $t=1$（可更正 1 個位元錯誤，或偵測 2 個位元錯誤，即 SEC-DED），切勿誤寫為「具雙錯誤更正能力」。
    * 區分全體單項式求值矩陣（Evaluation Matrix $E \in \mathbb F_2^{2^m \times 2^m}$）與特定階數 RM 碼之生成矩陣（$G_{\mathrm{RM}(r, m)} = E_{1:k, :}$ 取前 $k$ 列子矩陣），符號與觀念需嚴格分明。
+8. **作業寫作定位：純答題、得分導向（「你是在寫作業，不是寫論文」）**：
+   * 這是課堂作業，目標是讓助教快速核對並拿到滿分。
+   * 老師在講義（Jupyter Notebook）已有完整定義，作業開頭**不需鋪陳大段教科書式的背景符號定義**，結尾**嚴禁附加論文式的「理論總結與編碼意涵」**等冗餘論述。
+   * 直接切入題 1～題 $N$ 作答，每題保留助教審查給分的核心算式即可（例如：左右兩端展開對比、特徵 2 向量加法 $(a+b)+b=a$ 求逆、三類單項式展開搭配 $X_i^2 = X_i$ 次數分析）。
+   * 術語優先使用自然標準的英文單字（如 `codeword`、`evaluation points`、`pullback`、`bijection`、`degree`、`multilinear monomial`），避免不自然的中文生硬翻譯（如「碼字」）。
+   * 精準控制頁數預算（如 11 題濃縮至剛好 2 頁），每題獨立完整，避免跨頁斷頭或孤兒頁。
 
 # macOS XeLaTeX 與環境設定陷阱
 
