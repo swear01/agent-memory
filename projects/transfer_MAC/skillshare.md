@@ -7,7 +7,7 @@ status: active
 confidence: high
 evidence: Successful target sync, nested-skill naming fix, explicit migration precedence, and separate MCP workflow; legacy overlap remains a verification caveat.
 created: 2026-08-18
-updated: 2026-09-06
+updated: 2026-09-25
 tags:
   - skillshare
   - skills
@@ -50,6 +50,10 @@ During the explicit migration, the live machine skill source won over divergent 
 # Submodule update boundary
 
 The active Mac source is the detached `.skillshare/skills` submodule. Running `skillshare pull` there merges `origin/main` into detached HEAD and can create local, unpushable merge commits even when the resulting tree equals upstream. After a shared-skills PR merges, fetch and detach-checkout the exact upstream merge SHA, verify a clean source, then run `skillshare sync`; update the parent gitlink separately. Do not use `skillshare pull` for this detached submodule checkout.
+
+## Unpushed local commits handling before fleet sync
+
+當 Mac 端的 `.skillshare/skills` submodule 存在未推送至上游的本機 commit（例如政策補充或調整）時，不要在 fleet sync 時直接覆寫或丟棄。應先將未推送提交建立分支保留，在 `<agent-worktrees-root>` 建立以 `origin/main` 為底的獨立工作區 cherry-pick 並跑完整驗證，循 `personal-pr-workflow` 開 PR、待 CI 與審查通過後自動合入。合入後再以 detached HEAD checkout 新 merge SHA、執行 `skillshare sync`、更新父儲存庫 gitlink，最後對其餘 fleet 機器執行 `skillshare pull`。
 
 # Worktree cleanup boundary
 
