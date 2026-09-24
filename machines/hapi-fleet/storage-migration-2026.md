@@ -5,7 +5,7 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-23
+updated: 2026-09-24
 ---
 
 # DVLab persistent storage migration inventory
@@ -19,6 +19,12 @@ updated: 2026-09-23
 - yochi／部分 ML 的 29 組資料重新完整 SHA 比對，保留每組一份並刪除 65 個多餘檔；刪後與最終重查，保留檔 identities 不變，刪除路徑均不存在。ML canonical 選 Pinchun；yochi canonical 與精確 restore mapping 在回執內。不可再沿用歷史 9.2 GB 當剩餘候選。
 - 現行 NFS home 未清理，只新增授權的小檔私有備份；ff945、sam031023、tyyywei 先前保留的研究 log 區與獨立 cache 清理未處理。本輪依既有冷讀回證據核對來源，沒有重新讀取外接長碟全部 payload。最初 reference checker 被既有 systemd 失效 symlink 的 ENOENT 擋下，確認 link 指向候選外缺失服務後才續行；不可忽略候選相關引用。
 - 持久結案、逐檔雜湊／member 對應、壓縮回執、保留清單、現場驗證與 SHA256SUMS 在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-cleanup-20260923/RESULT.md` 及同目錄。原始 root 保護回執在 Valkyrie `/var/tmp/valkyrie-cleanup-20260923/`；`/var/tmp` 有 age 清理，不可只靠原始現場副本。下列本日盤點段落是執行前快照，其中「未刪／未補存」不再描述這三批現況。
+
+## 剩餘 1.70 GB 的內容分類（2026-09-24）
+
+- 依 09-23 封印的 `retained.jsonl.gz` 清單分類，未新增刪除、未讀取敏感檔內容。瀏覽器資料 1,281,978,368 bytes（21,221 項），主要為 SillyDuck 兩份 Chrome profile 與三份 Firefox profile；清單確有 Bookmarks、History、Cookies、Login Data、places.sqlite、logins.json 等，因此不能把整個 profile 稱為純 cache。
+- pip／字型／GPU／Theano cache 與 Python bytecode 共 209,920,000 bytes（735 項）；15 個與同路徑備份大小不同的封存檔共 187,301,888 bytes，最大為 SillyDuck `boost_1_63_0.zip`，142,667,776 allocated bytes，其餘含課程作業、程式碼及舊套件封存。容器大小不同尚不足以判定內部資料不同或已完整保存。
+- 其餘檔案合計 2,428,928 bytes，另有目錄配置 23,199,744 bytes。小檔含操作歷史、macOS／Windows 目錄中繼資料、SSH known_hosts、GNOME keyring／keystore，以及 SillyDuck 舊 OpenVPN 目錄的三個 `.key` 私鑰檔名（含 CA 私鑰）。這些不是全部可重建的快取；私鑰及密碼儲存狀態不可因容量小或年代舊而整批丟棄，也不可直接放入未加密公開封存。
 
 ## 整個 md1 的用量與後續盤點邊界（2026-09-23 清理前）
 
