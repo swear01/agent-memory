@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-23
+updated: 2026-09-26
 ---
 
 # CPAchecker 研究主線與 LLM 使用授權
@@ -22,6 +22,14 @@ updated: 2026-09-23
 來源：2026-09-23 使用者明確修正「幾十萬 甚至百萬 token 幾乎都是沒有成本 可以直接用」，並要求同步記憶、文件、QMD、issue。研究主索引為 #182／Wiki Research-Convergence。此授權針對研究用 LLM 呼叫；Codex/HAPI session 的 reasoning effort／Fast 偏好另見 [成本偏好](../../global/codex-cost-preference.md)。
 
 #278 的單例必要關係 Goal 已完成：3 份原始 LLM 回答直接消費為 TRUE／UNKNOWN／TRUE，固定第一份完整回答兩次 TRUE、移除三個索引關係兩次 timeout，62/62 actual precision members。詳細限制見 [native C 邊界](native-c-predicate-boundary.md)。跨題可重複收益仍由 #182 追蹤。
+
+## 優先路線與詳細計畫（2026-09-26）
+
+使用者要求不同路線分開追蹤：#280 為總覽，#281 共同索引／陣列關係、#282 排序分解、#283 策略搜尋、#284 經驗證轉換、#285 輔助後端、#286 整體歸納、#287 reducer 總和守恆。之後授權選最有希望的一條做詳細計畫，選 #281；完整設計在 Wiki Shared-Index-Plan 與 `cpachecker-experiments/reports/issue281-shared-index-plan-20260925/PLAN.md`。本次只有來源核對與規劃，沒有新 verifier/model run。
+
+重新核對到重要的既有證據：9/22 `predicate-representation-goal-20260922/array-route.json` 的原始 pair-symmetr2 是 3 eligible arrays／0 loops／UNCHANGED；同批 N=100000 字面常數診斷版為 3 arrays／3 loops／PRECISE／0 remaining loops，匯出 C 已有 a/b/c index 對齊。該 probe 屬 runtime-4a6d353068，不能冒充目前 main 的結果或原題安全 verdict。目前 main e76bd0dc 的 TransformableLoop 仍明確排除 global bound。最短下一步是同版本重查，再安全辨識不變 global／沿用現成對齊；不能直接刪 global guard 或預設須實作共享索引。
+
+若轉換後 Stock 已可解，記為表示改善，不能歸因 LLM；若已無 loop head，現有 loop-head schema 沒有合法注入位置，不是模型生成失敗。只有尚有證明需求與合法位置時進入 reference／20 份 LLM 初始批次及必要關係對照；20 不是新的全域用量上限。先排除原題 eligibility／表示問題，#283 的策略比較保持獨立。
 
 ## 開放突破研究：方案先於 predicates（2026-09-23）
 
