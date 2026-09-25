@@ -5,10 +5,16 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-24
+updated: 2026-09-25
 ---
 
 # DVLab persistent storage migration inventory
+
+## Valkyrie 舊帳號可重建快取清理（2026-09-25）
+
+- 使用者授權清除 09-24 分類中不重要的暫存後，僅在 Valkyrie `/mnt/md1/dvlab/backup` 移除 14 個明確可重建的 pip、fontconfig、Theano compiledir、NVIDIA ComputeCache、Chrome Application Cache/GPUCache/ShaderCache 根目錄。逐檔依 09-23 封印保留清單重新比對 identity、掛載和引用；刪除 1,326 一般檔及 1,092 目錄，實測淨釋放 **429,379,584 bytes**。
+- 該目錄 live `du` 由 1,704,828,928 降為 **1,275,449,344 bytes**，留下 20,796 個檔案／連結。未選檔案刪前刪後 identity 全數不變；瀏覽器個人資料、`.cache/keyring-*`、VPN 金鑰、15 個未證實相同的封存檔仍保留，現行 NFS home 未處理。09-24 的 1.70 GB 分類是此次清理前快照，不可再當現況。
+- 精確腳本、逐項回執、空間差異與 SHA256SUMS 保存在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-residual-cleanup-20260925/RESULT.md`；Valkyrie `/var/tmp/valkyrie-residual-cleanup-20260925/` 僅為會過期的現場副本。
 
 ## 三批授權清理完成（2026-09-23）
 
