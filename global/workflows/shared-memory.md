@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-09-14
+updated: 2026-09-25
 tags:
   - shared-memory
   - qmd
@@ -19,6 +19,8 @@ tags:
 GitHub repository `swear01/agent-memory` 負責在不同 machines 之間同步這些 Markdown 記憶。新增或更新已驗證的長期經驗後，先 `git pull --rebase`，再 commit、push，並重新執行 QMD update/embed。
 
 使用者於 2026-09-12 明確要求：每次更新記憶都要同步；此要求即後續記憶提交與推送的持續授權，不需每次重新詢問，也不能停在「已更新、未推送」。僅提交本次已核對的變更，保留其他 session 尚未完成的 dirty files；確認本次檔案沒有未提交差異、HEAD 與遠端一致，再刷新並查詢確認本機 QMD。
+
+2026-09-25 使用者再明確要求：代理修改檔案後，完成必要檢查就提交，不要把自己的修改留在 dirty worktree。若使用者明確要求把既有 dirty 修改一起提交，先檢查內容與衝突，再一併 commit／push；其他未授權的工作仍保留。
 
 2026-09-12 使用者核准更新 pre-push-review、personal-pr-workflow 與 shared-memory 的失敗分類規則：本次新增／加重問題要修正；已在未修改基準重現且與本次無關的失敗，記錄證據與影響後，不單獨阻擋已授權提交／同步。環境或工具問題要標示未驗證，不能稱為通過。真實敏感資料暴露、重大正確性或資料損失風險仍需先處理，平台強制 merge/deploy 檢查不豁免。不得為了綠燈自行改檢查器、分支保護或重寫歷史。來源修訂見 shared-skills PR #34。
 
