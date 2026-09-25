@@ -301,6 +301,22 @@ swop 仍未部署：HAPI machine 列表無此機；Mac 不在舊 `192.168.1.0/24
 Windows exe 已建置，SHA-256
 `e5b960e10bae928ab12b0de957fc9da334d3df9fa898947ac85a0107198c40b7`。
 
+
+## 2026-09-23：應用程式必須沿用使用者的 local gateway
+
+使用者明確更正 AIsimpV：DeepSeek V4.1 Flash 應走 same-machine local gateway，不能因環境存在 `DEEPSEEK_API_KEY` 就改用官方 API。mazu 的 live Pi `opencode-go` 路徑為 `http://127.0.0.1:35001/v1`、公開 placeholder `local-gateway`，model `deepseek-flash`；gateway 持有實際 upstream keys。官方 API 的 402／balance=false 與這條路徑不是同一帳戶，不能推論使用者的標準 DeepSeek 開發路徑無額度。
+
+新 client 應記錄 response 的 `X-Gateway-Active-Endpoint`、`X-Gateway-Attempt`，並帶 per-run 穩定 `x-opencode-session`；非 streaming 的 returned model 也須保存，不能只看 client model id。HTTP error 也要保存 routing metadata。Gateway 可 strip response_format／改寫 model ID／正規化 reasoning；client 的原始 JSON 不等於所有 upstream wire bytes。
+
+同日 AIsimpV 的 urllib smoke 透過 gateway 得 HTTP 403 / Cloudflare 1010，active endpoint 是 `opencode-go-1`、attempt 1；該 client signature 被上游拒絕，未有 generation 結果。這只是當時此 client 的實測，不代表所有 client／gateway routes 都壞了，也不可倒推成官方 key 餘額問題。未修改 gateway service、keys 或 routing。
+
+## 2026-09-23：最新 binary 仍不會對一般 403/1010 failover
+
+- mazu 磁碟 binary 與 running executable 的 SHA-256 都是 `37bf5804cd519d836575ad76fa2304a150034df9dc6fe87fa346fda52bb7d803`，符合 PR #14 的最新 Linux x64 部署；main `caa23fd` 相較 runtime merge `9507d17` 只改部署文件。這次問題不是漏更新。Repository 沒有 GitHub Release，不能靠 package 的固定 `1.0.0` 判斷版本。
+- `src/proxy.ts` 的 priority 路徑只對 quota classifier 命中或 recovery probe 的非成功回應繼續選來源；一般 active-endpoint 的 Cloudflare 403/1010 直接返回，不記錄 failure、不 cooldown。下一個 request 仍會打相同來源。README 的「走完 route」不能解讀為任何 HTTP error 都會 failover。
+- 用正式 binary 加隔離 loopback upstream、dummy key 重現：連續兩次模擬 403/1010 均 attempt 1、fallback 0 hits、circuit closed；429 對照則 attempt 2、fallback HTTP 200。這是 transport simulation，不是真實模型成功；沒有改正式服務或 routing。
+- 同一測試確認 forwarder 保留 urllib 的 `User-Agent: Python-urllib/3.14`。此 header 是 Cloudflare signature rejection 的候選原因，**未證明是實際唯一觸發因素**。處理時要區分 upstream access filtering 與 quota，不能把所有 403 當額度耗盡；重裝相同 binary 不會解決已重現的分類缺口。
+
 # 2026-09-23 Cloudflare Error 1010 封鎖與 User-Agent 正規化（PR #16 / #17）
 
 ## 原因分析
