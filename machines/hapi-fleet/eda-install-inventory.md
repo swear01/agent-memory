@@ -5,14 +5,21 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-20
+updated: 2026-09-25
 tags:
   - eda
+  - abc
   - synopsys
   - cadence
   - tsri
   - yosys
 ---
+
+# Berkeley ABC：五台 Linux 使用者安裝（2026-09-25）
+
+- Mazu、Athena、Cthulhu、Valkyrie 的 `swear01` 共用 NFS home；Zeus 使用獨立的 `swear02` home。兩份皆從 [Berkeley ABC 官方 repo](https://github.com/berkeley-abc/abc) 的 `master` commit `43d923fbb53f7297f218167ac3282d7c251a67bf` 編譯，原始碼在 `~/.local/src/abc`，命令在 `~/.local/bin/abc`。這是兩個帳號的使用者安裝，未宣稱其他學生帳號有此命令。
+- 五台以各自的 shell 執行 `command -v abc`，均解析到 `~/.local/bin/abc`；再執行 `abc -c "read $HOME/.local/src/abc/i10.aig; strash; print_stats"`，均得到 257/224 I/O、2675 AND、50 levels。Zeus 既有的 `yosys-abc` 未充作此安裝。
+- 更新時分別在 Mazu 的 `swear01` 與 Zeus 的 `swear02` 執行 `git -C ~/.local/src/abc pull --ff-only`、`make -C ~/.local/src/abc -j8`、`install -m 755 ~/.local/src/abc/abc ~/.local/bin/abc`，再從五台重跑上述驗證。此安裝不會自動更新。
 
 # 安裝結案與維運基線（2026-09-20）
 
