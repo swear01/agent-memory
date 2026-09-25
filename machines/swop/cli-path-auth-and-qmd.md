@@ -5,7 +5,7 @@ machine: swop
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-07
+updated: 2026-09-25
 tags:
   - windows
   - path
@@ -71,3 +71,28 @@ Windows PowerShell 呼叫 `[IO.File]::Replace` 時，第三參數應給明確備
 GitHub SSH fetch 卡住不表示 Windows LAN SSH 或 source repository 不可用。已驗證替代方式：在來源建立以 Windows 已有 commit 為 prerequisite 的增量 Git bundle，兩端驗證 bundle，經 LAN SSH 傳送，確認 Windows source clean 後 fetch bundle 並 merge --ff-only，再 skillshare sync。只終止自己發起且已核實 process tree 的卡住 pull，不改憑證、不 force reset、不覆蓋 dirty source。最後核對 source SHA 與 targets。
 
 同一次部署中，OpenSSH PowerShell Get-Content 對 `.agents/skills/hapi/SKILL.md` 回報不存在，但 junction 指向正確 source，source 可直接讀取；實際 HAPI Runner 的 list-directory RPC 對 `.agents` 與 `.codex` junction 都成功看到最新版 SKILL.md。必須區分 SSH 與互動登入 Runner principal 的 filesystem 可見性，不要僅凭 SSH 失敗就重建 junction、重裝 skill 或宣稱 Runner 讀不到。使用實際 Runner RPC 加 junction target/source SHA 驗證。
+
+# 2026-09-25 Fleet 全面同步與 HAPI v0.30.7.2 升級
+
+## HAPI 執行檔鎖定與熱替換
+
+Windows 上運行中的 `hapi.exe` 會被作業系統檔案鎖保護，直接 `Copy-Item` 覆蓋會回報 `The process cannot access the file because it is being used by another process`。
+NTFS 允許對運行中的執行檔執行 rename / move：
+1. 先以 `cmd /c move /y <hapi-dir>\hapi.exe <hapi-dir>\hapi.exe.old` 將鎖定檔案移走；
+2. 再將新版二進位（`hapi-0.30.7.2.exe`，校驗 SHA-256 為 `9ad1f208e006c85b1d8c2928032f8cf419f8b72fcf5a64ca887b24ed9f5ad504`）複製為 `hapi.exe`；
+3. 終止舊 PID 後，透過排程任務 `HAPI Runner (SWOP)`（`Start-ScheduledTask`）重新啟動。
+新啟動之 Runner 子程序為 `0.30.7.2`，已確認向 Hub 重新完成 machine 註冊（`7b729650-084c-4690-9c35-50cd370baab1`）並持續送出心跳。
+
+## 外部穿透與雙重 NAT 拓撲
+
+Mac 本機 `~/.ssh/config` 補齊 `Host swop`（指向外網穿透 IP `118.150.242.12`、帳號 `stanl`）與 `Host swop-lan`（`192.168.0.236`）。
+雙重 NAT 環境下，Mac 處於外層網段（`192.168.1.0/24`），而 Windows swop 目前由內層路由器 Wi-Fi 配發 `192.168.0.236`（舊筆記的 `192.168.1.206` 為過期租約）；跨網段無法直連，因此由外部穿透埠進入為目前最穩定之連線方式。
+
+## Fleet 各專案與設定對齊
+
+- `agent-memory`：以 `git pull --ff-only` 更新 51 個 commit（至 `ac3458e`），並執行 `qmd update` 完成索引更新。
+- `shared-skills` 與 `transfer_MAC`：因遠端使用專用金鑰或認證存放庫限制，在 Mac 製作增量 Git bundle 傳送，以 `--no-recurse-submodules` 配合本地已更新之 skills repo 完成 fast-forward（skills 至 `40348d4`、transfer_MAC 至 `d66b359`）。
+- `AGENTS.md`：重新部署並正規化為 UTF-8 LF，5 個代理目標（`.agents`、`.codex`、`.claude`、`.config\opencode`、`.pi\agent`）全部一致共享 SHA-256 `df83287eb295e4d2a8a47d8d8f4a5027d05c33f30439c83ed53bf6b99f2e2fd9`。
+- Codex 模型白名單：對齊 GPT-6 陣容（`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.6-terra`、`gpt-daybreak-blue-latest`、`codex-auto-review`）。
+- Pi 設定：`enabledModels` 遷移為 `deepseek-pro` 與 `deepseek-flash` 並加入 `gpt-6-astra`；`models.json` 與 `strict-model-allowlist.ts` 全面同步。
+- MCP 清理：執行 `render-mcp` 清除舊有 Unity 與 Browser MCP。
