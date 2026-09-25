@@ -3,7 +3,7 @@ title: AIsimpV RTL certificate checker 的已驗證界線
 scope: project
 project: AIsimpV
 status: active
-updated: 2026-09-21
+updated: 2026-09-23
 ---
 
 # AIsimpV RTL certificate checker
@@ -87,3 +87,63 @@ GitHub Actions `Verify` 已在 Ubuntu 24.04 / Python 3.12 實跑 89 項測試與
 - Current Yosys 對 edge-triggered `$check` 要先 `async2sync` 再 `chformal -lower`。第一次三筆 prep ERROR 保留；修正後使用 clocked assertion 的 SAFE/CEX/no-assert 真實工具回歸。獨立 runner `scripts/screen_baselines.py` 預設從 catalog 取深度，FIFO 4、AVR 20；不要為湊時間提高 FIFO unroll depth。
 - AVR `s1269b` 的 README top file 是 `_mod.v`；`Huffman_dec` 的 plain lookup 無 255，原 assert 組合恆真，不能當成困難成功題。正常 SAFE 過快的設計與 BOUNDED／CEX 也必須記錄；不能只保留符合目標時間的數據。
 - Native timing 包含 copy/prep/base/induction，尾端 artifact hashes 與 result 寫入在 suite wall。不能把它直接與舊 contract-harness abstract timing 拼成加速比。下一關是凍結原有 properties 並接通人工 FIFO rewrite＋certificate，完整計費。
+
+## RTL rewriting 與 AI 研究定位的查證
+
+2026-09-21 對 main `8314459` 與原始論文的調查；未執行競爭工具實驗。
+
+- 不能只用等價 RTL／PPA optimization 當 abstraction baseline。ROVER（arXiv:2406.12421）已有 e-graph 多步改寫、條件合成與 verification certificate；ROVERIFY（arXiv:2308.00431）已有 proof decomposition 加速等價檢查。Safety 目標應另比較 AVR／PDR 等原生抽象，不能把 PPA 或 equivalence runtime 當同一指標。
+- 規則／不變量自動生成不是 LLM 專屬。Ruler（OOPSLA 2021，arXiv:2108.10436）推導 rewrite rules；VMCAI 2020 的 Synthesizing Environment Invariants for Modular Hardware Verification 使用 SyGuS＋CEGAR。研究需隔離相同 grammar／預算的非 LLM 搜尋與 AI 的增益。
+- 直接相關 AI 工作：ASPEN（MLCAD 2025）是 LLM 規則提議／選擇＋e-graph＋PPA feedback；NeuroAbs（arXiv:2608.17304v1）是 AST statement abstraction＋SMT＋CEGAR；CIll（arXiv:2602.23389v2）是 CTI 引導 helper invariants＋rIC3。CIll 的 M-extension 成功採 ALTOPS 替代語意，原始 M 與 SERV 未解，bge 有逾時紀錄；不可宣稱完整原始 RISC-V 都已證。其 invariant migration 實驗由人工先對應變數名。
+- 本專案 joint rewrite prompt 限定一個 8-bit nondet port、state bits 少於 18；保存的候選 h 僅為投影、J=true、w=r_data。固定 occupancy pair 的證書發現與自由發明 occupancy RTL 是不同能力；人工 sum-state 也不能算 AI 發現。Memory 與 history／prophecy／不同步數對應仍不在現有介面範圍。
+- 固定 ZipCPU sfifo 原 FORMAL harness 已有 anyconst fw_first_addr、相鄰第二地址與資料／順序 tracking。讀到原 harness 後重用該技巧不能算自主發明 symbolic transaction abstraction；部署可保留它，但須明示提示來源。
+
+## 教師題目 6 的原始目標
+
+2026-09-21 核對公開「2026 Summer Plan: AI for EDA Frontend」完整折疊內容；Project 06 為 Abstraction and Refinement of RTL Designs。
+
+- 目標是處理現代 formal engines 因複雜度無法證明／反證的 RTL assertions：AI 建立 overapproximation，遇到假反例後 refinement。交付為 LLM abstraction/refinement skills 與 absref assertion-checking framework；TODO 明列困難 benchmarks、AST／architecture abstraction IR 及其 overapproximation engine。
+- 文中把 RTL signals 的 cut 視為 abstraction，把抽象反例延伸為具體反例視為另一個 assertion proof，並提出 AND-OR proof tree。它明確要求排除全部抽象反例；排除若干已觀察到的 traces 不足以宣稱 SAFE，必須有完整 abstract proof 或其他完備覆蓋論證。抽象反例屬於抽象模型的 underapproximation，未經 concretization 不能當作原設計可達行為。
+- 不可把一般 AI＋contracts／AND-OR decomposition 宣稱新技術：SMASH（POPL 2010）已有 compositional may-must alternation；ConVer（arXiv:2605.27051v1）已有 LLM contracts 與 invariant synthesis 的軟體組合驗證。RTL 特定的關係抽象效益仍須另行實驗；這次未執行新 solver 實驗，也未決定實作方向。
+
+## 研究試驗的使用者約束
+
+2026-09-21 使用者修正前述研究建議：第一階段希望約三個 baseline 耗時約 30 秒的案例，以明顯加速為目標；不要求先找到強 engines 超時的極難題。拒絕把「人工先做出有效關係摘要」當成繼續研究的前提，因人工失敗不能否定摘要存在。後續規劃應直接讓 AI 搜尋，並比較傳統固定模板與 NeuroAbs；不能重新加入這兩個前置門檻。
+
+30→0.3 秒若只涵蓋 property proof，代表該階段 100×；須另報抽象正確性檢查與包含失敗嘗試的生成成本，不能直接稱端到端 100×。選題宜依事先設定的 baseline 時間範圍，不能依本方法是否成功事後挑三題。此為當時的目標與實驗設計約束；後續已完成下節試驗，尚無 100× 總成本改善。
+
+
+## 約 30 秒案例的自主抽象搜尋實測
+
+2026-09-21，基於 main `8314459`，程式與完整報告在 `docs/reports/abstraction_search.md`；原始候選與全部量測分別收在同目錄 `data/abstraction_search_candidates.json`、`data/abstraction_search_results.json`。未以人工有效抽象作為前置條件。
+
+- 依生成前的順序挑出原生 SFIFO 深度×寬度 256×256、64×512、256×512；三次完整原始 proof medians 為 24.399／52.830／35.371 秒。仍是一個家族的三種配置，不能說成三個獨立 controller。原 28 assertions、0 assumptions、reset 與 partial memory init 不變。共同 normalization 本身把 baseline 降到 19.575／28.808／31.677 秒，不能把這段算成 AI 收益。
+- rIC3 1.5.2 `-e ic3 model.btor2` 對這三題皆在 60 秒 timeout。正確出口為 UNSAT+20、SAT+10、UNKNOWN+30，須連同 verdict 驗證；不能套新版本的 `check ... ic3` CLI。Locked crates.io 1.5.2 實際以 nightly-2025-11-15 編成；stable 不支援 feature，2026-09-21 nightly 與 logicrs 0.6.1 的 Try/Step 不相容。建置使用隔離 meson 1.9.1／ninja 1.13.0，不更換 global default Rust。
+- NeuroAbs 公開 Figshare artifact version 2 只有 `detail result.xlsx`，沒有找到原實作；本輪只做明確標記的 NeuroAbs-inspired netlist-cutting 部分比較，未重現 AST-local rewriting 或論文的 CEX reduction，也沒有執行 AVR solver。
+- 四個最寬單點 havoc 模板的 12 次全為 spurious CEX；LLM cutpoint 組四次／每題全部選空集合。事後枚舉每題全部 11 個 eligible vectors，33/33 單點皆 CEX。對這個 monotone havoc 空間，加更多 cut 不能移除既有 CEX；不代表其他 predicates、state representations 或 NeuroAbs 沒有答案。
+- 完整改寫由 gpt-5.6-sol/high 各四次／900 秒：8 次 provisional success、1 次 induction failure、2 次 certificate timeout、1 次 generation timeout；所有失敗與耗時保留。完整 search-process wall 約 573.023／854.851／900.962 秒，不能只報成功候選。
+- 三輪配對中，最佳 stateless candidates 的 property medians 都約 0.30 秒，但含正確性檢查的總驗證 medians 為 17.986／23.736／34.591 秒；對 matched C 為 1.09×／1.21×／0.92×。尤其 31.677→0.301 的 property 約 105×，證書卻需 33.638 秒，並非大幅整體改善。候選把 A 設成 A_choice|EN_choice 或全 1，使抽象 bad 恆 0，product 實際重證原始 safety theorem。不可把這種 proof transfer 當成新抽象技術。
+- 64×512 第四次確有 AI 自行產生的 21-bit control summary（C register+RAM 共 34,911 bits）與 8 個 typed relations：C.f_fill=A.fill、guarded history equalities 等。前一次 induction 失敗，後一次獨立通過，parent 未修候選。這些關係重用原 RTL/assertions 的資訊，不宣稱新定理；資料相關 obligations 仍留在 certificate，總驗證 36.880 秒，慢於 matched C 28.808 秒。
+
+## Native product 的新 soundness 與 runtime 防線
+
+- 舊有限 BV h/J/w checker 未被擴充冒稱支援 memory。新增 native adapter 保留原 assertion A/EN 與任意初始 memory，原 anyconst 在 C/A 共享；A 額外輸入在最終 property 中每拍自由。Product 比較所有原 public outputs 與 enabled violation bits，helpers 為 assertions，不是 assumptions。它只給出充分條件：universally paired initial states 與現成 C signal witnesses 會拒絕部分有效抽象。
+- 真實漏洞重現：Yosys 會接受 input 上的 `init` attribute，它可限制原 public input 的初值，使原 first-cycle assertion 有 CEX、product 卻 SAFE。僅禁止 `$assume` 不夠。修正限制非平凡 init 只能作用於實際 stored state，拒絕 alias／memory read-register initializer 衝突與 async memory read reset。回歸還確認 memory CEX 在 step 0，不是靠後續任意 write 才失敗。
+- 外層 worker 與內層 `_run` 各開新 process group；只殺 Python supervisor 會漏掉 solver。必須把共同 deadline 傳到每個 inner tool，讓其先自行 kill group／收尾，再讓外層截止；真實 sleeping-child 測試確認沒有活著的 solver descendant，收尾時間仍計費。
+- Generation snapshot v1 與 ledgers 不改；v2/v3 為未使用中間版，全部 provisional successes 用修正後 v4 重驗，exact duplicate bytes 在同一 frozen task 重用同一證明但不抹掉原搜尋成本。五個 distinct candidates 重驗共 155.954 秒；21 次正式配對 proof 全通過。177 本機 tests、demo、公開 rewrite matrix 與舊 FIFO unsupported assessment 都通過；GitHub gate 是另一份 evidence，不能混稱本機測試即 CI。
+
+下階段應保留這批題目，將 AI 用在提出新的關係／predicates 與便宜的 local simulation certificate，評分採 property＋correctness 成本。現介面的 named-wire witnesses、whole-product proof 與可改寫的 abstract monitor observations 會鼓勵 proof-transfer 退化解；本輪不能否定更好的摘要存在，也不能宣稱贏過原版 NeuroAbs／傳統 word-level abstraction。
+
+
+## Direct API generation：避免 CLI prompt 混入實驗
+
+使用者指定正式開發模型為 DeepSeek V4.1 Flash 或 Muse Spark 1.3 Contributor，研究生成不可用 Codex CLI 的內建 system prompt 代替直接 API。PR #22 把共用 `scripts/llm_pilot.py` 改為 stdlib Chat Completions worker；每次僅送一則完整 user message，無 system/developer message、tools 或繼承 agent rules。`scripts/llm_models.toml` 與 runner 一起凍結／雜湊，兩個 driver 皆有 `--provider meta|deepseek`。
+
+- **2026-09-23 使用者更正：DeepSeek 必須走既有 local gateway。** mazu 使用 `http://127.0.0.1:35001/v1/chat/completions`、model `deepseek-flash`、公開 placeholder `local-gateway`，與 live Pi `opencode-go` 設定一致；上游 key／帳戶／fallback 由 gateway 管理，專案不讀 `DEEPSEEK_API_KEY`。前次誤選官方 API，402 與 `/user/balance=false` 只描述該官方帳戶，**不可當作使用者 DeepSeek 開發路徑額度不足的結論**。不得再建議充值作為本專案先決條件。
+- Meta 使用 `muse-spark-1.3-contributor`、`https://api.meta.ai/v1/chat/completions`、現有 `META_API_KEY`。真實 JSON smoke 成功，returned model 相符。Muse 保留為預設；DeepSeek 的明確選項改接 local gateway。API/model 清單可能變，後續重驗。
+- 兩個 profile 均 high reasoning／16384 completion cap；DeepSeek 額外 `thinking.type=enabled`，用 `max_tokens`；Meta 用 `max_completion_tokens`。相同 effort 名稱不代表相同算力。保存 exact request/response、provider returned ID、usage/cache/reasoning tokens，不猜成本或內部 routing。
+- 保留四次／900 秒總預算、獨立 formal gate、raw candidate/hash、失敗費用。HTTP worker 由 parent 硬截止、拒 redirect，key 不進 shell args／artifacts。API errors 停止 orchestration；client 不跨模型 fallback，但既有 gateway 可能 retry／切上游，須記錄回應路由 headers。V2 拒舊 Codex ledger；必須用舊 frozen runner 重播歷史，勿移植／重設 attempts。
+- Smoke 僅 transport qualification，無 RTL／關係提示；不可當研究 discovery、correctness 或加速證據。舊 gpt-5.6-sol/Codex 結果仍維持原標籤。179 項測試（含 pinned rIC3）、formal demo、四題 matrix、FIFO assessment 與 snapshot config 複製檢查均通過。
+
+- Gateway provenance：每個 run 固定 `x-opencode-session`，保存 `response-metadata.json` 中的 HTTP status、`X-Gateway-Active-Endpoint` 與 `X-Gateway-Attempt`，連失敗也要留；成功時再保存 returned model／usage。Gateway 可 strip response_format、正規化 reasoning，不能把 client request bytes 說成完整 upstream wire bytes。
+- 2026-09-23 真實 smoke（移除官方 key）已到 `opencode-go-1`、upstream attempt 1，但收到 Cloudflare 1010 / HTTP 403，未拿到模型輸出。這是上游拒絕該 client signature，**不是官方餘額問題，也不是 model allowlist 缺漏**；禁止用 route health 或配置名稱冒稱 generation 已成功。保留失敗與診斷證據；未修改 gateway service 或 routing。
