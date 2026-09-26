@@ -12,4 +12,4 @@ NeuroAbs 內的 Pyverilog `VerilogParser` 預設 `outputdir="."`，PLY 因而在
 
 清理臨時目錄前先檢查引用：NeuroAbs 的兩組研究證據已搬到 `<remote-home>/research-archives/agent-cleanup-20260926/neuroabs/`，`NeuroAbs/results/i2c_assert1/README.md` 的引用由 PR #11 更新。`<remote-home>/.agent-worktrees/` 是依工作流程集中放置的 Git 工作樹，必須先查 Git 狀態與 ownership，不能整批刪除。
 
-`issue174_repro` 的四個內層 `.git` 檔雖可讓 `git status` 執行，卻全指向同一個別處工作樹的 Git metadata，且未列在 `git worktree list`；它們是複製快照，不是四個已登記工作樹。搬入 `<remote-home>/research-archives/agent-cleanup-20260926/issue174_repro/` 時，將這些檔改名為 `.git.stale-pointer` 保留原始內容，避免後續 Git 命令誤用別處的 index。
+`issue174_repro` 的四個內層 `.git` 檔雖可讓 `git status` 執行，卻全指向同一個別處工作樹的 Git metadata，且未列在 `git worktree list`；它們是複製快照，不是四個已登記工作樹。Issue #174 已完成，實驗結論保存在 `projects/cpachecker/mathsat-crash-issue174.md`；2026-09-26 刪除了這份 3.1 GB 原始重現資料。
