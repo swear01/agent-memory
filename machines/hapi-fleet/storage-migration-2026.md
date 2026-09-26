@@ -10,6 +10,11 @@ updated: 2026-09-26
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie `/mnt/md1` 清後容量分布（2026-09-26）
+
+- 即時 `df -B1`：已用 1,002,230,603,776 bytes（14%）。以 09-03 完整逐帳號 `du` 清單，逐路徑扣除 09-21、09-23、09-25、09-26 已執行清理的封印配置量與回執，重建帳號合計 1,002,230,587,392 bytes，和即時 `df` 只差 16,384 bytes。一般帳號直接 `du` 會漏掉受限子目錄；全樹即時掃描因 `yenlu_mepu` 大型影像／影片小檔樹耗時而停止，不能把它的部分輸出當完整盤點。
+- 重建後前十帳號（decimal GB）：`yenlu_mepu` 206.10、`wish` 86.03、`ntuwp` 71.67、`mikasa` 71.26、`Pinchun` 66.26、`sam031023` 59.78、`tyyywei` 54.70、`anitalu724` 52.55、`jasminehsu` 46.53、`hchchiu` 35.41；合計 750.30 GB，其餘帳號與檔案系統差額約 251.93 GB。`yenlu_mepu/DLCV-Fall-2023-Final-1-beyourselfjustdoit` 的 174.21 GB 是清理前歷史 `du`，沒有列入已執行刪除路徑；內有影像與影片資料，但未完成該子樹清後即時 `du`。
+
 ## Valkyrie 三帳號大型研究輸出清理完成（2026-09-26）
 
 - 使用者看過用途後，明確決定永久清除久未使用的大型 raw log 與 trace。Valkyrie `/mnt/md1` 精確移除 ff945 76,445 `.log`／863,129,272,320 bytes、sam031023 8,090 `.log` 加 123 個 `*_socv_proof.itp`／815,802,179,584 bytes、tyyywei 54,654 `.log`／381,489,606,656 bytes；合計 **139,312 檔、2,060,421,058,560 bytes（1.874 TiB）**，逐批 `statvfs` 淨釋放與回執配置量完全一致。`df` 已用由 3,062,651,662,336 降為 **1,002,230,603,776 bytes（14%）**。
