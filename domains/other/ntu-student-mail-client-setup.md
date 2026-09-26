@@ -22,18 +22,22 @@ updated: 2026-09-26
 | **使用者名稱** | `<student-id>` | **必須為純學號**；嚴禁保留系統預設的「自動」，嚴禁附加 `@ntu.edu.tw` |
 | **帳號類型** | `POP` / `POP3` | 嚴禁選擇 `IMAP` 或 `Exchange` |
 | **收件伺服器** | `msa.ntu.edu.tw` | 埠號 `995`，必須勾選 SSL/TLS 加密 |
-| **寄件伺服器** | `mail.ntu.edu.tw` | 埠號 `587` (STARTTLS)；**見下方校外避坑說明** |
+| **寄件伺服器** | `smtps.ntu.edu.tw` | 埠號 `465` (SSL/TLS)，必須勾選「外寄伺服器需要驗證」；**切勿改用 mail.ntu.edu.tw** |
 
-## 校外 SMTP 防火牆阻擋與轉圈卡死排查（核心教訓）
+## 寄件伺服器權限陷阱與校外連線超時除錯（核心教訓）
 
-1. **官方手冊陷阱（`smtps.ntu.edu.tw:465`）**：
-   - 計資中心官方文件（如 `WMMM1106TP`）指示寄件伺服器填寫 `smtps.ntu.edu.tw:465`。
-   - **實測故障表現**：在非校園 IP（如家用寬頻、手機熱點）環境下，`smtps.ntu.edu.tw` 的 Port 465、Port 25 與 Port 587 連線會遭校園外圍防火牆直接靜默丟包（Packet Drop / Timed out）。
-   - **macOS 行為**：macOS「系統設定 → 網際網路帳號」與「郵件 App」在驗證帳號時，會持續等待 TCP 逾時，導致介面陷入長達 60 秒以上的旋轉載入圈圈，超時後提示「無法驗證帳號名稱或密碼」。
+1. **切勿將寄件伺服器改為 `mail.ntu.edu.tw`（權限陷阱）**：
+   - `mail.ntu.edu.tw` 是教職員使用的 Microsoft Exchange 伺服器。
+   - 雖然其 Port 587 在校外看似可以通過 SMTP 帳密認證，但由於學生郵箱未建置於 Exchange 上，實際發送郵件時 Exchange 會嚴格拒絕代理，並拋出致命錯誤：
+     `SMTP; Client does not have permissions to send as this sender`。
+   - 因此學生發信**唯一合法的寄件伺服器只有 `smtps.ntu.edu.tw`**。
 
-2. **正確解決方案**：
-   - **寄件伺服器一律改填 `mail.ntu.edu.tw`，連接埠走 `587`（STARTTLS）**。
-   - `mail.ntu.edu.tw:587` 面向校外網路完全開放且驗證正常，可立即通過帳號驗證，秒解轉圈卡死問題。
+2. **校外 `smtps.ntu.edu.tw:465` 連線逾時（Timeout）真因**：
+   - **官方政策無校外 IP 限制**：計資中心官方規範明確說明 `smtps.ntu.edu.tw` 支援校外寄信，其防護依賴「強制 SMTP 帳密驗證」而非純 IP 白名單。
+   - **連線逾時成因**：當客戶端因舊密碼錯誤或 macOS 自動探測未加密 Port（110/25）連續失敗時，會觸發臺大伺服器端的防暴力安全機制（如 Fail2ban），將來源 IP 暫時靜默丟包（Drop / Timeout）15～30 分鐘，在介面上造成長達 60 秒的登入旋轉卡死。
+   - **解決方案**：
+     - 若遭遇 Timeout，請靜置等待 15～30 分鐘讓防火牆解除封鎖，或切換手機熱點/連線臺大 VPN。
+     - 伺服器必須維持 `smtps.ntu.edu.tw`（Port 465 SSL），切勿病急亂投醫改換 Exchange 主機。
 
 ## 登入成功後必做安全配置
 
