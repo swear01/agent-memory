@@ -21,6 +21,11 @@ tags:
 - 五台均用 `nobody` 執行 `/usr/local/bin/abc -c "version; quit"` 成功；Mazu、Athena、Cthulhu、Valkyrie 的 `swear01` 與 Zeus 的 `swear02` 的 `command -v abc` 均解析到 `/usr/local/bin/abc`。同一執行檔在安裝前以 `i10.aig; strash; print_stats` 驗證，得到 257/224 I/O、2675 AND、50 levels。先前的 `~/.local/bin/abc`、`~/.local/src/abc` 與建置 log 已移除；Zeus 原有 `yosys-abc` 沒有充作此安裝。
 - 此版本不會自動更新。更新時從官方 repo 取新 commit 並編譯，再由管理員把 `abc` 安裝到五台各自的 `/usr/local/bin/abc`，記錄新 commit／SHA-256，並重跑跨帳號驗證。學生使用說明見 `/apps/eda/README.md`。
 
+# TSRI eTAS 舊版 EDA 來源查核（2026-09-26）
+
+- 新版下載站的登入必須從 `https://etas.tsri.niar.org.tw/tsrisso` 發起，完成 TSRI SSO 及返回 eTAS 的 callback。直接開 `cs.tsri.niar.org.tw/Security/Login.aspx` 雖可登入，eTAS 的 `/login-state` 與下載 API 仍回 401；正確流程完成後 `/login-state`、`/api/software-download/software-information` 與 `/api/software-download/allow-download` 均回 200。勿因前者的 401 就判定帳號沒有下載權限。
+- 當日登入後的 `/api/software-download/allow-download` 清單中，Synopsys `syn` 沒有 `2022.03-sp2`、`vcs` 沒有 `2022.06`、`Formality` 沒有原版 `2023.12`（有 `2023.12-sp2`），Cadence `JASPER` 沒有 `2406`／`2024.06`。這是當日清單快照，重查時以新版站即時目錄為準；不要把不同 service pack 或 VC Formal 當成同版本。
+
 # 安裝結案與維運基線（2026-09-20）
 
 此節取代下方歷史進度；數字與測試為 2026-09-20 收據，不是永久即時狀態。接手先讀結案紀錄，不要重跑舊下載、搬移或解壓佇列。
