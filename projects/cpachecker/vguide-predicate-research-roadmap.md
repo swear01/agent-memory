@@ -23,6 +23,16 @@ updated: 2026-09-26
 
 #278 的單例必要關係 Goal 已完成：3 份原始 LLM 回答直接消費為 TRUE／UNKNOWN／TRUE，固定第一份完整回答兩次 TRUE、移除三個索引關係兩次 timeout，62/62 actual precision members。詳細限制見 [native C 邊界](native-c-predicate-boundary.md)。跨題可重複收益仍由 #182 追蹤。
 
+## 三條路線的持續目標與完整集合驗收（2026-09-26）
+
+使用者明確糾正：三條路線各設 goal，不能只完成第一輪或單題展示。有改善就擴大到完整 set；沒改善要分辨實作／表示／consumer／模型生成／證明與資源限制，嘗試合理修正並實測，不能把一次 timeout、截斷或 parser rejection 當作方向無用。只有可查核的原因、必要修正／有界負面結論與完整集合效果量具備才完成；不因 PR 服務或單 lane 問題停止其他可進研究。
+
+共同主分母固定既有 hard218（224 父集扣原 6 infrastructure censor），另完整 array-cav19 13 題、array-examples/sorting*.yml 6 題及完整 sorting 命名 inventory、reducercommutativity 50 YAML（官方 unreach-call 28；其餘 22 是 def-behavior property，明列不適用）。不能挑成功題、刪失敗分母或把 family 成功率當成全218；這是已曝光的研究集合，不宣稱未見題泛化。Reserved44 不動。
+
+#281 分開 Stock、保留 strict-bound safety 修正的 pre-global array、patched array；#282 分開人工 scaffold、LLM 自動發現與輔助 backend／CPA consumer；#287 INTEGER 成功必有每題原 C 接合，signed overflow gate 與 cast UF 並不足以涵蓋任意 unsigned/mixed comparison/pointer 操作。全部記 new/lost/wrong/unknown、coverage、整體 CPU 和模型成本；預先固定 fallback 與抽樣，事後最好結果 union 不冒充等成本 portfolio。正式 population 按既有 idle-ready／P-core protocol，候選整體 gate+verification 亦納入600 CPU秒預算。新完整集授權是 fresh matched research，沒有重啟舊#269 slot／#197/#215診斷replay包或宣稱舊缺陷已修。
+
+主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三位 Astra owner 各自有獨立 active goal；前輪結果是起點，不是這次 goal 的完成證據。
+
 ## 三條路線實際執行（2026-09-26）
 
 使用者授權開始 #281 並允許 GPT-6 Astra 平行研究，已同時執行 #282／#287。各路線必須分開歸因，不能合計成「LLM 多解三題」。詳細證據為 `cpachecker-experiments/reports/issue281-execution-20260926/`、`issue282-execution-20260926/`、`issue287-execution-20260926/`；Wiki Breakthrough-Execution 統一索引。
