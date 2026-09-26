@@ -26,6 +26,7 @@ tags:
 - 新版下載站的登入必須從 `https://etas.tsri.niar.org.tw/tsrisso` 發起，完成 TSRI SSO 及返回 eTAS 的 callback。直接開 `cs.tsri.niar.org.tw/Security/Login.aspx` 雖可登入，eTAS 的 `/login-state` 與下載 API 仍回 401；正確流程完成後 `/login-state`、`/api/software-download/software-information` 與 `/api/software-download/allow-download` 均回 200。勿因前者的 401 就判定帳號沒有下載權限。
 - 當日登入後的 `/api/software-download/allow-download` 清單中，Synopsys `syn` 沒有 `2022.03-sp2`、`vcs` 沒有 `2022.06`、`Formality` 沒有原版 `2023.12`（有 `2023.12-sp2`），Cadence `JASPER` 沒有 `2406`／`2024.06`。這是當日清單快照，重查時以新版站即時目錄為準；不要把不同 service pack 或 VC Formal 當成同版本。
 - 新版 eTAS 前端只列 `software-information`、`allow-download`、`package-download-information` 與 `download` 四個軟體下載 API，未見獨立歷史版本入口；舊 `etas.tsri.narl.org.tw/eda/` 當日 HTTP／HTTPS 均連不上。[Synopsys 2026-04-13 台灣學界 SolvNetPlus 使用規則](https://sara.synopsys.com.tw/api/File/Download/PageContent/22/dccbcd59-0c60-4b06-b5ce-1072c35fdcc7.pdf)明定學界帳戶**不能下載軟體工具**，故不能把 SolvNetPlus 當作補齊 TSRI 舊版安裝包的替代入口。若確需舊版，向 TSRI 客服確認是否能提供封存檔。
+- Zeus 於 2026-09-26 使用 Rocky r7 容器及已發布的 VCS `2026.03`，成功編譯並執行最小 SystemVerilog 測試，證明當時現行 VCS 授權路徑可用；`2022.06` 的實際 checkout 與 TSRI 現行合約適用性尚未驗證，不能從新版成功外推。取得舊版後須在隔離目錄安裝並做實際編譯測試。
 
 # 安裝結案與維運基線（2026-09-20）
 
