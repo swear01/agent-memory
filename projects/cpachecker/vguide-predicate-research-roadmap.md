@@ -33,6 +33,12 @@ updated: 2026-09-26
 
 主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三位 Astra owner 各自有獨立 active goal；前輪結果是起點，不是這次 goal 的完成證據。
 
+### 已驗證的 consumer 與算術限制
+
+- **cast UF 不足以保留 unsigned 語義。** `ignoreExtractExtend=false` 的 INTEGER 路徑，在同寬 signed/unsigned 比較與 unsigned wrap 兩個原 C 反例給錯誤 TRUE；精確 BV 為 FALSE。既有 `cpa.predicate.encodeOverflowsWithUFs=true` 使這兩個控制恢復 FALSE，應先測現成功能，不必重寫 resolver。但這只是兩個控制，不能推論通用 soundness；no-overflow property 也不能代替明確 cast、unsigned 或 pointer 操作的接合審查。原 signed fragment 的排除條件仍有效。root 已逐份核對六個 raw logs／source hashes，見 `three-route-fullset-20260926/issue287-signedness-independent-audit.json`。
+- **排序 importer 與模型失敗要分開。** Clang AST 同時列出 implicit builtin 與原 `abort` 宣告，機械產生兩份 ACSL contract 會先導致 parser error；排除 `isImplicit` function declarations 後，同一批原模型回答才進入真正 VC 檢查。安全 selection 的模型原先在 swap 後仍引用 `a[s]`，一次原始失敗 VC feedback 後自行改用當下 `a[i]`；完整原 C、未人工修改的22項模型候選經既有 JSON schema／註解 consumer 得到127/127。root 重建輸出逐 byte 相同，核對44個 invariant initiation/preservation 和原 assertion caller obligations。這是已曝光研究題的 auxiliary backend 證據，尚非 CPA 或完整集合效益；見 `three-route-fullset-20260926/issue282-selection-independent-audit.json`。
+- **整體成本不能只看最後 checker。** gate、INTEGER 和必要 exact-BV validation 均計入同一600 CPU秒；各 phase 的 `prlimit` 是單 process 限制，還須核對 `RUSAGE_CHILDREN` 累計與正式 cgroup 總 CPU，再採納 verdict。證明義務全過和 consumer 實際使用只證明該例可用，新增解題仍需配對 baseline 與完整分母。
+
 ## 三條路線實際執行（2026-09-26）
 
 使用者授權開始 #281 並允許 GPT-6 Astra 平行研究，已同時執行 #282／#287。各路線必須分開歸因，不能合計成「LLM 多解三題」。詳細證據為 `cpachecker-experiments/reports/issue281-execution-20260926/`、`issue282-execution-20260926/`、`issue287-execution-20260926/`；Wiki Breakthrough-Execution 統一索引。
