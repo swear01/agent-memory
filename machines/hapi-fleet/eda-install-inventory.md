@@ -129,6 +129,7 @@ source /apps/eda/cadence/xcelium.sh 25.03.005
 - Cthulhu：手工 Yosys `0.35`、APT GTKWave `3.3.126`。
 - Valkyrie：手工 Yosys `0.35` 與 `yosys-abc`。
 - Zeus：手工 Yosys／SBY `0.63`、APT GTKWave `3.3.126`、Icarus `12.0`、Verilator `5.032`。
+- 2026-09-26 複查：三台的 `yosys` 都是各機 `root:root` 的 `/usr/local/bin/yosys`，資料目錄為 `/usr/local/share/yosys`；`dpkg-query -S` 查不到兩者的套件擁有權，因此不是目前由 APT 管理的安裝。Cthulhu／Valkyrie 是 `0.35`（`cc31c6ebc`），Zeus 是 `0.63`（`70a11c6bf`）。在 `/usr/local/src`、`/opt`、`/root` 未找到 Yosys 原始碼或安裝紀錄；只能確認是套件管理器以外放入 `/usr/local` 的安裝，無法確認執行過的安裝命令或安裝者。
 - 五台系統基線明確排除 GTKWave；不要把它當成共同必裝項。不部署 YosysHQ OSS CAD Suite 進 `/apps`，除非另開任務。
 
 # 舊安裝
