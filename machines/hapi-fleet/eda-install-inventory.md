@@ -123,13 +123,12 @@ source /apps/eda/cadence/xcelium.sh 25.03.005
 - Cadence CIC 多數 cshrc 仍假設 `/usr/cad/$VENDOR/$TOOL`。Zeus 本機 Genus／Conformal 已刪，這些路徑現在五台都沒有安裝樹。
 - 單元庫在 `/apps/cad/cell_library`：CBDK45、IC Contest、TSMC 018／40／90、SAED32／90。
 
-# 開放源碼（host-local，版本不一致）
+# 開放源碼（host-local；Yosys 已統一）
 
-- Mazu、Athena：PATH 上沒有 Yosys、GTKWave、Icarus、Verilator。
-- Cthulhu：手工 Yosys `0.35`、APT GTKWave `3.3.126`。
-- Valkyrie：手工 Yosys `0.35` 與 `yosys-abc`。
-- Zeus：手工 Yosys／SBY `0.63`、APT GTKWave `3.3.126`、Icarus `12.0`、Verilator `5.032`。
-- 2026-09-26 複查：三台的 `yosys` 都是各機 `root:root` 的 `/usr/local/bin/yosys`，資料目錄為 `/usr/local/share/yosys`；`dpkg-query -S` 查不到兩者的套件擁有權，因此不是目前由 APT 管理的安裝。Cthulhu／Valkyrie 是 `0.35`（`cc31c6ebc`），Zeus 是 `0.63`（`70a11c6bf`）。在 `/usr/local/src`、`/opt`、`/root` 未找到 Yosys 原始碼或安裝紀錄；只能確認是套件管理器以外放入 `/usr/local` 的安裝，無法確認執行過的安裝命令或安裝者。
+- 2026-09-26 五台均系統安裝官方 Release `v0.69` 的 Yosys，`yosys -V` 顯示 `0.69+post`（內嵌 Git SHA `143eb14f9cc55d6f8927e68523b0c9d2166ed02c`）。官方 `yosys.tar.gz` SHA-256 為 `6dad6412cae417f5a53e2c943c2aee160162cfc1bdd31669230da1b7e3522571`。五台 `/usr/local/bin/yosys` 均為 `root:root`、mode `755`、SHA-256 `10e6ae08baf36e40f04f2767c6a56521cd5b1030a8847ab68c55ae59d18d427d`；資料目錄為 `/usr/local/share/yosys`。
+- 從官方完整原始碼包以 CMake Release 建置，設定 `-DCMAKE_INSTALL_PREFIX=/usr/local -DYOSYS_ABC_EXECUTABLE=/usr/local/bin/abc`，同一份安裝包分發到五台。五台均以 `nobody` 執行 Verilog `synth -top top`，log 確認 ABC pass 與 AND／OR cells；`ldd` 無缺少 library。獨立的系統 `abc` 五台 SHA-256 仍是 `032d13f9c74cee1c70017fefa2e86ad18a271d1f9a8e66a5e97cb5341726a358`。
+- 舊版 Cthulhu／Valkyrie `0.35`、Zeus `0.63` 的 `/usr/local/bin/yosys*`、`/usr/local/share/yosys`、`/usr/local/lib/yosys` 已移除後再安裝新版本。舊 `yosys-abc` 已移除；新 Yosys 直接使用 `/usr/local/bin/abc`。原先三台舊版都不受 APT 管理；未找到原始安裝命令或安裝者。
+- Mazu、Athena 仍沒有 GTKWave、Icarus、Verilator；Cthulhu 的 APT GTKWave `3.3.126` 未改；Zeus 的 SBY、APT GTKWave `3.3.126`、Icarus `12.0`、Verilator `5.032` 未改。
 - 五台系統基線明確排除 GTKWave；不要把它當成共同必裝項。不部署 YosysHQ OSS CAD Suite 進 `/apps`，除非另開任務。
 
 # 舊安裝
