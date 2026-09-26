@@ -23,9 +23,20 @@ updated: 2026-09-26
 
 #278 的單例必要關係 Goal 已完成：3 份原始 LLM 回答直接消費為 TRUE／UNKNOWN／TRUE，固定第一份完整回答兩次 TRUE、移除三個索引關係兩次 timeout，62/62 actual precision members。詳細限制見 [native C 邊界](native-c-predicate-boundary.md)。跨題可重複收益仍由 #182 追蹤。
 
+## 三條路線實際執行（2026-09-26）
+
+使用者授權開始 #281 並允許 GPT-6 Astra 平行研究，已同時執行 #282／#287。各路線必須分開歸因，不能合計成「LLM 多解三題」。詳細證據為 `cpachecker-experiments/reports/issue281-execution-20260926/`、`issue282-execution-20260926/`、`issue287-execution-20260926/`；Wiki Breakthrough-Execution 統一索引。
+
+- **#281 原題表示入口。** 同 base e76bd0dc 的原始 pair-symmetr2 是3 arrays／0 loops／UNCHANGED；安全辨識不變global後3 loops／PRECISE／0 retained，現成index對齊已足夠。v2原題N100000/ILP32/原assert範圍在60CPU arm TRUE；600CPU配對兩次B0都OS CPU limit而無reported verdict，B1兩次TRUE。此題無合法loop head、Stock+array已解，LLM arm不適用，0研究模型呼叫。mutable-global保持UNCHANGED/FALSE，zero/equal controls FALSE。
+- **發現並修復的健全性缺陷。** v1 `N=INT_MIN` 的零次迴圈因共用ConstantComparison用C int做N-1而wrap，反例B0 FALSE／B1錯TRUE。v1停止且中止run不當timeout。v2以BigInteger規範化strict endpoint，要求index值域可在calculation type表示、rhs可表示、endpoint可在index type表示；不能把-2147483649做成int literal。INT_MIN/<與INT_MAX/>反例在v2 B0/B1全FALSE；PR288，11tests與Checkstyle通過。canonical all-checks與未改e76bd0dc同14個strictECJ錯誤，研究compile.warn建置不等於全綠。
+- **#282 auxiliary原題proof。** sorting_bubblesort_ground-1.i，N100000/ILP32，只加ACSL註解且C tokens不變。Frama-C31/Alt-Ergo2.5.4 reference84/84兩次。原y assertion loop的`a[x]<=a[y-1]`直接做distance induction，無需另造all-pairs lemma/ghost loop。模型只在人工作好的prefix/frame/contracts scaffold中補y關係，原樣候選也84/84兩次；移除prefix或distance各剩一個未證義務，錯誤strict assertion未被證明。CPA仍UNKNOWN，不能算CPA/完整模型策略新增解題。
+- **#287 既有整數表示。** 原輸入是reducercommutativity/avg10-2.i，N10；array abstraction因call/alias eligibility為UNCHANGED，不是已轉換後丟失sum。INTEGER BMC保留cast UF原題TRUE並重現，原C BV no-overflow、avg body/return-range與局部sum義務接合；精確BV MathSAT/Z3、CBMC仍timeout。rotate正確摘要是`Sum(x)+temp-x[i]=S`，中途Sum=S負控制FALSE。三次avg的loop counter累計33，k20不足，k64的bounding assertions保留。這是此題算術接合，不是通用INTEGER soundness宣稱；不需新增aggregate engine，沒有LLM增益。
+
+研究Meta transport合計7 live calls，已知16908 tokens另3次usage unknown；不含Astra協作本身用量，也不是總token/美元費用。#282兩份整體方案截斷排除，只1份完整局部repair；#287兩份完整研究回答、1份截斷及1次原VGuide回答，VGuide12個local predicates注入後仍UNKNOWN。原始输出／失败／usage不丟棄。現有格式與resolver沒有重寫，廣泛跨題收益仍未完成。
+
 ## 優先路線與詳細計畫（2026-09-26）
 
-使用者要求不同路線分開追蹤：#280 為總覽，#281 共同索引／陣列關係、#282 排序分解、#283 策略搜尋、#284 經驗證轉換、#285 輔助後端、#286 整體歸納、#287 reducer 總和守恆。之後授權選最有希望的一條做詳細計畫，選 #281；完整設計在 Wiki Shared-Index-Plan 與 `cpachecker-experiments/reports/issue281-shared-index-plan-20260925/PLAN.md`。本次只有來源核對與規劃，沒有新 verifier/model run。
+使用者要求不同路線分開追蹤：#280 為總覽，#281 共同索引／陣列關係、#282 排序分解、#283 策略搜尋、#284 經驗證轉換、#285 輔助後端、#286 整體歸納、#287 reducer 總和守恆。之後授權選最有希望的一條做詳細計畫，選 #281；完整設計在 Wiki Shared-Index-Plan 與 `cpachecker-experiments/reports/issue281-shared-index-plan-20260925/PLAN.md`。此段記錄執行前規劃；後續實測見上節。
 
 重新核對到重要的既有證據：9/22 `predicate-representation-goal-20260922/array-route.json` 的原始 pair-symmetr2 是 3 eligible arrays／0 loops／UNCHANGED；同批 N=100000 字面常數診斷版為 3 arrays／3 loops／PRECISE／0 remaining loops，匯出 C 已有 a/b/c index 對齊。該 probe 屬 runtime-4a6d353068，不能冒充目前 main 的結果或原題安全 verdict。目前 main e76bd0dc 的 TransformableLoop 仍明確排除 global bound。最短下一步是同版本重查，再安全辨識不變 global／沿用現成對齊；不能直接刪 global guard 或預設須實作共享索引。
 
