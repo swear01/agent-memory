@@ -5,10 +5,16 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-25
+updated: 2026-09-26
 ---
 
 # DVLab persistent storage migration inventory
+
+## Valkyrie 大型研究 log 用途核對（2026-09-26）
+
+- 針對使用者想清理的三處大宗做唯讀核對，`/mnt/md1` 當時已用 3,062,651,662,336 bytes。精確 raw `.log` 候選：ff945 `ia2b/log` 76,445 檔、863,129,272,320 allocated bytes；sam031023 `research/**/log*` 8,090 檔、746,570,694,656 bytes；tyyywei 三個實驗樹 54,654 檔、381,489,606,656 bytes；合計 **139,189 檔、1,991,189,573,632 bytes**。均是 PDR/QBF/SAT 求解逐步 trace，無多重 hardlink，2022 年後未修改。
+- ff945 的 282 份 CSV 與 sam031023 的 90 份 CSV 各自涵蓋所有候選 log 的 case basename，但尚未核對每次執行的 method/timeout/status，不能把 case-name 覆蓋當成完整備份。tyyywei 另有 509 個小型 CSV 保存 solver 結果與時間，但 54,654 log 的逐執行覆蓋尚未證明；其 QDIMACS/AIG 輸入混在候選樹內，不能整樹刪。sam 的 123 個 `*_socv_proof.itp` 配置 69,231,484,928 bytes，屬 proof trace，明確另行保留。
+- 本次沒有刪除。詳細用途、保護範圍與可執行的後續門檻見 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-log-review-20260926/REPORT.md`。未證明原始 raw log 已由外接長碟保存；若要回收約 1.99 TB 而保留完整 trace，可先做有清單、雜湊和讀回驗證的壓縮封存；若永久丟棄 trace，需先完成逐執行 coverage 與例外樣本保存。
 
 ## Valkyrie 舊帳號可重建快取清理（2026-09-25）
 
