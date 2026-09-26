@@ -10,6 +10,12 @@ updated: 2026-09-26
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie 三帳號大型研究輸出清理完成（2026-09-26）
+
+- 使用者看過用途後，明確決定永久清除久未使用的大型 raw log 與 trace。Valkyrie `/mnt/md1` 精確移除 ff945 76,445 `.log`／863,129,272,320 bytes、sam031023 8,090 `.log` 加 123 個 `*_socv_proof.itp`／815,802,179,584 bytes、tyyywei 54,654 `.log`／381,489,606,656 bytes；合計 **139,312 檔、2,060,421,058,560 bytes（1.874 TiB）**，逐批 `statvfs` 淨釋放與回執配置量完全一致。`df` 已用由 3,062,651,662,336 降為 **1,002,230,603,776 bytes（14%）**。
+- 三專案其餘 **50,597 個檔案／連結**（結果 CSV、source、Git、論文、AIG/QDIMACS 輸入等）最後 exact remaining-set 與刪前 identity/symlink target 全部不變。Zeus `<admin-home>/private-system-backups/valkyrie-large-log-cleanup-20260926/summaries-and-samples.tar.zst` 是 918 個結果／文件與代表 log/proof 樣本的私有 5,060,579-byte 封存，SHA-256 `2c101f98b525d74ab098058a3272fb22f0457900739ed2a9a5d8e1edee474cad`；zstd、完整 member-set 與 tar compare 通過。這**不是** 2.06 TB 原始 trace 的完整備份，不能聲稱可恢復其詳細過程。
+- 完整 189,909 項刪前 inventory、逐檔刪除回執、保留驗證、腳本與 SHA256SUMS 在 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-large-log-cleanup-20260926/RESULT.md`。同日下方「用途核對／未刪」段落是執行前快照，不能再當現況。現行 NFS home、外接碟及其他帳號未處理。
+
 ## Valkyrie 大型研究 log 用途核對（2026-09-26）
 
 - 針對使用者想清理的三處大宗做唯讀核對，`/mnt/md1` 當時已用 3,062,651,662,336 bytes。精確 raw `.log` 候選：ff945 `ia2b/log` 76,445 檔、863,129,272,320 allocated bytes；sam031023 `research/**/log*` 8,090 檔、746,570,694,656 bytes；tyyywei 三個實驗樹 54,654 檔、381,489,606,656 bytes；合計 **139,189 檔、1,991,189,573,632 bytes**。均是 PDR/QBF/SAT 求解逐步 trace，無多重 hardlink，2022 年後未修改。
