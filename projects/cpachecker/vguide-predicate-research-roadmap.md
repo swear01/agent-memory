@@ -35,6 +35,15 @@ updated: 2026-09-27
 
 9/27 reducer v1 的完整官方 unreach-call 28 題配對收齊：Stock 2 solved／26 UNKNOWN，路線 11 solved／17 UNKNOWN，新增10、退步1、淨增9、wrong0。25題在已審 signed fragment 中使用候選，3題保留Stock；另22個其他property仍在全50 inventory。這是配置／表示法收益，v1沒有LLM。10new 的 Stock 原因分為5 CPU耗盡、2 MathSAT interpolation error、3 cgroupOOM；lost是rangesum05，抽象反例接不回原C而UNKNOWN。新解／退步重現及全hard218仍未完成，不能把此family淨增當全218或LLM增益。見 `three-route-fullset-20260926/issue287-v1-family-independent-audit.json`。
 
+### 9/27 完整性與歸因更正
+
+**舊排序 TRUE 不能外推成完整初始化語義的原 C 證明。** Frama-C31 一般 `-wp-rte` 不會自動包含全部局部變數初始化檢查；須明確設定 `-rte-initialized` 並核對所有實際函式。原兩份成功完整LLM plan逐byte不改，補此設定後bubble為101/105 UNKNOWN、selection為168/178 UNKNOWN，未證4／10個義務全屬陣列讀取初始化。它們不是C反例，也不表示原invariants已被否證；但原6題F1的2TRUE/4UNKNOWN和hard218單例增量只保留為legacy configuration結果，完整原C proof gain為待定。新16题consumer與兩safe修補必須保留這些義務。#282 comment5852367214、#280 comment5852383144及Wiki Three-Route-Fullset已公開更正；下方舊80/80、84/84、127/127與99/99歷史證據亦不能無條件外推完整初始化語義。
+
+- **模型收益需相同策略的無候選對照。** reducer v4同時改人工gate precision、CPU分配、UNKNOWN後exact fallback；25題15TRUE/5FALSE/5UNKNOWN、完整family28為21solved，對Stock19new/0lost，但不能全歸因bounds，更不是LLM增益。五rangesum各用不到舊38CPU，主要差別是舊UNKNOWN未進exact分支。v5/v6對v4只衡量替代人工，另凍結同策略去除初始precision的full25 F0才分離模型增量。hard218仍5new/2未解/211未套用，family額外收益未增加hard218；重現及正式全集未完成。
+- **研究檔案adapter不等於production輸出接通。** #287原始模型SMT predmap確經既有initialPredicates消費，但function-scoped qualified symbols、虛擬PREDMAP_FILE carrier不是native-C expression或真CFA head。不要以重新標籤冒充原resolver整合；優先直接讓模型輸出已支援native C與真head，先核encoding/placement/實際precision，再看解題，無證據不造SMT→C transcoder。
+- **完整模型收據才能採納成本內證明。** #282舊採納器對缺receipt或model timeout仍可能保留TRUE；外部overlay核完整contiguous draw/request/response/plan ledger、一對一hash、正常退出、usage自洽與總額。2正例＋7負控制獨立複驗PASS；缺或矛盾usage保留unknown，不能當零或已知subtotal算全成本。此修補只關乎完整性，不會補齊上述初始化語義缺口。見`three-route-fullset-20260926/issue282-f1-boundary-followup.json`。
+- **byte相同C仍可能有不同嚴格request key。** #281重新匯出使structured trace中的source.file路徑改變，原cache無法命中；v2失敗保留。明示path-only等價localhost fixture的v3保留原回答byte，actual Java request逐byte核對，完整13題5TRUE/8UNKNOWN，5次draw有45/45precision members；其中3題轉換直解、2題用LLM回答，double第3份未用。這是capability/developmentpolicy，每題whole-service600CPU/900wall內，但原6次生成12226tokens在外且generationCPU未知，不冒充含生成正式portfolio。見`issue281-native-family-v3-independent-audit.json`。
+
 ### 已驗證的 consumer 與算術限制
 
 - **cast UF 不足以保留 unsigned 語義。** `ignoreExtractExtend=false` 的 INTEGER 路徑，在同寬 signed/unsigned 比較與 unsigned wrap 兩個原 C 反例給錯誤 TRUE；精確 BV 為 FALSE。既有 `cpa.predicate.encodeOverflowsWithUFs=true` 使這兩個控制恢復 FALSE，應先測現成功能，不必重寫 resolver。但這只是兩個控制，不能推論通用 soundness；no-overflow property 也不能代替明確 cast、unsigned 或 pointer 操作的接合審查。原 signed fragment 的排除條件仍有效。root 已逐份核對六個 raw logs／source hashes，見 `three-route-fullset-20260926/issue287-signedness-independent-audit.json`。
