@@ -5,14 +5,14 @@ project: dvlab-mis
 tags: [hackmd, google-drive, google-docs, documentation]
 status: active
 created: 2026-08-25
-updated: 2026-09-16
+updated: 2026-09-28
 ---
 
 # DVLab MIS HackMD to Google Docs migration
 
 ## 正式架構
 
-- 私有網管文件的正式入口是共用網管帳號所擁有、維持 `Restricted` 的 `DVLab-MIS` Google Drive 資料夾。
+- 私有網管文件的正式入口是共用 DVLab 帳號所擁有、維持 `Restricted` 的 `DVLab-MIS` Google Drive 資料夾。`about.user` 可確認共用 DVLab 帳號身分，不能單憑顯示名稱確認其 MIS 身分；還需核對目標資料夾與文件的擁有者及既有定位。
 - 2026-08 遷移當時是 19 份獨立正式文件加 1 份 `00 - DVLab MIS 文件索引`，全部為 Google 原生文件；索引取代 HackMD tags。這是歷史數量，後續新增服務文件應查即時清單。
 - 2026-08-25 追加納入 `DVLab 本地 LLM：Valkyrie NInfer + Zeus Bifrost` 與 `DVLab 伺服器無主帳號清理公告`。
 - 2026-09-11 起：canonical 已在 Google Drive。使用者確認後，HackMD 只保留給實驗室同學看的公開文件；其餘網管／私有 note 已用 CLI `notes delete`／`team-notes delete` 丟進垃圾桶（可還原，不是清空垃圾桶）。
@@ -32,13 +32,13 @@ updated: 2026-09-16
 
 ## 日常寫回（2026-09-11 已驗證）
 
-- 本機預設 `gws` 登入的是個人 Google 帳號，**不是**網管共用帳號。寫 `DVLab-MIS` 前先用 rclone remote `dvlab-drive` 打 Drive `about.user`，確認顯示名稱是共用網管帳號後，才把該 remote 的 access token 拿去打 Docs API。
+- 本機預設 `gws` 登入的是個人 Google 帳號，**不是**共用 DVLab 帳號。寫 `DVLab-MIS` 前先用 rclone remote `dvlab-drive` 打 Drive `about.user`，確認共用 DVLab 帳號身分，再核對目標資料夾與文件的擁有者；沒有預期 MIS 帳號資料時，不可只憑 `about.user` 宣稱已驗證 MIS 身分。
 - 正常修改用 Docs API 增量更新（`replaceAllText` / 在既有清單項換行處 `insertText`），加 `writeControl.requiredRevisionId`；寫完立刻 export `text/plain` 讀回。不要用 Markdown 全文覆蓋，不要建同名副本。
 - 2026-09-11 SSID 切換已寫回 `353 network setup manual(private)` 與 `Notes from DVLab MIS Team`：實驗室 Wi-Fi 只剩 ASUS 的 `DVLab353`，R9000 無線關閉，舊名 `DVLab353-2` 停用。
 
 ## 操作邊界
 
-- 每次操作必須以 Google 畫面顯示的帳號身分確認共用網管帳號，不可把 URL 的 `u/N` 當成固定身分。
+- 每次操作必須核對 Google 帳號身分與目標資料夾／文件擁有者，不可把 URL 的 `u/N` 當成固定身分，也不可只憑帳號顯示名稱推定 MIS 身分。
 - 更新既有文件時依 file ID 寫回並讀回驗證，不建立同名副本。
 - 記憶不得保存密碼、API key、文件正文、帳號資料、HackMD note ID、Google file ID 或受限文件 URL；精確對照以受控遷移包的 mapping 檔為準。
 
