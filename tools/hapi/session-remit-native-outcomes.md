@@ -2,7 +2,7 @@
 title: HAPI remit 結果必須依 native terminal outcome 判定
 scope: tools/hapi
 status: verified
-updated: 2026-09-09
+updated: 2026-09-28
 ---
 
 `Session.thinking === false` 不是成功證據：heartbeat expiry、abort、native error 都可能清除 thinking。`wait-peer` 必須在該 remit 的訊息視窗找到明確 native success；部分 prose 加 idle 不能回傳 completed。`ready` 也不是成功事件，部分 launcher 在失敗後仍會發送。
@@ -20,3 +20,5 @@ Pi `turn_end` 是 LLM/tool-loop 小回合，不能當整個 prompt 結束；等 
 `AcpSdkBackend.prompt` 的 `session/prompt` RPC 拒絕時，原本沒有 stopReason；launcher 捕捉錯誤並保持 active，會讓 wait-peer 等到 timeout。共用 backend 的 catch 將 stopReason 設為 error，重新拋出原錯誤，既有 finally 排空輸出後發布失敗 terminal。Cursor 已在外層延後 terminal 到重試決策完成，因此中間重試不會誤報失敗。新增 producer 與 steering 回歸在舊程式碼皆失敗，修正後通過。
 
 Pi 文字輸出也是 cumulative snapshot：Hub row id 每筆不同，但 nested `data.id` 穩定且 `streamSnapshot: true`。`wait-peer` 與 `inspect-peer` 應按此 stream ID 更新同一文字區塊，保留第一次出現的位置與最新內容，不可把每個前綴都加入答案，也不可按文字內容去重。`wait-peer` 的 map 必須涵蓋整個 remit 視窗，不能逐頁重建；一般非 snapshot 訊息即使 data.id 相同仍需保留。兩個新增回歸在舊 collector 失敗、修正後通过，涵蓋跨頁、不同 stream ID、最新 row metadata 與普通文字。
+
+2026-09-27 的 swairM5 Pi 文件查核案例：父 session 兩次 `wait-peer` 逾時後封存子 session；後來 `inspect-peer --limit 100` 回傳 `lifecycleState=archived`，只擷取到三則 user 文字、沒有 agent 文字。`inspect-peer` 會從 Hub 訊息列擷取可辨識的文字，這個結果不能區分 Hub 未儲存、同步中斷或擷取器未解析，也不能推論 Pi 本機沒有回覆或正式文件沒有部分寫入。重新寫入前先以已核對身分的帳號讀回正式文件。另一次重開 Pi 在 webhook 前因 `Canonical hapi-session-control skill is shadowed or could not be verified` 退出，屬於獨立的啟動錯誤；該訊息只表示實際解析的技能未通過與內建內容的比對，不能單憑字面斷定哪個路徑遮蔽。事後本機技能解析比對通過，新 Pi 也成功啟動；舊 Pi 的訊息缺失原因仍未證實。
