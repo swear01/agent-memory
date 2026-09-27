@@ -5,10 +5,16 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 # DVLab persistent storage migration inventory
+
+## Valkyrie `/mnt/md1` 實體碟讀取故障與轉存（2026-09-27）
+
+- `/mnt/md1` 所在實體 `/dev/sda` 的核心紀錄多次回報 sector `44055104` unrecovered read error；實測讀取 `yenlu_mepu/gv/gv0/engine/yosys/techlibs/ecp5/synth_ecp5.o` 得到 EIO。SMART Reallocated_Sector_Ct=16、Current_Pending_Sector=8、Offline_Uncorrectable=8，不能因總評為 PASSED 就當健康碟使用。該 `.o` 是編譯物件；相鄰 `.cc` 與 `.d` 仍可讀。
+- 故障發現後停止 `/mnt/md1` 來源刪除，改以單次讀來源、保留原件方式，將舊帳號封存到既有 NFS `/home` 下的管理員私有目錄。搶救回執明列沒有對來源做逐位元二次比對；封存以 zstd 完整性、tar member 數及 SHA-256 讀回驗證。`yenlu_mepu` 封存排除上述唯一已知無法讀取的 `.o`，不得宣稱其全樹無缺漏。現況與逐項回執見 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-g1-migration-20260926/RESULT.md`。
+- 故障前已有 15 個小帳號經來源逐項比對、NFS 跨主機 SHA 核對後移除；Charades 公開影格／ZIP／解包影片與 STAR 公開姿態檔、兩個可重建環境也經各自校驗清理。這批回執合計釋放 144,267,186,176 bytes。仍在進行的舊帳號與隔離的 7,011,153 個失效影格連結不可當作已清理容量。
 
 ## Valkyrie `/mnt/md1` 清後容量分布（2026-09-26）
 
