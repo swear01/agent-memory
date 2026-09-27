@@ -1,20 +1,20 @@
 ---
-title: DVLab IKEv2 VPN 雙軌架構與 Windows 用戶端排查
+title: DVLab IKEv2 VPN 現況與 Windows 用戶端排查
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
-updated: 2026-09-21
+updated: 2026-09-28
 tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 ---
 
-# DVLab IKEv2 VPN 雙軌架構與 Windows 用戶端排查
+# DVLab IKEv2 VPN 現況與 Windows 用戶端排查
 
 ## 架構現況
 
-- 實驗室 IKEv2 VPN 採平台雙軌制：
-  - Apple / Android：端點走純 PSK（Pre-Shared Key）模式，不需個人或共用使用者帳號密碼。
-  - Windows 10 / 11：現行版本為 `DVLab IKEv2 EAP`，走獨立端點與 EAP-MSCHAPv2 認證，需匯入專用 CA 根憑證並輸入共用認證帳密。
-- 正式安裝包位於伺服器 `<remote-home>/dvlab-vpn/latest/DVLab-IKEv2-VPN.zip`，由發布流程維護。排查連線問題時，應先確認用戶端取得的是最新釋出包，不可單憑本機暫存目錄的歷史 ZIP 作為依據。
+- 2026-09-21 使用者確認 Windows 現在也使用 PSK，並回報 Windows 與 Mac 同時連線會互踢；根因尚未驗證。
+- Windows PSK 的用戶端名稱及 Local ID 尚待核對；防火牆 PSK 端點為 `.141`。不可再把舊 EAP 獨立端點紀錄當作現況，或據此排除 Windows/Mac 連線衝突。
+- 本地維運文件與 `<remote-home>/dvlab-vpn/latest/DVLab-IKEv2-VPN.zip` 在查核時仍記載／包含 2026-07-26 EAP 部署。`latest` 路徑和記憶更新日期均不足以證明內容反映目前部署，必須核對實際用戶端與資料來源。
+- 以下 EAP 與腳本排查為歷史紀錄，不是目前 PSK 的安裝指引。
 
 ## Windows 腳本 PropertyNotFoundStrict 根因與處置
 
@@ -24,13 +24,39 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
   2. Windows 原生產生的 `rasphone.pbk` 常為 ANSI 或 UTF-8。強制以 Unicode 讀取會使換行無法識別，回傳單一 scalar 字串（或空白檔案為 null）。
   3. 腳本開頭設有 `Set-StrictMode -Version Latest`，存取 scalar 物件的 `.Count` 會直接觸發例外終止。
 - **處置**：
-  - 引導同學直接自伺服器重新取得最新正式安裝包（已切換至 EAP 模式，不再呼叫 `Set-RasphonePreSharedKey`）。
+  - 當時處置為改用 EAP 安裝包，不再呼叫 `Set-RasphonePreSharedKey`；Windows 後續已改用 PSK，勿將此歷史處置當作現行安裝指引。
   - 若需維護舊版或撰寫類似 PowerShell 腳本，檔案讀取行數應一律使用強制陣列 `@(Get-Content -LiteralPath $PbkPath)`，並動態偵測檔案 BOM / 編碼；修改電話簿等次要設定需加 `try-catch` 防禦，避免阻斷主體 VPN profile 建立。
 
 ## 文件與公開說明邊界
 
 - 公開說明文件保留給成員閱讀之安裝指引，不直接列出明文認證帳密，引導成員透過驗證帳號由內部伺服器取得包含設定與認證資訊的安裝包。
-- 排查同學詢問「是否有帳號密碼」時，需先區分作業系統：Apple/Android 無帳密，Windows 需填入安裝包隨附之共用認證。
+- 排查認證方式時，先核對實際用戶端與 profile，不能只憑作業系統推斷 Windows 必用 EAP 帳密。
+
+## PSK 同時連線與客戶端識別（2026-09-21 查核）
+
+- 本地維運文件位於 `<project-root>/playground/dvlab-mis-docs/IKEv2 Remote Access(private).md`；內容含機密，查詢時只輸出需要的非機密欄位。
+- 文件記載 PSK gateway 的 `Peer ID Type` 為 `Any`、connection 為 `Remote Access (Server Role)`。這是文件紀錄，不是即時防火牆查核；不得據此宣稱已排除現行限制。
+- 正式 ZIP 內 Apple IKEv2 payload 未設定 `LocalIdentifier`。未設定不能直接推斷所有裝置送出相同 ID，須檢查實際 IKE IDi 或設備日誌。
+- 本地 Android 說明將 `IPSec identifier` 標成 Remote ID 並要求填伺服器位址。AOSP `Ikev2VpnProfile.java` 的 `fromVpnProfile()` 將 `profile.ipsecIdentifier` 傳入 Builder 的 user identity，`toVpnProfile()` 也將 `getUserIdentity()` 存入該欄位。因此不能把 Android 原生此欄位當成 Apple RemoteIdentifier；照同一值設定會共用客戶端身分，值得優先排查。
+- Zyxel Community 的 `Multiple IKEv2 gateways in parallel`（discussion 16173）有 FLEX200 使用者回報相同 client Local ID 導致後連線替換前連線；員工確認不同 client Local ID 可同時連線。該案例使用憑證且涉及多 gateway，只能支持排查方向，不足以證明本部署 PSK 互踢的根因。
+- 尚未做雙裝置同時連線驗證，也未修改正式設定或安裝包。
+
+## 防火牆唯讀實查（2026-09-21）
+
+- 從 zeus 使用維運文件中的 LAN 管理位址、既有 known_hosts 與管理認證，可 SSH 登入 USG FLEX 200；WAN 位址沒有 known_hosts 並不表示沒有可用管理入口。
+- 此設備的 SSH 遠端 command 模式回報 `% session is not found`；`ssh -tt` 進入互動會話並由 stdin 傳入唯讀命令成功。不得因此跳過主機金鑰驗證。
+- 已驗證可用：`show version`、`show running-config`、`show isakmp sa`、`show sa monitor`、`show logging entries category ike`、`show logging debug entries category ike`。`show ikev2 ?` 與 `show vpn ?` 在此會話回報 parse error，不要當作有效查詢。
+- 韌體 V5.42(ABUI.1)。現行 `RemoteAccess_IKEv2` 為 pre-share、`peer-id type any`、remote-access-server；位址池有 250 個位址。設定未見每把 PSK 單連線限制，但這不足以排除實作的重複身分／來源位址處理。
+- 2026-09-21 查核時 EAP gateway 仍存在且啟用；這是當時狀態，不代表 Windows 正在使用它。此次初次即時檢查只見一條 PSK IKE SA；尚不能從伺服器輸出辨認其作業系統。
+- 現存 IKE 日誌只有近期保活，未涵蓋使用者回報的互踢事件。尚未取得雙裝置 IDi 或刪除原因，不可宣稱 Local ID 衝突已證實。下一步是兩台受控重現時同步讀取 IKE 日誌。
+
+## EAP 退役與 utux 位址（2026-09-27）
+
+- 使用者確認 Windows 現用 PSK 後，授權停用舊 EAP 並將原 `.143` 分配給 utux。USG FLEX 200 已將 `RemoteAccess_IKEv2_EAP` 的 IKEv2 policy 和 crypto map 設為 deactivate；即時讀回 EAP `active: no`，PSK `RemoteAccess_IKEv2` 仍為 `active: yes`。
+- `wan2:1` 保留 `.143`，描述改為 utux；新 1:1 NAT 對應 utux 的既有內網位址。`.142:25565` port forward 曾在 2026-09-27 刪除，但 2026-09-28 即時讀回已恢復並啟用，亦轉送 utux。WAN→utux 的既有政策只允許 Minecraft TCP 25565；內網 NAT loopback 下掃到 SSH 開放，不能據此推斷 WAN 的 SSH 也開放。
+- 2026-09-28 在實驗室內測到 `.143:25565` 和 `.142:25565` 均可連；外部視角尚未驗證。防火牆 `write` 無錯誤，但設備不支援 `show startup-config`，未直接讀回持久化設定。本機網路文件已按即時設定修正；Google Drive 正式文件須另外讀回驗證。
+- 2026-09-28 HAPI `inspect-peer --limit 100` 的 `messages` 只擷取 Hub 訊息列中 CLI 可辨識的文字；對已封存的 Pi 工作階段只顯示三則 user 文字，沒有可讀的 Pi agent 文字。這不能區分 Hub 未儲存、同步中斷或擷取器未解析，也不能推論 Pi 在 Mac 未顯示或執行，或判定 Google 文件寫入狀態；須以正式 Google 文件讀回為準。
+
 ## Windows IPsec 300 秒閒置斷線：已驗證設定與未完成驗證
 
 2026-09-21 在 Swear01_PC 的 Windows 原生 IKEv2 EAP 連線觀察到兩次相同序列：建立 IPsec Quick Mode SA 後整整 300 秒結束，再約 2 秒由 RasClient 記錄 20226、reason code 828（ERROR_IDLE_TIMEOUT）。同期檢查未見 Wi-Fi 斷線或休眠事件；這支持閒置回收假說，但不代表已排除所有其他原因。
