@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-26
+updated: 2026-09-27
 ---
 
 # CPAchecker 研究主線與 LLM 使用授權
@@ -31,7 +31,9 @@ updated: 2026-09-26
 
 #281 分開 Stock、保留 strict-bound safety 修正的 pre-global array、patched array；#282 分開人工 scaffold、LLM 自動發現與輔助 backend／CPA consumer；#287 INTEGER 成功必有每題原 C 接合，signed overflow gate 與 cast UF 並不足以涵蓋任意 unsigned/mixed comparison/pointer 操作。全部記 new/lost/wrong/unknown、coverage、整體 CPU 和模型成本；預先固定 fallback 與抽樣，事後最好結果 union 不冒充等成本 portfolio。正式 population 按既有 idle-ready／P-core protocol，候選整體 gate+verification 亦納入600 CPU秒預算。新完整集授權是 fresh matched research，沒有重啟舊#269 slot／#197/#215診斷replay包或宣稱舊缺陷已修。
 
-主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三位 Astra owner 各自有獨立 active goal；前輪結果是起點，不是這次 goal 的完成證據。
+主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三位 Astra owner 各自已設獨立 goal；前輪結果是起點，不是這次 goal 的完成證據。9/27 使用者要求繼續，三位 owner 已恢復執行；平台 usageLimited／blocked 狀態不能用 update_goal 改回 active，也不能為此假標完成。
+
+9/27 reducer v1 的完整官方 unreach-call 28 題配對收齊：Stock 2 solved／26 UNKNOWN，路線 11 solved／17 UNKNOWN，新增10、退步1、淨增9、wrong0。25題在已審 signed fragment 中使用候選，3題保留Stock；另22個其他property仍在全50 inventory。這是配置／表示法收益，v1沒有LLM。10new 的 Stock 原因分為5 CPU耗盡、2 MathSAT interpolation error、3 cgroupOOM；lost是rangesum05，抽象反例接不回原C而UNKNOWN。新解／退步重現及全hard218仍未完成，不能把此family淨增當全218或LLM增益。見 `three-route-fullset-20260926/issue287-v1-family-independent-audit.json`。
 
 ### 已驗證的 consumer 與算術限制
 
@@ -40,6 +42,8 @@ updated: 2026-09-26
 - **整體成本不能只看最後 checker。** gate、INTEGER 和必要 exact-BV validation 均計入同一600 CPU秒；各 phase 的 `prlimit` 是單 process 限制，還須核對 `RUSAGE_CHILDREN` 累計與正式 cgroup 總 CPU，再採納 verdict。證明義務全過和 consumer 實際使用只證明該例可用，新增解題仍需配對 baseline 與完整分母。
 - **native 轉換成功與關係足夠是不同問題。** #281 double/triple 各三份原始 live LLM 回答，53 個 predicate/head bindings 全部通過 native C consumer、實際注入且 exact uninstantiated precision membership 全中；六次離線 replay 為3 TRUE／3次600CPU UNKNOWN。raw回答、來源、validated/injected multiset與terminal logs已獨立核對；pipeline重排使舊order-sensitive介面旗標false，不等於丟候選。失敗三份不能再歸因resolver拒收，仍需關係充分性／refinement診斷。這是兩題機制證據，不是每題一次600CPU的best-of3或完整集收益；見 `three-route-fullset-20260926/issue281-native-six-independent-audit.json`。
 - **印出 verdict 不等於子程序完整成功。** reducer研究wrapper曾只看log，可能把印TRUE後hang到inner wall cap的子程序採納，且外層wrapperexit0掩蓋逾時。新正式兩臂啟動前以`exit==0 && !wall_timeout`約束effective verdict，raw verdict仍保存；gate與INTEGER／exact fallback都消費effective verdict。12個真child的正常／nonzero／timeout控制及獨立複驗全過，原frozen版本保留。見 `three-route-fullset-20260926/issue287-v4v5-r1-local-review.json`。這是結果完整性修補，不能冒充signed fragment健全性的通用證明。
+- **整個 cgroup OOM 會連 wrapper 一起殺掉。** 因此缺少terminal JSON不必然是infrastructure failure；有systemd明確`Finished with result: oom-kill`且launch/source證據吻合時，應記資源UNKNOWN，從服務紀錄取得可觀測CPU/wall，unknown exit保持null，不虛構-9或0。沒有明確終局證據仍是infra；原missing-terminal紀錄保留，用獨立reconciliation接合，不覆寫原始失敗。修正collector的fault controls與獨立審查PASS，且新Stock sum20實際OOM成功分類，見 `three-route-fullset-20260926/issue281-resource-runner-independent-audit.json` 與reducer完整family audit。
+- **候選都進入precision，仍可能少一條關鍵bound。** 原triple第一份LLM回答已全部native消費但600CPU UNKNOWN；保持其餘7條不變，只追加人工診斷`c:__array_index_a <= 300000`後TRUE約2.5CPU、8/8 exactmembers。這支持該配置的關係充分性解釋，不是通用數學必要性、resolver修復或LLM自行發現。見 `three-route-fullset-20260926/issue281-single-bound-independent-audit.json`。
 
 ## 三條路線實際執行（2026-09-26）
 
