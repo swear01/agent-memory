@@ -10,6 +10,12 @@ updated: 2026-09-27
 
 # DVLab persistent storage migration inventory
 
+## 其他舊 home 與備份工作碟現場盤點（2026-09-27，唯讀）
+
+- Zeus `/home.bak` 仍掛載本機 ext4，頂層已空。NAS 舊 home 仍在同一份 NFS `/home`：G3 `.backup/` 有 29 個 tar、合計 1,313,249,259,520 bytes；G4 `copy/cthulhu_home/` 有 19 個 tgz、合計 279,240,795,714 bytes，另有兩個搬移輔助檔。兩個 NFS 位址不是兩份資料。長備份碟記錄顯示 Canonical Home 54 卷已於 09-20 完整驗證並歸位，但本次外接碟未接上 Mazu，未對實體成品重新讀回；不能把這次唯讀盤點當成新的刪除驗證。
+- 被 NFS `/home` 掛載遮住的各機本地 home 現有：Valkyrie `/mnt/md0/home` **163,920,551,936 bytes**、Athena **10,740,592,640 bytes**（其中 `piohuang/.cache` 10,593,132,544）、Cthulhu **323,706,880 bytes**、Mazu **91,299,840 bytes**。Valkyrie 大宗是 `madmax` 121,963,282,432、`dvlab` 17,906,798,592、`hchchiu` 17,906,409,472、`chinyi0523` 5,865,545,728 bytes。`madmax` 主要為 `DLCV/checkpoints` 108,544,126,976 與 `DLCV/final.bak` 13,419,143,168 bytes；現行 NFS home 沒有這兩個同路徑。舊「Valkyrie hidden vs Zeus exact」清單對 `madmax` 只證實 3 檔、19,118,293 logical bytes，不能據此清除整個 122 GB；其他路徑是否被 G2/G3/長備份覆蓋尚待比對。
+- Mazu `/usr/2TB-SSD/backup-work` 現用 **593,253,756,928 bytes**。其中 `long-backup-clean-swear02` 414,930,567,168 bytes，主要是兩個已寫入長碟的精簡來源檔 `dvlab.cleaned.tgz`（178,168,055,053）與 `yoctol.cleaned.tgz`（236,762,429,270）；`zeus-homebak-retained-20260921` 134,911,791,104 bytes 是須保留的舊帳號私有保存包；`canonical-recovery-20260912` 33,000,181,760 與 `canonical-repack-20260915` 10,411,163,648 bytes 是待分類工作／恢復證據。長碟目前未掛載，不能只憑檔名與大小把 SSD 來源刪掉。本次未移動或刪除。
+
 ## Valkyrie `/mnt/md1` 實體碟讀取故障與轉存（2026-09-27）
 
 - `/mnt/md1` 所在實體 `/dev/sda` 的核心紀錄多次回報 sector `44055104` unrecovered read error；實測讀取 `yenlu_mepu/gv/gv0/engine/yosys/techlibs/ecp5/synth_ecp5.o` 得到 EIO。SMART Reallocated_Sector_Ct=16、Current_Pending_Sector=8、Offline_Uncorrectable=8，不能因總評為 PASSED 就當健康碟使用。該 `.o` 是編譯物件；相鄰 `.cc` 與 `.d` 仍可讀。
