@@ -4,7 +4,7 @@ scope: tools/git
 tool: gh
 status: active
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-28
 tags: [git, worktree, gh, merge]
 ---
 
@@ -29,7 +29,10 @@ cannot delete branch '<feature>' used by worktree at <task-worktree>
 
 正確順序：確認 GitHub 已合併 → 確認 task worktree 乾淨 → 普通
 `git worktree remove` + `git worktree prune` → 在 main checkout
-`git branch -d <feature>`。不要為了刪分支對 worktree 用 `--force`。
+`git branch -d <feature>`。若普通移除只因 submodule 被拒絕，完成歸屬、
+乾淨狀態與無使用中程序檢查後可用 `--force`；見
+[子模組清理](worktree-submodule-cleanup.md)。2026-09-28 使用者已要求移除
+`personal-pr-workflow` 的強制清理禁令。
 
 2026-09-12 在 `deepseek-latch-gateway` PR #14 與 docs PR #15 各發生一次，
 GitHub merge 都已成功，只有本機刪分支失敗。
