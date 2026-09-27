@@ -45,3 +45,28 @@ updated: 2026-09-26
    - POP3 協定預設會在本地客戶端抓取信件後將伺服器端郵件刪除。
    - 帳號新增完成後，必須進入 macOS 郵件「設定」→「帳號」→ 該校園帳號：
      - 將「收取郵件後移除伺服器上的備份」設為「**一個月之後**」或「**永不**」，確保網頁版 Webmail 2.0 信件完整保留。
+
+## macOS Mail.app AppleScript 自動化配置技巧
+
+若在 macOS GUI 中因自動管理連線或快取導致無法直接修改 SMTP 參數，可透過 AppleScript 直接操作 `smtp server` 物件進行原地修正：
+
+```applescript
+tell application "Mail"
+    set s to smtp server "ntu.edu.tw"
+    set server name of s to "smtps.ntu.edu.tw"
+    set user name of s to "<student-id>"
+    set port of s to 465
+    set uses ssl of s to true
+    set authentication of s to password
+end tell
+```
+
+同時，POP 帳號的防刪信保護亦可直接透過 AppleScript 強制鎖定：
+
+```applescript
+tell application "Mail"
+    set acc to first pop account
+    set delete mail on server of acc to false
+    set delete messages when moved from inbox of acc to false
+end tell
+```
