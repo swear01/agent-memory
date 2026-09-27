@@ -16,7 +16,8 @@ updated: 2026-09-27
 - 此碟是 512-byte 邏輯／4096-byte 實體扇區。現有 8 個 pending logical sectors 與反覆同一 LBA 相符於一個 4 KiB 實體區塊，但未完整掃描整碟，不能宣稱其他區域無錯。2026-09-27 再查 SMART 計數未增加，核心最後錯誤仍在同一 LBA。
 - 對應 `.cc`、`.d` 已另存 NFS `private-system-backups/valkyrie-g1-migration-20260926/recovery-synth-ecp5/` 並核對 SHA；來源 `.cc` 的 SHA-256 是 `7daa9c4af06689e88cb71edffd418f2b85cddbc5b57e2900d29a9a00754ba7de`。NFS G3 `.backup/yenlu_mepu.tar` 有同路徑編譯物件，但與損壞原檔大小／mtime 不同；G4 `copy/cthulhu_home/yenlu_mepu.tgz` 無同路徑成員。原檔位元尚未精確恢復，可用保存的原始碼／建置樹於健康儲存重新編譯。不要以覆寫壞扇區、fsck 或 SMART PASSED 取代救援與換碟。
 - 故障發現後停止 `/mnt/md1` 來源刪除，改以單次讀來源、保留原件方式，將舊帳號封存到既有 NFS `/home` 下的管理員私有目錄。搶救回執明列沒有對來源做逐位元二次比對；封存以 zstd 完整性、tar member 數及 SHA-256 讀回驗證。`yenlu_mepu` 封存排除上述唯一已知無法讀取的 `.o`，不得宣稱其全樹無缺漏。現況與逐項回執見 Zeus `<admin-home>/playground/storage-audit-20260903/valkyrie-g1-migration-20260926/RESULT.md`。
-- 故障前已有 15 個小帳號經來源逐項比對、NFS 跨主機 SHA 核對後移除；Charades 公開影格／ZIP／解包影片與 STAR 公開姿態檔、兩個可重建環境也經各自校驗清理。這批回執合計釋放 144,267,186,176 bytes。仍在進行的舊帳號與隔離的 7,011,153 個失效影格連結不可當作已清理容量。
+- 2026-09-27 來源保留批次的 30/30 個舊帳號已完成：NFS 封存合計 379,772,435,918 bytes、7,550,229 個 tar 成員；逐份 zstd、tar 清點與 Valkyrie NFS SHA 通過，Zeus 抽查最後一份跨主機 SHA 通過。全部來源目錄仍在、無 `.partial`；`ntuwp` 有 2 個舊 socket 被 tar 跳過，其餘批次帳號無已知排除。故障碟 `df -B1` 已用仍為 857,669,718,016 bytes，SMART 計數未增加。此批成功不等於整碟 bit-exact 比對或硬碟修復，保持來源直到換碟／後續驗證。
+- 故障前已有 15 個小帳號經來源逐項比對、NFS 跨主機 SHA 核對後移除；Charades 公開影格／ZIP／解包影片與 STAR 公開姿態檔、兩個可重建環境也經各自校驗清理。這批回執合計釋放 144,267,186,176 bytes。已封存但仍保留來源的舊帳號與隔離的 7,011,153 個失效影格連結不可當作已清理容量。
 
 ## Valkyrie `/mnt/md1` 清後容量分布（2026-09-26）
 
