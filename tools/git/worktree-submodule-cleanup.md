@@ -1,11 +1,11 @@
 ---
-title: 含 submodule 的 Git worktree 非 force 清理
+title: 含 submodule 的 Git worktree 清理
 scope: tools/git
 tool: git
 tags: [git, worktree, submodule, cleanup]
 status: verified
 created: 2026-08-25
-updated: 2026-09-07
+updated: 2026-09-28
 ---
 
 # 症狀
@@ -20,7 +20,25 @@ fatal: working trees containing submodules cannot be moved or removed
 已清空，某些 Git 版本仍會因
 `<common-git-dir>/worktrees/<worktree-name>/modules` 的 cached repository 而拒絕。
 
-# 已驗證的非 force 流程
+# 使用者核准的直接清理
+
+2026-09-28 使用者要求刪除 `personal-pr-workflow` 中禁止強制清理的敘述，
+並清掉已合併的暫存 worktree。shared-skills PR #42 已移除該句；保留
+ownership、cleanliness 與 inactive 檢查。不要再把 `--force` 本身當成禁止事項。
+
+確認 task commit 已在遠端合併、worktree 沒有未保存內容、submodule 沒有
+未推送工作且沒有程序使用後，可從主 checkout 執行：
+
+```bash
+git worktree remove --force <task-worktree>
+git branch -d <merged-task-branch>
+```
+
+本次 `transfer_MAC` 的 commit-sync task worktree 在普通 remove 因子模組
+拒絕後，已用上述方式移除；路徑不存在、本機與遠端任務分支均已清除。
+`--force` 只處理已驗證的子模組限制，不代表可以丟棄其他人的未保存工作。
+
+# 歷史上已驗證的非 force 替代流程
 
 1. 確認 superproject 與每個 submodule 都是 clean，並確認 exact worktree ownership。
 2. 在 task worktree 執行 `git submodule deinit -f -- <submodule>`。
