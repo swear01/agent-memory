@@ -11,6 +11,8 @@ HAPI `v0.30.7.2` 的 `spawn-peer --agent codex` 可在 runner 在線時立即失
 
 貢獻流程：使用者要求先在 `tiann/hapi` 查重並開 issue，再提交上游修正 PR；個人 fork 的 `swear01/hapi#27` 不能代替上游交付。準備 PR 前必須核對真正的 upstream 和未合併功能相依，不能只因現有 clone 沒有 upstream remote 就把 fork/main 當成上游基準。
 
+後續更正：`tiann/hapi#1928` 因錯把尚未合併的整合缺口當成 main bug 而關閉；修正併入原有功能 PR `tiann/hapi#1771` 的 `2dfa2413`，個人 fork PR `swear01/hapi#27` 已關閉。#1771 上的回歸測試先紅後綠，16 個相關 CLI/native 測試、CLI typecheck 與隔離的真實 Hub→Runner→Codex spawn/wait/重試/封存皆通過。PR #1771 仍與上游 main `86c88df9` 有 18 個舊的合併衝突；2026-09-27 推送後的上游 `pr-review` Action checkout 了舊 base `092a2259`，因缺 `.github/scripts/pr-review.cjs` 在審查前即失敗。這不是本次程式碼審查結論，PR 尚未可合併或部署。
+
 根因是 `hub/src/sync/syncEngine.ts` 的 `spawnSessionWithRemitOnce` 先建立尚無 `codexSessionId` 的 `spawn-with-remit` 紀錄，再經 `spawnSession` 與 runner 傳成 `--existing-session-id`。`cli/src/codex/shared/frontend.ts` 的 `runSharedCodex` 將它當成 cold resume，要求已存在的 native thread binding，因此在啟動 shared runtime 前拋錯。
 
 不能只刪除 frontend guard：該版 `shared/runtime.ts` 的新 thread 路徑另建 HAPI row，無法保留 remit 預留的 row identity。修正須完整區分「接管預留的新 row」與「恢復有 native thread 的舊 row」，並沿 Hub、runner、CLI/bootstrap 維持同一 session ID。
