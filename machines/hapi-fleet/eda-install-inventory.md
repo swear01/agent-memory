@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-26
+updated: 2026-09-27
 tags:
   - eda
   - abc
@@ -14,6 +14,13 @@ tags:
   - tsri
   - yosys
 ---
+
+# TSRI 相同年度 EDA 版本已安裝（2026-09-27）
+
+- 使用者接受替代版本：VCS `2023.12-sp2`、Design Compiler `2022.12-sp6`、Formality `2023.12-sp2`、JasperGold `2024.03p002`。除 VCS 指定 2023.12 系列外，其他只保證與原需求同年份，不能當作精確小版。四個官方 TSRI 下載包先比對 eTAS 提供的檔案大小與 MD5，再解壓至 `/apps/eda/<vendor>/<package>/<version>`；已建立 `.eda-installed`，未改 `cur`。官方壓縮包留在 `/apps/eda/.admin/downloads`。
+- Zeus 的 Rocky 8 r7 容器功能驗證：VCS 編譯並執行 SystemVerilog 測試，印出 `VCS_2023_TEST_OK`；DC 以 `/apps/cad/cell_library/CBDK_IC_Contest_v2.5/SynopsysDC/db/typical.db` 成功合成並寫出 mapped Verilog；Formality 以相同 RTL 作 reference/implementation，回報 `Verification SUCCEEDED`；JasperGold `top.p` property proven 100%，且 `jasper_fao` 授權 checkout 成功。這些驗證證明當日所用授權可用，不保證未來授權期限或所有進階功能。
+- DC `2022.12-sp6` 在 r7 啟動時缺 `libpng12.so.0`。從 Rocky Linux 8 官方 AppStream `libpng12-1.2.57-7.el8_10.x86_64.rpm` 取出相容 library，放入此版本的 `lib/libpng12.so.0`；`synthesis.sh` 既有邏輯會將該 `lib` 加進 `LD_LIBRARY_PATH`。Zeus Ubuntu 的同名 library 要求 `GLIBC_2.29`，在 Rocky 8 容器不可用。JasperGold 此版在 Rocky 8.9 需 `-allow_unsupported_OS`。
+- Mazu、Athena、Cthulhu、Valkyrie、Zeus 均以公開 `source /apps/eda/synopsys/{vcs,synthesis,formality}.sh <version>` 與 `source /apps/eda/cadence/jasper.sh 2024.03p002` 驗證四個 binary 路徑；完整用法見 `/apps/eda/README.md`。五台 source 驗證不是五台各自功能測試；真正編譯、合成與形式驗證在 Zeus 執行。
 
 # Berkeley ABC：五台 Linux 系統安裝（2026-09-26）
 
