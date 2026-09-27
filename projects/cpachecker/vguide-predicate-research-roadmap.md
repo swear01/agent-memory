@@ -31,7 +31,7 @@ updated: 2026-09-27
 
 #281 分開 Stock、保留 strict-bound safety 修正的 pre-global array、patched array；#282 分開人工 scaffold、LLM 自動發現與輔助 backend／CPA consumer；#287 INTEGER 成功必有每題原 C 接合，signed overflow gate 與 cast UF 並不足以涵蓋任意 unsigned/mixed comparison/pointer 操作。全部記 new/lost/wrong/unknown、coverage、整體 CPU 和模型成本；預先固定 fallback 與抽樣，事後最好結果 union 不冒充等成本 portfolio。正式 population 按既有 idle-ready／P-core protocol，候選整體 gate+verification 亦納入600 CPU秒預算。新完整集授權是 fresh matched research，沒有重啟舊#269 slot／#197/#215診斷replay包或宣稱舊缺陷已修。
 
-主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三位 Astra owner 各自已設獨立 goal；前輪結果是起點，不是這次 goal 的完成證據。9/27 使用者要求繼續，三位 owner 已恢復執行；平台 usageLimited／blocked 狀態不能用 update_goal 改回 active，也不能為此假標完成。
+主協調證據在 `cpachecker-experiments/reports/three-route-fullset-20260926/`，各路線為 `issue281-fullset-20260926/`、`issue282-fullset-20260926/`、`issue287-fullset-20260926/`；#280 與 Wiki Three-Route-Fullset 維護目前驗收。三條路線各自已設獨立 goal；前輪結果是起點，不是 goal 完成證據。9/27 使用者要求繼續並降低 subagent 成本，後續依任務使用 Luna／Sol／Terra、只在必要困難推理使用 Astra；不恢復大量高成本 owner 或重做已通過審查。平台 usageLimited／blocked 狀態不能用 update_goal 改回 active，也不能為此假標完成。
 
 9/27 reducer v1 的完整官方 unreach-call 28 題原始配對為Stock 2 solved／26 UNKNOWN、路線11 solved／17 UNKNOWN，觀測10new／1lost。但後續整服務核帳發現Stock有19筆超600 CPU預算的UNKNOWN，不能把這些當合格等預算baseline；原始數字與成本保留，嚴格配置效果須補測。25題在已審signed fragment中使用候選，3題保留Stock；另22個其他property仍在全50 inventory。v1沒有LLM。10個觀測new的Stock原因為5 CPU耗盡、2 MathSAT interpolation error、3 cgroupOOM；lost是rangesum05，抽象反例接不回原C而UNKNOWN。見`three-route-fullset-20260926/issue287-v1-family-independent-audit.json`及`issue287-fullset-20260926/WHOLE-SERVICE-COST-AUDIT.json`。
 
@@ -300,3 +300,10 @@ generation、validation、trajectory、verdict、cost 分開記錄。完整生�
 不能只挑成功 atom。正式 model call 必須重用 Java `PredicateProposalClient` transport；參見
 `vguide-experiment-transport.md`。研究規格以 GitHub Issues/Wiki 為準，artifact 在
 `<remote-home>/cpachecker-experiments/`。
+
+### 9/27 接續的已驗證邊界
+
+- native75 的新增／退步集合已完成22次嚴格固定回應重播（48份回應、零新HTTP）；原觀測皆重現。原rangesum20最後一次模型請求未完成，另以全新draw得到UNKNOWN，仍只有overflow gate執行，895.707 wall、50.668 whole CPU。兩次全新生成都出現前段API等待耗尽wall、下游沒開始，支持研究最小wall reserve；不能把新draw冒充原完整重播。
+- Newton BLOCK＋native repeated LLM 的完整5題配對共10次皆UNKNOWN，4824.549 whole CPU，37次完成模型呼叫、280152 tokens。各模型臂候選確實注入並出現在下一輪precision，04仍終止於ie-local interpolation failure，其餘4題耗盡CPU。這5題原陣列抽象census全UNCHANGED、沒有轉換array/loop。候選送達precision不等於所需跨loop前綴關係已在抽象狀態成立；不能以更多候選或readback當作突破。
+- ArrayAbstractionAlgorithm delegate 的外層等待迴圈必須尊重既有analysis.stopAfterError；多次delegate結果須合取AlgorithmStatus。原控制忽略stopAfterError且覆蓋先前status，PR295以3個回歸測試修正，舊實作mutation均失敗；合併47cc91c。imprecise CFA重新驗證原C時的status替換是另一個語義，不可一併改成合取。075同編譯器配對實測已完整收帳：只差wrapper class的舊臂UNKNOWN599.577CPU、新臂正確FALSE66.115CPU，whole-service預算、來源與final closure皆合格；這恢復反例，不是LLM增益或整體速度結論。原075 LOST紀錄保留，新的正例獨立重複仍待做。
+- 建立同編譯器控制時，來源相同不保證舊jar逐byte相同；本次重新編譯的兩臂只有外層wrapper class不同，與舊凍結baseline分開保存。runtime透過config/lib symlink執行時，closure須涵蓋實際alias檔案路徑，僅hash原resolved paths不足以攔截alias改指；使用既有全域hash驗證即可，不必每row重複。
