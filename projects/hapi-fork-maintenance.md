@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-21
+updated: 2026-09-27
 tags:
   - hapi
   - fork
@@ -39,6 +39,12 @@ Keep tokens, signing material, runner environments, and deployment configuration
 
 # Latest verified release
 
+`v0.30.7.3` 於 2026-09-27 發布，`main` 與 tag 均為 `e80ab76f1ab2d9f9ac22a5e115ad9029f0816410`。從上游重新建置，carry 24 個當時仍開放的 PR；已關閉、未合併的 #847 從成品排除，作者是 `swear01` 也不能例外。Release Actions `36292425047` 成功，9 個 assets、8 條 payload checksum 通過。Mac、五台 Linux、Oracle 的 binary 與 Runner 均為 `.3` 且 Hub online；Windows `swop` 仍為 `.2` 且離線，使用者於 2026-09-27 決定暫緩處理，因此本輪是 7/8 部署。七台已部署主機的 HAPI Skillshare 安裝檔雜湊與已發布來源一致。
+
+`swop` 對外 SSH 入口以 Mac 當前 `Host swop` 設定為準；設定的公網 IP 可回 ping，但從 Mac、Mazu、Oracle 連 TCP 22 均逾時。舊 LAN 位址僅在實驗室內使用。新版移除了舊版 `hub-artifact` 自升級路由；下述流程僅是歷史紀錄。Mac 的 `skillshare sync` 曾讀設定檔遇到 `Operation not permitted`，重試後成功，不是待批准事項。
+
+# Historical v0.30.4.1 release
+
 `v0.30.4.1` 於 2026-09-14 發布、2026-09-15 完成 Unix 7 機與 standalone Hub 驗證。官方 pin 是 GitHub Release `v0.30.4` / `8cefb0f04c413d4f47cd364bcf556e03af6b4073`，可為當時 `upstream/main` 的 ancestor，不必等於 tip。維護 SHA / tag / `origin/main` 為 `76d578dcaa6c8dd7cc0d3a6ce56eb2513da397c7`。`cli/package.json` 的 `optionalDependencies` 維持官方 `0.30.4`，不要改成維護版號。
 
 新鮮稽核 156 個 open PR：`27 carry / 125 defer / 4 drop`。Carry 集合與 `v0.29.1.1` 相同；`PERSONAL_PR_POLICY_EXCEPTION` 為 `#1771` `#1635`；`#1320` drop 不 replay。tag 當下的 release notes 仍寫 155/124，以 `pr-audit.tsv` 為準。frozen lockfile 曾因 `tar@7.5.2` 變成 `7.5.22` 秒敗，已重產 `bun.lock`。巨大 PR 上 Swear Review 可能 timeout；此次 latest-head Gemini 0 inline 作為過關證據。
@@ -55,9 +61,9 @@ The `v0.29.0.5` app shell returned no `Cache-Control: no-store` header through e
 
 Binary replacement can briefly remove `runner.state.json` while a supervised Runner completes its own handoff. Treat a missing state file during this window as transient: re-read supervisor and state together before taking action. If ownership remains split, stop the supervisor, terminate only the exact state PID after verifying it is `hapi runner start-sync` without `--started-by runner`, then start the supervisor and require its PID to match the new state PID.
 
-# Windows Runner self-upgrade
+# Historical Windows Runner self-upgrade (before v0.30.7.3)
 
-The Windows `swop` Runner has no direct SSH management path. A standalone compiled Hub with `HAPI_UPGRADE_CHANNEL=off` also cannot materialize a `hub-artifact` by itself because it has no monorepo root. The verified narrow upgrade path is:
+At the time, the Windows `swop` Runner had no known direct SSH management path. A standalone compiled Hub with `HAPI_UPGRADE_CHANNEL=off` also could not materialize a `hub-artifact` by itself because it had no monorepo root. The then-verified narrow upgrade path was:
 
 1. In an isolated checkout at the exact release commit, use the release-compatible Bun version, frozen dependencies, generated Web assets, and `ensureCliArtifact` to prebuild the `win32-x64` binary in the Hub artifact cache.
 2. Verify the artifact SHA-256 and full source fingerprint, then temporarily run the Hub from that exact source under its existing supervisor with `HAPI_UPGRADE_CHANNEL=hub-artifact`; keep fleet policy at `alert` so no other Runner auto-upgrades.
@@ -121,7 +127,7 @@ Project-group keyboard handlers must ignore events whose target is a child contr
 
 # v0.30.7.1 release
 
-- Policy update: PRs authored by `swear01` are permanent auto-carries (`carry`) in the maintenance release pipeline and must never be deferred or dropped.
+- Historical policy at this release: PRs authored by `swear01` were auto-carried. Superseded by `v0.30.7.3`: closed and unmerged PRs are excluded regardless of author.
 - PR #1436 (`feat/web-persist-voice-input-session-switch`) rebased onto upstream `main`, tests passed, and pushed to `swear01/hapi`. Restores the voice dictation direct-send button (`dictationCanDirectSend`) in `HappyComposer.tsx` and `ComposerButtons.tsx`.
 - Upstream release lineage: `sync-from-upstream.sh` updated so that release tags whose parent commit is an ancestor of `upstream/main` (e.g. `v0.30.7` at `0239edf38`) are accepted.
 - Published release `v0.30.7.1` on `swear01/hapi` with 9 release assets and sha256 checksums.
