@@ -5,12 +5,17 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 
 # DVLab persistent storage migration inventory
 
-## 其他舊 home 與備份工作碟現場盤點（2026-09-27，唯讀）
+## NAS G3/G4 舊封存與 Mazu 精簡來源已清理（2026-09-28）
+
+- 使用者授權後，Zeus 在 NAS NFS `/home` 按封印帳本逐檔刪除 G3 `.backup/` 的 29 份 tar（1,313,249,259,520 bytes）與 G4 `copy/cthulhu_home/` 的 19 份 tgz（279,240,795,714 bytes）。執行前核對掛載、48/48 檔名／大小／inode／單一連結與 `fuser`，執行後 48 條路徑皆不存在。NAS `df -B1` 已用量由 12,179,078,643,712 降至 10,586,591,985,664 bytes，實際減少 **1,592,486,658,048 bytes**；G3 目錄空，G4 `move_home.sh` 與 `-` 仍在。
+- Mazu SSD 精確刪除 `long-backup-clean-swear02/dvlab.cleaned.tgz`（178,168,055,053 bytes）、`yoctol.cleaned.tgz`（236,762,429,270 bytes）。`/usr/2TB-SSD` 已用量由 593,253,773,312 降至 178,323,238,912 bytes，實際減少 **414,930,534,400 bytes**；兩份 rewrite JSON 報告、原有空暫存目錄和 `zeus-homebak-retained-20260921/` 均保留。長備份對應既定精簡 canonical 內容，並非這 50 個原檔的 bit-exact 副本；本輪未接上長碟重新讀回，沿用已完成的 54 卷冷讀回與精簡檔 SHA／讀回證據。清單和逐檔回執在 Zeus `<admin-home>/playground/storage-audit-20260903/nfs-g3-g4-cleanup-20260928/RESULT.md`。下節是清理前快照，不可再把這 50 個檔案列為待清。
+
+## 其他舊 home 與備份工作碟現場盤點（2026-09-27，清理前快照）
 
 - 刪除資格複核：前次因長碟未接上而要求重做冷讀回，門檻設得過高。NFS G3/G4 來源現有檔名／大小與 29/29、19/19 封印帳本完全一致，無額外 tar/tgz，mtime 均早於長備份；G3/G4 必要差異已併入單一 home 的 143,954-file overlay，Mazu 的最終 54 卷已於 09-17 完成冷讀回、09-20 驗證歸位。Mazu SSD `dvlab.cleaned.tgz`、`yoctol.cleaned.tgz` 的對應長碟成品也已有全量 SHA／讀回紀錄，現有來源大小與舊紀錄相符、mtime 早於長碟搬移。依既定精簡與敏感資料排除規則，精確 48 個 G3/G4 archive 與 2 個 SSD 精簡來源檔已達內容替代門檻；不必為它們重新全讀 1.84 TB 長碟。但不是原始 tar/tgz bit-exact 保存，實際刪除仍須重核掛載、精確來源及引用，且保留 SSD 報告與 G4 兩個輔助檔。本次未刪。
 - Zeus `/home.bak` 仍掛載本機 ext4，頂層已空。NAS 舊 home 仍在同一份 NFS `/home`：G3 `.backup/` 有 29 個 tar、合計 1,313,249,259,520 bytes；G4 `copy/cthulhu_home/` 有 19 個 tgz、合計 279,240,795,714 bytes，另有兩個搬移輔助檔。兩個 NFS 位址不是兩份資料。長備份碟記錄顯示 Canonical Home 54 卷已於 09-20 完整驗證並歸位，但本次外接碟未接上 Mazu，未對實體成品重新讀回；不能把這次唯讀盤點當成新的刪除驗證。
