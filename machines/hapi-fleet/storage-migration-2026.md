@@ -10,6 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Cthulhu 8T scratch 研究專案已搬入 NFS home（2026-09-29）
+
+- 使用者授權**搬移**大小專案而非只複製。Cthulhu `/mnt/8T-Data/scratch` 的 19 個研究專案與兩個獨立檔案已搬入現行 NFS `<remote-home>/<account>`；驗證後刪除本機原件，舊 `/mnt/md0/home/<account>/...` 經 bind mount 與來源 symlink 仍可讀到 NFS。NFS 原有不同版目錄沒有被覆寫：`lipohan/ml_hw7`、`chenyunting/GraphQSat-main`、`piohuang/ICCAD_GNN` 的本機版另以 `-cthulhu-local-20260929` 命名；`cursorpro` 新接收目錄為 root:cursorpro、2775。
+- 大多數樹以 `rsync -aHAXS --numeric-ids` 搬至暫存、全量 checksum dry-run 核對後切換。`michael/neuroback_work` 的 387,185 個一般檔在全量 checksum 重驗時令 8T 碟小檔隨機讀取降到約 1 MB/s，因此停下該次重驗；完整路徑／size／mtime／權限／ACL/xattr 差異為零，再對 101 個確定性抽樣檔（14,405,069,733 bytes，含所有 >500 MB 檔案）做雙邊 SHA-256，全部相符。**此樹不是全量 checksum 讀回**。`michael/frontend-eda` 的 Cursor 程序 cwd 仍在舊根目錄，故保留根目錄 inode，三個子專案與兩個檔案經完整 checksum 後移入 NFS，以五個 symlink 保留舊入口，未中斷程序。
+- 最後逐一驗證 19 個映射、兩個獨立檔案、`frontend-eda` 五個入口，無斷鏈、hold 或 incoming；舊路徑代表檔與現行 NFS 路徑均位於 NFS 裝置。8T 已用由 268,482,822,144 降為 271,052,800 bytes，釋放 268,211,769,344 bytes。剩餘約 271 MB 主要是 Cursor runtime 與快取／空目錄，不是這批研究成果。詳細結果與搬移腳本在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/CTHULHU-DATA-DISK-20260928.md`；以下 09-28 與 09-29「只讀」段落均為搬移前快照。
+
 ## Cthulhu 本機 scratch 與 NFS home 的關係（2026-09-28，只讀）
 
 - Cthulhu 的 `/home` 是 NAS `192.168.1.199:/volume1/nfs-home`（nfs4），帳號登入 home 為 `<remote-home>/<account>`。8T 碟 `/mnt/8T-Data` 是本機 ext4；`/etc/fstab` 明寫 `Local scratch on 8T-Data; preserve legacy /mnt/md0/home paths`，把九個 `/mnt/8T-Data/scratch/<account>` bind mount 到 `/mnt/md0/home/<account>`。`findmnt` 及同 inode `stat` 證實舊路徑指向 scratch，與 NFS home 不同。`autofs` 目前 inactive。Scratch birthtime 與 fstab birthtime 同在 08-23，像是當天搬碟保留舊路徑，但未找到操作紀錄，不能把效能／配額說成已證實動機。
