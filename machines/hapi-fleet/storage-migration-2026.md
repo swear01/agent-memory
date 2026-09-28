@@ -10,7 +10,12 @@ updated: 2026-09-28
 
 # DVLab persistent storage migration inventory
 
-## Hugging Face 快取、轉換與舊整合暫存清理（2026-09-28）
+## Cthulhu Issue 25 舊索引與無效分片已清理（2026-09-28）
+
+- 使用者確認替代檢索驗證已完成，授權刪除 Cthulhu `/var/tmp/issue25-qmd-global-cthulhu` 舊 QMD 索引 228,296,683,520 bytes 與 `/var/tmp/issue25-qmd-invalid-athena-archive` 早期無效分片 133,587,517,440 bytes；本次沒有重跑檢索驗證，不把原先等待 retrieval gate 的舊紀錄當成現況。刪前精確核對 inode、目錄類型、無子掛載、無程序 cwd/root/exe/fd/maps 引用、無 Issue 25／QMD systemd unit 或掃描範圍內設定引用。原 `/var/tmp/issue25-memory-cthulhu` 工作來源未動。
+- 先保存設定、verified/passed 帳冊、manifests、分片與根因報告，共 36 個 tar 項目至 `<remote-home>/private-system-backups/issue25-cthulhu-retired-20260928/evidence.tar.zst`（13,006 bytes，目錄 0700／檔案 0600）；zstd／tar 讀回通過，SHA-256 `47ffe6f4d742bdca41181cfcb3f7e32aeaf1b80df4085261713544c36ec3deaf`。兩棵大型樹刪後均不存在，Cthulhu 系統碟實測釋放 **361,884,200,960 bytes**，已用降至 **114,147,540,992 bytes**。詳見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/ISSUE25-CLEANUP-RESULT.md`；下節的「Issue 25 仍保留」是前一批快照。
+
+## Hugging Face 快取、轉換與舊整合暫存清理（2026-09-28，Issue 25 清前快照）
 
 - Cthulhu `piohuang` 的 Hugging Face `DaJhuan/ICCAD` 五個 ZIP sidecar URL 均可公開 HEAD 200，線上 Content-Length 與本機原始 ZIP 相符；`timm/convnextv2_tiny.fcmae` 和 `lipohan` 的 WizardMath、Mistral、shisa-gamma 模型 refs/main 也逐一等於公開倉庫現行 SHA。核對無子掛載或程序開啟引用後，清除 `piohuang/.cache/huggingface` 與 `lipohan/.cache/huggingface/hub`，`/mnt/8T-Data` 實測釋放 **293,687,844,864 bytes**，已用降至 268,482,822,144 bytes。這只涵蓋可重抓的快取，不等同使用者訓練產出的 checkpoint。
 - Valkyrie 轉換暫存 `qwen3_8_27b_orcarouter_9878936.ninfer` 與正式 `/opt/valkyrie-infer/models/qwen3_8_27b.ninfer` SHA-256 均為 `314e2812942b2b078f341530f6f5f5e46d79b08d668b77ed4d8f58e12fda41f4`。無程序／掛載引用後，清除轉換樹與臨時 venv，系統碟釋放 **18,240,618,496 bytes**；正式模型仍在。被 NFS 遮住的 `madmax/DLCV/checkpoints` 108,544,126,976 bytes（401 個課程訓練檔）及 `final.bak` 13,419,143,168 bytes 尚無同成品線上來源或現行 NFS 同路徑，沒有刪。
