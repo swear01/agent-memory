@@ -4,7 +4,7 @@ scope: tools
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-21
+updated: 2026-09-29
 tags:
   - docx
   - word
@@ -52,3 +52,10 @@ sources:
   3. 重啟 Google Drive app（`pkill -9 -f "Google Drive"` 後 `open -a`）不一定立刻好，file provider 要重新註冊，且重啟後大檔案可能更卡——優先用 Preview 水合。
   4. 水合後**先 `cp` 到本地（如 `/tmp`）再處理**，後續操作都對本地副本做，別再碰 DriveFS 路徑。
 - 判定：`file <檔案>` 或 `dd` 直接回 `Resource deadlock avoided` 就是 DriveFS 沒水合，不是檔案真的壞掉。
+
+## 直接以 XML 編輯既有 DOCX 範本的防損毀原則
+
+- 不要使用 Python 標準庫 `xml.etree.ElementTree` 解析並寫回 `word/document.xml`。ElementTree 預設會重寫 root `<w:document>` 的命名空間宣告（例如丟失 `mc:Ignorable`、將預設命名空間冠上 `ns0:` 前綴），且無法保障 OOXML 規範中 `<w:pPr>`、`<w:rPr>` 等子元素的嚴格先後順序，這會立即觸發 Microsoft Word 開啟時的「Word 找到無法讀取的內容」損毀阻擋提示。
+- 正確做法：使用基於 `lxml` 的 `python-docx` 進行就地修改。針對範本中已有之佔位符或下劃線（如 `_____:_____` 或空格 run），直接修改 `run.text = '...'`，完整保留既有 run 的所有字型、字級、樣式屬性與 schema 順序。
+- 若儲存格段落原本無 run 需新增文字，使用 `p.add_run(...)`，不可使用 `p.text = ''` 清除段落（python-docx 的 `p.text = ''` 會留下無 text 子節點的空 run `<w:r/>`，在部分嚴格版 Word 中被判定為格式異常）。
+- 驗證方法：解開 docx 比對修改前後的 `word/document.xml`，確認 diff 僅為 `<w:t>` 內的純文字替換，其餘標籤與屬性完全 100% 一致。
