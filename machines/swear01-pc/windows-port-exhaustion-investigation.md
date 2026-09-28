@@ -35,6 +35,13 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 
 ## 官方參考
 
+## 更新後仍重現的證據
+
+- 09-28 更新 WARP 後，21:56:20 又記錄 Tcpip 4231、22:18:30 又記錄 4266。已核對事件訊息明確為 global TCP/UDP ephemeral port allocation failure；不能宣稱更新 WARP 已解決耗盡。
+- 21:32 至 23:07 的 22 筆五分鐘取樣，TCP 不同動態本機 port 約 66–210、UDP 32–45。事件後 AFD 快照也未見數萬 socket。這種取樣只能證明取樣當下數量低，不能排除短暫尖峰或未呈現在 endpoint 表中的分配問題。
+- 此期間新版 warp-svc、WARP GUI、ZeroTier、Radmin、RustDesk 未顯示持續增加的 endpoint/句柄。音訊 audiodg 同一 PID 的句柄從 1022 持續升至 2507，值得另外追蹤資源釋放；其 TCP/UDP 均為 0，沒有證據將它直接連結到 port 耗盡。
+- PrismLauncher 的 javaw 約 8.3 GB 私有記憶體、AFD 句柄 101 且兩次快照相同。記憶體高不等於已證實洩漏；AFD 數量不等於已綁定 port 數量。
+
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
 - Microsoft Learn: Delivering a great startup and shutdown experience
 - Cloudflare One Client Changelog: Windows GA 2026.7.1343.0, 2026-08-19
