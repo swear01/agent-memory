@@ -60,7 +60,7 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 - 2026-09-28 公開 HackMD `DVLab VPN 安裝指南` 原仍教 Windows 執行舊 EAP 腳本並輸入共用帳密，與已停用的 EAP 不符。已改成 `.141` PSK 現況、告知 Windows 向網管取得設定，並同步本機 VPN 使用需知的五列常見問題；再次 export 與本機完整 Markdown 逐位元組相同。公開文件未加入 PSK 明文或私有網管設定。
 - 2026-09-28 使用者指出 Windows 現行安裝方式就是腳本。已將公開 HackMD 指引與本機 VPN 使用需知改為「向網管取得現行 PSK 安裝腳本」，移除公開指南中引導 Windows 下載舊 EAP ZIP 的指令；HackMD export 與本機指南完整相同。正式 Restricted Google 文件的 Windows 段落也由 Docs API 增量加入這項更正，Docs 讀回與 Drive 純文字匯出確認新增文字且其他正文未變，owner-only 權限仍在。
 - 2026-09-28 在 NFS home 找到 `<remote-home>/dvlab-vpn/releases/2026-07-26/DVLab-IKEv2-VPN.zip`：ZIP/sha256 一致，包內 Windows 腳本為 `.141` PSK、連線名稱 `DVLab IKEv2`，PSK 與 Apple 描述檔及私有防火牆文件一致；README 提供 PowerShell 安裝步驟。原 `vpn-release-tests/validate-release.py` 錯把字面 `0.0.0.0/0` 當作全流量條件；2026-07-26 腳本雖移除了 `Add-VpnConnectionRoute`，仍在 `Add-VpnConnection` 參數中明設 `SplitTunneling = $false`。驗證器已改檢查此值，2026-07-17、07-25、07-26 的 PSK 包均通過；將值改為 `$true` 的負例被拒絕。使用者確認此腳本能在現有 Windows 上執行。
-- 2026-09-28 將版本化 2026-07-26 PSK ZIP 與 checksum 發布至 `<remote-home>/dvlab-vpn/latest/`，再讀回校驗、跑 release validator、比對原始檔完全一致。刪除 `releases/2026-07-26-eap` 的舊 EAP ZIP／checksum 與本機早期 PSK 腳本；較早 PSK 版本化發行檔保留作歷史紀錄。公開 HackMD 指南改回從 `latest` 下載並讀回完整比對；Restricted Google 維運文件的 Windows 提醒與 NFS release 段落由 Docs API 修正，讀回正文、Drive 匯出及 owner-only 權限確認。
+- 2026-09-28 將版本化 2026-07-26 PSK ZIP 與 checksum 發布至 `<remote-home>/dvlab-vpn/latest/`，再讀回校驗、跑 release validator、比對原始檔完全一致。刪除 `releases/2026-07-26-eap` 的舊 EAP 包、較早的 `2026-07-17`／`2026-07-25` PSK 發布包及本機早期 PSK 腳本；`releases/` 僅保留 2026-07-26。公開 HackMD 指南改回從 `latest` 下載並讀回完整比對；Restricted Google 維運文件的 Windows 提醒與 NFS release 段落由 Docs API 修正，讀回正文、Drive 匯出及 owner-only 權限確認。
 
 ## Windows IPsec 300 秒閒置斷線：已驗證設定與未完成驗證
 
