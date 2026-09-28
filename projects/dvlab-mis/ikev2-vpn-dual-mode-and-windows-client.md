@@ -12,7 +12,7 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 ## 架構現況
 
 - 2026-09-21 使用者確認 Windows 現在也使用 PSK，並回報 Windows 與 Mac 同時連線會互踢；根因尚未驗證。
-- 2026-09-28 使用者更正：Windows 現行透過 PSK 腳本安裝，防火牆端點為 `.141`；先前把「安裝方式待核對」寫進公開指南與維運文件是誤判。現行腳本的發放位置、用戶端名稱及 Local ID 尚未從實際腳本讀回，不能把本機早期 PSK 腳本或 NFS `latest` 的舊 EAP 腳本直接當成現行版本。
+- 2026-09-28 使用者更正：Windows 現行透過 PSK 腳本安裝，防火牆端點為 `.141`；先前把「安裝方式待核對」寫進公開指南與維運文件是誤判。NFS home 的版本化 PSK 安裝包見下方；不能把本機早期 PSK 腳本或 NFS `latest` 的舊 EAP 腳本直接當成現行版本。腳本未明設 Local ID。
 - 本地維運文件與 `<remote-home>/dvlab-vpn/latest/DVLab-IKEv2-VPN.zip` 在查核時仍記載／包含 2026-07-26 EAP 部署。`latest` 路徑和記憶更新日期均不足以證明內容反映目前部署，必須核對實際用戶端與資料來源。
 - 以下早期 PSK 腳本錯誤與 EAP 排查為歷史紀錄，不是目前發給使用者的腳本版本證據。
 
@@ -59,6 +59,7 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 - 2026-09-28 以共用 DVLab 帳號直接使用 Docs API 增量更新既有 `IKEv2 Remote Access(private)` 與 `353 network setup manual(private)`：Windows 現用 `.141` PSK、舊 `.143` EAP policy／crypto map 停用且 `.143` 分配 utux；舊 EAP 安裝腳本標為歷史資料。兩份原生 Google 文件均以 Docs 讀回、Drive `text/plain` 匯出及 owner-only Restricted 權限檢查確認；網路文件的內部 VPN 連結改標 Google Docs，原連結仍指向 Google 文件。
 - 2026-09-28 公開 HackMD `DVLab VPN 安裝指南` 原仍教 Windows 執行舊 EAP 腳本並輸入共用帳密，與已停用的 EAP 不符。已改成 `.141` PSK 現況、告知 Windows 向網管取得設定，並同步本機 VPN 使用需知的五列常見問題；再次 export 與本機完整 Markdown 逐位元組相同。公開文件未加入 PSK 明文或私有網管設定。
 - 2026-09-28 使用者指出 Windows 現行安裝方式就是腳本。已將公開 HackMD 指引與本機 VPN 使用需知改為「向網管取得現行 PSK 安裝腳本」，移除公開指南中引導 Windows 下載舊 EAP ZIP 的指令；HackMD export 與本機指南完整相同。正式 Restricted Google 文件的 Windows 段落也由 Docs API 增量加入這項更正，Docs 讀回與 Drive 純文字匯出確認新增文字且其他正文未變，owner-only 權限仍在。
+- 2026-09-28 在 NFS home 找到 `<remote-home>/dvlab-vpn/releases/2026-07-26/DVLab-IKEv2-VPN.zip`：ZIP/sha256 一致，包內 Windows 腳本為 `.141` PSK、連線名稱 `DVLab IKEv2`，PSK 與 Apple 描述檔及私有防火牆文件一致；README 提供 PowerShell 安裝步驟。`latest` 仍是 `.143` EAP 包。本機公開指南已改指版本化 PSK 包並同步 HackMD，完整 export 與本機一致。既有 `vpn-release-tests/validate-release.py` 對這份 2026-07-26 包回報缺少字面 `0.0.0.0/0`，因腳本移除了 `Add-VpnConnectionRoute`；Microsoft `Add-VpnConnection` 文件指出未指定 `-SplitTunneling` 時預設停用分流。此為靜態核對，尚未在 Windows 實機安裝測試。
 
 ## Windows IPsec 300 秒閒置斷線：已驗證設定與未完成驗證
 
