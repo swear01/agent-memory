@@ -28,3 +28,8 @@ Clause2Inv／Loopy的clauses與Houdini有可借用的候選保存及具體失敗
 
 
 #300 記錄另一個實際入口限制（來源479804e）：`PredicateCPARefiner` 先 `checkCounterexample` 再進 VGuide bridge；原生插值失敗可在任何 LLM 呼叫前結束分析。`fallbackWithoutInterpolation` 即使 non-interpolating solver 證明 UNSAT 仍重拋原插值錯誤；INFO log 不能區分此分支與 feasibility check 也失敗。不可因看見插值錯誤就宣稱路徑已證 UNSAT。現成 `sourcePriorMode=true` 只接受SMT路徑，`validateSourceOnly` 明確以 `native_c_context_unavailable` 拒收所有 `c:` 候選；它缺乏實際 block formula／SSA／pointer context，不是 native-C 的可直接開啟替代路線。研究提前介入時，先核對真實 context 是否已存在，再重用現成 encoder／validation，不能猜 SSA 或偽造 interpolants。證據：`<experiments-root>/reports/issue296-interpolation-boundary-20260928/EVIDENCE.{md,json}`。
+
+
+#300 的實際診斷確認：插值前已有可用的 ARGPath／block formula／SSA／pointer context，可沿原 consumer 編碼 `c:` 候選。PR #302（source `2fc6213de291e37ae3f07aac7c19e6a712e1690c`）以真正 non-interpolating UNSAT 結果為入口，只把新 PRECISION_ONLY predicates 加到 precision，再用 `ARGReachedSet.removeSubtree` 保持 coverage 並重排探索；SAT 仍走真實反例處理。最後版本本機固定回答驗證 shared_mem2 的候選在 N32 編碼、注入、重新探索，但終局 UNKNOWN，不能說增加解題。max rounds=1 的單次呼叫不能證明重複路徑 guard 有效；提高為3、every_n=1的獨立重播仍只一次本機 HTTP，才排除上限的混淆。證據：`<experiments-root>/reports/issue300-native-recovery-20260928/root-final-capability/RECEIPT.json`；正式 LLM 效果需另做 matched evaluation。
+
+`PredicatePrecision` 建構器會把 global／function predicates 複製到新增的 local key；因此 `calculateDifferenceTo` 增加不必然代表新增資訊，也不等於 LLM 候選數。恢復入口先比對候選 head 上原有的 global／function／local predicates；instance-only predicate 不能視為整個 head 都已追蹤。`recovery_precision_delta` 記錄去重後真正新的 head/formula bindings，原生插值增量仍為 `native_delta=0`。實際 global-existing candidate regression 證明沒有新資訊時不改 ARG。這個區分對判斷 precision 進度和避免無效重啟很重要；也不能進一步把新 binding 當作解題收益。
