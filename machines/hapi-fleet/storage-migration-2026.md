@@ -10,6 +10,12 @@ updated: 2026-09-28
 
 # DVLab persistent storage migration inventory
 
+## Mazu Canonical Home 舊工作樹已清理（2026-09-28）
+
+- Mazu `/var/tmp/canonical-home-one-touch-20260906` 是最終長備份製作暫存，刪前 `du -x -B1` 為 950,633,775,104 bytes（展開 home 約 851.82 GB、overlay 約 36.45 GB、incoming 約 37.71 GB、evidence 約 22.32 GB）。最終 54 卷已於 09-17 完整冷讀回、09-20 歸位長碟；SSD `canonical-recovery-20260912/union-verified.json` 與 `canonical-repack-20260915/consolidation-complete.json` 仍在。本次沒有重新接上長碟全量讀回，也不宣稱暫存樹的每個原始 byte 都在長碟。
+- 先把 `evidence`、`credential-copies`、`tools`、`incoming`、`current`、兩個 conflicts 區封存至 NFS 管理員私有 `<remote-home>/private-system-backups/mazu-canonical-staging-20260928/preserved.tar.zst`，包含原始截斷 `cph.tgz` 和不適合一般 Home 備份的憑證副本。封存檔 40,560,263,103 bytes，SHA-256 `4905b11c92d2615b7e340dba9973d44a2a1fbb10cadc5e2f1d37982387c3aa39`，NFS 全檔解壓／11,122-member tar list 通過；目錄 0700、封存與 SHA 側錄 0600。`live/home` 已無掛載；四個相關 service inactive，暫存無子掛載、程序引用或 systemd unit 路徑引用。
+- 精確核對 ext4 與 root inode 後，以 `rm -rf --one-file-system` 移除整棵 staging；exit 0，來源獨立重查不存在，私有封存與 SSD 標記保留。Mazu 系統碟 `df -B1` 已用量 1,109,979,799,552 → 159,348,019,200 bytes，觀測減少 **950,631,780,352 bytes**。現行 NFS home 使用者目錄與長碟成品未清。詳細紀錄：Zeus `<admin-home>/playground/storage-audit-20260903/mazu-canonical-staging-cleanup-20260928/RESULT.md`。
+
 ## NAS G3/G4 舊封存與 Mazu 精簡來源已清理（2026-09-28）
 
 - 使用者授權後，Zeus 在 NAS NFS `/home` 按封印帳本逐檔刪除 G3 `.backup/` 的 29 份 tar（1,313,249,259,520 bytes）與 G4 `copy/cthulhu_home/` 的 19 份 tgz（279,240,795,714 bytes）。執行前核對掛載、48/48 檔名／大小／inode／單一連結與 `fuser`，執行後 48 條路徑皆不存在。NAS `df -B1` 已用量由 12,179,078,643,712 降至 10,586,591,985,664 bytes，實際減少 **1,592,486,658,048 bytes**；G3 目錄空，G4 `move_home.sh` 與 `-` 仍在。
@@ -18,7 +24,7 @@ updated: 2026-09-28
 ## 各機可重建資料清理（2026-09-28）
 
 - 四台 Linux 主機的 `docker builder prune -f` 只清 Docker 未使用 build cache，沒有清 image、container、volume；Valkyrie 五個 running container 保留。Cthulhu、Mazu、Athena、Valkyrie 的 `df -B1` 觀測減少分別為 28,300,234,752、4,784,439,296、49,152、14,567,182,336 bytes，清後四台 build cache reclaimable 都是 0。Docker 報告的 cache 邏輯大小與 `df` 差額不同，不能混用。
-- Mazu `/var/tmp/eda-staging-20260915/` 九套已發布 EDA 本機解壓暫存已清空，staging root 不存在。前五套 `fc`、`formality`、`lc`、`primetime`、`spyglass` 的正式版路徑／類型／大小比對 `rsync -rln --size-only` 均零差異，並有代表檔 SHA、標記、既有功能測試與引用檢查，`df -B1` 減少 192,221,708,288 bytes。`synthesis` 的相同全樹比對五分鐘逾時，不代表內容錯誤；後四套 `synthesis`、`vcs`、`verdi`、Cadence Xcelium 改採套件層級證據：18 個原始 tgz 仍在 NAS `/apps/eda/.admin/downloads`，正式版與 `.eda-installed`、既有功能驗證、代表檔 SHA、無暫存引用／子掛載；刪後來源包和正式安裝仍在，`df` 另減少 225,131,864,064 bytes。沒有做後四套全樹逐檔比對。九套合計約 417.35 GB，加四機 Docker build cache 約 47.65 GB，本輪六批 `df` 觀測差額約 465.01 GB。約 951 GB Canonical Home 工作樹、Issue 25、scratch、Valkyrie 舊本機 home 未動。詳細回執在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
+- Mazu `/var/tmp/eda-staging-20260915/` 九套已發布 EDA 本機解壓暫存已清空，staging root 不存在。前五套 `fc`、`formality`、`lc`、`primetime`、`spyglass` 的正式版路徑／類型／大小比對 `rsync -rln --size-only` 均零差異，並有代表檔 SHA、標記、既有功能測試與引用檢查，`df -B1` 減少 192,221,708,288 bytes。`synthesis` 的相同全樹比對五分鐘逾時，不代表內容錯誤；後四套 `synthesis`、`vcs`、`verdi`、Cadence Xcelium 改採套件層級證據：18 個原始 tgz 仍在 NAS `/apps/eda/.admin/downloads`，正式版與 `.eda-installed`、既有功能驗證、代表檔 SHA、無暫存引用／子掛載；刪後來源包和正式安裝仍在，`df` 另減少 225,131,864,064 bytes。沒有做後四套全樹逐檔比對。九套合計約 417.35 GB，加四機 Docker build cache 約 47.65 GB，本輪六批 `df` 觀測差額約 465.01 GB。該批次時約 951 GB Canonical Home 工作樹未動，後續已按上節清理；Issue 25、scratch、Valkyrie 舊本機 home 未動。詳細回執在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
 
 ## 其他舊 home 與備份工作碟現場盤點（2026-09-27，清理前快照）
 
