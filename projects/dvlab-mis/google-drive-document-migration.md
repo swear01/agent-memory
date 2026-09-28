@@ -34,6 +34,8 @@ updated: 2026-09-28
 
 - 本機預設 `gws` 登入的是個人 Google 帳號，**不是**共用 DVLab 帳號。寫 `DVLab-MIS` 前先用 rclone remote `dvlab-drive` 打 Drive `about.user`，確認共用 DVLab 帳號身分，再核對目標資料夾與文件的擁有者；沒有預期 MIS 帳號資料時，不可只憑 `about.user` 宣稱已驗證 MIS 身分。
 - 正常修改用 Docs API 增量更新（`replaceAllText` / 在既有清單項換行處 `insertText`），加 `writeControl.requiredRevisionId`；寫完立刻 export `text/plain` 讀回。不要用 Markdown 全文覆蓋，不要建同名副本。
+- 2026-09-28 跨機器寫回已驗證：Mac 上的 Pi 僅從 `dvlab-drive` 取得短效 access token，以臨時 RSA 公鑰加密後透過 HAPI 傳回密文；協調端解密並自行呼叫 Drive／Docs API。不要傳送 refresh token、client secret 或明文憑證。直接 API 寫入後需核對帳號、原生文件、修訂、段落、連結及 owner-only 權限。
+- Drive `text/plain` 匯出可能使用 CRLF；與 Python `Path.read_text()` 的結果比對前先正規化換行。此次兩份正式文件的增量修改均於正規化後確認除目標文字外無正文差異。
 - 2026-09-11 SSID 切換已寫回 `353 network setup manual(private)` 與 `Notes from DVLab MIS Team`：實驗室 Wi-Fi 只剩 ASUS 的 `DVLab353`，R9000 無線關閉，舊名 `DVLab353-2` 停用。
 
 ## 操作邊界
