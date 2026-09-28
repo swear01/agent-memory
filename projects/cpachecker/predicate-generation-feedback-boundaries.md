@@ -17,6 +17,11 @@ Clause2Inv／Loopy的clauses與Houdini有可借用的候選保存及具體失敗
 
 舊Issue152已明確RETIRED／NOT_PLANNED，單例obligation提示／factorization未證泛化。不可重跑舊停止格，再把同題成功稱為通用；新研究需新範圍、跨題型、answer-free與等長無關資訊control。先把context與scheduler分開消融，維持原source、機器語意、consumer及whole CPU/wall。
 
-本輪沒有新verifier／模型呼叫，沒有新增解題或加速結論。可追溯報告與雜湊：
+上述歷史只讀稽核沒有新 verifier／模型呼叫，未產生新增解題或加速結論。可追溯報告與雜湊：
 `<experiments-root>/reports/predicate-generation-methods-20260928/REPORT.md`、
 `EXISTING-RUN-AUDIT.json`。
+
+
+#296 後續實測已確認實際 prompt 收到完整 CFA proof steps（第一對相同 prefix：0筆對56筆，16,000字元上限），但資訊抵達模型不等於 predicate 可消費或新增解題。首輪 direct CEGAR pilot 漏掉 `cpa.predicate.memoryAllocationsAlwaysSucceed=true`：凍結2026-07-11 corpus 的 `sll-token-2` 因允許 malloc 回傳0而三組同判 WRONG。只切換此選項的無 LLM 對照消除空指標反例，但 MathSAT5 插值仍失敗，結果 UNKNOWN。從既有 reducer 配置拆出 direct baseline 時，必須保留原 corpus 的共同 C 語意契約，同時依每題 YAML 保留 ILP32／LP64；不能整份複製 reducer 選項，也不能把共同語意一起刪掉。證據：`<experiments-root>/reports/issue296-allocation-semantics-20260928/`。
+
+#298 確認另一個轉換缺口：`parsePureExpression` 的無宣告 wrapper 讓 CDT 將 `~state_145` 設為問題型別；後續 scope binding 修正 identifier，`ASTConverter` 的 unary default 卻保留舊 `CProblemType`，導致公式編碼拋 `UnsupportedOperationException`。候選是有效的 C 運算；只新增拒收 guard 可止崩潰，但不算修好它的表示能力。修補需從已解析 operand 推導 unary 型別，另保留對未解析型別的個別拒收。直接 exit1 的未處理例外須另記 INVALID／failure reason，不應當成普通 budget UNKNOWN 或負面方法證據。此處記錄已重現根因，尚不宣稱修補效果。
