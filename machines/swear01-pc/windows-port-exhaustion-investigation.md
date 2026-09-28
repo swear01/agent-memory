@@ -1,0 +1,39 @@
+---
+title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
+scope: machine
+machine: swear01-pc
+status: active
+updated: 2026-09-28
+---
+
+# 已驗證線索；根因尚未確認
+
+- 2026-08-01 至 09-26 的 System 日誌有 Tcpip 4231 共 16 筆、4266 共 19 筆。事件 XML 的 Execution ProcessID=4 是記錄事件的系統行程，不能當成洩漏來源 PID。
+- IPv4/IPv6 TCP/UDP 動態範圍均為 49152–65535；IPv4 只有 50000–50059 的 60 個動態埠被預留，沒有發現大量預留或縮小範圍。
+- 09-04 23:15:17 完整啟動（Kernel-Boot 27=0x0）後，23:29:33 即出現 UDP 耗盡；當晚另一次完整啟動後約 17 分鐘出現 TCP 耗盡。不能將問題歸結成「只有連續開機十天才發生」。
+- 啟用 Fast Startup；09-17 至 09-24 有八次 Kernel-Boot 27=0x1。關機後開機並不代表完整重建核心；排查驅動累積資源時應分辨完整啟動和快速啟動。
+- 09-28 重啟後三次短時取樣，TCP 動態本機埠 62–65、UDP 40–41。完整 AFD 句柄快照約 279；WARP 1、ZeroTier 16、Radmin 7、RustDesk 4。這是正常時的基準，不能排除故障期間的洩漏。
+
+## WARP 的具體異常
+
+調查前版本 2025.10.186.0；daemon 運行但 tunnel 為 Manual Disconnection。歷史日誌仍反覆進入 `Reconnecting on network change`，不能把這行直接解讀成成功建立了新 tunnel 或新 socket。
+
+對保存的四個輪替日誌比較 old_info/new_info 共 1,210 組，有 1,161 組顯示的網卡資料、DNS 集合和其他欄位相同，只改變網卡/DNS 清單順序。例如 09-26 10:35:28 發生此類處理，22 秒後記錄 UDP 耗盡。這是時間相關線索，尚不是因果證明。
+
+09-27 01 時段有 145 次重連處理訊息；04:18、04:36 有 socket error 10055，04:41–04:42 daemon watchdog 終止。需優先追蹤 WARP 網路變更處理及其與虛擬網卡的互動，同時保留「它只是系統資源不足受害者」的可能。
+
+Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修復 GUI 在 IPC client 建立失敗時造成的 process leak／system resource exhaustion。沒有證據確認本機就是該 bug；不可宣稱更新已證明可修復本機 TCP/UDP 耗盡。
+
+## 診斷方法與界限
+
+- 組合 Get-NetTCPConnection（包括 Bound/CloseWait/TimeWait）、Get-NetUDPEndpoint、行程 PID/啟動時間/句柄、服務對應、記憶體池指標；在重現時保存，才能指認來源。
+- Sysinternals Handle 枚舉 socket 要使用 `handle.exe -accepteula -nobanner -a -v Afd`，再篩 `Type=File` 且 `Name` 以 `\Device\Afd` 開頭。只執行預設檔案搜尋曾回傳 No matching handles；`-a` 後能讀取 socket。Afd 搜尋也可能命中登錄鍵名稱，必須篩掉。
+- TCP TIME_WAIT 的說明不能單獨解釋 UDP 耗盡。擴大動態埠範圍或縮短等待時間只適用於經確認的負載模式，不能當作已找到洩漏根因。
+- 09-28 已依使用者要求將 WARP 更新為 2026.7.1376.0；GUI/CLI 版本一致、CloudflareWARP Running/Auto，保留 Manual Disconnection。安裝 MSI 紀錄與 winget 均成功；不能當作根因已證明解決。
+- 已建立 Windows 排程工作 `Port Resource Monitor`：每 5 分鐘以目前使用者 Interactive/Highest 取樣，日誌位於 `<user-home>/Documents/Codex/2026-09-28/no-more-older-messages-conversation-log/outputs/port-monitor`，每日資料保留 30 天；實際兩次執行成功，LastTaskResult=0。登出/睡眠不取樣。Codex heartbeat 每小時檢查，只通知新的可處理異常。
+
+## 官方參考
+
+- Microsoft Learn: TCP/IP port exhaustion troubleshooting
+- Microsoft Learn: Delivering a great startup and shutdown experience
+- Cloudflare One Client Changelog: Windows GA 2026.7.1343.0, 2026-08-19
