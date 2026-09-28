@@ -33,8 +33,6 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 已建立 Windows 排程工作 `Port Resource Monitor`：每 5 分鐘以目前使用者 Interactive/Highest 取樣，日誌位於 `<user-home>/Documents/Codex/2026-09-28/no-more-older-messages-conversation-log/outputs/port-monitor`，每日資料保留 30 天；實際兩次執行成功，LastTaskResult=0。登出/睡眠不取樣。Codex heartbeat 每小時檢查，只通知新的可處理異常。
 - 使用者回報直接啟動 PowerShell 的排程每五分鐘跳出視窗。已改由 `wscript.exe //B //NoLogo` 執行 `launch-hidden.vbs`，使用 `WScript.Shell.Run(command, 0, True)` 隱藏子行程並傳回退出碼；更新後排程實際取樣成功、LastTaskResult=0。排程动作不要直接啟動帶主控台視窗的 PowerShell。
 
-## 官方參考
-
 ## 更新後仍重現的證據
 
 - 09-28 更新 WARP 後，21:56:20 又記錄 Tcpip 4231、22:18:30 又記錄 4266。已核對事件訊息明確為 global TCP/UDP ephemeral port allocation failure；不能宣稱更新 WARP 已解決耗盡。
@@ -44,8 +42,11 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 23:21 起已在既有五分鐘排程加入音訊句柄類型統計，完整明細保留 baseline 與 latest；實際捕獲 audiodg 2652 個句柄（與行程總數一致），其中 Key 2206、Event 137。Key 中 1809 個集中在 Render/FxProperties 設定；登錄裝置屬性對應 PHL 276E8V / NVIDIA High Definition Audio。下一次取樣 Key 增至 2227，值得追蹤未釋放的音訊設定資源，但不等於已證明 NVIDIA 驅動錯誤或 port 耗盡原因。已讀取 audiodg 模組快照，當時未見非 Microsoft 公司模組。
 - 訂閱 Tcpip 4231/4266 的 `Port Exhaustion Capture` 已於 09-28 23:53 經使用者重新確認 Windows UAC 後完成登記。語法與 XPath 匹配歷史事件驗證通過；手動執行成功保存 TCP/UDP/行程/AFD 明細，LastTaskResult=0。此次 RecentExhaustionEvents=0，不能當作耗盡重現；仍需等自然事件驗證自動觸發。原有五分鐘取樣及新增 audiodg 統計也已實際運行成功。
 - Handle 全類型 CSV 的 `Name ` 欄名及部分文字有尾端空白；讀取名稱時應 trim 欄名和文字，避免誤判無名稱。部分 AFD 搜尋模式 CSV 欄名則沒有尾端空白。
-- 09-29 約 00:08 使用者手動勾選 PHL 276E8V 的 Disable all enhancements；已核實該裝置 FxProperties 的 PKEY_AudioEndpoint_Disable_SysFx=1。個別音效原本均未勾選，不能將此當作總開關已停用。對照試驗基準記在本機 audio-intervention.json，須比較後續 30–60 分鐘 Key 句柄增長率，尚不能宣稱已修復。Heartbeat 暫改每 30 分鐘，取得並回報對照結果後應恢復每小時。
+- 09-29 約 00:08 使用者手動勾選 PHL 276E8V 的 Disable all enhancements；已核實該裝置 FxProperties 的 PKEY_AudioEndpoint_Disable_SysFx=1。個別音效原本均未勾選，不能將此當作總開關已停用。對照試驗基準與結果記在本機 audio-intervention.json。試驗期間 heartbeat 改為每 30 分鐘，回報初步結果後已恢復每小時。
 - 09-29 00:39 完成初步對照：同一 audiodg PID/StartTime 在 00:08:41 至 00:39:08 的七筆後續取樣中，Key 固定 2719，30.4 分鐘增量 0；相較調整前約每五分鐘增加 50，累積已在該觀察窗停止。此結果支持音訊句柄累積初步改善，不能證明 TCP/UDP 耗盡或整機死機已根治。結果已記錄並將 heartbeat 恢復每小時，繼續檢查是否復發。
+- 09-29 01:29 的延長觀察：調整後約 80.4 分鐘、18 筆取樣，同一 audiodg PID/StartTime 的 Key 在 2719–2725 間小幅波動，最新 2720，淨增 1；改善在這段觀察窗仍維持。調整後未出現新的 Tcpip 4231/4266，非分頁池約 826–848 MB。這些結果不足以將音訊問題與先前 port 耗盡建立因果關係，也不能保證更長時間不復發。
+
+## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
 - Microsoft Learn: Delivering a great startup and shutdown experience
