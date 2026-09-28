@@ -5,7 +5,7 @@ project: dvlab-storage
 tags: [storage, migration, backup, cleanup, fleet]
 status: active
 created: 2026-08-26
-updated: 2026-09-28
+updated: 2026-09-29
 ---
 
 # DVLab persistent storage migration inventory
@@ -15,6 +15,7 @@ updated: 2026-09-28
 - Cthulhu 的 `/home` 是 NAS `192.168.1.199:/volume1/nfs-home`（nfs4），帳號登入 home 為 `<remote-home>/<account>`。8T 碟 `/mnt/8T-Data` 是本機 ext4；`/etc/fstab` 明寫 `Local scratch on 8T-Data; preserve legacy /mnt/md0/home paths`，把九個 `/mnt/8T-Data/scratch/<account>` bind mount 到 `/mnt/md0/home/<account>`。`findmnt` 及同 inode `stat` 證實舊路徑指向 scratch，與 NFS home 不同。`autofs` 目前 inactive。Scratch birthtime 與 fstab birthtime 同在 08-23，像是當天搬碟保留舊路徑，但未找到操作紀錄，不能把效能／配額說成已證實動機。
 - NFS 目前有 9.13 TB 可用（個別 quota 未驗）。同名專案不是完整複本：`lipohan/ml_hw7` NFS 約 1.43 MB、本機 28.97 GB，且主程式內容不同；`chenyunting/GraphQSat-main` NFS 約 2.58 GB、本機 7.44 GB（本機 0700，未能完整比對）；`piohuang/ICCAD_GNN` NFS 約 1.82 MB、本機資料集約 2.76 GB。`michael/new_puzzle_2026`、`neuroback_work`、`lipohan/ml2026hw5-output`、`vichuang/iccad2026` 在各自 NFS home 無同名目錄；`cursorpro` 只有群組，沒有 passwd 帳號或 `<remote-home>/cursorpro`。
 - 本機研究資料可按專案／資料型別遷到 NFS，但不能整棵覆寫：`lipohan` 腳本／Python／YAML、`vichuang` 執行文件／程式／venv shebang、`michael/neuroback_work` 程式都明確引用 `/mnt/md0/home/...`。先核對同名不同版檔與獨有成果、決定新路徑與權限，再複製驗證和切換引用。沒有證據表明這 268.48 GB scratch 已納入既有 NFS home／長碟成品。詳細只讀表見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/CTHULHU-DATA-DISK-20260928.md`；本輪未搬、刪或改掛。
+- 09-29 補查小專案：`michael/frontend-eda` 62 MB、兩棵 `untouchable` 約 352 MB、近期 showcase Git bundle 所在樹 70.7 MB；`vichuang/iccad/iccad-2025` 848 MB（NFS 同父目錄沒有 2025 子目錄）、`PD_final_test` 701 MB（兩種 tar 不是 bit-exact 同包）、`cad_lab` 49 MB；`piohuang/WojiuLan_cad_contest` 591 MB（另一帳號 NFS 同名專案有差異），都適合先作 NFS 保留副本。`lipohan` NFS `ml_local/ml2026hw5-data` 與 `ml2026hw5-output` 雖存在，兩者都是空目錄；本機 9.3 MB 輸入及 21.37 GB checkpoint 沒有在這些路徑保存。`arttr1521/.cursor-server` 主要是 runtime，不是優先搬遷的使用者成果；`chenyunting` 本機 0700 尚無法全比。細節與容量見上列 Zeus 盤點，這次沒有搬移。
 
 ## Cthulhu 8T 資料碟清後盤點（2026-09-28，只讀）
 
