@@ -10,6 +10,13 @@ updated: 2026-09-28
 
 # DVLab persistent storage migration inventory
 
+## Hugging Face 快取、轉換與舊整合暫存清理（2026-09-28）
+
+- Cthulhu `piohuang` 的 Hugging Face `DaJhuan/ICCAD` 五個 ZIP sidecar URL 均可公開 HEAD 200，線上 Content-Length 與本機原始 ZIP 相符；`timm/convnextv2_tiny.fcmae` 和 `lipohan` 的 WizardMath、Mistral、shisa-gamma 模型 refs/main 也逐一等於公開倉庫現行 SHA。核對無子掛載或程序開啟引用後，清除 `piohuang/.cache/huggingface` 與 `lipohan/.cache/huggingface/hub`，`/mnt/8T-Data` 實測釋放 **293,687,844,864 bytes**，已用降至 268,482,822,144 bytes。這只涵蓋可重抓的快取，不等同使用者訓練產出的 checkpoint。
+- Valkyrie 轉換暫存 `qwen3_8_27b_orcarouter_9878936.ninfer` 與正式 `/opt/valkyrie-infer/models/qwen3_8_27b.ninfer` SHA-256 均為 `314e2812942b2b078f341530f6f5f5e46d79b08d668b77ed4d8f58e12fda41f4`。無程序／掛載引用後，清除轉換樹與臨時 venv，系統碟釋放 **18,240,618,496 bytes**；正式模型仍在。被 NFS 遮住的 `madmax/DLCV/checkpoints` 108,544,126,976 bytes（401 個課程訓練檔）及 `final.bak` 13,419,143,168 bytes 尚無同成品線上來源或現行 NFS 同路徑，沒有刪。
+- Zeus 將兩棵舊整合／分析樹 30,499,016,704 allocated bytes 完整存到 `<remote-home>/private-system-backups/zeus-nfs-staging-20260928/nfs-staging.tar.zst`（23,164,091,874 bytes，目錄 0700／檔案 0600）。NFS 全檔解壓與 170,614-member tar list 讀回通過，兩個預期根目錄均存在；SHA-256 `afe004bf3df2180740325a692321ea5c7880ecc55ba44407c74de778c34dc398`，側錄在同目錄 `.sha256`。重查來源 inode、無掛載／程序引用後刪除兩樹。Zeus 系統碟已用降至 **44,469,932,032 bytes**。
+- Cthulhu Issue 25 仍保留：228,296,683,520-byte 舊 QMD SQLite 向量索引是替代 retrieval 驗證前的回退；133,587,517,440-byte invalid Athena shard archive 有 verified/passed 帳冊、來源已移走，不能因名稱 `invalid` 就刪。合計 **361,884,200,960 bytes**，不是小暫存；舊 PID 已不存在但未找到替代 retrieval gate 完成紀錄。Mazu SSD recovery/repack 工作證據 **43,411,345,408 bytes** 依使用者指定未動，SSD 已用仍 178,323,238,912 bytes。詳細實測與來源在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/CLEANUP-RESULT.md`。下節為執行前候選快照。
+
 ## 清後大宗候選快照（2026-09-28，只讀）
 
 - Zeus 系統碟 105.09 GB 已用約 74.96 GB；`/var/tmp/nfs-canonical-20260905` 21,382,967,296 bytes 與 `nfs-g3-analysis-20260905` 9,116,049,408 bytes 是下一批舊整合／分析暫存，兩樹無子掛載、cwd/exe/root 引用為零。先保存 `.work`／`.excluded` 的唯一證據，再按整樹處理。Valkyrie `/mnt/md0/home` 仍 163,920,551,936 bytes，其中 madmax 121,963,282,432 bytes 的舊 checkpoint／`final.bak` 在現行 NFS 無同路徑；先整棵轉存並驗證，不能直接刪。Mazu SSD `canonical-recovery-20260912` 與 `canonical-repack-20260915` 合計 43,411,345,408 bytes，可在保存 readback／recovery metadata 後另案清理；134,911,791,104-byte Zeus 舊帳號保存包須保留。
