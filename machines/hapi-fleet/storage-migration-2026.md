@@ -10,6 +10,11 @@ updated: 2026-09-28
 
 # DVLab persistent storage migration inventory
 
+## 清後大宗候選快照（2026-09-28，只讀）
+
+- Zeus 系統碟 105.09 GB 已用約 74.96 GB；`/var/tmp/nfs-canonical-20260905` 21,382,967,296 bytes 與 `nfs-g3-analysis-20260905` 9,116,049,408 bytes 是下一批舊整合／分析暫存，兩樹無子掛載、cwd/exe/root 引用為零。先保存 `.work`／`.excluded` 的唯一證據，再按整樹處理。Valkyrie `/mnt/md0/home` 仍 163,920,551,936 bytes，其中 madmax 121,963,282,432 bytes 的舊 checkpoint／`final.bak` 在現行 NFS 無同路徑；先整棵轉存並驗證，不能直接刪。Mazu SSD `canonical-recovery-20260912` 與 `canonical-repack-20260915` 合計 43,411,345,408 bytes，可在保存 readback／recovery metadata 後另案清理；134,911,791,104-byte Zeus 舊帳號保存包須保留。
+- Cthulhu `/mnt/8T-Data/scratch` 562,170,638,336 bytes，其中 piohuang／lipohan Hugging Face 快取合計 293,708,623,872 bytes（09-01 後未見新檔或兩帳號當下程序）；使用者先前表示 cache 暫不處理，本輪未刪。非此快取約 268.46 GB 混有近期研究輸出。Cthulhu 系統碟另有 Issue 25 舊 QMD 228,296,683,520 bytes 與 verified invalid Athena archive 133,587,517,440 bytes；舊 QMD PID `361884` 現不存在、未見處理程序，但先前專案紀錄要求把舊索引保留作 rollback，替代 retrieval gate 完成證據尚未找到，不可只憑進程已停清空。Mazu `/var/tmp/hapi-hub` 約 80.98 GB，`swear01` hub service 仍 active。Cthulhu 舊清單的孤立 buildx volume 已於 09-21 移除，現場 Docker 亦回報不存在；Valkyrie 模型轉換暫存現約 18.23 GB，舊 68.73 GiB 估值失效。Athena 本輪 SSH host-key verification failed，未略過驗證；沒有最新容量。詳細盤點在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/REPORT.md`。
+
 ## Mazu Canonical Home 舊工作樹已清理（2026-09-28）
 
 - Mazu `/var/tmp/canonical-home-one-touch-20260906` 是最終長備份製作暫存，刪前 `du -x -B1` 為 950,633,775,104 bytes（展開 home 約 851.82 GB、overlay 約 36.45 GB、incoming 約 37.71 GB、evidence 約 22.32 GB）。最終 54 卷已於 09-17 完整冷讀回、09-20 歸位長碟；SSD `canonical-recovery-20260912/union-verified.json` 與 `canonical-repack-20260915/consolidation-complete.json` 仍在。本次沒有重新接上長碟全量讀回，也不宣稱暫存樹的每個原始 byte 都在長碟。
