@@ -15,6 +15,11 @@ updated: 2026-09-28
 - 使用者授權後，Zeus 在 NAS NFS `/home` 按封印帳本逐檔刪除 G3 `.backup/` 的 29 份 tar（1,313,249,259,520 bytes）與 G4 `copy/cthulhu_home/` 的 19 份 tgz（279,240,795,714 bytes）。執行前核對掛載、48/48 檔名／大小／inode／單一連結與 `fuser`，執行後 48 條路徑皆不存在。NAS `df -B1` 已用量由 12,179,078,643,712 降至 10,586,591,985,664 bytes，實際減少 **1,592,486,658,048 bytes**；G3 目錄空，G4 `move_home.sh` 與 `-` 仍在。
 - Mazu SSD 精確刪除 `long-backup-clean-swear02/dvlab.cleaned.tgz`（178,168,055,053 bytes）、`yoctol.cleaned.tgz`（236,762,429,270 bytes）。`/usr/2TB-SSD` 已用量由 593,253,773,312 降至 178,323,238,912 bytes，實際減少 **414,930,534,400 bytes**；兩份 rewrite JSON 報告、原有空暫存目錄和 `zeus-homebak-retained-20260921/` 均保留。長備份對應既定精簡 canonical 內容，並非這 50 個原檔的 bit-exact 副本；本輪未接上長碟重新讀回，沿用已完成的 54 卷冷讀回與精簡檔 SHA／讀回證據。清單和逐檔回執在 Zeus `<admin-home>/playground/storage-audit-20260903/nfs-g3-g4-cleanup-20260928/RESULT.md`。下節是清理前快照，不可再把這 50 個檔案列為待清。
 
+## 各機可重建資料清理（2026-09-28）
+
+- 四台 Linux 主機的 `docker builder prune -f` 只清 Docker 未使用 build cache，沒有清 image、container、volume；Valkyrie 五個 running container 保留。Cthulhu、Mazu、Athena、Valkyrie 的 `df -B1` 觀測減少分別為 28,300,234,752、4,784,439,296、49,152、14,567,182,336 bytes，清後四台 build cache reclaimable 都是 0。Docker 報告的 cache 邏輯大小與 `df` 差額不同，不能混用。
+- Mazu 的 `/var/tmp/eda-staging-20260915/synopsys/` 只清 `fc`、`formality`、`lc`、`primetime`、`spyglass` 五套本機解壓暫存。各自的內層樹對正式 `/apps/eda` 版本執行 `rsync -rln --size-only` 均 exit 0、零差異，並有代表檔 SHA 一致、正式安裝標記、既有功能測試、無暫存程序引用／子掛載；刪後五條暫存路徑不存在，正式安裝仍在。這不是五套全檔雜湊比對。Mazu `df -B1` 再減少 192,221,708,288 bytes；和 Docker 四機的差額合計約 239.87 GB。`synthesis` 比對五分鐘逾時未完成，`vcs`、`verdi`、Cadence Xcelium 未完整比對，均保留；約 951 GB Canonical Home 工作樹、Issue 25、scratch、Valkyrie 舊本機 home 也未動。詳細回執在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
+
 ## 其他舊 home 與備份工作碟現場盤點（2026-09-27，清理前快照）
 
 - 刪除資格複核：前次因長碟未接上而要求重做冷讀回，門檻設得過高。NFS G3/G4 來源現有檔名／大小與 29/29、19/19 封印帳本完全一致，無額外 tar/tgz，mtime 均早於長備份；G3/G4 必要差異已併入單一 home 的 143,954-file overlay，Mazu 的最終 54 卷已於 09-17 完成冷讀回、09-20 驗證歸位。Mazu SSD `dvlab.cleaned.tgz`、`yoctol.cleaned.tgz` 的對應長碟成品也已有全量 SHA／讀回紀錄，現有來源大小與舊紀錄相符、mtime 早於長碟搬移。依既定精簡與敏感資料排除規則，精確 48 個 G3/G4 archive 與 2 個 SSD 精簡來源檔已達內容替代門檻；不必為它們重新全讀 1.84 TB 長碟。但不是原始 tar/tgz bit-exact 保存，實際刪除仍須重核掛載、精確來源及引用，且保留 SSD 報告與 G4 兩個輔助檔。本次未刪。

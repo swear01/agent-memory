@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-27
+updated: 2026-09-28
 tags:
   - eda
   - abc
@@ -14,6 +14,10 @@ tags:
   - tsri
   - yosys
 ---
+
+# Mazu 舊解壓暫存清理（2026-09-28）
+
+`/var/tmp/eda-staging-20260915/synopsys/` 的 `fc`、`formality`、`lc`、`primetime`、`spyglass` 五套舊解壓目錄已按各自 `/apps/eda/synopsys/<tool>/2026.03/` 正式版做完整路徑／類型／大小比對（`rsync -rln --size-only` 零差異）、代表檔 SHA 抽查與使用中引用檢查後刪除；Mazu 系統碟觀測減少 192,221,708,288 bytes。正式版及 `.eda-installed` 標記均保留。這不是全檔雜湊比對。`synthesis` 的比對五分鐘逾時，`vcs`、`verdi`、Cadence Xcelium 未完整比對，暫存均留原位。詳細回執見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
 
 # TSRI 相同年度 EDA 版本已安裝（2026-09-27）
 
