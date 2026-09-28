@@ -2,7 +2,7 @@
 title: "中斷批次應保留可驗證的已完成案例"
 scope: "projects/cpachecker"
 status: active
-updated: 2026-09-09
+updated: 2026-09-28
 evidence_digest: 32ed625b90bc74bae3b0c7fcae42199fabd31c67ceaf7f967f64ffffbfa22aeb
 negative_result: false
 redaction: passed
@@ -37,3 +37,9 @@ HAPI polling 的 `aborted` 或 `Unknown process id` 本身不能區分 host rebo
 恢復前分開盤點四種狀態：未進入 solver 的 wrapper setup failure（零 solver attempts）、可獨立驗證的 terminal case、已啟動但沒有 terminal sidecar 的 interrupted case，以及未啟動 case。依原 protocol 允許逐案例採納且來源／結果完整性可驗證時，保留 terminal case，不因其 parent wrapper 中斷而整批重跑。中斷 case 的既有檔案和雜湊原樣保留；另經具體授權的 supplemental attempt 使用新輸出路徑及遞增 attempt index，不能覆蓋 partial。未啟動 case 的第一輪仍是 attempt 1；solver attempts、terminal slots、wrapper attempts 分開計算。這不授權重試 provider 安全 halt，也不覆蓋另有整批排除要求的既定 protocol。
 
 若接續搬到其他主機，重新核對 runtime／JDK／source／config 和資源上限，記錄 host 變更；不能把跨重開機、跨主機補跑當成乾淨的配對 timing 證據。#237 root 逐檔核對過一個零 solver setup failure，以及後續 started 2／terminal 1／interrupted 1／unstarted 4 的重開機紀錄；恢復規劃與完成結果仍是不同狀態。證據：`<experiments-root>/reports/issue237-remaining8-allocation-20260909/root-athena-reboot-receipt.json`。此記憶不宣稱接續執行已完成。
+
+## Whole-service wall 與部分用量（2026-09-28）
+
+#296 pilot-c 有一格 worker 已於899.618秒停止，systemd service含收尾卻為900.359秒，觸發既定900秒嚴格上限。worker deadline不能當作whole-service成本：後續runner於895秒終止child預留5秒，但最終900秒檢查仍保留，超限仍INVALID；5秒不是所有環境的保證，live wall-bound驗證待完成。不要事後放寬上限或把舊超限結果重分類。此問題追蹤#301，與稍後host reboot是兩件事。證據：`<experiments-root>/reports/issue296-pilot-d-preparation-20260928/runner-r5/WALL-RESERVE-REPORT.md`。
+
+重開機後unit顯示inactive／not-found與claim可取得，只證明新boot當下狀態，不證明舊boot正常退出或完成收帳。#296保留28個terminal、4個interrupted、22個unstarted的54格對帳，synthetic disposition另存，不改原records。保存的54份完成回答可逐份request／response hash配對、計算token下界；不能把未保存的inflight呼叫記零，也不能把完成call latency加總稱整個LLM pipeline wait。這次後續另用合併版runtime凍結新批次，不把跨版本結果配成效果對照。證據：`<experiments-root>/reports/issue296-pilot-c-closure-20260928/`。
