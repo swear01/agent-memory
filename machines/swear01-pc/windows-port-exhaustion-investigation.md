@@ -41,6 +41,9 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 21:32 至 23:07 的 22 筆五分鐘取樣，TCP 不同動態本機 port 約 66–210、UDP 32–45。事件後 AFD 快照也未見數萬 socket。這種取樣只能證明取樣當下數量低，不能排除短暫尖峰或未呈現在 endpoint 表中的分配問題。
 - 此期間新版 warp-svc、WARP GUI、ZeroTier、Radmin、RustDesk 未顯示持續增加的 endpoint/句柄。音訊 audiodg 同一 PID 的句柄從 1022 持續升至 2507，值得另外追蹤資源釋放；其 TCP/UDP 均為 0，沒有證據將它直接連結到 port 耗盡。
 - PrismLauncher 的 javaw 約 8.3 GB 私有記憶體、AFD 句柄 101 且兩次快照相同。記憶體高不等於已證實洩漏；AFD 數量不等於已綁定 port 數量。
+- 23:21 起已在既有五分鐘排程加入音訊句柄類型統計，完整明細保留 baseline 與 latest；實際捕獲 audiodg 2652 個句柄（與行程總數一致），其中 Key 2206、Event 137。Key 中 1809 個集中在 Render/FxProperties 設定；登錄裝置屬性對應 PHL 276E8V / NVIDIA High Definition Audio。下一次取樣 Key 增至 2227，值得追蹤未釋放的音訊設定資源，但不等於已證明 NVIDIA 驅動錯誤或 port 耗盡原因。已讀取 audiodg 模組快照，當時未見非 Microsoft 公司模組。
+- 已準備訂閱 Tcpip 4231/4266 的 `Port Exhaustion Capture` 腳本，語法與 XPath 匹配歷史事件驗證通過；登記的 Windows UAC 被取消，尚未建立，不能宣稱事件即時擷取已啟用。原有取樣及新增 audiodg 統計已實際運行成功，LastTaskResult=0。
+- Handle 全類型 CSV 的 `Name ` 欄名及部分文字有尾端空白；讀取名稱時應 trim 欄名和文字，避免誤判無名稱。部分 AFD 搜尋模式 CSV 欄名則沒有尾端空白。
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
 - Microsoft Learn: Delivering a great startup and shutdown experience
