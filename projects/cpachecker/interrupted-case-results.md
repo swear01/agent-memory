@@ -40,6 +40,6 @@ HAPI polling 的 `aborted` 或 `Unknown process id` 本身不能區分 host rebo
 
 ## Whole-service wall 與部分用量（2026-09-28）
 
-#296 pilot-c 有一格 worker 已於899.618秒停止，systemd service含收尾卻為900.359秒，觸發既定900秒嚴格上限。worker deadline不能當作whole-service成本：後續runner於895秒終止child預留5秒，但最終900秒檢查仍保留，超限仍INVALID；5秒不是所有環境的保證，live wall-bound驗證待完成。不要事後放寬上限或把舊超限結果重分類。此問題追蹤#301，與稍後host reboot是兩件事。證據：`<experiments-root>/reports/issue296-pilot-d-preparation-20260928/runner-r5/WALL-RESERVE-REPORT.md`。
+#296 pilot-c 有一格 worker 已於899.618秒停止，systemd service含收尾卻為900.359秒，觸發既定900秒嚴格上限。worker deadline不能當作whole-service成本：後續runner於895秒終止child預留5秒，但最終900秒檢查仍保留，超限仍INVALID；5秒不是所有環境的保證；後續同題實測worker895.049秒、whole service897.331秒／23.508CPU秒，完整收帳與來源檢查通過，#301據此結案。不要事後放寬上限或把舊超限結果重分類。此問題追蹤#301，與稍後host reboot是兩件事。證據：`<experiments-root>/reports/issue296-pilot-d-preparation-20260928/runner-r5/WALL-RESERVE-REPORT.md`。
 
 重開機後unit顯示inactive／not-found與claim可取得，只證明新boot當下狀態，不證明舊boot正常退出或完成收帳。#296保留28個terminal、4個interrupted、22個unstarted的54格對帳，synthetic disposition另存，不改原records。保存的54份完成回答可逐份request／response hash配對、計算token下界；不能把未保存的inflight呼叫記零，也不能把完成call latency加總稱整個LLM pipeline wait。這次後續另用合併版runtime凍結新批次，不把跨版本結果配成效果對照。證據：`<experiments-root>/reports/issue296-pilot-c-closure-20260928/`。
