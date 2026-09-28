@@ -4,7 +4,7 @@ scope: tools
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-09-28
 tags:
   - hackmd
   - codemirror
@@ -37,6 +37,7 @@ sources:
 - 公開頁面沒有「無法顯示圖片」。
 - 每張圖片都要確認實際載入，而不只檢查 Markdown 裡存在 URL。
 - 如果補圖來源很大，先縮圖再上傳；不要把來源相簿連結、EXIF、GPS 或暫時憑證寫入公開內容或 repository。
+- `@hackmd/hackmd-cli` 2.5.0 的 `notes update` 可能在尾端增加一個空白行；CLI 寫回後以 `export` 與本機全文逐位元組比對，只在確認差異確實僅是尾端換行時對齊本機檔案。
 
 ## 憑證處理
 

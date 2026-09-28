@@ -57,6 +57,7 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
 - 2026-09-28 在實驗室內測到 `.143:25565` 和 `.142:25565` 均可連；外部視角尚未驗證。防火牆 `write` 無錯誤，但設備不支援 `show startup-config`，未直接讀回持久化設定。本機網路文件已按即時設定修正；Google Drive 正式文件須另外讀回驗證。
 - 2026-09-28 HAPI `inspect-peer --limit 100` 的 `messages` 只擷取 Hub 訊息列中 CLI 可辨識的文字；對已封存的 Pi 工作階段只顯示三則 user 文字，沒有可讀的 Pi agent 文字。這不能區分 Hub 未儲存、同步中斷或擷取器未解析，也不能推論 Pi 在 Mac 未顯示或執行，或判定 Google 文件寫入狀態；須以正式 Google 文件讀回為準。
 - 2026-09-28 以共用 DVLab 帳號直接使用 Docs API 增量更新既有 `IKEv2 Remote Access(private)` 與 `353 network setup manual(private)`：Windows 現用 `.141` PSK、舊 `.143` EAP policy／crypto map 停用且 `.143` 分配 utux；舊 EAP 安裝腳本標為歷史資料。兩份原生 Google 文件均以 Docs 讀回、Drive `text/plain` 匯出及 owner-only Restricted 權限檢查確認；網路文件的內部 VPN 連結改標 Google Docs，原連結仍指向 Google 文件。
+- 2026-09-28 公開 HackMD `DVLab VPN 安裝指南` 原仍教 Windows 執行舊 EAP 腳本並輸入共用帳密，與已停用的 EAP 不符。已改成 `.141` PSK 現況、告知 Windows 向網管取得設定，並同步本機 VPN 使用需知的五列常見問題；再次 export 與本機完整 Markdown 逐位元組相同。公開文件未加入 PSK 明文或私有網管設定。
 
 ## Windows IPsec 300 秒閒置斷線：已驗證設定與未完成驗證
 
