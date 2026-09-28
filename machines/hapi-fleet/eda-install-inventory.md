@@ -15,6 +15,17 @@ tags:
   - yosys
 ---
 
+# 舊版 DC 統一啟動入口（2026-09-28）
+
+- 同學在新的 Bash 登入終端機使用 `source /apps/eda/synopsys/synthesis.sh 2022.12-sp6`，再執行 `dc_shell` 或 `dc_shell -f synth.tcl`。入口自動處理相容環境，不需 sudo、Docker 權限或手動進容器；同一工具換版仍需新終端機。
+- 根因：DC 2022.12-sp6 的舊執行檔依賴 `__pthread_unwind@GLIBC_PRIVATE`，五台 Ubuntu 26.04／glibc 2.43 皆無法直接啟動；四台另缺 `/bin/csh`。只補 csh 或沿用既有 libpng12 不足以解決 glibc 問題。
+- `/apps/eda/env.sh` 僅對 Ubuntu 上選定的 DC 2022.12-sp6 插入相容命令目錄；`/apps/bin/dc_shell` 與同包命令共用入口，呼叫 `/apps/eda/.compat/dc-2022/run`。後者使用五台既有 `/usr/bin/bwrap` 與從 Rocky r7 映像抽出的共用 rootfs，保留 cwd、HOME、UID／GID、參數與主機檔案路徑。Docker 僅用於管理員一次性準備 runtime，不參與學生啟動。
+- 子程序覆蓋相容系統函式庫與設定，保留網路及授權主機解析；passwd／group 資料遮蔽認證欄位。`EDA_DC_RUNTIME=1` 只設在子程序防止遞迴，不得洩漏至父 shell。這是相容執行環境，不是安全隔離承諾。
+- 五台 Mazu、Athena、Cthulhu、Valkyrie、Zeus 均以無 Docker 群組的 `nobody` 帳號，經公開 source 入口合成 16-cell counter，寫出 caller-owned mapped Verilog。可重跑 `bash /apps/eda/.compat/dc-2022/check.sh`；涵蓋空格路徑、重複 source、無效版本及同一 shell 換版拒絕。Tcl `analyze` 的檔名含空格時須用 `[list $env(EDA_CHECK_RTL)]`，避免將一個檔名拆成多項。
+- Mazu 一般 NIS 帳號另在同一 shell 完成 DC 合成與 VCS 2023.12-sp2 編譯、反相器模擬；VCS 用 `source /apps/eda/synopsys/vcs.sh 2023.12-sp2` 與 `vcs -full64 ...`。DC 互動提示字元、標準輸入及退出亦以無特權帳號驗證。主機 glibc、登入設定與 cur 未改，2026.03 仍解析原入口；不要用舊版失敗紀錄要求同學自行進容器。
+- 五台入口／helper／檢查／README SHA-256 已讀回一致。原始檔、更新後 source 及部署紀錄保存在受保護的 `/apps/eda/.admin/dc-entry-20260928/`。Design Vision GUI 與完整學生專案未驗證；其他版本／工具的相容性不能從此結果外推。
+- 原有 HackMD 學生指南已就地補上舊版 DC／VCS 指令並修正過時的啟動失敗 QA；API 全文讀回與候選稿一致，閱讀／編輯權限仍為 `signed_in`／`owner`。文件保留學生需要的 source、啟動與 QA，不加入安裝流水帳。
+
 # Mazu 舊解壓暫存清理（2026-09-28）
 
 `/var/tmp/eda-staging-20260915/` 的九套舊解壓目錄已清空，整個 staging root 不存在。先清 `fc`、`formality`、`lc`、`primetime`、`spyglass`：與正式版本做完整路徑／類型／大小比對（`rsync -rln --size-only` 零差異）、代表檔 SHA 抽查及引用檢查，Mazu 系統碟觀測減少 192,221,708,288 bytes。`synthesis` 的同一全樹比對五分鐘逾時，並非發現資料錯誤；後續改以套件層級證據清理 `synthesis`、`vcs`、`verdi`、Cadence Xcelium：四套共 18 個原始 tgz 仍在 `/apps/eda/.admin/downloads`，正式版與 `.eda-installed`、先前功能驗證、代表檔 SHA 均有證據，且暫存無程序引用或子掛載。後四套 `df` 另觀測減少 225,131,864,064 bytes；沒有做全樹逐檔內容比對。正式安裝和原始 tgz 清後重查仍在。詳細回執見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
