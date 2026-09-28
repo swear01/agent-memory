@@ -3,8 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-09-28
-audio_trial: 2026-09-29
+updated: 2026-09-29
 ---
 
 # 已驗證線索；根因尚未確認
@@ -46,6 +45,7 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 訂閱 Tcpip 4231/4266 的 `Port Exhaustion Capture` 已於 09-28 23:53 經使用者重新確認 Windows UAC 後完成登記。語法與 XPath 匹配歷史事件驗證通過；手動執行成功保存 TCP/UDP/行程/AFD 明細，LastTaskResult=0。此次 RecentExhaustionEvents=0，不能當作耗盡重現；仍需等自然事件驗證自動觸發。原有五分鐘取樣及新增 audiodg 統計也已實際運行成功。
 - Handle 全類型 CSV 的 `Name ` 欄名及部分文字有尾端空白；讀取名稱時應 trim 欄名和文字，避免誤判無名稱。部分 AFD 搜尋模式 CSV 欄名則沒有尾端空白。
 - 09-29 約 00:08 使用者手動勾選 PHL 276E8V 的 Disable all enhancements；已核實該裝置 FxProperties 的 PKEY_AudioEndpoint_Disable_SysFx=1。個別音效原本均未勾選，不能將此當作總開關已停用。對照試驗基準記在本機 audio-intervention.json，須比較後續 30–60 分鐘 Key 句柄增長率，尚不能宣稱已修復。Heartbeat 暫改每 30 分鐘，取得並回報對照結果後應恢復每小時。
+- 09-29 00:39 完成初步對照：同一 audiodg PID/StartTime 在 00:08:41 至 00:39:08 的七筆後續取樣中，Key 固定 2719，30.4 分鐘增量 0；相較調整前約每五分鐘增加 50，累積已在該觀察窗停止。此結果支持音訊句柄累積初步改善，不能證明 TCP/UDP 耗盡或整機死機已根治。結果已記錄並將 heartbeat 恢復每小時，繼續檢查是否復發。
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
 - Microsoft Learn: Delivering a great startup and shutdown experience
