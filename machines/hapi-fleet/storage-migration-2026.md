@@ -18,7 +18,7 @@ updated: 2026-09-28
 ## 各機可重建資料清理（2026-09-28）
 
 - 四台 Linux 主機的 `docker builder prune -f` 只清 Docker 未使用 build cache，沒有清 image、container、volume；Valkyrie 五個 running container 保留。Cthulhu、Mazu、Athena、Valkyrie 的 `df -B1` 觀測減少分別為 28,300,234,752、4,784,439,296、49,152、14,567,182,336 bytes，清後四台 build cache reclaimable 都是 0。Docker 報告的 cache 邏輯大小與 `df` 差額不同，不能混用。
-- Mazu 的 `/var/tmp/eda-staging-20260915/synopsys/` 只清 `fc`、`formality`、`lc`、`primetime`、`spyglass` 五套本機解壓暫存。各自的內層樹對正式 `/apps/eda` 版本執行 `rsync -rln --size-only` 均 exit 0、零差異，並有代表檔 SHA 一致、正式安裝標記、既有功能測試、無暫存程序引用／子掛載；刪後五條暫存路徑不存在，正式安裝仍在。這不是五套全檔雜湊比對。Mazu `df -B1` 再減少 192,221,708,288 bytes；和 Docker 四機的差額合計約 239.87 GB。`synthesis` 比對五分鐘逾時未完成，`vcs`、`verdi`、Cadence Xcelium 未完整比對，均保留；約 951 GB Canonical Home 工作樹、Issue 25、scratch、Valkyrie 舊本機 home 也未動。詳細回執在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
+- Mazu `/var/tmp/eda-staging-20260915/` 九套已發布 EDA 本機解壓暫存已清空，staging root 不存在。前五套 `fc`、`formality`、`lc`、`primetime`、`spyglass` 的正式版路徑／類型／大小比對 `rsync -rln --size-only` 均零差異，並有代表檔 SHA、標記、既有功能測試與引用檢查，`df -B1` 減少 192,221,708,288 bytes。`synthesis` 的相同全樹比對五分鐘逾時，不代表內容錯誤；後四套 `synthesis`、`vcs`、`verdi`、Cadence Xcelium 改採套件層級證據：18 個原始 tgz 仍在 NAS `/apps/eda/.admin/downloads`，正式版與 `.eda-installed`、既有功能驗證、代表檔 SHA、無暫存引用／子掛載；刪後來源包和正式安裝仍在，`df` 另減少 225,131,864,064 bytes。沒有做後四套全樹逐檔比對。九套合計約 417.35 GB，加四機 Docker build cache 約 47.65 GB，本輪六批 `df` 觀測差額約 465.01 GB。約 951 GB Canonical Home 工作樹、Issue 25、scratch、Valkyrie 舊本機 home 未動。詳細回執在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
 
 ## 其他舊 home 與備份工作碟現場盤點（2026-09-27，清理前快照）
 
