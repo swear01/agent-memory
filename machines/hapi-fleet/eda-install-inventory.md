@@ -17,7 +17,7 @@ tags:
 
 # Mazu 舊解壓暫存清理（2026-09-28）
 
-`/var/tmp/eda-staging-20260915/synopsys/` 的 `fc`、`formality`、`lc`、`primetime`、`spyglass` 五套舊解壓目錄已按各自 `/apps/eda/synopsys/<tool>/2026.03/` 正式版做完整路徑／類型／大小比對（`rsync -rln --size-only` 零差異）、代表檔 SHA 抽查與使用中引用檢查後刪除；Mazu 系統碟觀測減少 192,221,708,288 bytes。正式版及 `.eda-installed` 標記均保留。這不是全檔雜湊比對。`synthesis` 的比對五分鐘逾時，`vcs`、`verdi`、Cadence Xcelium 未完整比對，暫存均留原位。詳細回執見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
+`/var/tmp/eda-staging-20260915/` 的九套舊解壓目錄已清空，整個 staging root 不存在。先清 `fc`、`formality`、`lc`、`primetime`、`spyglass`：與正式版本做完整路徑／類型／大小比對（`rsync -rln --size-only` 零差異）、代表檔 SHA 抽查及引用檢查，Mazu 系統碟觀測減少 192,221,708,288 bytes。`synthesis` 的同一全樹比對五分鐘逾時，並非發現資料錯誤；後續改以套件層級證據清理 `synthesis`、`vcs`、`verdi`、Cadence Xcelium：四套共 18 個原始 tgz 仍在 `/apps/eda/.admin/downloads`，正式版與 `.eda-installed`、先前功能驗證、代表檔 SHA 均有證據，且暫存無程序引用或子掛載。後四套 `df` 另觀測減少 225,131,864,064 bytes；沒有做全樹逐檔內容比對。正式安裝和原始 tgz 清後重查仍在。詳細回執見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-safe-cleanup-20260928/RESULT.md`。
 
 # TSRI 相同年度 EDA 版本已安裝（2026-09-27）
 
