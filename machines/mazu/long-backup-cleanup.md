@@ -5,12 +5,14 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-21
+updated: 2026-09-28
 ---
 
 # Mazu 長備份可重建資料清理邊界
 
 ## 使用者原則
+
+- 2026-09-28 Mazu 系統碟的 `/var/tmp/canonical-home-one-touch-20260906` 舊製作工作樹已按既有 54 卷冷讀回／歸位證據清理，實測釋放約 950.63 GB；此路徑不再是恢復來源。未納入一般 Home 備份的驗證檔、原始截斷封存檔和憑證副本先封存於 NFS 管理員私有 `<remote-home>/private-system-backups/mazu-canonical-staging-20260928/preserved.tar.zst`，40,560,263,103 bytes，完整解壓／11,122-member 清單及 SHA-256 通過；精確收據見 [儲存遷移總表](../hapi-fleet/storage-migration-2026.md)。
 
 - 2026-09-21 Jonathan 歸位完成：長碟新增獨立 `backup/home/jonathan.tar.zst` 與 SHA sidecar，76,204,875,019 bytes；完整 SHA-256 對照既有基準與 257,533-member 解壓／tar 讀回通過後，才移除短碟原件。它沒有重新封裝進本節的 Canonical Home 54 卷。兩顆短備份碟皆已按授權清空，長碟與 5 TB 短碟已安全卸載；詳細核對與較早中斷記錄見 [外接備份碟](external-backup-drives.md)。下方 Jonathan 尚留短碟的記載均為歷史狀態。
 
