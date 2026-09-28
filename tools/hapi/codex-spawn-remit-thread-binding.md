@@ -2,7 +2,7 @@
 title: Codex spawn-peer 將預留的新 session 誤當 cold resume
 scope: tools/hapi
 status: verified
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 
 HAPI `v0.30.7.2` 的 `spawn-peer --agent codex` 可在 runner 在線時立即失敗，回報 `Existing HAPI session has no Codex thread binding`。swairM5 的失敗呼叫回傳 HTTP 502，mazu runner stderr 亦有相同錯誤；這與後續機器離線或 Google 授權失效是不同問題。
@@ -32,3 +32,7 @@ CI 首輪 `orphanReap.test.ts` 偶發失敗，因測試假 PID 固定為 `4242`�
 驗證包含新增入口案例先紅後綠、CLI typecheck、18 個入口／真實 Codex runtime 檢查，以及完全隔離的真實 Hub→Runner→Codex `spawn-peer`、`wait-peer`、同 remit retry、`archive-peer`。模型端使用本機 mock Responses，沒有付費推理。這些證據不等於正式 runner 已部署更新。
 
 測試邊界：opt-in `runtime.integration.test.ts` 的 MockSession 必須實作 EventEmitter，否則會在 `registerControls` 因缺少 `on` 而失敗。較大的 `frontend.integration.test.ts` 在修正前後皆於 `secondary attach to terminal-owned engine` 逾時；未修改基準 `e80ab76f` 已重現，不能把它當成 remit 啟動失敗或本次已修好的功能。
+
+## 正式部署驗證（2026-09-28）
+
+修正已由維護版 `v0.30.7.4` carry #1771 head `5a0465f6` 發布，七台可連線主機的 Runner 均已部署。Mac 與 mazu 正式使用 native CLI `spawn-peer --agent codex`，新 session 成功回覆、首次 archive 成功並讀回 inactive／archived；因此舊 `.3` 的「未部署／仍需避開 spawn-peer」結論已被取代。Windows `swop` 仍離線、未部署，不能延伸宣稱已修好該主機。這與 Skillshare 遮蔽 HAPI-owned `.hapi-managed` 技能是不同原因，不應重新把 `hapi-session-control` 發布到 Skillshare。
