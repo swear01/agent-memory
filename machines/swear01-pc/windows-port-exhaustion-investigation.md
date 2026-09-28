@@ -31,6 +31,7 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - TCP TIME_WAIT 的說明不能單獨解釋 UDP 耗盡。擴大動態埠範圍或縮短等待時間只適用於經確認的負載模式，不能當作已找到洩漏根因。
 - 09-28 已依使用者要求將 WARP 更新為 2026.7.1376.0；GUI/CLI 版本一致、CloudflareWARP Running/Auto，保留 Manual Disconnection。安裝 MSI 紀錄與 winget 均成功；不能當作根因已證明解決。
 - 已建立 Windows 排程工作 `Port Resource Monitor`：每 5 分鐘以目前使用者 Interactive/Highest 取樣，日誌位於 `<user-home>/Documents/Codex/2026-09-28/no-more-older-messages-conversation-log/outputs/port-monitor`，每日資料保留 30 天；實際兩次執行成功，LastTaskResult=0。登出/睡眠不取樣。Codex heartbeat 每小時檢查，只通知新的可處理異常。
+- 使用者回報直接啟動 PowerShell 的排程每五分鐘跳出視窗。已改由 `wscript.exe //B //NoLogo` 執行 `launch-hidden.vbs`，使用 `WScript.Shell.Run(command, 0, True)` 隱藏子行程並傳回退出碼；更新後排程實際取樣成功、LastTaskResult=0。排程动作不要直接啟動帶主控台視窗的 PowerShell。
 
 ## 官方參考
 
