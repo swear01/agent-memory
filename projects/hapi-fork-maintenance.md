@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-27
+updated: 2026-09-28
 tags:
   - hapi
   - fork
@@ -39,9 +39,21 @@ Keep tokens, signing material, runner environments, and deployment configuration
 
 # Latest verified release
 
-`v0.30.7.3` 於 2026-09-27 發布，`main` 與 tag 均為 `e80ab76f1ab2d9f9ac22a5e115ad9029f0816410`。從上游重新建置，carry 24 個當時仍開放的 PR；已關閉、未合併的 #847 從成品排除，作者是 `swear01` 也不能例外。Release Actions `36292425047` 成功，9 個 assets、8 條 payload checksum 通過。Mac、五台 Linux、Oracle 的 binary 與 Runner 均為 `.3` 且 Hub online；Windows `swop` 仍為 `.2` 且離線，使用者於 2026-09-27 決定暫緩處理，因此本輪是 7/8 部署。七台已部署主機的 HAPI Skillshare 安裝檔雜湊與已發布來源一致。
+`v0.30.7.4` 於 2026-09-28 發布，`main` 與 tag 為 `aec67d5c1ed56f7acccc5965967bdf1bc67a2f6c`，官方 base 為 `86c88df93baf5d1f738dd4b202078bdf6dec376e`。重新稽核 176 個 open PR、carry 25 個：原 24 個中 23 個 head 不變，#1771 更新為 `5a0465f6`，新增 archive 修正 #1930 `86abb6b8`。33 個重產 patches 的 rehearsal tree 相符；相較 `.3` 沒有額外移除功能。已關閉未合併的 #847 不 replay；#1320 僅保留已授權的官方 base 內容。維護記錄位於 `<project-root>/tools/maintenance/releases/v0.30.7.4/`。
 
-`swop` 對外 SSH 入口以 Mac 當前 `Host swop` 設定為準；設定的公網 IP 可回 ping，但從 Mac、Mazu、Oracle 連 TCP 22 均逾時。舊 LAN 位址僅在實驗室內使用。新版移除了舊版 `hub-artifact` 自升級路由；下述流程僅是歷史紀錄。Mac 的 `skillshare sync` 曾讀設定檔遇到 `Operation not permitted`，重試後成功，不是待批准事項。
+最新 head Gemini review 通過；本機完整測試 8,335 passed／16 skipped、實際 Codex/mock-model integration 5 passed。exact-main 與 tag Test、Android、iOS、fixtures、relay CI 通過；iOS 既有 transcript 3 秒等待偶發逾時，於同 SHA 重試一次成功，沒有放寬測試。Release workflow `36348621399` 成功，9 assets、8 payload checksums 通過，兩種 macOS 架構的嚴格簽章與原安裝版 designated requirement 相符。PR `swear01/hapi#28` 已合併；驗證收據見該 PR 的 comment `5859827960`。
+
+Mac、mazu、cthulhu、athena、valkyrie、zeus、Oracle 的 binary／Runner 均為 `.4`，七台 canonical machines active，Hub 與公開 Web asset 也為 `.4`。Mac 與 mazu 的正式 `spawn-peer --agent codex` 新 session 能回覆，首次 archive 成功且讀回 inactive／archived；六個既有 session roots 的 PID 與 start time 維持不變。這次已修好先前 `.3` 尚未修復的 native thread binding 問題，詳見 `tools/hapi/codex-spawn-remit-thread-binding.md`；archive confirmation 是另一個 runner 問題，見 `tools/hapi/session-lifecycle-exit-confirmation.md`。
+
+Windows `swop` 未部署，最後回報仍為 `.2`；從 Mac、mazu、Oracle 探測外部 SSH TCP 22 均逾時，mazu 探測舊 LAN 路由亦逾時。2026-09-28 的結果為 **7/8**，不是全 fleet 完成。未來恢復部署前重新核對當前 `Host swop` 路由與 TCP 22，不以 ping 或 `ssh -G` 當成連線證明。`.3` 起已移除舊 `hub-artifact` 自升級路由，下面 Windows 流程僅為歷史紀錄。
+
+Hub 更新前 backup 與更新後 live DB 的 `quick_check=ok`，schema 保持 27。只清除經程序／FD／maps 查核無使用的 10 個 runtime directories 與四份舊 installer archives，約 1.77 GiB；mazu `.2`／`.3`、zeus `.2` 及仍被 session/helpers 使用的舊 `.nfs*` executable 必須保留，不能為清理而停止既有工作。
+
+Canonical gist、handover mirrors 與 HAPI skill 文件已同步。`shared-skills#43` 與 `transfer_MAC#53` 已合併，七台 source 讀回 `a24779d4db451a9f05b6a1388b481d2f8b888187`、六個 targets／106 links 且 source clean；parent main 為 `b398629b91ca68e9fecceb9d02599cedefc0811b`。原有其他 local edits 保留。三個本輪 release/docs worktrees 已清理，上游 #1930 的 worktree 保留等待 maintainer。
+
+# Historical v0.30.7.3 release
+
+`v0.30.7.3` 於 2026-09-27 發布，SHA `e80ab76f1ab2d9f9ac22a5e115ad9029f0816410`，carry 24 個 open PR，排除 closed/unmerged #847；Release Actions `36292425047`、9 assets／8 checksums 通過。Unix 七機部署 `.3`，Windows `swop` 當時仍 `.2`／離線，使用者暫緩處理。Mac `skillshare sync` 曾遇設定檔 `Operation not permitted`，重試成功。
 
 # Historical v0.30.4.1 release
 

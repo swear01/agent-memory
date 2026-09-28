@@ -2,7 +2,7 @@
 title: HAPI inactive lease 不能代替 runner 程序退出確認
 scope: tools/hapi
 status: verified
-updated: 2026-09-09
+updated: 2026-09-28
 ---
 
 Hub `Session.active` 是心跳 lease；30 秒失聯即可變為 false，並不證明 detached runner child 已退出。新 lifecycle 操作不能只依賴 inactive 就 archive 或 delete，否則程序可能仍在跑，Hub 紀錄卻已消失。
@@ -16,3 +16,11 @@ Hub `Session.active` 是心跳 lease；30 秒失聯即可變為 false，並不�
 Hub 已保留 child session id 的 spawn 請求，即使在真正建立 child 前被拒絕，也必須留下可供 cleanup 使用的退出證據。`spawnSessionOnce` 的 `failBeforeChild` 會記錄 verified-exit tombstone；machine RPC 若提前因 workspace roots 拒絕，便跳過此 bookkeeping，造成沒有 PID 也沒有 tombstone，`stopSession` 只能回 still_alive，預留 row 無法封存。保留傳給 runner 的 `validateDirectory` callback，讓同一個 pre-child rejection 路徑完成驗證和退出記錄；不要靠刪除資料庫紀錄來繞過退出確認。
 
 驗證：新增真實 Hub → machine RPC → runner integration regression，舊實作回 `outside_workspace_roots` 且 `cleanedUp:false`；修正後 `cleanedUp:true`、預留 session 已 archived、stop 回 already_gone、沒有 child 或被拒絕的目錄。完整 serial runner integration：15 passed、1 skipped，測試所屬程序清理 audit 通過。
+
+## Codex 最後 root 的首次 archive 誤報失敗
+
+Shared Codex runtime 的 KillSession 已將指定 root binding 設為 inactive，但 runner tracking 隨清理消失時，`startRunner` 的 stop confirmation 原先只在還有 sibling 或 protected PID 時讀取 binding。最後一個 root 沒有 sibling，wrapper 尚在收尾，因此落入 `unknown`；Hub 雖已有原生封存證據，第一次 archive 仍報失敗。
+
+上游 PR `tiann/hapi#1930`，head `86abb6b8a5667d055d5de0c355fd6a7c6a60c8b3`，將 registry binding 的確認移出 sibling 條件：inactive binding 可確認指定 root 已封存；active binding 仍回 still_alive，absent binding 且沒有其他退出證據仍保持 unknown。Sibling 存在本身不是封存證明，也不能停掉共用 wrapper 的其他 roots。這是官方 main 也有的 runner 問題，與未合併 #1771 的 fresh-remit binding 整合缺口分開。
+
+七個 stopSession 回歸案例通過，上游 PR CI／Codex review 通過；2026-09-28 查核 PR 仍 OPEN，等待 maintainer，未合併。個人維護版 `.4` 已 carry 此 head，Mac／mazu 新 Codex session 的首次 archive 實際通過，六個既有 session roots 維持原 PID／start time。舊未部署主機或其他 Agent 的封存結果仍須個別驗證。
