@@ -4,6 +4,7 @@ scope: machine
 machine: swear01-pc
 status: active
 updated: 2026-09-28
+audio_trial: 2026-09-29
 ---
 
 # 已驗證線索；根因尚未確認
@@ -44,6 +45,7 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 23:21 起已在既有五分鐘排程加入音訊句柄類型統計，完整明細保留 baseline 與 latest；實際捕獲 audiodg 2652 個句柄（與行程總數一致），其中 Key 2206、Event 137。Key 中 1809 個集中在 Render/FxProperties 設定；登錄裝置屬性對應 PHL 276E8V / NVIDIA High Definition Audio。下一次取樣 Key 增至 2227，值得追蹤未釋放的音訊設定資源，但不等於已證明 NVIDIA 驅動錯誤或 port 耗盡原因。已讀取 audiodg 模組快照，當時未見非 Microsoft 公司模組。
 - 訂閱 Tcpip 4231/4266 的 `Port Exhaustion Capture` 已於 09-28 23:53 經使用者重新確認 Windows UAC 後完成登記。語法與 XPath 匹配歷史事件驗證通過；手動執行成功保存 TCP/UDP/行程/AFD 明細，LastTaskResult=0。此次 RecentExhaustionEvents=0，不能當作耗盡重現；仍需等自然事件驗證自動觸發。原有五分鐘取樣及新增 audiodg 統計也已實際運行成功。
 - Handle 全類型 CSV 的 `Name ` 欄名及部分文字有尾端空白；讀取名稱時應 trim 欄名和文字，避免誤判無名稱。部分 AFD 搜尋模式 CSV 欄名則沒有尾端空白。
+- 09-29 約 00:08 使用者手動勾選 PHL 276E8V 的 Disable all enhancements；已核實該裝置 FxProperties 的 PKEY_AudioEndpoint_Disable_SysFx=1。個別音效原本均未勾選，不能將此當作總開關已停用。對照試驗基準記在本機 audio-intervention.json，須比較後續 30–60 分鐘 Key 句柄增長率，尚不能宣稱已修復。Heartbeat 暫改每 30 分鐘，取得並回報對照結果後應恢復每小時。
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
 - Microsoft Learn: Delivering a great startup and shutdown experience
