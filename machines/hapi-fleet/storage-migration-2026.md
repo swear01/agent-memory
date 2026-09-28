@@ -10,6 +10,12 @@ updated: 2026-09-28
 
 # DVLab persistent storage migration inventory
 
+## Cthulhu 8T 資料碟清後盤點（2026-09-28，只讀）
+
+- `/mnt/8T-Data` ext4 7,937,303,777,280 bytes，已用 **268,482,822,144 bytes（4%）**、可用 7,268,726,018,048 bytes，幾乎全部在 `/scratch`。帳號大宗：`michael` 133.42 GB（`new_puzzle_2026` 85.62 GB，100 個大型 CNF 約 80.42 GB；`neuroback_work` 47.31 GB），`lipohan` 50.37 GB（HW7 合併模型／中間模型各 14.49 GB、HW5 微調 checkpoint 21.37 GB），`vichuang` 37.09 GB，`cursorpro` 36.56 GB；四者約占 96%。`michael/new_puzzle_2026` 程式／報告 09-25 仍更新，`chenyunting/GraphQSat-main` 09-08 有少量更新；其他主要專案 09-01 後無新檔，但不代表可整樹清理。
+- `vichuang/iccad2026/FloorSet/floorset_lite` 與 `cursorpro/floorset/floorset_lite` 各 **25,001,029,632 allocated bytes**、各 9,000 個 `.th`；相對路徑／型別／大小清單一致，`rsync -rcni --delete` 整樹 checksum dry-run 無差異，不是 hard link。兩專案可能各自引用不同路徑，本次沒有刪；須先選 canonical 路徑。`vichuang/iccad2026/FloorSet/pd` 是 7.76 GB Python venv，屬可重建環境候選。`cursorpro/exported_netlists` 11.56 GB 是 `.th` 的 JSON／CSV／DOT／文字匯出，來源範例仍在，但 README 提到的匯出腳本在資料碟未找到，不能直接宣稱可完全重建。
+- `michael/neuroback_work/DataBack_raw` 30.18 GB 包含原始 tar.gz 與展開資料；作者的 `neuroback/DataBack` 公開資料集現有相同名稱的 original／dual 封存約 11.1 GB，但本機檔案尚未與線上逐檔核對，`neuroback/data` 另 16.95 GB，不把整棵工作樹當可刪快取。`lipohan` HW5 checkpoint 是本機微調成品，不能以基礎模型可下載推定可重抓。詳細盤點在 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/CTHULHU-DATA-DISK-20260928.md`；這次沒有刪資料碟檔案。
+
 ## Cthulhu Issue 25 舊索引與無效分片已清理（2026-09-28）
 
 - 使用者確認替代檢索驗證已完成，授權刪除 Cthulhu `/var/tmp/issue25-qmd-global-cthulhu` 舊 QMD 索引 228,296,683,520 bytes 與 `/var/tmp/issue25-qmd-invalid-athena-archive` 早期無效分片 133,587,517,440 bytes；本次沒有重跑檢索驗證，不把原先等待 retrieval gate 的舊紀錄當成現況。刪前精確核對 inode、目錄類型、無子掛載、無程序 cwd/root/exe/fd/maps 引用、無 Issue 25／QMD systemd unit 或掃描範圍內設定引用。原 `/var/tmp/issue25-memory-cthulhu` 工作來源未動。
