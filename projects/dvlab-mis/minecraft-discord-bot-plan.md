@@ -36,3 +36,10 @@ Discord bot on **zeus** that shows Vault Hunters (utux, MOTD `dvlab server`) onl
 - Bot token via secure channel (never chat paste)
 - Exact public join host:port as seen from zeus
 - zeus SSH access for deploy (or approve assistant deploy path)
+
+
+## Status (2026-09-29)
+- Code on zeus: `~/dvlab-mc-discord-bot`
+- Slash commands registered on guild `1155808217872466041`
+- Bot logged in as DVLAB Bot; presence polls `140.112.171.142:25565`
+- Box NTU VPN reaches campus sites but not `140.112.171.x` (deploy via Mac SSH)
