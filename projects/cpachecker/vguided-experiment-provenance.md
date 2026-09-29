@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-09-29
+updated: 2026-09-30
 ---
 
 # Frozen benchmark pairing
@@ -130,6 +130,21 @@ CPU／wall 預算耗盡及 cgroup OOM 仍依原政策列為 `UNKNOWN`。不要�
 重跑原列。修正需在追蹤 Issue 先登記，並讓 INVALID 留在完整分母、PAR2與成本中。
 證據：`<experiments-root>/reports/issue296-hard218-cthulhu-recovery-r7-20260929/HARVEST-V2-CORRECTION.md`、
 `build_harvest_v2.py`、`check_harvest_v2.py`，Issue #296 comment 5884581512。
+
+# #296 完整重跑的時間與 replay 證據邊界
+
+hard218 原 Cthulhu 與替代 r8 各303列均完整；r8 零超預算、零停臂。`foreign_load.py`
+記錄的是其他程序近期 CPU 使用率及其允許的 affinity 與 P-core pool 相交，不是實際
+core residency。兩批各有31個 external positive windows；這不能證明某一列實際受干擾，
+卻無法依 formal protocol 證明全程無競爭。保留 verdict 與觀測成本，暫不主張正式
+timing/PAR2；不能用前後各五次空閒 load gate 取代執行期間證據。
+
+固定回答 replay 即使逐 byte 命中並消耗所有原始回答，solver 仍可能提出新的請求。
+#296 iprotocol.1 的 Step replay 第一筆 refinement 與 source 完全相同，之後提出
+source cache 沒有的第二筆請求；正確分類是 fail-closed `REPLAY_MISS`，不能當成
+普通 UNKNOWN 或放寬 request key。其餘三筆因 CPU watchdog 而止，應分列
+`REPLAY_BUDGET`。兩次 fresh repeat 的 F0/Existing/Step 結果可獨立解讀；
+replay 限制不能改寫 fresh verdict。
 
 # 準備文件不能自稱已取得執行核准
 
