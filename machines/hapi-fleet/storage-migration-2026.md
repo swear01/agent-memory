@@ -10,6 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## 非現行 home 磁碟複查（2026-09-29，只讀）
+
+- Valkyrie 系統碟已用 383,917,969,408 bytes：`/mnt/md0/home` 隱藏舊本機 home 163,920,551,936（`madmax` 121.96 GB，其中 `DLCV/checkpoints` 108.54 GB、`final.bak` 13.42 GB，尚未證明已保存；`dvlab`、`hchchiu` 各約 17.91 GB）；`/var/lib/docker` 實體約 125.12 GB。Docker 有 4 個現役容器，7 個停止容器 writable layer 約 40.93 GB reclaimable，9 個 `LINKS=0` volume 約 39.07 GB 邏輯量／40.29 GB 實體，其中多個 `cva6`、`XiangShan`、`rocket-chip` 研究重現工作目錄；無容器引用不等於有替代保存。`/mnt/md1` 故障舊碟已用 28,707,450,880 bytes，幾乎全是 `.cleanup-star-links-20260927` 的 6,949,104 個 symlink；抽查前 67,805 個目標均指向已移除的 `yenlu_mepu`，因故障碟讀取慢停止全體目標掃描，勿稱 694 萬個已完整核對。
+- Mazu 系統碟已用 159,464,472,576 bytes；`/var/tmp/hapi-hub` 80,992,882,688，含現役 `hapi.db` 5.04 GB、18 個舊 `hapi.db.*` 快照合計 60,751,372,288 logical bytes、`backups/` 9.52 GB。整理快照須先定回退保留範圍，不可整樹清理。SSD `/usr/2TB-SSD` 已用 178,323,238,912；其中 134.91 GB `zeus-homebak-retained-20260921` 受保護，43.41 GB recovery/repack 依使用者指定暫不處理。
+- Cthulhu 系統碟已用 114,165,301,248 bytes，其中 `/var/lib/docker` 64,372,293,632；Docker 無執行容器，image 顯示 25.44 GB reclaimable，但有 `gqsat`、`learned-planner` 等本機研究映像，不等同安全可刪或精確可釋放量。8T 碟已用僅 271,052,800 bytes。Zeus 系統碟已用 44,472,115,200，沒有同量級的大宗舊研究資料。Athena 公網 SSH host-key verification failed，未跳過驗證，因此本輪無 Athena 現況。詳細數字與候選見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。本輪沒有刪除或搬移，現行 NAS home 未掃描。
+
 ## Cthulhu 8T scratch 研究專案已搬入 NFS home（2026-09-29）
 
 - 使用者授權**搬移**大小專案而非只複製。Cthulhu `/mnt/8T-Data/scratch` 的 19 個研究專案與兩個獨立檔案已搬入現行 NFS `<remote-home>/<account>`；驗證後刪除本機原件，舊 `/mnt/md0/home/<account>/...` 經 bind mount 與來源 symlink 仍可讀到 NFS。NFS 原有不同版目錄沒有被覆寫：`lipohan/ml_hw7`、`chenyunting/GraphQSat-main`、`piohuang/ICCAD_GNN` 的本機版另以 `-cthulhu-local-20260929` 命名；`cursorpro` 新接收目錄為 root:cursorpro、2775。
