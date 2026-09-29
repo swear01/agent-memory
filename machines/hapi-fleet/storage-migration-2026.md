@@ -10,6 +10,11 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie 故障碟即時 SMART 與管理權限（2026-09-29）
+
+- Valkyrie 的 `swear01` 可 SSH，但**無 sudo**；同機 `swear02` 已實測 `sudo -n -l` 有 `NOPASSWD: ALL`。先前以 `swear01` 讀不到即時 SMART 是帳號選擇錯誤，不是機器無管理通道。
+- 2026-09-29 16:51 用 `swear02` 的 sudo 即時執行 `smartctl -H -A -l error -l selftest /dev/sda`：Seagate `ST8000VX0022-2EJ112`／`ZA18W6D2`、8 TB、SMART 整體 PASSED，但 reallocated=16、pending=8、offline uncorrectable=8、reported uncorrect=9；最近五筆 ATA error 都是 LBA `44055104` 的 `UNC`。核心 09-27 日誌同位置有 `Medium Error`、`Unrecovered read error - auto reallocate failed` 及 `I/O error`；自檢日誌沒有 self-test。實際讀取故障確定，建議換碟，勿以整體 PASSED 否定 EIO；並非全碟掃描或所有扇區的健康證明。詳細即時複查見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。
+
 ## Valkyrie G1 舊 Home 私有封存已移至長備份碟（2026-09-29）
 
 - 原 `<admin-home>/private-system-backups/valkyrie-g1-migration-20260926/` 的 50 份帳號封存及側錄、還原／搶救小檔，共 104 檔、435,481,509,423 bytes，已原檔搬至 Mazu 長備份 One Touch（UUID `001D-7DC1`）的 `backup/private-system-backups/valkyrie-g1-migration-20260926/`。目的碟 50 份 SHA-256 全量讀回皆通過，其他 54 檔逐 byte 相同，來源刪除後路徑不存在；長碟恢復唯讀。使用者明確接受這批私有舊封存不加密存於實驗室私人硬碟；Mazu 掛載為管理員專用，但 exFAT 權限不提供跨系統保護。較早記錄的「仍在 NFS」是搬移前狀態，不再是恢復位置。
