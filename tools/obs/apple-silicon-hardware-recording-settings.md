@@ -98,3 +98,9 @@ rm -f /tmp/concat_list.txt
 - Profile「未命名」、scene collection「未命名」：1920×1200、30 FPS、NV12、Rec.709 Partial、Apple VT HEVC Hardware、CRF 60、keyint 2s、MKV + AutoRemux、不分割。
 - 來源：可見的「Brave 窗口采集」（視窗擷取）、隱藏的「Brave 应用备用」（應用擷取、靜音）、麥克風靜音。
 - Screen Recording／麥克風／相機權限已授予 OBS。
+
+## 上課錄影與暫停（2026-09-29 教訓）
+
+- OBS 暫停會停止寫檔但行程仍在跑；長暫停＝課漏錄，日誌只會出現 `output … paused` / `unpaused`。
+- 僅綁開始/停止熱鍵時，暫停多半來自 Controls 小鈕；空白鍵在 OBS 前景可能誤觸聚焦的暫停/停止。
+- 建議：課堂整段連錄、事後裁切；需要暫停時綁專用熱鍵（不要用 Space），並看狀態列圖示。
