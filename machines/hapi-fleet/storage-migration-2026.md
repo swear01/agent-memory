@@ -10,6 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Mazu SSD Zeus 舊 Home 保存包精簡清理（2026-09-29）
+
+- 使用者改定只留重要內容、不需完整舊 Home。Mazu `/usr/2TB-SSD/backup-work/zeus-homebak-retained-20260921/preserved.tar.zst` 原有 13 個舊帳號與 3 個備份整理工作目錄，134,911,736,531 bytes；已逐檔讀取，比對現行 `/home` 與長備份 Canonical Home 舊版差異。三個疑點 qsyn 工作樹的 140 個舊 source blob 均可在現行 Git 物件庫讀取，舊 commit 符合已保存的整合紀錄。
+- 另將 199 個未直接匹配的 source、測試輸入及參考輸出（6,257,473 bytes）按舊相對路徑保存於 Mazu 所接 One Touch（UUID `001D-7DC1`）`backup/private-system-backups/zeus-g2-unique-source-20260929/`。目的碟寫入時及恢復唯讀後 SHA-256 全量讀回通過，`manifest.json` 記錄每檔雜湊；長備份的 54 卷 Canonical Home 成品與完成標記仍在。完整舊封存沒有搬移，舊 build／環境／私有歷史狀態和整理暫存依使用者新保留範圍捨棄，不再承諾原 16 棵樹的完整還原。
+- 檢查原檔 size／inode／單一硬連結與無程序引用後，精確刪除 SSD `preserved.tar.zst`。SSD 已用量從 `178,323,238,912` 降為 `43,411,488,768` bytes，實測釋放 `134,911,750,144` bytes；小型歷史收據仍留在原目錄，長碟唯讀。較早節次稱該 134.91 GB 包「須保留」是刪前狀態，已由本次結果取代。詳細逐項稽核見 Zeus `<admin-home>/playground/storage-audit-20260903/homebak-final-cleanup-20260921/RESULT.md`。
+
 ## Valkyrie 故障碟即時 SMART 與管理權限（2026-09-29）
 
 - Valkyrie 的 `swear01` 可 SSH，但**無 sudo**；同機 `swear02` 已實測 `sudo -n -l` 有 `NOPASSWD: ALL`。先前以 `swear01` 讀不到即時 SMART 是帳號選擇錯誤，不是機器無管理通道。
