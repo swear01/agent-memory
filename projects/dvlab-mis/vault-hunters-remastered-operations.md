@@ -2,7 +2,7 @@
 title: Vault Hunters Remastered small-server operations
 scope: projects/dvlab-mis
 status: active
-updated: 2026-09-17
+updated: 2026-09-29
 ---
 
 # Vault Hunters Remastered small-server operations
@@ -20,3 +20,6 @@ updated: 2026-09-17
 - 主機的共享家目錄正式切換及整機重開機是另一項尚未完成的工作。不能因 Minecraft 或備份成功，就把 NIS/NFS 完整重開機驗證標成完成。
 - 正式文件為獨立的 Minecraft 維運 runbook；帳密／硬體回到 Overview、IP/MAC/NAT 回到 network manual、主機 NIS/NFS 實作回到 New Server Setup。
 - 2026-09-16 已透過共用網管帳號 Token 與 Docs API 增量寫回 Google Drive 正式文件《utux Minecraft 維運：Vault Hunters Remastered (private)》：包含版本映射、BCC 2.0.3 修正、MOTD (dvlab server)、DVLab 官方圖示與狀態驗收，並完成 text/plain 讀回校驗。
+
+- 公開 join（LAN／Mac 可 ping）：`140.112.171.142:25565`（inari 網站主機 port-forward，建議文件化的共用入口）與 `140.112.171.143:25565`（utux 1:1 NAT）皆回 MOTD `dvlab server`、max 8，且 server-list sample 含玩家名稱時可不靠 FIFO 做 `/players`。
+- Discord 狀態 bot（2026-09-29 已上線）：zeus 上 `dvlab-mc-discord-bot.service`（systemd enabled），程式在 swear01 家目錄 `dvlab-mc-discord-bot`，重用 DVLAB Bot；狀態欄活動名稱 `minecraft N/8 players`（Watching）；slash `/status` `/players` `/ip`。細節見 `minecraft-discord-bot-plan.md` 與 `machines/zeus/dvlab-mc-discord-bot-systemd.md`。
