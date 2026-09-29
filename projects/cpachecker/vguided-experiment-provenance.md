@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, experiments, provenance, preregistration]
 status: active
 created: 2026-08-30
-updated: 2026-09-08
+updated: 2026-09-29
 ---
 
 # Frozen benchmark pairing
@@ -105,6 +105,14 @@ Agent 在 fail-closed 後必須自行完成 recovery ladder：
 preregister 後、啟動 parallel jobs 前由單一 controller 建立空的 common parent；每個 runner 再用
 plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保留並排除整個失敗 attempt，
 以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
+
+#296 hard218 的 r6 `run_batch_native.py` 也用 `output.mkdir(parents=True, exist_ok=False)`：
+controller 只能預建共同的 `runs/` parent，不能預建正式輸出 child。2026-09-29 Athena
+替代批次首次啟動因空的 `runs/cthulhu` 已存在而在派題前收到 `FileExistsError`；
+原 journal、監看 sidecar 與 invocation 已留存，確認 child 全空後移除，沿用凍結 registry、
+輸出路徑與 runner，重新預告並啟動同一服務。重新啟動的 r6 前後各五次 CPU load gate 通過，
+首批四題開始執行。`systemd-run` 回報已啟動不等於 runner preflight 通過，須再讀
+`run_meta.json` 的 `status`、`load_check` 與實際 `launches.jsonl`。
 
 # 準備文件不能自稱已取得執行核准
 
