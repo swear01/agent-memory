@@ -5,10 +5,16 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-21
+updated: 2026-09-29
 ---
 
 # Mazu 外接備份硬碟識別
+
+## Valkyrie G1 私有舊 Home 封存搬至長碟（2026-09-29）
+
+- 使用者確認長備份 One Touch（UUID `001D-7DC1`）是實驗室私人硬碟，授權將舊 Home 私有封存原檔、不加密地搬入獨立的 `backup/private-system-backups/valkyrie-g1-migration-20260926/`，未重新打包或更動原有 `backup/home/` 成品。
+- 從 NFS 管理員私有 `<admin-home>/private-system-backups/valkyrie-g1-migration-20260926/` 搬入 50 份 `.tar.zst`、50 份同名 SHA-256 側錄及 4 個還原／搶救檔，共 104 檔、435,481,509,423 bytes。先複製到同碟 `.incoming`，檔案集合與大小一致，54 個非 archive 檔逐 byte 相同；目的碟完整讀回的 50 份 archive SHA-256 全部符合原側錄。來源 metadata 於搬移前後一致，正式改名與 sync 後才刪除 NFS 來源，來源路徑已不存在。
+- 長碟恢復唯讀，Mazu 掛載選項 `uid=1075,gid=1076,fmask=0077,dmask=0077`，本機僅管理員可讀；exFAT 本身沒有跨系統的 Unix 權限保護，這批原檔仍未加密。最終長碟 used 3,227,690,205,184 bytes、available 772,801,298,432 bytes；複製、讀回與收尾期間未見 USB／exFAT／I/O 錯誤。
 
 ## Jonathan 已移至長碟；兩顆短碟均已清空（2026-09-21）
 
