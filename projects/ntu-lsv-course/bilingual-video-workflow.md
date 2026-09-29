@@ -43,3 +43,5 @@ EEE5028 邏輯合成與驗證，第 1–2 週共五支錄影。教材放在 macO
 製作逐字稿與課綱前，先用 Codex 內建瀏覽器下載同課程／單元的教師原始 PDF（不搬 cookie，不接管個人瀏覽器）。已取得 lecture01-intro.pdf（26頁）、LSV26 syllabus.pdf（2頁）、ls-handout.pdf（112頁，2010背景教材）、lecture01-abc.pdf（46頁）、ABC_tutorial.pdf（39頁）及 LSV_2026_pa1.pdf（5頁）。合計六份／230頁；按既有週次與單元放入「原始講義」，共用講義放週目錄。資料說明/原始講義索引.json/.md 保存來源、SHA-256、頁數與影片對照；*.pages.md 供搜尋，圖／公式看原 PDF。
 
 給 subagent 的輸入須包括影片、穩定 cue ID 原字幕、對應 PDF／頁碼及畫面，先核對術語與章節覆蓋，再整理完整句子與圖文講義；修正回報須附 PDF頁碼與錄影時間。PDF證明書面內容，不代表每個字都曾講出；未口述內容標「原始講義補充」。三個 Luna subagent 已做重點抽查，並修正 homework 遲交規則為每天扣20%、補 Mask Level、限定 RTL while 可合成性與 AIG/FRAIG 表述。原始字幕不覆寫。來源與 Drive 本機副本的PDF magic/hash、頁碼抽字、來源連結及原cue檢查通過；遠端 Drive同步未獨立確認。
+
+PDF 文字擷取已證實會漏掉底線：PA1 第 2、4 頁實際命令是 `lsv_cut_tt <k>`、`lsv_cut_bddsize <k>`，不可依 pages.md 改成空格。命令／公式必須看原 PDF 圖像；三位 Luna 稽核建議須經來源複核後套用。
