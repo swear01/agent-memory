@@ -10,6 +10,10 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie G1 舊 Home 私有封存已移至長備份碟（2026-09-29）
+
+- 原 `<admin-home>/private-system-backups/valkyrie-g1-migration-20260926/` 的 50 份帳號封存及側錄、還原／搶救小檔，共 104 檔、435,481,509,423 bytes，已原檔搬至 Mazu 長備份 One Touch（UUID `001D-7DC1`）的 `backup/private-system-backups/valkyrie-g1-migration-20260926/`。目的碟 50 份 SHA-256 全量讀回皆通過，其他 54 檔逐 byte 相同，來源刪除後路徑不存在；長碟恢復唯讀。使用者明確接受這批私有舊封存不加密存於實驗室私人硬碟；Mazu 掛載為管理員專用，但 exFAT 權限不提供跨系統保護。較早記錄的「仍在 NFS」是搬移前狀態，不再是恢復位置。
+
 ## Valkyrie Docker 舊資料清理（2026-09-29）
 
 - 精確移除三個停止的 OpenTitan 容器 `opentitan_bug18638`、`opentitan_bug15897`、`opentitan_bug14199`；`/repo` 是 NFS bind mount，writable layer 主要是 Bazel 快取，系統碟實測釋放 **38,299,009,024 bytes**。確認舊 `buildx_buildkit_qsyn-builder0_state` volume 無 container/builder 引用、僅 BuildKit 快取後精確移除，另釋放 **6,682,554,368 bytes**。四個執行中的容器未變。
