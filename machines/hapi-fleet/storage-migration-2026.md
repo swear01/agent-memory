@@ -10,7 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
-## 非現行 home 磁碟複查（2026-09-29，只讀）
+## Valkyrie 舊 `madmax` 訓練成果已搬入現行 NFS home（2026-09-29）
+
+- 使用者確認已離校的 `madmax` 不需維持舊路徑。Valkyrie 本機 `/mnt/md0/home/madmax/DLCV` 僅有 `checkpoints` 與 `final.bak` 兩棵樹；NFS `<remote-home>/madmax/DLCV` 原有 14 個其他專案入口，但這兩個名稱空著。以帳號本人權限用 `rsync -aHAXS --fsync` 傳至 NFS 暫存，共 432 個一般檔、121,961,721,901 logical bytes；兩棵各以 `rsync -aHAXcni --checksum-choice=xxh128 --delete` 完整讀回，退出碼 0、差異為零，刪前 quick metadata 重查仍一致。另從 Cthulhu 跨主機確認 NFS 兩個正式目錄和大型 H5 可見。
+- 確認無來源程序引用、子掛載或目標衝突後，把 NFS 暫存升為 `<remote-home>/madmax/DLCV/{checkpoints,final.bak}`。本機來源逐一改名為 hold、核對後刪除；空的舊 `DLCV` 根目錄亦移除，**未建立舊路徑 symlink**。同帳號其他本機 `gatos` 保留。Valkyrie 系統碟已用由 383,834,611,712 降為 261,871,419,392 bytes，實測釋放 **121,963,192,320 bytes**；本機隱藏舊 home 剩 41,957,277,696 bytes，以 `dvlab`、`hchchiu`、`chinyi0523` 為主。最後確認 NFS 兩樹 432 檔仍在，舊來源、暫存和 hold 均不存在。詳細回執見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。下節 163.92 GB `madmax` 仍在的敘述均為搬移前快照。
+
+## 非現行 home 磁碟複查（2026-09-29，`madmax` 搬移前快照）
 
 - Valkyrie 系統碟已用 383,917,969,408 bytes：`/mnt/md0/home` 隱藏舊本機 home 163,920,551,936（`madmax` 121.96 GB，其中 `DLCV/checkpoints` 108.54 GB、`final.bak` 13.42 GB，尚未證明已保存；`dvlab`、`hchchiu` 各約 17.91 GB）；`/var/lib/docker` 實體約 125.12 GB。Docker 有 4 個現役容器，7 個停止容器 writable layer 約 40.93 GB reclaimable，9 個 `LINKS=0` volume 約 39.07 GB 邏輯量／40.29 GB 實體，其中多個 `cva6`、`XiangShan`、`rocket-chip` 研究重現工作目錄；無容器引用不等於有替代保存。`/mnt/md1` 故障舊碟已用 28,707,450,880 bytes，幾乎全是 `.cleanup-star-links-20260927` 的 6,949,104 個 symlink；抽查前 67,805 個目標均指向已移除的 `yenlu_mepu`，因故障碟讀取慢停止全體目標掃描，勿稱 694 萬個已完整核對。
 - 同日細查 Valkyrie 舊 `madmax/DLCV`：只有 `checkpoints` 108,544,126,976 bytes、`final.bak` 13,419,143,168 bytes，合計 432 個一般檔／63 目錄；現行 NFS `<remote-home>/madmax/DLCV` 已有 14 個其他專案入口、53,267,755,008 bytes，但兩個同名目標均不存在。兩邊 owner 均 UID/GID 1030:1030，帳號能讀舊來源、寫 NFS 父目錄，NAS 尚有約 8.85 TB 可用；沒有程序 cwd/root/fd 引用舊 DLCV，指定文字副檔名沒有舊路徑字面引用。最省事的保留方式是把**這兩個子目錄**驗證後搬入現行 NFS DLCV，並以舊路徑 symlink 保留相容性，勿覆寫 NFS 既有專案。個別 NFS quota 未核對，本輪未搬移。細節見下列 Zeus 盤點的 `madmax` 小節。
