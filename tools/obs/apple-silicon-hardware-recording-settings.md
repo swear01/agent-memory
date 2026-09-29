@@ -37,8 +37,8 @@ updated: 2026-09-29
 
 ### 2. 視訊設定 (Settings $\rightarrow$ Video)
 - **基礎畫布解析度**：`1920×1080`（或螢幕原生解析度）
-- **輸出縮放解析度**：`1920×1080` (1080p Full HD)
-  - 1080p 像素量僅 4K 的 25%，字體點對點清晰，且避免 M1 單編碼引擎超載。
+- **輸出縮放解析度**：`1920×1080` (1080p Full HD)；**錄 Google Meet／需貼合 16:10 螢幕時改用 `1920×1200`**（見下方 M1 Meet 段）。
+  - 1080p／1200p 像素量遠低於 4K，字體點對點清晰，且避免 M1 單編碼引擎超載。
 - **常用 FPS**：`30 FPS`
   - 課程、會議、桌面錄影勿用 60 FPS，負載與發熱直接減半，徹底消除被動散熱降頻風險。
 
@@ -65,3 +65,36 @@ CONCAT_EOF
 ffmpeg -f concat -safe 0 -i /tmp/concat_list.txt -c copy "merged_output.mkv"
 rm -f /tmp/concat_list.txt
 ```
+
+
+---
+
+## M1 雙螢幕 Google Meet 錄影（Swair-M1）
+
+針對 `Swair-M1.local`（基礎款 Apple M1、OBS Studio 32.2.2）錄製 Brave 裡的 Google Meet 時，在通用設定之外再套用以下規則：
+
+### 輸出比例用 16:10
+- **畫布與輸出**：`1920×1200`（不是通用段落的 1920×1080）。
+- 原因：M1 MacBook 原生約 16:10；Meet 視窗／外接螢幕內容用 16:10 可避免黑邊過多或非等比拉伸。
+
+### 擷取來源：Brave 視窗，不要用舊版螢幕擷取
+- 刪除 legacy `display_capture`（介面名稱常為「显示器采集」）。OBS 32 + 新版 macOS 會在啟動時 `Failed to create source`，且舊的 display UUID 常對不上目前連接的螢幕。
+- 主要來源用 ScreenCaptureKit **視窗擷取**（OBS id `screen_capture`，`type=1`），應用程式 `com.brave.Browser`，並開啟來源音訊以錄到 Meet 對方聲音。
+- 優點：Meet 視窗拖到哪個螢幕都跟得上，不必等外接螢幕接好再綁定。
+- 缺點（OBS 32）：視窗擷取**只記住 window ID**，沒有依標題／應用自動重綁。Brave 重開或 Meet 換視窗後，必須在來源屬性重新選一次視窗。
+- 可加一個隱藏的 Brave **應用程式擷取**（`type=2`）當備用；它不需重選視窗，但只顯示綁定那塊螢幕上的 Brave 視窗，且音訊應靜音以免與視窗擷取雙軌重疊。
+
+### 音訊
+- 麥克風／Aux **維持靜音**時，只錄 Meet 裡的聲音（對方與會議播放），不錄本機麥克風。
+- 需要自己的聲音時再打開麥克風軌。
+
+### 操作注意
+- 快捷鍵：`U` 開始錄影、`I` 停止錄影。誤按 `U` 會再開一段新錄影。
+- 設定檔位於 OBS Application Support 下的 `basic/profiles/<profile>/basic.ini` 與 `recordEncoder.json`；場景在 `basic/scenes/<collection>.json`。OBS 開啟時會覆寫設定檔，**必須先完全退出 OBS 再改檔**。
+- 遠端用腳本送快捷鍵需要「輔助使用」權限；沒有權限時可用結束 OBS 程序來停錄（MKV 通常可收尾，但可能沒有自動 remux 成 MP4）。
+- 驗證順序：預覽有畫面 → 會議有聲音 → 短錄 → 停止後檢查 remux 出的 MP4 解析度為 1920×1200、非全黑、音訊峰值不是靜音。
+
+### 已驗證狀態（2026-09-29）
+- Profile「未命名」、scene collection「未命名」：1920×1200、30 FPS、NV12、Rec.709 Partial、Apple VT HEVC Hardware、CRF 60、keyint 2s、MKV + AutoRemux、不分割。
+- 來源：可見的「Brave 窗口采集」（視窗擷取）、隱藏的「Brave 应用备用」（應用擷取、靜音）、麥克風靜音。
+- Screen Recording／麥克風／相機權限已授予 OBS。
