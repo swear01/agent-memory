@@ -118,6 +118,19 @@ controller 必須預建共同的 `runs/` parent，不能預建正式輸出 child
 另外 r6 的 worker 於895.196秒停下，service 收尾多6.218秒而達901.414秒；
 最終900秒上限仍判 INVALID，後續完整重跑將 prospective child watchdog 設為880秒。
 
+# Fullset 彙整須沿用 pilot 的 Java heap 分類
+
+#296 pilot-d 把三筆 `exit=1`、`java.lang.OutOfMemoryError: Java heap space` 列為
+`INVALID`，保留題目、成本與分母。首版 fullset `build_harvest.py` 卻只檢查
+`native_crash`／`infrastructure_error`，會把同樣的 Java heap 失敗列為 `UNKNOWN`；
+原始 Cthulhu 303 筆中已可直接查到15筆。因此「沒有超預算／基礎設施錯誤」不等於
+「沒有無效語意列」。保留凍結腳本與執行資料，另以全題一律適用的 v2 彙整規則把
+`exit=1` 且 result line 含 `java.lang.OutOfMemoryError` 列為 `INVALID`；
+CPU／wall 預算耗盡及 cgroup OOM 仍依原政策列為 `UNKNOWN`。不要因此挑選題目或
+重跑原列。修正需在追蹤 Issue 先登記，並讓 INVALID 留在完整分母、PAR2與成本中。
+證據：`<experiments-root>/reports/issue296-hard218-cthulhu-recovery-r7-20260929/HARVEST-V2-CORRECTION.md`、
+`build_harvest_v2.py`、`check_harvest_v2.py`，Issue #296 comment 5884581512。
+
 # 準備文件不能自稱已取得執行核准
 
 Worker 產生的 admission 範例必須保留 `NOT_ADMITTED`，不能預填 `issued_by_root=true`
