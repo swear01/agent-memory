@@ -10,6 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie Docker 舊資料清理（2026-09-29）
+
+- 精確移除三個停止的 OpenTitan 容器 `opentitan_bug18638`、`opentitan_bug15897`、`opentitan_bug14199`；`/repo` 是 NFS bind mount，writable layer 主要是 Bazel 快取，系統碟實測釋放 **38,299,009,024 bytes**。確認舊 `buildx_buildkit_qsyn-builder0_state` volume 無 container/builder 引用、僅 BuildKit 快取後精確移除，另釋放 **6,682,554,368 bytes**。四個執行中的容器未變。
+- 七個未被 Docker 引用的 CVA6／Rocket Chip／XiangShan 研究 volume **不是空資料**。先以保留 numeric owner、ACL、xattr、稀疏檔的 tar.zst 封存在 NFS `<admin-home>/private-system-backups/valkyrie-docker-repro-volumes-20260929/`，七份合計 7,054,676,881 bytes；全部經完整解壓讀回、`tar -d` 來源比對零差異，SHA256SUMS 在 Valkyrie 及 Zeus 另一個 NFS 掛載入口驗證通過。確認無特殊檔、子掛載、程序及容器引用後，精確移除七個來源 volume：`cva6-repro-{900,3459,3460}-work`、`rocket-chip-repro-{2895,2980}-work`、`xiangshan-repro-{6022,6210}-work`，實測釋放 **33,608,011,776 bytes**。三批合計釋放 **78,589,575,168 bytes**，最後系統碟已用 141,414,645,760 bytes（16%），Docker volume 僅剩空的 `PCOAST`。詳情見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`；下節 Docker 125 GB／九個 volume 是處理前快照。
+- 其餘：Valkyrie 映像約 13.79 GB Docker 標為 reclaimable，但含本地研究環境，未廣泛 prune；Cthulhu 亦有 `gqsat`、`learned-planner` 本地映像。Mazu HAPI hub 舊 DB 快照約 60.75 GB 與 backups 約 9.52 GB 涉及會話／歷史回復，依 HAPI 維運政策未清。Valkyrie 故障 `/mnt/md1` 隔離連結約 28.71 GB／694 萬 symlink，有 EIO 且尚有約 7.5 TB 可用，避免為少量空間對故障碟大規模 unlink，優先換碟。
+
 ## Valkyrie 隱藏舊 home 已搬入 NIS 共用 home（2026-09-29）
 
 - 使用者授權將舊本機 home 的其餘內容搬入現行 NIS 共用 home。`dvlab` 原有 NIS `<remote-home>/dvlab` 登入設定但實體目錄不存在，現已建 `<remote-home>/dvlab` 並搬入整份舊 home；其約 8.10 GB Anaconda 垃圾桶依使用者要求一併保存。`hchchiu`、`chinyi0523`、`arttr1521` 舊 home 搬入各自 `<remote-home>/<account>/valkyrie-old-home-20260929`，避免覆寫現有 home。`zwischen`、`clare`、`tzuyu`、`HugoChen` 少量舊設定檔亦搬到各自相同名稱子目錄；沒有 NIS 帳號的 `test_GPU` 搬到管理員 `<admin-home>/private-system-backups/valkyrie-test-gpu-20260929`。UID/GID、mode、ACL/xattr 等以 `rsync -aHAXS --numeric-ids` 保存。
