@@ -10,6 +10,12 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie 隱藏舊 home 已搬入 NIS 共用 home（2026-09-29）
+
+- 使用者授權將舊本機 home 的其餘內容搬入現行 NIS 共用 home。`dvlab` 原有 NIS `<remote-home>/dvlab` 登入設定但實體目錄不存在，現已建 `<remote-home>/dvlab` 並搬入整份舊 home；其約 8.10 GB Anaconda 垃圾桶依使用者要求一併保存。`hchchiu`、`chinyi0523`、`arttr1521` 舊 home 搬入各自 `<remote-home>/<account>/valkyrie-old-home-20260929`，避免覆寫現有 home。`zwischen`、`clare`、`tzuyu`、`HugoChen` 少量舊設定檔亦搬到各自相同名稱子目錄；沒有 NIS 帳號的 `test_GPU` 搬到管理員 `<admin-home>/private-system-backups/valkyrie-test-gpu-20260929`。UID/GID、mode、ACL/xattr 等以 `rsync -aHAXS --numeric-ids` 保存。
+- `dvlab/hw3` 與 `chinyi0523/hw3` 路徑與大小初看幾乎相同，但 checksum dry-run 證實 `hw3_2.py` 大小不同、51,357,588-byte `model.pkl` 同大小異內容，因此**不是全同副本**，兩個版本均搬到各自 NIS home。四個主要帳號加五份小資料在暫存 NFS 目的地以 `rsync -aHAXcni --checksum-choice=xxh128 --delete` 完整讀回，退出碼 0、差異為零；主要帳號刪前 metadata dry-run 亦零差異。項目數：`dvlab` 301,477、`hchchiu` 179,128、`chinyi0523` 30,637、`arttr1521` 4,991。Zeus 從另一個 NFS 掛載入口能讀四帳號代表路徑。來源無其他程序引用、無子掛載；升級 NFS 暫存後，九個本機來源逐一改名為 hold、原路徑連到 NFS 正式目錄、核對同 inode 與代表檔，再移除 hold，9/9 成功。
+- Valkyrie 系統碟 `df -B1` 由 261,928,144,896 降至 220,002,222,080 bytes，淨釋放 **41,925,922,816 bytes**。本機 `/mnt/md0/home` 實體剩 31,195,136 bytes，主要是 `valkyrie` 帳號約 31.05 MB，該帳號登入 home 本就在本機，保留；`madmax/gatos` 和幾個空／極小舊目錄亦在。九個已搬帳號的舊路徑僅存 symlink，沒有 hold 或 incoming。詳細結果見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。下節「41.96 GB 剩餘舊 home」是搬移前快照。
+
 ## Valkyrie 搬移後剩餘容量的內容（2026-09-29，只讀）
 
 - 舊本機 `/mnt/md0/home` 仍為 41,957,277,696 bytes。`dvlab` 17.91 GB 中 `.local/share/Trash/files` 約 8.10 GB，主要是 2022–2023 年的 Anaconda／conda pkgs，現行 NFS 無 `<remote-home>/dvlab`；`chinyi0523` 5.87 GB 中 `hw3` 4.22 GB，與舊 `dvlab/hw3` 的路徑和大小 dry-run 僅 `hw3_2.py` 有差異，尚未核對位元內容。`hchchiu` 17.91 GB 中 `ml` 8.23 GB（xglm-1.7B 快取 3.48 GB、`saved_model` 1.30 GB）、`gv` 3.22 GB、`bin/Bear` 2.13 GB、`yosys` 1.78 GB；現行 NFS 同帳號沒有 `ml`、`gv`、`gv0-socv`、`thesis`、`yosys` 同名目錄，研究成果仍應保留。
