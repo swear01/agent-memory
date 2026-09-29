@@ -14,6 +14,7 @@ updated: 2026-09-29
 
 - Valkyrie 的 `swear01` 可 SSH，但**無 sudo**；同機 `swear02` 已實測 `sudo -n -l` 有 `NOPASSWD: ALL`。先前以 `swear01` 讀不到即時 SMART 是帳號選擇錯誤，不是機器無管理通道。
 - 2026-09-29 16:51 用 `swear02` 的 sudo 即時執行 `smartctl -H -A -l error -l selftest /dev/sda`：Seagate `ST8000VX0022-2EJ112`／`ZA18W6D2`、8 TB、SMART 整體 PASSED，但 reallocated=16、pending=8、offline uncorrectable=8、reported uncorrect=9；最近五筆 ATA error 都是 LBA `44055104` 的 `UNC`。核心 09-27 日誌同位置有 `Medium Error`、`Unrecovered read error - auto reallocate failed` 及 `I/O error`；自檢日誌沒有 self-test。實際讀取故障確定，建議換碟，勿以整體 PASSED 否定 EIO；並非全碟掃描或所有扇區的健康證明。詳細即時複查見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。
+- 後續狀態：使用者決定之後自行安排更換這顆碟；目前列為待辦，本次不拆換或清理故障碟。
 
 ## Valkyrie G1 舊 Home 私有封存已移至長備份碟（2026-09-29）
 
