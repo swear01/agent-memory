@@ -10,6 +10,11 @@ updated: 2026-09-29
 
 # DVLab persistent storage migration inventory
 
+## Valkyrie 搬移後剩餘容量的內容（2026-09-29，只讀）
+
+- 舊本機 `/mnt/md0/home` 仍為 41,957,277,696 bytes。`dvlab` 17.91 GB 中 `.local/share/Trash/files` 約 8.10 GB，主要是 2022–2023 年的 Anaconda／conda pkgs，現行 NFS 無 `<remote-home>/dvlab`；`chinyi0523` 5.87 GB 中 `hw3` 4.22 GB，與舊 `dvlab/hw3` 的路徑和大小 dry-run 僅 `hw3_2.py` 有差異，尚未核對位元內容。`hchchiu` 17.91 GB 中 `ml` 8.23 GB（xglm-1.7B 快取 3.48 GB、`saved_model` 1.30 GB）、`gv` 3.22 GB、`bin/Bear` 2.13 GB、`yosys` 1.78 GB；現行 NFS 同帳號沒有 `ml`、`gv`、`gv0-socv`、`thesis`、`yosys` 同名目錄，研究成果仍應保留。
+- Valkyrie Docker 實體 125.12 GB，`overlay2` 84.73 GB、volumes 40.29 GB。7 個停止容器 writable layers Docker 回報 40.93 GB；三個最大的 OpenTitan 停止容器（`opentitan_bug18638`、`opentitan_bug15897`、`opentitan_bug14199`）約 35.8 GB，其中各自 upperdir 的 Bazel 快取約 13.15、12.71、7.22 GB，合計 **33.08 GB**。它們的 `/repo` 是 bind mount 到 NFS 專案；後續若清理容器須用 Docker 管理，勿手刪 `overlay2`。另有 9 個未被容器引用的 volume，邏輯量 39.07 GB，包含研究重現工作，未證明可刪。詳細只讀盤點見 Zeus `<admin-home>/playground/storage-audit-20260903/fleet-remaining-large-20260928/FLEET-DISK-RECHECK-20260929.md`。本輪沒有刪除或搬移。
+
 ## Valkyrie 舊 `madmax` 訓練成果已搬入現行 NFS home（2026-09-29）
 
 - 使用者確認已離校的 `madmax` 不需維持舊路徑。Valkyrie 本機 `/mnt/md0/home/madmax/DLCV` 僅有 `checkpoints` 與 `final.bak` 兩棵樹；NFS `<remote-home>/madmax/DLCV` 原有 14 個其他專案入口，但這兩個名稱空著。以帳號本人權限用 `rsync -aHAXS --fsync` 傳至 NFS 暫存，共 432 個一般檔、121,961,721,901 logical bytes；兩棵各以 `rsync -aHAXcni --checksum-choice=xxh128 --delete` 完整讀回，退出碼 0、差異為零，刪前 quick metadata 重查仍一致。另從 Cthulhu 跨主機確認 NFS 兩個正式目錄和大型 H5 可見。
