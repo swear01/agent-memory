@@ -107,12 +107,16 @@ plain `mkdir` 建立自己的 distinct child 並拒絕 pre-existing child。保�
 以新的 runner/input hashes preregister 下一個 attempt；不要把部分成功 case 混入結果。
 
 #296 hard218 的 r6 `run_batch_native.py` 也用 `output.mkdir(parents=True, exist_ok=False)`：
-controller 只能預建共同的 `runs/` parent，不能預建正式輸出 child。2026-09-29 Athena
+controller 必須預建共同的 `runs/` parent，不能預建正式輸出 child。2026-09-29 Athena
 替代批次首次啟動因空的 `runs/cthulhu` 已存在而在派題前收到 `FileExistsError`；
 原 journal、監看 sidecar 與 invocation 已留存，確認 child 全空後移除，沿用凍結 registry、
 輸出路徑與 runner，重新預告並啟動同一服務。重新啟動的 r6 前後各五次 CPU load gate 通過，
 首批四題開始執行。`systemd-run` 回報已啟動不等於 runner preflight 通過，須再讀
 `run_meta.json` 的 `status`、`load_check` 與實際 `launches.jsonl`。
+後續 r7 首次啟動反過來因未建立 `runs/` parent，監看 sidecar 立即收到
+`FileNotFoundError`，同樣零派題；建立 parent 且保持 child 不存在後才通過 preflight。
+另外 r6 的 worker 於895.196秒停下，service 收尾多6.218秒而達901.414秒；
+最終900秒上限仍判 INVALID，後續完整重跑將 prospective child watchdog 設為880秒。
 
 # 準備文件不能自稱已取得執行核准
 
