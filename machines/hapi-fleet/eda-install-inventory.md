@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-28
+updated: 2026-09-30
 tags:
   - eda
   - abc
@@ -163,7 +163,7 @@ source /apps/eda/cadence/xcelium.sh 25.03.005
 # 舊安裝
 
 - 三份閒置學生家目錄舊 EDA 樹（clare 的 `eda_tools`、HugoChen 的 `eda_tools`、eedave 的 `synthesis_2024.09_linux`）已於 2026-09-14 改名 `.retired-20260914`。觀察期過後才能 `rm -rf`。
-- jack0716 的 `tsri` 已於 2026-09-14 改名 `tsri.retired-20260914`（Valkyrie `opentitan_bug8729` 已 `docker stop`，未 `rm`）。觀察期同日，不要 `rm -rf`。
+- jack0716 的 `tsri` 於 2026-09-14 改名 `tsri.retired-20260914`；使用者於 2026-09-30 明確授權刪除後，退休樹已清除，NFS home 實測釋放 445,900,521,472 bytes。當時已停止的 Valkyrie `opentitan_bug8729` 容器未因此刪除；其舊 bind mount 指向更早已不存在的 `tsri` 路徑。現行共用 EDA 位於 `/apps/cad`、`/apps/eda`，刪後代表檔 SHA-256 仍與刪前一致。完整核對範圍見 `nfs-jack0716-home.md`。
 - 那些舊樹不是 fleet launcher 入口。Zeus 本機 `eda.bashrc` 已隨 `/cad` 刪除。
 - Zeus 的 `libpng12-0` 仍安裝（舊 Genus 依賴）；工具樹已刪，套件可留到另案。
 
