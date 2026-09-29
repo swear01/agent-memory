@@ -5,10 +5,14 @@ machine: mazu
 tags: [storage, backup, exfat, nfs, acl]
 status: active
 created: 2026-09-03
-updated: 2026-09-29
+updated: 2026-09-30
 ---
 
 # Mazu 外接備份硬碟識別
+
+## 長碟舊中斷封存清理（2026-09-30）
+
+使用者明確同意清理 2026-09-06 中止的 `backup/home/single-home.tar.zst.partial`。它原為 405,723,078,656 bytes，沒有完成 archive test、SHA 或冷讀回，不能當恢復來源。刪前重查 One Touch UUID `001D-7DC1`、exFAT 唯讀掛載、精確 inode／大小／mtime、無 `fuser` 引用，並確認 `backup/home/Canonical-Home.repacked-20260915/` 的 `COMPLETE.json` 和 54 個分卷存在。短暫改掛讀寫，只刪該檔，`sync -f` 後恢復唯讀；刪後檔案不存在，成品標記與 54 卷、獨立 Jonathan 封存仍在。本次沒有重讀完整 54 卷 payload。`df -B1` 已用由 3,227,775,401,984 降到 2,822,052,249,600 bytes，實測釋放 405,723,152,384 bytes；可用 1,178,439,254,016 bytes。較早「partial 保留」的紀錄是清理前快照。
 
 ## Valkyrie G1 私有舊 Home 封存搬至長碟（2026-09-29）
 
