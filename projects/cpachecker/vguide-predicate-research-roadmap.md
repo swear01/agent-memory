@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-27
+updated: 2026-09-30
 ---
 
 # CPAchecker 研究主線與 LLM 使用授權
@@ -45,6 +45,22 @@ updated: 2026-09-27
 - **byte相同C仍可能有不同嚴格request key。** #281重新匯出使structured trace中的source.file路徑改變，原cache無法命中；v2失敗保留。明示path-only等價localhost fixture的v3保留原回答byte，actual Java request逐byte核對，完整13題5TRUE/8UNKNOWN，5次draw有45/45precision members；其中3題轉換直解、2題用LLM回答，double第3份未用。這是capability/developmentpolicy，每題whole-service600CPU/900wall內，但原6次生成12226tokens在外且generationCPU未知，不冒充含生成正式portfolio。見`issue281-native-family-v3-independent-audit.json`。
 
 9/27 full25 LLM與F0比較及全部gain確認已收齊：F0為7TRUE/5FALSE/13UNKNOWN；v5原答12TRUE/5FALSE/8UNKNOWN；v6修補15TRUE/5FALSE/5UNKNOWN，其中19題原樣重用v5、6題另跑。相對F0，v5新增5、v6新增8、均無退步；sum10/40修補自主，sum60用過人工概念提示。完整8個NEW/LOST聯集在Mazu另做24 logical／19 actual同機配對（5份v6與v5逐byte相同明示重用），F0八題均UNKNOWN，v5五TRUE三UNKNOWN，v6八TRUE；1181凍結依賴及每筆原始服務成本核對通過、實跑合計6697.795 CPU秒。全8效果重現，但不是fresh LLM regeneration；離線生成成本另列，不宣稱端到端加速。hard218的LLM增量僅原答2／修補3，不能外推family的5／8。見`issue287-f0-complete-independent-audit.json`、`issue287-llm-complete-independent-audit.json`、`issue287-paired19-complete-independent-audit.json`。
+
+### #287 hard218 的三題與 #296 的不同對照
+
+#287 的 native-C reducer 方法保留 hard218 全部218題分母，其中7題屬於該方法的
+適用集合、211題標為該方法未套用。7題已做同策略 F0 配對：F0 解出2題，
+FIRST1／EVERY1_HISTORY 各解出5題，兩者均新增 `avg10-2`、`sum10-1`、
+`sum20-2`，在這7題沒有退步。因此「hard218 多解三題」指 #287 的這個
+方法範圍內的增量；#287 沒有對全部218題執行候選方法。
+
+#296 把直接 CEGAR 的 Step Context 擴到不同題型；其195題 evaluation 中
+F0／Existing／Step 各解出16／14／15題。Step 對 Existing 單次多解
+`iprotocol.1`，對同批 F0 則新增0題；該題兩次 fresh 確認均未重現 Step 成功。
+這些數字與 #287 的 reducer 方法、適用範圍和 F0 配置不同，不能互相替換。
+依據：`<experiments-root>/reports/issue287-fullset-20260926/native-latest25/ANALYSIS-r5.json`、
+`<experiments-root>/reports/issue296-hard218-cthulhu-recovery-r8-20260929/HARVEST-V3.json`、
+`<experiments-root>/reports/issue296-hard218-confirmation-20260930/CONFIRMATION-ACCEPTANCE.json`。
 
 ### 整體成本、benchmark語義與production接合
 
