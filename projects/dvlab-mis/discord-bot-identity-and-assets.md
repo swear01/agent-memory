@@ -5,7 +5,7 @@ project: dvlab-mis
 tags: [discord, bot, assets, branding, browser-automation]
 status: active
 created: 2026-09-18
-updated: 2026-09-18
+updated: 2026-09-29
 ---
 
 # DVLab Discord Bot 識別設定與資產規範
@@ -14,7 +14,7 @@ updated: 2026-09-18
 
 - 應用程式識別碼（Application ID）：`1550481869618024468`
 - 名稱：`DVLAB Bot`
-- 用途定位：臺大電機 DVLab（設計驗證實驗室）內部專用機器人，提供成員 EDA 工具環境查詢、工作站與伺服器狀態通知等 MIS 自動化功能。
+- 用途定位：臺大電機 DVLab（設計驗證實驗室）內部專用機器人。2026-09-29 起實際線上用途含 Vault Hunters Minecraft 狀態（presence + slash `/status` `/players` `/ip`，部署於 zeus）；原規劃的 EDA／MIS 查詢仍可擴充，但目前未實作。
 - 官方站台與條款網址：服務條款（TOS）與隱私權政策（Privacy Policy）均指向實驗室正式首頁 `https://dvlab.ee.ntu.edu.tw/`。
 - 標籤設定（Tags，上限 5 個）：`internal`、`DVLAB`、`NTU`、`eda`、`tools`。
 
