@@ -45,3 +45,7 @@ EEE5028 邏輯合成與驗證，第 1–2 週共五支錄影。教材放在 macO
 給 subagent 的輸入須包括影片、穩定 cue ID 原字幕、對應 PDF／頁碼及畫面，先核對術語與章節覆蓋，再整理完整句子與圖文講義；修正回報須附 PDF頁碼與錄影時間。PDF證明書面內容，不代表每個字都曾講出；未口述內容標「原始講義補充」。三個 Luna subagent 已做重點抽查，並修正 homework 遲交規則為每天扣20%、補 Mask Level、限定 RTL while 可合成性與 AIG/FRAIG 表述。原始字幕不覆寫。來源與 Drive 本機副本的PDF magic/hash、頁碼抽字、來源連結及原cue檢查通過；遠端 Drive同步未獨立確認。
 
 PDF 文字擷取已證實會漏掉底線：PA1 第 2、4 頁實際命令是 `lsv_cut_tt <k>`、`lsv_cut_bddsize <k>`，不可依 pages.md 改成空格。命令／公式必須看原 PDF 圖像；三位 Luna 稽核建議須經來源複核後套用。
+
+# 第二週原片優先（2026-09-29）
+
+使用者指出教師出國的第二週不應採用錄影的錄影。內建瀏覽器核對 Week 1 announcement（COOL discussion_topics/524836）及兩個播放器；260915（G749faIQmWQ，10:19）的實際截圖顯示教室投影舊錄影，240910 ABC Tutorial（dBt7pnxLiXc，19:30）是 COOL 直接提供的舊原片。主要首頁／總覽改採後者；260915 設 reading_role=archived-rerecording，資料留存、不列主要路線。主閱讀四支／60章／385段，PA1要求另依2026 PDF；五支原字幕仍全量核查。來源與 Drive 本機副本檢查及內建首頁查核通過。
