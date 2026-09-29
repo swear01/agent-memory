@@ -48,6 +48,8 @@ updated: 2026-09-29
 
 Mazu 是連接與管理外接硬碟的主機；`/mnt/one-touch` 是長期備份硬碟 Seagate One Touch（約 4 TB、UUID `001D-7DC1`）的掛載點。對使用者應說「已存入長期備份硬碟，目前接在 Mazu」，並附掛載路徑；只說「成品位於 Mazu」會讓人誤以為仍在系統碟或工作 SSD。
 
+2026-09-29：Zeus 舊 Home 的 135 GB Mazu SSD 完整保存包已依使用者新範圍移除；僅 199 個補存的 source／測試檔（6,257,473 bytes）新增在長碟 `backup/private-system-backups/zeus-g2-unique-source-20260929/`，附 `manifest.json`，目的碟恢復唯讀後全數 SHA-256 讀回通過。這不是原 16 棵舊樹的完整副本；其餘重要帳號資料依既有 54 卷 Canonical Home 與現行 NFS／Git 保存。Mazu SSD 實測釋放 134,911,750,144 bytes；詳見[遷移總表](../hapi-fleet/storage-migration-2026.md)。
+
 Canonical Home 最終成品已於 2026-09-20 03:28 歸位到該硬碟的 `backup/home/Canonical-Home.repacked-20260915/`，54 卷合計 1,841,566,237,633 bytes，全部在外接硬碟；SSD 的 volumes 僅保留指向成品的 symlink。完整 tar 與分卷已驗證，授權舊 59 卷已刪除，硬碟為唯讀；目錄內有 COMPLETE.json、SHA256SUMS、volumes.json 與還原 README。詳細驗證與操作沿革見 [長備份紀錄](long-backup-cleanup.md)。
 
 2026-09-20 現場用量為 2,715,980,922,880 bytes，可用 1,284,510,580,736 bytes（約 1.28 TB）；以下較早的容量數字是歷史狀態。系統碟、`/usr/2TB-SSD` 工作碟、`/mnt/one-touch` 長期備份碟必須分別描述。
