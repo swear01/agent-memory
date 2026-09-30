@@ -24,6 +24,8 @@ updated: 2026-09-30
 
 CI 範圍已由 PR #28 調整並合併：`.github/workflows/verify.yml` 移除 feasibility demo、公開 RTL rewrite matrix 與 FIFO assessment，只保留單元／前端測試與測試結果 artifact。`tests/test_formal.py` 等既有 Formal 單元測試**仍在 CI**，因此「CI 不再跑 rewrite 實驗」不等於「CI 完全不跑 Formal」；新 PicoRV32 候選仍未經 Formal 或 assertion suite 檢查。
 
+研究素材其後由 PR #29 合併到 `main`（merge commit `5f502f28ed9776b069cb9687bdf38d75956d3ebe`），靜態對照頁位於 `experiments/picorv32_majority/index.html`。最新 head 的 GitHub CI 與 Swear Review 均通過；Gemini 重審沒有新意見。對候選只重跑了 VCS 七條非 M 指令 smoke test 與 DC 映射，未做候選 Formal 檢查。
+
 mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.sh 2024.09-sp4` 啟用。用 `/apps/cad/cell_library/CBDK45_FreePDK_TSRI_v1.1/lib/freepdk45_v1.1_t25.db`、20 ns clock、相同 PicoRV32 參數、`compile -map_effort medium -area_effort high -ungroup_all`，`report_area` 與 `get_cells -hierarchical` 統計一致，且各量測均無 macro/black box。
 
 - 不含 RVFI 的實際算術設定：原版 30,108 mapped cells，候選 05（移除 M＋單埠暫存器檔）15,636，少 48.1%；library cell area 少 43.5%。
