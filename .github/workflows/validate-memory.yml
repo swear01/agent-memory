@@ -36,7 +36,7 @@ jobs:
           )
           absolute_users_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"Users/[^\s`<>]+")
           absolute_home_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"home/[^\s`<>]+")
-          secret_patterns = [
+          credential_patterns = [
               re.compile(r"(?i)\b(?:gh" + r"[pousr]_" + r"|github_pat_)[A-Za-z0-9_-]{10,}"),
               re.compile(r"-----BEGIN [^-]*PRIVATE KEY-----"),
               re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -44,9 +44,12 @@ jobs:
               re.compile(r"\bsk-" + r"[A-Za-z0-9_-]{20,}\b"),
               re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"),
               re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{12,}"),
+              # An old bot note says "credential: zeus home" to name its storage host.
               re.compile(
-                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
+                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential(?!:\s*zeus\s+home\b)|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
               ),
+          ]
+          secret_patterns = credential_patterns + [
               absolute_users_path,
               absolute_home_path,
               re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
@@ -56,6 +59,9 @@ jobs:
           assert absolute_home_path.search("/" + "home/example/private.txt")
           assert not absolute_users_path.search("archive/Users/example/private.txt")
           assert not absolute_home_path.search("backup/home/jonathan.tar.zst")
+          assert any(pattern.search("user creden" + "tial: sample") for pattern in credential_patterns)
+          assert any(pattern.search("Discord creden" + "tial: actualvalue") for pattern in credential_patterns)
+          assert not any(pattern.search("Discord credential: zeus home") for pattern in credential_patterns)
 
           for name in files:
               if forbidden_names.search(name):
@@ -71,10 +77,54 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          history = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True)
+          # Older public file contents contain paths and an email, but the full
+          # history must still reject high-confidence credential formats.
+          full_history = subprocess.check_output(
+              ["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True
+          )
+          assert any(pattern.search("gh" + "p_" + "x" * 12) for pattern in credential_patterns)
+          for pattern in credential_patterns:
+              if pattern.search(full_history):
+                  errors.append(("git-history", "credential pattern"))
+                  break
+
+          # This was main's tip before the repair; after a coordinated history
+          # rewrite, re-audit old content before choosing a new baseline.
+          history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
+          if subprocess.run(
+              ["git", "merge-base", "--is-ancestor", history_base, "HEAD"],
+              stdout=subprocess.DEVNULL,
+              stderr=subprocess.DEVNULL,
+          ).returncode:
+              for name, reason in errors:
+                  print(f"{name}: {reason}")
+              sys.exit(f"history baseline {history_base[:7]} is missing or not an ancestor of HEAD")
+          history = subprocess.check_output(
+              ["git", "log", f"{history_base}..HEAD", "--no-merges", "-p", "--format="], text=True
+          )
+          def added_lines(patch):
+              lines = []
+              in_hunk = False
+              for line in patch.splitlines():
+                  if line.startswith("diff --git "):
+                      in_hunk = False
+                  elif line.startswith("@@"):
+                      in_hunk = True
+                  elif in_hunk and line.startswith("+"):
+                      lines.append(line[1:])
+              return lines
+
+          sample_path = "/" + "home/example/private.txt"
+          sample_patch = "diff --git a/x b/x\n+++ b/x\n@@ -1 +1 @@\n-" + sample_path + "\n+new\n"
+          assert added_lines(sample_patch) == ["new"]
+          assert any(pattern.search(line) for pattern in secret_patterns for line in added_lines(sample_patch.replace("+new", "+" + sample_path)))
+          sample_yaml = "diff --git a/x b/x\n+++ b/x\n@@ -0,0 +1,2 @@\n+pass" + "word:\n+example\n"
+          assert any(pattern.search("\n".join(added_lines(sample_yaml))) for pattern in credential_patterns)
+          additions = added_lines(history)
+          joined_additions = "\n".join(additions)
           for pattern in secret_patterns:
-              if pattern.search(history):
-                  errors.append(("git-history", "secret/private-data pattern"))
+              if pattern.search(joined_additions):
+                  errors.append(("new-git-history", "secret/private-data pattern"))
                   break
 
           emails = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "--format=%ae"], text=True).splitlines()
@@ -86,5 +136,5 @@ jobs:
               for name, reason in errors:
                   print(f"{name}: {reason}")
               sys.exit(1)
-          print(f"validated {len(files)} tracked files and full Git history")
+          print(f"validated {len(files)} tracked files, full credential history, and Git additions since {history_base[:7]}")
           PY
