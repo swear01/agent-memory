@@ -71,10 +71,17 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          # Older public commits contain personal paths and an email. Scan every
-          # new addition since this fixed baseline without rewriting that history.
+          # Older public file contents contain personal paths and an email.
+          # Scan new additions since this baseline; author emails remain checked below.
           history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
-          subprocess.run(["git", "merge-base", "--is-ancestor", history_base, "HEAD"], check=True)
+          if subprocess.run(
+              ["git", "merge-base", "--is-ancestor", history_base, "HEAD"],
+              stdout=subprocess.DEVNULL,
+              stderr=subprocess.DEVNULL,
+          ).returncode:
+              for name, reason in errors:
+                  print(f"{name}: {reason}")
+              sys.exit(f"history baseline {history_base[:7]} is missing or not an ancestor of HEAD")
           history = subprocess.check_output(
               ["git", "log", f"{history_base}..HEAD", "--no-merges", "-p", "--format="], text=True
           )
