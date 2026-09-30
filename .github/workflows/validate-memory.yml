@@ -36,7 +36,7 @@ jobs:
           )
           absolute_users_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"Users/[^\s`<>]+")
           absolute_home_path = re.compile(r"(?<![A-Za-z0-9._-])/" + r"home/[^\s`<>]+")
-          secret_patterns = [
+          credential_patterns = [
               re.compile(r"(?i)\b(?:gh" + r"[pousr]_" + r"|github_pat_)[A-Za-z0-9_-]{10,}"),
               re.compile(r"-----BEGIN [^-]*PRIVATE KEY-----"),
               re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -45,8 +45,10 @@ jobs:
               re.compile(r"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+"),
               re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]{12,}"),
               re.compile(
-                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
+                  r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|passwd|secret|private[_-]?key|(?<!\w\s)credential|cookie|authorization|bearer)\b\s*[:=]\s*(?!(?:[\"']?<[^>]+>[\"']?|Bearer\s+<[^>]+>|\$\{?))[^\s,;`]+"
               ),
+          ]
+          secret_patterns = credential_patterns + [
               absolute_users_path,
               absolute_home_path,
               re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
@@ -56,6 +58,8 @@ jobs:
           assert absolute_home_path.search("/" + "home/example/private.txt")
           assert not absolute_users_path.search("archive/Users/example/private.txt")
           assert not absolute_home_path.search("backup/home/jonathan.tar.zst")
+          assert any(pattern.search("creden" + "tial: sample") for pattern in credential_patterns)
+          assert not any(pattern.search("Discord credential: zeus home") for pattern in credential_patterns)
 
           for name in files:
               if forbidden_names.search(name):
@@ -76,13 +80,14 @@ jobs:
           full_history = subprocess.check_output(
               ["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True
           )
-          assert any(pattern.search("gh" + "p_" + "x" * 12) for pattern in secret_patterns[:7])
-          for pattern in secret_patterns[:7]:
+          assert any(pattern.search("gh" + "p_" + "x" * 12) for pattern in credential_patterns)
+          for pattern in credential_patterns:
               if pattern.search(full_history):
                   errors.append(("git-history", "credential pattern"))
                   break
 
-          # Scan every new addition for all patterns without rewriting old history.
+          # This was main's tip before the repair; after a coordinated history
+          # rewrite, re-audit old content before choosing a new baseline.
           history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
           if subprocess.run(
               ["git", "merge-base", "--is-ancestor", history_base, "HEAD"],
@@ -111,9 +116,12 @@ jobs:
           sample_patch = "diff --git a/x b/x\n+++ b/x\n@@ -1 +1 @@\n-" + sample_path + "\n+new\n"
           assert added_lines(sample_patch) == ["new"]
           assert any(pattern.search(line) for pattern in secret_patterns for line in added_lines(sample_patch.replace("+new", "+" + sample_path)))
+          sample_yaml = "diff --git a/x b/x\n+++ b/x\n@@ -0,0 +1,2 @@\n+pass" + "word:\n+example\n"
+          assert any(pattern.search("\n".join(added_lines(sample_yaml))) for pattern in credential_patterns)
           additions = added_lines(history)
+          joined_additions = "\n".join(additions)
           for pattern in secret_patterns:
-              if any(pattern.search(line) for line in additions):
+              if pattern.search(joined_additions):
                   errors.append(("new-git-history", "secret/private-data pattern"))
                   break
 
