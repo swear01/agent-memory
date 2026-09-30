@@ -53,6 +53,8 @@ jobs:
               absolute_users_path,
               absolute_home_path,
               re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
+              re.compile(r"\b(?:" + "r14" + "k41044|" + "b119" + "01015|" + "143" + "566" + r")\b"),
+              re.compile("黃" + "思維"),
           ]
 
           assert absolute_users_path.search("/" + "Users/example/private.txt")
@@ -77,54 +79,14 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          # Older public file contents contain paths and an email, but the full
-          # history must still reject high-confidence credential formats.
+          # All published history has been rewritten to remove private data.
           full_history = subprocess.check_output(
               ["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True
           )
           assert any(pattern.search("gh" + "p_" + "x" * 12) for pattern in credential_patterns)
-          for pattern in credential_patterns:
-              if pattern.search(full_history):
-                  errors.append(("git-history", "credential pattern"))
-                  break
-
-          # This was main's tip before the repair; after a coordinated history
-          # rewrite, re-audit old content before choosing a new baseline.
-          history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
-          if subprocess.run(
-              ["git", "merge-base", "--is-ancestor", history_base, "HEAD"],
-              stdout=subprocess.DEVNULL,
-              stderr=subprocess.DEVNULL,
-          ).returncode:
-              for name, reason in errors:
-                  print(f"{name}: {reason}")
-              sys.exit(f"history baseline {history_base[:7]} is missing or not an ancestor of HEAD")
-          history = subprocess.check_output(
-              ["git", "log", f"{history_base}..HEAD", "--no-merges", "-p", "--format="], text=True
-          )
-          def added_lines(patch):
-              lines = []
-              in_hunk = False
-              for line in patch.splitlines():
-                  if line.startswith("diff --git "):
-                      in_hunk = False
-                  elif line.startswith("@@"):
-                      in_hunk = True
-                  elif in_hunk and line.startswith("+"):
-                      lines.append(line[1:])
-              return lines
-
-          sample_path = "/" + "home/example/private.txt"
-          sample_patch = "diff --git a/x b/x\n+++ b/x\n@@ -1 +1 @@\n-" + sample_path + "\n+new\n"
-          assert added_lines(sample_patch) == ["new"]
-          assert any(pattern.search(line) for pattern in secret_patterns for line in added_lines(sample_patch.replace("+new", "+" + sample_path)))
-          sample_yaml = "diff --git a/x b/x\n+++ b/x\n@@ -0,0 +1,2 @@\n+pass" + "word:\n+example\n"
-          assert any(pattern.search("\n".join(added_lines(sample_yaml))) for pattern in credential_patterns)
-          additions = added_lines(history)
-          joined_additions = "\n".join(additions)
           for pattern in secret_patterns:
-              if pattern.search(joined_additions):
-                  errors.append(("new-git-history", "secret/private-data pattern"))
+              if pattern.search(full_history):
+                  errors.append(("git-history", "secret/private-data pattern"))
                   break
 
           emails = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "--format=%ae"], text=True).splitlines()
@@ -136,5 +98,5 @@ jobs:
               for name, reason in errors:
                   print(f"{name}: {reason}")
               sys.exit(1)
-          print(f"validated {len(files)} tracked files, full credential history, and Git additions since {history_base[:7]}")
+          print(f"validated {len(files)} tracked files and full Git history")
           PY
