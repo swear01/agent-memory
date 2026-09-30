@@ -71,8 +71,18 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          # Older public file contents contain personal paths and an email.
-          # Scan new additions since this baseline; author emails remain checked below.
+          # Older public file contents contain paths and an email, but the full
+          # history must still reject high-confidence credential formats.
+          full_history = subprocess.check_output(
+              ["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True
+          )
+          assert any(pattern.search("gh" + "p_" + "x" * 12) for pattern in secret_patterns[:7])
+          for pattern in secret_patterns[:7]:
+              if pattern.search(full_history):
+                  errors.append(("git-history", "credential pattern"))
+                  break
+
+          # Scan every new addition for all patterns without rewriting old history.
           history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
           if subprocess.run(
               ["git", "merge-base", "--is-ancestor", history_base, "HEAD"],
@@ -116,5 +126,5 @@ jobs:
               for name, reason in errors:
                   print(f"{name}: {reason}")
               sys.exit(1)
-          print(f"validated {len(files)} tracked files and Git additions since {history_base[:7]}")
+          print(f"validated {len(files)} tracked files, full credential history, and Git additions since {history_base[:7]}")
           PY
