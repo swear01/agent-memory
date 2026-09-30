@@ -22,9 +22,9 @@ updated: 2026-09-30
 
 後續分支 `feat/picorv32-mapped-20260930`（commit `50b74b59ff664935b1d6f98f7b8bf771bfc49cc2`）cherry-pick 前述研究素材，再加入可綜合候選 03–05、DC Tcl、VCS 小型模擬與 `experiments/picorv32_majority/mapped_size.md`。03–05 是 Codex 根據上游已有設計選項直接構造的工程對照，不是獨立 freestyle 模型產出。
 
-CI 範圍已由 PR #28 調整並合併：`.github/workflows/verify.yml` 移除 feasibility demo、公開 RTL rewrite matrix 與 FIFO assessment，只保留單元／前端測試與測試結果 artifact。`tests/test_formal.py` 等既有 Formal 單元測試**仍在 CI**，因此「CI 不再跑 rewrite 實驗」不等於「CI 完全不跑 Formal」；新 PicoRV32 候選仍未經 Formal 或 assertion suite 檢查。
+CI 範圍已由 PR #28 調整並合併：`.github/workflows/verify.yml` 移除 feasibility demo、公開 RTL rewrite matrix 與 FIFO assessment，只保留單元／前端測試與測試結果 artifact。`tests/test_formal.py` 等既有 Formal 單元測試**仍在 CI**，因此「CI 不再跑 rewrite 實驗」不等於「CI 完全不跑 Formal」。此 PR/CI 沒有對新 PicoRV32 候選跑 Formal；後續的單獨探測見下節。
 
-研究素材其後由 PR #29 合併到 `main`（merge commit `5f502f28ed9776b069cb9687bdf38d75956d3ebe`），靜態對照頁位於 `experiments/picorv32_majority/index.html`。最新 head 的 GitHub CI 與 Swear Review 均通過；Gemini 重審沒有新意見。對候選只重跑了 VCS 七條非 M 指令 smoke test 與 DC 映射，未做候選 Formal 檢查。
+研究素材其後由 PR #29 合併到 `main`（merge commit `5f502f28ed9776b069cb9687bdf38d75956d3ebe`），靜態對照頁位於 `experiments/picorv32_majority/index.html`。最新 head 的 GitHub CI 與 Swear Review 均通過；Gemini 重審沒有新意見。本次合併流程只重跑了 VCS 七條非 M 指令 smoke test 與 DC 映射，未在 PR 內做候選 Formal 檢查。
 
 mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.sh 2024.09-sp4` 啟用。用 `/apps/cad/cell_library/CBDK45_FreePDK_TSRI_v1.1/lib/freepdk45_v1.1_t25.db`、20 ns clock、相同 PicoRV32 參數、`compile -map_effort medium -area_effort high -ungroup_all`，`report_area` 與 `get_cells -hierarchical` 統計一致，且各量測均無 macro/black box。
 
