@@ -3,7 +3,7 @@ title: DVLab 網站深淺色對比、粒子配色與主站部署驗證
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-09-09
+updated: 2026-09-30
 ---
 
 ## 主站與備援
@@ -66,3 +66,8 @@ updated: 2026-09-09
 - 封裝 SHA-256：`5553dd4c4dd20ec668270d2a336b1c75a8daa8e2698e5be5f667ccc8a14f20af`。兩站皆載入 `/_astro/awards.IwBPUfb2.css`，雜湊同為 `c56be4b7cc4f292025229091f0210a06ade59b85cd8c78fc376b29c59732d327`；檔名與雜湊是此次部署證據，不是永久設定。
 - 最終 CMS disabled／enabled verify 各為 7 tests、0 failures，147 頁、2,776 links、708 images；完整 Brave 瀏覽器測試通過。合併後 CI／Pages 成功，兩站再驗證中英文、手機／桌面、深淺色、日期框、活動文案、HTTPS、canonical、靜態資產與 404。兩份相關文件已更新；本次分支、乾淨 worktree 及 preview 程序均清理。
 - 使用者明確同意「同意 直接發佈部署」，授權 PR #91 略過此次無法使用的外部 bot 審查；沒有宣稱 bot 通過，不延伸為未來任務的永久豁免。當次組織安裝清單只有 GitRoll／Cursor，未列 Swear Review、Gemini、Codex；Google Developer Connect 未找到此倉庫連結。整合狀態會變，後續先重新查證。
+
+## CRA parity PR #101（2026-09-30）
+
+- Production 維持 Astro on `main`；primary 為 `https://dvlab.ee.ntu.edu.tw`（inari），GitHub Pages 為 backup。PR #100（Host page 等）已合併，main SHA 約為 `7f1a78e`；Inari release pattern 為 `releases/<date>-host-<shortsha>`。
+- PR #101 是 open draft：`https://github.com/DVLab-NTU/dvlab-ntu.github.io/pull/101`，branch `cursor/cra-visual-parity-5109`，最新 visual commit（截至 2026-09-30 早上）為 `dad9355d2a328580ac147500f5b61fc011501315`。在使用者 review 前不得 merge；merge 後仍須分別 deploy 與驗證 Pages、inari。
