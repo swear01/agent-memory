@@ -16,11 +16,13 @@ updated: 2026-09-30
 
 只跑 size-only Yosys `synth -flatten; stat`，沒有跑 Formal、BMC、模擬或行為檢查。相同 wrapper 參數與上游 `RISCV_FORMAL`、`DEBUGNETS`、`RISCV_FORMAL_ALTOPS` defines 下，通用 cell 數為原版 12,412、候選 01 11,460（−7.7%）、候選 02 7,221（−41.8%）。`RISCV_FORMAL_ALTOPS` 已使 M 算術較簡單；不帶這些 defines 的一般硬體組態中，候選 01 的 18,823→9,864（−47.6%）不能代表上游 assertion 任務。cell 數不是 solver runtime 或行為涵蓋率。詳細命令見 `experiments/picorv32_majority/structural_size.md`。
 
-兩次獨立 API 生成都未交付候選：DeepSeek Flash gateway 3 次嘗試後 HTTP 403；Muse Spark 1.3 Contributor 的 16,384 completion tokens 幾乎全用於 reasoning，回覆 `finish_reason=length` 且 `content=null`。不能把兩份助手整理的候選當作外部模型能力的成功率資料。公開研究素材在 feature branch `feat/picorv32-majority-20260930`，最新 commit `d213ee6aa0c3d4635482ffbd0aefd4cd78127300`。因專案 PR CI 會自動執行 Formal，本輪只推 branch，未開 PR。
+兩次獨立 API 生成都未交付候選：DeepSeek Flash gateway 3 次嘗試後 HTTP 403；Muse Spark 1.3 Contributor 的 16,384 completion tokens 幾乎全用於 reasoning，回覆 `finish_reason=length` 且 `content=null`。不能把兩份助手整理的候選當作外部模型能力的成功率資料。第一版研究素材曾推到 `feat/picorv32-majority-20260930`（commit `d213ee6aa0c3d4635482ffbd0aefd4cd78127300`）。當時因 PR CI 含 Formal 而未開 PR；後來確認那是專案既有案例的回歸，並非對此候選執行 Formal，把「候選先不跑 Formal」當作不能開 PR 是過度解讀。
 
 ## Design Compiler mapped-cell follow-up
 
-後續分支 `feat/picorv32-mapped-20260930`（commit `50b74b59ff664935b1d6f98f7b8bf771bfc49cc2`）cherry-pick 前述研究素材，再加入可綜合候選 03–05、DC Tcl、VCS 小型模擬與 `experiments/picorv32_majority/mapped_size.md`。03–05 是 Codex 根據上游已有設計選項直接構造的工程對照，不是獨立 freestyle 模型產出。分支已推送；專案 PR CI 會自動跑 Formal，因此在使用者「先不要任何 Formal」的要求下仍未開 PR。
+後續分支 `feat/picorv32-mapped-20260930`（commit `50b74b59ff664935b1d6f98f7b8bf771bfc49cc2`）cherry-pick 前述研究素材，再加入可綜合候選 03–05、DC Tcl、VCS 小型模擬與 `experiments/picorv32_majority/mapped_size.md`。03–05 是 Codex 根據上游已有設計選項直接構造的工程對照，不是獨立 freestyle 模型產出。
+
+CI 範圍已由 PR #28 調整並合併：`.github/workflows/verify.yml` 移除 feasibility demo、公開 RTL rewrite matrix 與 FIFO assessment，只保留單元／前端測試與測試結果 artifact。`tests/test_formal.py` 等既有 Formal 單元測試**仍在 CI**，因此「CI 不再跑 rewrite 實驗」不等於「CI 完全不跑 Formal」；新 PicoRV32 候選仍未經 Formal 或 assertion suite 檢查。
 
 mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.sh 2024.09-sp4` 啟用。用 `/apps/cad/cell_library/CBDK45_FreePDK_TSRI_v1.1/lib/freepdk45_v1.1_t25.db`、20 ns clock、相同 PicoRV32 參數、`compile -map_effort medium -area_effort high -ungroup_all`，`report_area` 與 `get_cells -hierarchical` 統計一致，且各量測均無 macro/black box。
 
