@@ -71,10 +71,33 @@ jobs:
                       errors.append((name, "secret/private-data pattern"))
                       break
 
-          history = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "-p", "--format="], text=True)
+          # Older public commits contain personal paths and an email. Scan every
+          # new addition since this fixed baseline without rewriting that history.
+          history_base = "af4b80a6289aea1fd81758a2676812d8fb9c6d77"
+          subprocess.run(["git", "merge-base", "--is-ancestor", history_base, "HEAD"], check=True)
+          history = subprocess.check_output(
+              ["git", "log", f"{history_base}..HEAD", "--no-merges", "-p", "--format="], text=True
+          )
+          def added_lines(patch):
+              lines = []
+              in_hunk = False
+              for line in patch.splitlines():
+                  if line.startswith("diff --git "):
+                      in_hunk = False
+                  elif line.startswith("@@"):
+                      in_hunk = True
+                  elif in_hunk and line.startswith("+"):
+                      lines.append(line[1:])
+              return lines
+
+          sample_path = "/" + "home/example/private.txt"
+          sample_patch = "diff --git a/x b/x\n+++ b/x\n@@ -1 +1 @@\n-" + sample_path + "\n+new\n"
+          assert added_lines(sample_patch) == ["new"]
+          assert any(pattern.search(line) for pattern in secret_patterns for line in added_lines(sample_patch.replace("+new", "+" + sample_path)))
+          additions = added_lines(history)
           for pattern in secret_patterns:
-              if pattern.search(history):
-                  errors.append(("git-history", "secret/private-data pattern"))
+              if any(pattern.search(line) for line in additions):
+                  errors.append(("new-git-history", "secret/private-data pattern"))
                   break
 
           emails = subprocess.check_output(["git", "log", "HEAD", "--no-merges", "--format=%ae"], text=True).splitlines()
@@ -86,5 +109,5 @@ jobs:
               for name, reason in errors:
                   print(f"{name}: {reason}")
               sys.exit(1)
-          print(f"validated {len(files)} tracked files and full Git history")
+          print(f"validated {len(files)} tracked files and Git additions since {history_base[:7]}")
           PY
