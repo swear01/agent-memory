@@ -25,6 +25,7 @@ updated: 2026-09-30
 CI 範圍已由 PR #28 調整並合併：`.github/workflows/verify.yml` 移除 feasibility demo、公開 RTL rewrite matrix 與 FIFO assessment，只保留單元／前端測試與測試結果 artifact。`tests/test_formal.py` 等既有 Formal 單元測試**仍在 CI**，因此「CI 不再跑 rewrite 實驗」不等於「CI 完全不跑 Formal」。此 PR/CI 沒有對新 PicoRV32 候選跑 Formal；後續的單獨探測見下節。
 
 研究素材其後由 PR #29 合併到 `main`（merge commit `5f502f28ed9776b069cb9687bdf38d75956d3ebe`），靜態對照頁位於 `experiments/picorv32_majority/index.html`。最新 head 的 GitHub CI 與 Swear Review 均通過；Gemini 重審沒有新意見。本次合併流程只重跑了 VCS 七條非 M 指令 smoke test 與 DC 映射，未在 PR 內做候選 Formal 檢查。
+PR #30 修正 `mapped_size.md`：原始 DC/VCS log 是重跑命令的本地輸出，沒有隨 repo 發布。
 
 mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.sh 2024.09-sp4` 啟用。用 `/apps/cad/cell_library/CBDK45_FreePDK_TSRI_v1.1/lib/freepdk45_v1.1_t25.db`、20 ns clock、相同 PicoRV32 參數、`compile -map_effort medium -area_effort high -ungroup_all`，`report_area` 與 `get_cells -hierarchical` 統計一致，且各量測均無 macro/black box。
 
@@ -38,7 +39,7 @@ mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.
 
 ## 候選 05 的 Z3 formal 探測
 
-後續在 `feat/picorv32-mapped-20260930` 對 pinned 生成的 `.sby` 保留 checker、wrapper、深度及 defines，只把原版 RTL 路徑換成候選，並因本機無相容 Boolector 將 `smtbmc boolector` 換成 `smtbmc z3`。SBY 0.69、Yosys 0.69+post、Z3 4.15.4；原始 task 的 `expect pass,fail` 使 FAIL 也可能 exit 0，必須讀 `status`。被 Git 忽略的完整 task、log、trace 和 `summary.json` 在 `results/picorv32_majority/formal-20260930/`。
+後續在 `feat/picorv32-mapped-20260930` 對 pinned 生成的 `.sby` 保留 checker、wrapper、深度及 defines，只把原版 RTL 路徑換成候選，並因本機無相容 Boolector 將 `smtbmc boolector` 換成 `smtbmc z3`。SBY 0.69、Yosys 0.69+post、Z3 4.15.4；原始 task 的 `expect pass,fail` 使 FAIL 也可能 exit 0，必須讀 `status`。完整 task、log、trace 和 `summary.json` 當時寫入該工作樹被 Git 忽略的 `results/picorv32_majority/formal-20260930/`；合併後清理工作樹時，這些原始檔隨之移除，未納入版本控制。以下只保留結果摘要，需要原始證據時須重跑。
 
 候選 05 的 10 個 CSR BMC：4 個 `csr_ill_*` PASS，`csrc_inc_{mcycle,minstret}`、`csrc_upcnt_{mcycle,minstret}`、`csrw_{mcycle,minstret}` 共 6 個 FAIL；這 6 題原版在相同 Z3 設定下全部 PASS。`csrw_mcycle_ch0` 對照中，單埠候選 03 PASS、只刪 M 的候選 01 FAIL；兩個 mcycle `csrc` 題也同樣是候選 03 PASS、候選 01 FAIL。這定位到刪 M／PCPI，而非單埠暫存器。候選 05 的 ADD、MUL、C.ADD、REG、PC-forward 五個代表 task 在 150 秒內未結束，不能算 PASS/FAIL。尚未量完整 86 題的保留率。
 
