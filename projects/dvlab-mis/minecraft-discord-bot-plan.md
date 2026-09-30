@@ -23,7 +23,7 @@ Discord bot on **zeus** that shows Vault Hunters (utux, MOTD `dvlab server`) onl
 - Code path on zeus: `<zeus-home>/dvlab-mc-discord-bot` (Node, discord.js + minecraft-server-util + dotenv)
 - Bot identity: `DVLAB Bot#8714`
 - Poll target: `140.112.171.142:25565` (inari website-host forward; also answers on `140.112.171.143:25565` utux 1:1 NAT)
-- Discord credential: zeus home `.env` mode `600` (never commit; never paste into chat)
+- Discord bot token stored in zeus home `.env` mode `600` (never commit; never paste into chat)
 - Persistence: systemd unit `dvlab-mc-discord-bot.service`, **enabled** + **active**; unit installed with **swear02** passwordless sudo because **swear01 cannot sudo** on zeus; process `User=swear01`
 - Guild slash commands registered for `1155808217872466041`
 - Box NTU VPN reaches campus sites (www/cool) but times out to `140.112.171.x`; deploy/ops via Mac SSH (`Host zeus`)

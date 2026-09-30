@@ -14,9 +14,7 @@ tags:
 
 ## 帳號與課程
 
-- 帳號：`b11901015`（Canvas user id `143566`）
-- 課程：`數位系統設計 Digital System Design`，course id `45284`
-- API token（用途名 `NTU COOL bot b11901015`，不過期）存於 `/home/box/.secrets/ntu_cool_token_b11901015`（mode 600）；勿寫入本檔
+使用大學部 COOL 帳號存取 `數位系統設計 Digital System Design`（course id `45284`）。API 權杖存於本機 mode 600 secrets 檔，不記錄個人帳號或具體路徑。
 
 ## 下載結果（2026-09-29）
 
@@ -25,11 +23,9 @@ tags:
 - 跳過：`Midterm_seats.xlsx`（名冊）；串流 ExternalTool 講義影片
 - 拿不到：舊版 `W8_Synthesis.pdf`（file id `6938576`，`hidden_for_user` / API 404）
 
-## 本機最終路徑
+## 本機與 rclone
 
-`/Users/swear/Library/CloudStorage/GoogleDrive-stanley.yellow1@gmail.com/我的雲端硬碟/document/學校講義/大二/數位系統設計`
-
-對應 rclone：`gdrive:document/學校講義/大二/數位系統設計`（遠端名 `gdrive:`）
+講義存於個人 Mac 的學校講義資料夾；對應 rclone 路徑為 `gdrive:document/學校講義/大二/數位系統設計`。
 
 ## 傳檔備註
 

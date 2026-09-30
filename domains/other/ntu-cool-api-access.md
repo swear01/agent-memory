@@ -15,21 +15,17 @@ tags:
 
 ## 帳號
 
-- 研究所帳號學號：`r14k41044`（主要）
-- 大學部帳號學號：`b11901015`（例如課程「數位系統設計」course id `45284`）
-- 兩個帳號都是同一人（黃思維），課程與權杖彼此獨立。
+研究所與大學部 COOL 帳號由同一人持有，課程與權杖彼此獨立；數位系統設計使用大學部帳號。
 
 ## API
 
 - Base：`https://cool.ntu.edu.tw/api/v1`
 - 認證：`Authorization: Bearer <personal access token>`
-- 不需 VPN 即可打 COOL API；ADFS / 其他 `140.112.0.0/16` 站點才需要 `/home/box/bin/ntu-vpn-up`。
+- 不需 VPN 即可打 COOL API；ADFS 與其他校內站點才需要本機 VPN 設定。
 
-## 權杖存放（不要把實際權杖寫進本檔或聊天）
+## 權杖存放
 
-- `r14k41044`：`/home/box/.secrets/ntu_cool_token`（mode 600）
-- `b11901015`：`/home/box/.secrets/ntu_cool_token_b11901015`（mode 600）
-- 權杖用途名稱可在 COOL 設定頁辨識／撤銷（例如「Grok Bot」「NTU COOL bot b11901015」）。
+兩帳號的權杖分別存於本機 mode 600 secrets 檔；公開記憶不記錄帳號、具體路徑或權杖。權杖用途名稱可在 COOL 設定頁辨識與撤銷。
 
 ## 產生權杖：UI 被 CSS 隱藏，不是沒有
 

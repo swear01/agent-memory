@@ -16,6 +16,6 @@ updated: 2026-09-29
 - 需要本機印表機時：用 connector / `download_file` 拉到 box，再 `CopyFromBox` 到目標 Mac 的 `~/Downloads/`，或直接用本機已同步的 Google Drive 路徑。
 - 列印細節見 `machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print.md`。
 
-## Related local path（曾用）
+## Related local document
 
-- GUPS 工讀簽到：`…/GoogleDrive-stanley.yellow1@gmail.com/我的雲端硬碟/document/工作紀錄/碩一/GUPS助教/附件3_工讀生簽到退表_115年9月_已簽名.docx`
+GUPS 工讀簽到文件曾位於個人 Google Drive 的 `工作紀錄/GUPS助教/`；公開記憶不記錄個人帳號或簽名檔完整路徑。
