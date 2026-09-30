@@ -60,3 +60,11 @@ mazu 的 JasperGold 2025.03 可直接跑此 RTL/SVA，不需要 Yosys 或 Boolec
 每個拒絕立即以完全相同的 prompt 改送 `claude-sonnet-5-5`（high effort、128,000-token 上限）；三份都完整輸出並通過 frozen wrapper 的 Yosys frontend。候選是新寫的 511–639 行多週期核心，而非切換上游參數；但三份採相近的「逐指令 fetch／execute／memory／commit FSM」構想。相同 RVFI/ALTOPS DC 映射為 19,848、19,782、18,103 cells（原版 21,668）。完整 86 題 JasperGold bounded 結果為 **71/86、71/86、75/86**；每份的 8 個 M task 都 pass，但此設定使用 ALTOPS，沒有驗證真正乘除算術。第三份刪去 CSR 計數器，其中 4 題 CSR pass 的 assertion precondition bounded-unreachable，不能當保留 CSR 行為。
 
 三份原稿都在 trap RVFI 紀錄清零 `rs1` 位址與讀值，使 checker 對未對齊半字／字 load/store 用錯誤的來源位址重算，9 個相關指令 task 全有反例。只在第一份的另存**人工診斷副本**保留 trap 時的 `rs1` 位址與讀值，`insn_lw_ch0`、`insn_lh_ch0`、`insn_c_lw_ch0` 從 fail 轉 pass，且 checker cover 可達；原始模型輸出未修改，這三題修復不能計入模型原生成成績。輸出、hash、原稿、DC 與 Jasper logs 保存在 Git 忽略的 `<project-root>/results/picorv32_majority/opus-5-5-128k-parallel-20260930/`。
+
+## 偏好原 RTL 局部簡化的提示試驗
+
+在相同 frozen input/86 題上，只於原 prompt 加一段偏好「simplify the supplied RTL in place」，要求保留原控制／資料路徑、實際減少 state/logic，且不能把刪 adapter 或改參數當主要成果。三個 Opus 5.5 high、128K 請求平行送出，仍全部 `refusal`（`cyber`）；逐一 fallback 的 Sonnet 5.5 都回 `end_turn`。第一份 Verilog 尾端缺 `` `endif ``／`endmodule` 和 fast-mul module，Yosys frontend 拒絕。第二份回覆 JSON 含 literal control character，僅用 Python `json.loads(strict=False)` 取出原樣 RTL；第三份 JSON 正常。第二、三份都通過 Yosys 與原 RVFI wrapper 的 elaboration。
+
+第三份保留原 one-hot `cpu_state`、memory FSM、compressed expander、decoder、ALU、RVFI 的主要結構，刪 IRQ／trace／debug 狀態與 minstret 計數器，將 PCPI 的 M 指令路徑換成共用 ALU 計算；所以方向比前輪 511–639 行的新 CPU 更接近局部簡化，但仍大幅改動核心並改變 M／trap 時序。Yosys 在相同 RVFI/ALTOPS defines 下 generic cells 原版 12,412、第二份 10,779、第三份 10,948（第三份少 11.8%）；這不是 mapped area 或 solver runtime。
+
+第三份原稿的 JasperGold 86 題 bounded 結果 **82 pass、4 fail**；失敗為 `csrc_inc_mcycle_ch0`、`csrc_upcnt_mcycle_ch0`、`csrw_mcycle_ch0`、`csrw_minstret_ch0`。`csrc_inc_minstret_ch0` 與 `csrc_upcnt_minstret_ch0` 雖 pass，候選已刪 minstret 計數器，故不可把 82/86 解釋成行為保留率。第二份只做 10 題代表性檢查，7 pass、3 fail（`insn_mul_ch0`、`insn_div_ch0`、`csrw_mcycle_ch0`）。沒有等價／soundness 證明。原稿、prompt、frontend、Yosys 與逐題 Jasper logs 在 Git 忽略的 `<project-root>/results/picorv32_majority/simplify-preference-20260930/`。實務教訓：改 prompt 可以引導模型保留原架構並取得較高 bounded pass，但仍須逐項查被刪功能與 pass 的可達性，且需明確區分「原樣模型輸出」、「格式恢復」及人工 RTL 修復。
