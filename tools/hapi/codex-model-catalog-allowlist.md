@@ -6,7 +6,7 @@ tool: Codex app-server
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-09-23
+updated: 2026-09-30
 tags:
   - hapi
   - codex
@@ -31,15 +31,23 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 
 每個獨立 home 都要保留 canonical allowlist，並讓 `model_catalog_json` 指向該 host 的絕對路徑。更新 catalog 後先比較各 host 檔案內容，再實際呼叫 app-server `model/list` 或 HAPI machine Codex-models API，比對可見 ID。
 
-2026-09-23 驗證的可見集合為：
+2026-09-30 八台 app-server `model/list` 與 HAPI machine Codex-models API 驗證的可見集合為：
 
 - `gpt-6-astra`
-- `gpt-6-sol`
+- `gpt-6.1-sol`
 - `gpt-6-luna`
 - `gpt-5.6-terra`
 - `gpt-daybreak-blue-latest`
 
-（固定例外 `codex-auto-review` 保持 hidden；`gpt-5.6-sol` 與 `gpt-5.6-luna` 被 6 代同 tier 取代，各機預設模型設為 `gpt-6-sol`；API 查詢需 `client_version >= 0.155.0`，全 fleet 升級至 `@openai/codex@0.156.1`）。
+固定例外 `codex-auto-review` 保持 hidden。Mac、mazu、athena、cthulhu、valkyrie、zeus、oracle（Hub 名稱 swever）、Windows swop 的 Codex CLI 均為 `0.159.2`，原本的 Sol 預設改為 `gpt-6.1-sol`；八台 HAPI machine records 均在線，模型清單皆包含且預設選擇 6.1 Sol，沒有舊 `gpt-6-sol`。本次只更新 Codex catalog 與預設，沒有更新 Pi 模型或既有聊天的選擇。
+
+# Client-version gate
+
+2026-09-30 在同一台 Mac、同一帳號實測：CLI `0.157.1` 連 live endpoint 只取得 10 個模型，沒有 `gpt-6.1-sol`；升至 `0.159.2` 後取得 11 個模型，出現 6.1 Sol。這是已驗證的版本比較，尚未測出最早支援版本。只重跑舊 CLI 的 updater 不會解決此問題，也不能因公開 API 文件列出模型就假設該 client 的帳號 catalog 已提供。
+
+使用 transfer_MAC canonical `scripts/sync-ai-agent-configs.py render-codex-models` 的現有流程重建每個獨立 home；階級保留規則自動以 6.1 Sol 取代 6 Sol，無需修改 updater 政策或複製其他帳號的 catalog。更新後以新 app-server `model/list` 及 HAPI machine API 驗證，不能只看 JSON。舊 app-server 會保留啟動時的 catalog；相關限制見 `tools/hapi/codex-model-list-cold-path.md`。
+
+本機以 `codex exec --model gpt-6.1-sol --ephemeral --skip-git-repo-check --sandbox read-only` 完成真實推論，回覆 `FLEET_SOL61_OK`。其他七台驗證模型清單與 HAPI 預設，未各自執行推論；不要把 8/8 目錄驗證表述成 8/8 推論驗證。
 
 不要用 allowlist JSON 的 entry 數量代替有效驗證；canonical 檔案也可包含不會出現在一般選單的 hidden/internal models。
 
