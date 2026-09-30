@@ -33,3 +33,11 @@ mazu 的 Design Compiler W-2024.09-SP4 由 `source /apps/eda/synopsys/synthesis.
 - VCS 2025.06 指定模擬：候選 05 與原版 7 條非 M 指令的 RVFI 退休紀錄相同；候選 04 的 fast/8 步乘法器在正常與 ALTOPS 模式各 16 組對照一致。沒有跑 Formal、BMC 或 assertion suite，不能宣稱 80% 行為保留。
 
 這是個有用的量測分界：標準 cell 數可在可綜合候選上大幅降低，但若縮減依賴刪掉 M 指令，不能把 cell 改善寫成廣泛 verification 能力；若用 `ALTOPS`，原版乘除法本來就已被簡化，實際算術的面積收益不會等比例出現在驗證模型。
+
+## 候選 05 的 Z3 formal 探測
+
+後續在 `feat/picorv32-mapped-20260930` 對 pinned 生成的 `.sby` 保留 checker、wrapper、深度及 defines，只把原版 RTL 路徑換成候選，並因本機無相容 Boolector 將 `smtbmc boolector` 換成 `smtbmc z3`。SBY 0.69、Yosys 0.69+post、Z3 4.15.4；原始 task 的 `expect pass,fail` 使 FAIL 也可能 exit 0，必須讀 `status`。被 Git 忽略的完整 task、log、trace 和 `summary.json` 在 `results/picorv32_majority/formal-20260930/`。
+
+候選 05 的 10 個 CSR BMC：4 個 `csr_ill_*` PASS，`csrc_inc_{mcycle,minstret}`、`csrc_upcnt_{mcycle,minstret}`、`csrw_{mcycle,minstret}` 共 6 個 FAIL；這 6 題原版在相同 Z3 設定下全部 PASS。`csrw_mcycle_ch0` 對照中，單埠候選 03 PASS、只刪 M 的候選 01 FAIL；兩個 mcycle `csrc` 題也同樣是候選 03 PASS、候選 01 FAIL。這定位到刪 M／PCPI，而非單埠暫存器。候選 05 的 ADD、MUL、C.ADD、REG、PC-forward 五個代表 task 在 150 秒內未結束，不能算 PASS/FAIL。尚未量完整 86 題的保留率。
+
+`csrw_mcycle_ch0` 反例於第 15 拍退休 `0xc80030f3`（CSRRC x1, cycleh, x0），RVFI 回報 trap，但 checker 要求合法讀取不 trap；自訂 cover 確認原版、候選 03、候選 05 都可在第 15 拍退休另一條不 trap 的 `c80` CSR 指令，故不是整類 CSR 完全不可達。核心根因：候選把 `WITH_PCPI` 固定為 0，不只刪 M 算術，還繞過上游對不認得指令的 PCPI 等待／timeout 路徑，讓部分 trap 更早進入 RVFI；上游原版 `WITH_PCPI=1` 是由 wrapper 啟用的 M 引擎帶來。這是固定深度 BMC 的實際 regression，不足以單獨判斷所有 CSR 語意或 80% 行為保留。
