@@ -3,7 +3,7 @@ title: PicoRV32 多數 assertion 行為候選與無 Formal 階段
 scope: project
 project: rtl-relate
 status: active
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 # PicoRV32 majority-behavior candidate
@@ -70,3 +70,9 @@ mazu 的 JasperGold 2025.03 可直接跑此 RTL/SVA，不需要 Yosys 或 Boolec
 第三份原稿的 JasperGold 86 題 bounded 結果 **82 pass、4 fail**；失敗為 `csrc_inc_mcycle_ch0`、`csrc_upcnt_mcycle_ch0`、`csrw_mcycle_ch0`、`csrw_minstret_ch0`。`csrc_inc_minstret_ch0` 與 `csrc_upcnt_minstret_ch0` 雖 pass，候選已刪 minstret 計數器，故不可把 82/86 解釋成行為保留率。第二份只做 10 題代表性檢查，7 pass、3 fail（`insn_mul_ch0`、`insn_div_ch0`、`csrw_mcycle_ch0`）。沒有等價／soundness 證明。原稿、prompt、frontend、Yosys 與逐題 Jasper logs 在 Git 忽略的 `<project-root>/results/picorv32_majority/simplify-preference-20260930/`。實務教訓：改 prompt 可以引導模型保留原架構並取得較高 bounded pass，但仍須逐項查被刪功能與 pass 的可達性，且需明確區分「原樣模型輸出」、「格式恢復」及人工 RTL 修復。
 
 驗證速度不可由 cell 減幅推斷。舊版原核心 86 題使用 4 個平行 task，新候選使用 6 個，兩次 log 的 82 個共同 pass 題單題 session 中位數為 24.5→33 秒、加總 2254→2772 秒；並行負載不同，不能視為嚴格速度對照。再用相同 runner、同時混跑、總共 4 個平行 task 重跑 8 組原版／新候選配對，兩邊全 pass；候選 3 題較快、4 題較慢、1 題持平，session 加總 291→261 秒，主要收益來自 `insn_mul_ch0` 的 63→20 秒。樣本小且受排程影響，不能宣稱整體驗證變快。此候選是大量刪改的固定組態替代核心，並非少量局部 patch。
+
+## 2026-10-01 收尾
+
+使用者決定此實驗先做到這裡，暫停新的模型呼叫、RTL 修改與驗證試跑。收尾確認原專案工作區乾淨，prompt、原樣模型輸出、86 題結果與 8 組時間配對原始紀錄仍保存在前述 Git 忽略的 results 目錄；這些本地原始檔沒有隨 Git 發布。目前結論是「局部簡化偏好改善了模型提案方向，但仍未交付少改版本，也未證實穩定的整體驗證加速」，不能把 82/86 bounded pass 當成行為包含或等價證明。
+
+若未來恢復，先前討論的方向是保留原 RTL，以一個內部區塊的小範圍 diff 為候選，固定介面、memory handshake、RVFI 與 trap 時序，再用 assertion、非 trap 可達性和相同並行設定的時間對照篩選。除錯文字／影子狀態是待評估切點，並未實作或證明有效；不要自動接續試驗，也不要把這項建議寫成已驗證成果。
