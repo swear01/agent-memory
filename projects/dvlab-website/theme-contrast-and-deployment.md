@@ -3,7 +3,7 @@ title: DVLab 網站深淺色對比、粒子配色與主站部署驗證
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 ## 主站與備援
@@ -67,7 +67,13 @@ updated: 2026-09-30
 - 最終 CMS disabled／enabled verify 各為 7 tests、0 failures，147 頁、2,776 links、708 images；完整 Brave 瀏覽器測試通過。合併後 CI／Pages 成功，兩站再驗證中英文、手機／桌面、深淺色、日期框、活動文案、HTTPS、canonical、靜態資產與 404。兩份相關文件已更新；本次分支、乾淨 worktree 及 preview 程序均清理。
 - 使用者明確同意「同意 直接發佈部署」，授權 PR #91 略過此次無法使用的外部 bot 審查；沒有宣稱 bot 通過，不延伸為未來任務的永久豁免。當次組織安裝清單只有 GitRoll／Cursor，未列 Swear Review、Gemini、Codex；Google Developer Connect 未找到此倉庫連結。整合狀態會變，後續先重新查證。
 
-## CRA parity PR #101（2026-09-30）
+## CRA parity PR #101（2026-10-01）
 
-- Production 維持 Astro on `main`；primary 為 `https://dvlab.ee.ntu.edu.tw`（inari），GitHub Pages 為 backup。PR #100（Host page 等）已合併，main SHA 約為 `7f1a78e`；Inari release pattern 為 `releases/<date>-host-<shortsha>`。
-- PR #101 是 open draft：`https://github.com/DVLab-NTU/dvlab-ntu.github.io/pull/101`，branch `cursor/cra-visual-parity-5109`，最新 visual commit（截至 2026-09-30 早上）為 `dad9355d2a328580ac147500f5b61fc011501315`。在使用者 review 前不得 merge；merge 後仍須分別 deploy 與驗證 Pages、inari。
+- Production 維持 Astro on `main`；primary 為 `https://dvlab.ee.ntu.edu.tw`（inari），GitHub Pages 為 backup。
+- PR #101 已於 2026-10-01 squash-merge 為 `385e247` 並部署 Pages + inari（`releases/20261001-385e247`）。舊「open draft / do not merge #101」註記已過期。
+
+## Typewriter mottos PR #102（2026-10-01）
+
+- PR #102 squash-merge `2d370c3`；Pages run 36850430469 success；inari `current` → `releases/20261001-2d370c3`（保留 `20261001-385e247`），未重啟 Caddy。
+- 同源 Pages `github-pages` artifact 部署；首頁 `#lab-introduction` CRA mottos 已上線。詳見 `typewriter-mottos-pr102.md`。
+- 「Do not merge #102」與空 CSS tip `95867e9` 皆不得再當作現行狀態。
