@@ -3,14 +3,20 @@ title: DVLab CRA 視覺 parity PR #101
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-09-30
+updated: 2026-10-01
 ---
+
+## Deployed 2026-10-01
+
+- PR #101 squash-merged to `main` as `385e247`.
+- GitHub Pages + inari both served that build; inari then advanced for PR #102 (see `typewriter-mottos-pr102.md`). Snapshot at #101: `current` → `releases/20261001-385e247` (previous `20260930-host-7f1a78e` kept).
+- Do not treat older draft / “do not merge” notes below as current status.
 
 ## PR 與發布邊界
 
-- Production 目前是 Astro on `main`；primary 為 `https://dvlab.ee.ntu.edu.tw`（inari），GitHub Pages 是 backup。PR #100（包含 Host page 等內容）已合併；其 main SHA 約為 `7f1a78e`。Inari release 命名模式為 `releases/<date>-host-<shortsha>`。
-- PR #101 仍是 open draft：`https://github.com/DVLab-NTU/dvlab-ntu.github.io/pull/101`，branch 為 `cursor/cra-visual-parity-5109`，cloud agent 為 `bc-0540771a-7b2d-5206-813f-a73aab7c5109`。截至 2026-09-30 早上，最新 visual commit 是 `dad9355d2a328580ac147500f5b61fc011501315`。
-- **在使用者 review 前不要 merge PR #101。** Merge 後 deploy target 仍同時是 GitHub Pages 與 inari；PR merge 或 Pages 成功本身不代表 inari 已更新。
+- Production 目前是 Astro on `main`；primary 為 `https://dvlab.ee.ntu.edu.tw`（inari），GitHub Pages 是 backup。
+- **PR #101 已 merge 並雙站部署（2026-10-01，`385e247` / inari `20261001-385e247`）。** 之後更新仍須分別驗證 Pages 與 inari；Pages 成功本身不代表 inari 已更新。
+- **PR #102**（typewriter mottos）已於同日 merge+deploy：`2d370c3` / inari `20261001-2d370c3` — 詳見 `typewriter-mottos-pr102.md`。不要留下「do not merge #102」舊註記。
 
 ## 使用者指定的視覺方向
 
@@ -19,3 +25,4 @@ updated: 2026-09-30
 - Navbar 使用 liquid-glass / frosted translucent 與 `backdrop-filter`；header/body 的 `padding-top` 透過 ResizeObserver 追蹤 `--site-header-height`。
 - Members 使用 horizontal scrolling tracks/carousel；目前只有三個 categories：形式化驗證（`formal`/`ai-formal`/`verification`）、EDA/3DIC（`eda`/`3dic`/`architecture`）、Quantum。PI 不列入 categories。
 - Body 使用 CRA 的 Helvetica Neue（weight 300），titles 使用 Coolvetica；字型放在 `public/fonts/cra/`。
+- Homepage CRA culture typewriter mottos：`#lab-introduction`（PR #102）。
