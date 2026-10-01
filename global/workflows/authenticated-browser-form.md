@@ -3,7 +3,7 @@ title: Authenticated browser form continuity and submission gates
 scope: global
 status: active
 created: 2026-09-03
-updated: 2026-09-06
+updated: 2026-10-01
 tags:
   - browser
   - forms
@@ -30,3 +30,11 @@ tags:
 填完欄位、進入檢視頁或收到 `started` 類回應，都不等於正式送出。完成後要看到官方受理畫面、案件編號／查詢碼或可對應的確認通知，才能宣稱送出成功。
 
 不要把姓名、電話、地址、Email、帳號、驗證碼、Cookie、登入狀態或私人表單正文寫入 shared memory；只保存可重用的流程規則與去識別化的失敗教訓。
+
+# macOS CUA 控制逾時與 PDF 預覽
+
+2026-10-01 的實測中，CUA extension 分頁控制在 `Emulation.setFocusEmulationEnabled` 逾時時，原生 Brave 的 accessibility 操作仍可用。這是可嘗試的不同控制面，不代表必須重開瀏覽器或清除 profile。當 bundle ID 因 Sparkle 更新快取副本而模糊時，可用已核實的主應用程式完整路徑定位。
+
+AX 點擊後第一次觀察沒有變化，可能是載入尚未完成；先重新觀察頁面、網址與可見內容，不盲目重複點擊。原生座標操作若回報 `noWindowsAvailable`，不代表 accessibility 操作必然無法使用，兩者應分開判斷。不得因 native 操作成功就宣稱 extension 的 CDP 問題已修復。
+
+文件按鈕若開啟 PDF 預覽，可透過瀏覽器 Command+S／下載儲存。儲存視窗初期按鈕可能 disabled；確認實際檔名欄與狀態後再儲存。完成後驗證本機檔案格式與內容，而不是把控制 API 回覆或下載按鈕點擊當成交付證據。
