@@ -4,7 +4,7 @@ scope: tools
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-29
+updated: 2026-10-02
 tags:
   - docx
   - word
@@ -41,6 +41,13 @@ sources:
 
 - 將檔案建立或覆蓋到本機 Google Drive 同步資料夾後，DriveFS 的 item-id extended attribute 可能短暫消失再出現。
 - 先比對來源與目的檔 SHA-256、確認檔案能重新開啟，再輪詢 `com.google.drivefs.item-id#S` 是否恢復；不要在 attribute 尚未出現時宣稱已同步，也不要輸出實際 item ID。
+
+## macOS bundled headless LibreOffice 的中文字型與行距
+
+- 本次 bundled renderer 在缺少 Fontconfig 字型目錄時，PDF 的中文字形會整段消失。使用 task-local `fonts.conf` 列入 `/System/Library/Fonts`、`/System/Library/Fonts/Supplemental`、`/Library/Fonts`，設定 `FONTCONFIG_FILE` 指向該檔，並把標楷體／DFKai-SB fallback 設為 `Songti TC`，即可正常渲染。字型 cache 放 `<task-workspace>/work/`，不改全域設定或安裝新工具。
+- 本次 12 pt 中文正文用自動 1.4 倍行距時，fallback 字型造成行距過大、頁數增加；只對新正文設 `Songti TC`、固定 18 pt 行高與 `snapToGrid=false` 後，得到已逐頁檢查的 10 頁版面。固定 18 pt 只適用這次 12 pt 正文，不能套到大字封面或全頁圖片。
+- 修改後逐頁檢查中文、裁切及分頁；未變更的封面與已簽附件可與前次渲染的 PNG bytes 比較，不能僅以 DOCX 能解析作為排版證據。
+- 部分 bundled Python 沒有 `os.getxattr`；使用 `/usr/bin/xattr -p com.google.drivefs.item-id#S <file>` 查存在性，不輸出實際 ID。attribute 存在不等於遠端新內容已讀回；遠端確認仍需另做。
 
 ## DriveFS on-demand 檔案讀取死鎖（`Resource deadlock avoided`）
 
