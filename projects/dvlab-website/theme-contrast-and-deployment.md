@@ -3,7 +3,7 @@ title: DVLab 網站深淺色對比、粒子配色與主站部署驗證
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-10-01
+updated: 2026-10-02
 ---
 
 ## 主站與備援
@@ -77,3 +77,10 @@ updated: 2026-10-01
 - PR #102 squash-merge `2d370c3`；Pages run 36850430469 success；inari `current` → `releases/20261001-2d370c3`（保留 `20261001-385e247`），未重啟 Caddy。
 - 同源 Pages `github-pages` artifact 部署；首頁 `#lab-introduction` CRA mottos 已上線。詳見 `typewriter-mottos-pr102.md`。
 - 「Do not merge #102」與空 CSS tip `95867e9` 皆不得再當作現行狀態。
+
+## Liquid-glass chips PR #103（2026-10-02）
+
+- PR #103 squash-merge `9aff7ee`；Pages run 36984210862 success；inari `current` → `releases/20261002-9aff7ee`（保留 `20261001-2d370c3`），未重啟 Caddy。
+- 同源 Pages `github-pages` artifact（`artifact.tar` SHA-256 `8e8dc0928f6994cf89eb7f6479c0f1e5189a4c3a2a2716f2af1960971945e0d7`）；Mac→inari SSH。詳見 `liquid-glass-chips-pr103.md`。
+- Design prefs：`--glass-bg*` 核准半透明；news date / semester chips；paper list denser panel glass；paper detail 會議+年份 labeled chips；unified footer + `has-unified-page-backdrop` flex sticky footer。
+- 「Draft / do not merge #103」不得再當作現行狀態。
