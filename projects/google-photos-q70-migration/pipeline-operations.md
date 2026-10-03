@@ -71,3 +71,17 @@ tags:
 2. `--run`：寫入前才做雲端身分證明（`swbisb` 內容雜湊 → media key/dedup，必須與 `fDcn4b` 回讀的 dedup、檔名、位元組一致且無垃圾桶時間戳），先寫 journal `sending`，再送 `XwAOJf`，之後用 `zy0IHe` 垃圾桶回讀對帳；不確定寫入只回查不重送。執行器可重入。
 
 這樣「缺工作階段」只阻塞最後一步，不阻塞範圍、授權、測試與文件。
+
+## 用使用者自己的 Chromium 瀏覽器拿工作階段（實測可用）
+
+內建瀏覽器不可用時，若使用者授權自己的 Brave／Chrome，可以在**不碰使用者正在跑的視窗**下取得同一帳號的工作階段：
+
+1. 把整個 profile 目錄用 `cp -c -R` 複製到暫存沙盒（APFS clone，實測 2.2 GB profile 約 2 秒，實際佔用近零）。
+2. 刪掉沙盒裡的 `SingletonLock`／`SingletonCookie`／`SingletonSocket`，否則新實例會以 exit code 21 拒絕啟動（錯誤：`Failed to create .../SingletonLock: File exists`）。
+3. 啟動：`Brave Browser --user-data-dir=<clone> --profile-directory=Default --remote-debugging-port=9222 --remote-allow-origins=* --headless=new about:blank`；CDP 只綁 127.0.0.1。
+4. 用 CDP（Node 22+ 內建 `WebSocket` 即可，不需套件）：`PUT /json/new?<url>` 開 photos.google.com → 先 `Runtime.evaluate` 確認 `window.WIZ_global_data.oPEP7c` 是預期帳號，再 `Network.getCookies` 拿 cookie（**不要印出 cookie 值**）。macOS 上這是唯一不必碰 Keychain 解密的路（`Cookies` DB 的 v10 値需要 “Brave Safe Storage” 鑰匙）。
+5. 寫入專案的私有 0600 session 檔後**同一道命令串接執行**：複製的 cookie 只活幾分鐘。收尾要刪掉 profile 沙盒、cookie 暫存檔與暫存腳本；使用者原本的程序不受影響。
+
+## 非原畫質副本的清理真理
+
+有些圖庫副本在上傳時被 Google 重新編碼（`fDcn4b` 回報 `original_quality` false）。這種項目的內容雜湊永遠不會吻合（`swbisb` 回 0 筆），但身分其實完全確定：自己的 Takeout sidecar photo key ＋ 相同檔名 ＋ 相同位元組數。要動這種項目就把它做成**另一個常規閘門**：只當 `media_key` 存在、`original_quality is False`、檔名與位元組完全相同、且未進垃圾桶時才放行；放寬必須有自己的授權檔（綁 plan SHA256），journal 重開前先匯出舊回條當稽核（`*-journal-before-reopen-*.jsonl`），每筆結果要記下用了哪種證明。實例：47 筆中 33 筆內容雜湊、14 筆 sidecar/大小身分，兩者都逐項回讀並在垃圾桶列表獨立掃到 47/47。
