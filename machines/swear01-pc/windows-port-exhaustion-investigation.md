@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # 已驗證線索；根因尚未確認
@@ -54,6 +54,7 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 在本機監測目錄新增 trace-control.ps1，以 logman 的 PortExhaustionAFD ETW session 記錄 Microsoft-Windows-Winsock-AFD（keyword 0x8000000000000000、level5）。bincirc 256 MB、64 KB buffers（4–16）、每五秒 flush；沒有啟用封包擷取，仍含位址與行程中繼資料。由既有隱藏五分鐘排程維護，重啟後可重建；真實 Tcpip 事件時停止並保留 port-afd.etl，停止後不自動重啟。七天期限記在 trace-config.json；到期由下一次排程停用。
 - 實際測試成功記錄 loopback bind 事件1030及對應 HeaderPID；重複綁定測試記錄事件1029、NTStatus 0xC0000043，analyze-trace.ps1 能解析且不誤標為 0xC0000209 耗盡。trace-probe 檔案是測試，不能算新耗盡。正式 trace-state=Running，排程 LastTaskResult=0。測試時 DateTime 與 DateTimeOffset 比較錯誤已修正，以 DateTimeOffset.Now 比較期限。
 - 後續查 bind 失敗 0xC0000209（STATUS_TOO_MANY_ADDRESSES），結合 endpoint建立事件與快照行程啟動時間；payload Process 是指標，不能直接當 PID，HeaderPID 也需相關事件佐證。失敗呼叫者未必是消耗資源的來源。沒有匹配失敗不代表保留窗之外從未耗盡。
+- 10/4 01:11:35 的新 TCP4231（RecordId89597）已成功觸發凍結循環 ETL。AFD事件1029在同一時間回傳 0xC0000209，HeaderPID與同一endpoint建立事件1000的payload ProcessId相符，均指向 Brave network.mojom.NetworkService；快照啟動時間確認是同一行程。這證實 Brave 網路服務是本次分配失敗的呼叫者，不能證明它消耗所有port；當下 TCP238、UDP90、AFD最高javaw102/Brave51、可用記憶體約11GB，audiodg Key51仍穩定。追蹤狀態Captured且Enabled=false，保留檔案未重啟。失敗前同一指標曾用於UDP，後來重新建立TCP；指標會重用，必須以時間與建立事件判讀，不能混算endpoint生命周期。低影響下一步是使用者方便時保存工作、重啟Brave做對照，不能直接停用VPN或宣稱Brave是耗盡根因。
 ## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
