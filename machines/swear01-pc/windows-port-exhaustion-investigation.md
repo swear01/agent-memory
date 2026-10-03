@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-09-29
+updated: 2026-10-03
 ---
 
 # 已驗證線索；根因尚未確認
@@ -46,6 +46,14 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 09-29 00:39 完成初步對照：同一 audiodg PID/StartTime 在 00:08:41 至 00:39:08 的七筆後續取樣中，Key 固定 2719，30.4 分鐘增量 0；相較調整前約每五分鐘增加 50，累積已在該觀察窗停止。此結果支持音訊句柄累積初步改善，不能證明 TCP/UDP 耗盡或整機死機已根治。結果已記錄並將 heartbeat 恢復每小時，繼續檢查是否復發。
 - 09-29 01:29 的延長觀察：調整後約 80.4 分鐘、18 筆取樣，同一 audiodg PID/StartTime 的 Key 在 2719–2725 間小幅波動，最新 2720，淨增 1；改善在這段觀察窗仍維持。調整後未出現新的 Tcpip 4231/4266，非分頁池約 826–848 MB。這些結果不足以將音訊問題與先前 port 耗盡建立因果關係，也不能保證更長時間不復發。
 
+## 10/3 事件捕捉與循環追蹤
+
+- 10/1 00:25 UDP 4266（RecordId 89067）、10/2 13:19 TCP 4231（89305）真實復發。事件排程自動觸發已驗證成功，分別約 1.4 / 3.1 秒後取得快照：TCP 169 / 155、UDP 82 / 92、AFD 358 / 192，可用記憶體約 13 / 22 GB。取樣沒有顯示大規模 socket 累積；根因仍未知，不能證實網路耗盡造成全機記憶體枯竭。
+- 10/2 WakeTime 13:18:39，TCP 耗盡在恢復後約 24 秒；同時有 Wi-Fi 初始化與 WARP 介面變更。WARP 保留日誌在兩次事件當秒未找到 bind/socket/10055 錯誤；這些時間關聯不足以指認 WARP 或 Wi-Fi 驅動。10/1 UDP 事件前後兩分鐘未見相同恢復事件，不能將所有復發歸因睡眠恢復。
+- audiodg 已重啟；10/3 約 54 分鐘 Key 50–51 穩定。新行程初始 CSV Key19/Fx0、目前 Key51/Fx4；跨日增量不能證明持續洩漏，且不可直接比較舊行程試驗基準。
+- 在本機監測目錄新增 trace-control.ps1，以 logman 的 PortExhaustionAFD ETW session 記錄 Microsoft-Windows-Winsock-AFD（keyword 0x8000000000000000、level5）。bincirc 256 MB、64 KB buffers（4–16）、每五秒 flush；沒有啟用封包擷取，仍含位址與行程中繼資料。由既有隱藏五分鐘排程維護，重啟後可重建；真實 Tcpip 事件時停止並保留 port-afd.etl，停止後不自動重啟。七天期限記在 trace-config.json；到期由下一次排程停用。
+- 實際測試成功記錄 loopback bind 事件1030及對應 HeaderPID；重複綁定測試記錄事件1029、NTStatus 0xC0000043，analyze-trace.ps1 能解析且不誤標為 0xC0000209 耗盡。trace-probe 檔案是測試，不能算新耗盡。正式 trace-state=Running，排程 LastTaskResult=0。測試時 DateTime 與 DateTimeOffset 比較錯誤已修正，以 DateTimeOffset.Now 比較期限。
+- 後續查 bind 失敗 0xC0000209（STATUS_TOO_MANY_ADDRESSES），結合 endpoint建立事件與快照行程啟動時間；payload Process 是指標，不能直接當 PID，HeaderPID 也需相關事件佐證。失敗呼叫者未必是消耗資源的來源。沒有匹配失敗不代表保留窗之外從未耗盡。
 ## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
