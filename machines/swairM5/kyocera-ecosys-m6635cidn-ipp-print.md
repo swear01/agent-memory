@@ -32,7 +32,7 @@ updated: 2026-10-05
 ## 從實驗室 VPN 列印（2026-10-05 實測）
 
 - 使用者指定的實驗室 VPN 是原生 IPSec `DVLab IKEv2`；不要代換成 `SwearOVPN`（OpenVPN）或 FortiClient 的 ADFP VPN。
-- 本次原生 IKEv2 profile 在系統設定可見，但 `scutil --nc list` 沒有列出，`scutil --nc status 'DVLab IKEv2'` 回報 `No service`。這不代表 profile 不存在；改由「系統設定 → VPN」開啟既有 `DVLab IKEv2`。
+- 本次原生 IKEv2 profile 在系統設定可見，但 `scutil --nc list` 沒有列出，`scutil --nc status 'DVLab IKEv2'` 回報 `No service`。這不代表 profile 不存在。2026-10-05 已設定原生捷徑，可用 `shortcuts run "DVLab 連線"`／`shortcuts run "DVLab 斷線"` 控制；見 [DVLab IKEv2 捷徑](dvlab-ikev2-shortcuts.md)。亦可由「系統設定 → VPN」操作既有設定。
 - 可用 `open 'x-apple.systempreferences:com.apple.NetworkExtensionSettingsUI.NESettingsUIExtension'` 開啟該頁。連線後讀回「已連線」，並用 `route -n get 192.168.1.100` 確認實驗室位址走 `ipsec0`；不要只依 VPN 開關判定印表機可達。
 - VPN 上 mDNS 查詢沒有取得印表機位址；直接查既有 IPP 位址，先以 `Get-Printer-Attributes` 核對型號與 UUID 是否匹配本機 CUPS 印表機，再送印，不必掃描整個網段。
 - 經 `Validate-Job` 接受後，直接 `Print-Job` 指定 `media-col.media-source=tray-2`、A4、`copies=1`、`print-color-mode=monochrome`、`sides=one-sided`、`print-scaling=fit`，本次兩份既有 PDF 成功列印。
