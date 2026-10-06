@@ -3,18 +3,59 @@ title: DVLab IKEv2 VPN 現況與 Windows 用戶端排查
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
-updated: 2026-09-28
-tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
+updated: 2026-10-06
+tags: [vpn, ikev2, windows, powershell, certificate, eap, psk, archive, dvlab-mis]
 ---
 
 # DVLab IKEv2 VPN 現況與 Windows 用戶端排查
 
-## 架構現況
+## 架構現況（2026-10-06，取代先前 Windows PSK 說明）
 
-- 2026-09-21 使用者確認 Windows 現在也使用 PSK，並回報 Windows 與 Mac 同時連線會互踢；根因尚未驗證。
-- 2026-09-28 使用者更正：Windows 現行透過 PSK 腳本安裝，防火牆端點為 `.141`；先前把「安裝方式待核對」寫進公開指南與維運文件是誤判。NFS home 的版本化 PSK 安裝包見下方；本機早期 PSK 腳本和先前 `latest` 的 EAP 包均已移除。腳本未明設 Local ID。
-- 2026-09-21 查核時，本地維運文件與 `<remote-home>/dvlab-vpn/latest/DVLab-IKEv2-VPN.zip` 仍記載／包含 2026-07-26 EAP 部署；這是切換前的歷史狀態。`latest` 路徑和記憶更新日期均不足以證明內容反映目前部署，必須核對實際用戶端與資料來源。
-- 以下早期 PSK 腳本錯誤與 EAP 排查為歷史紀錄，不是目前發給使用者的腳本版本證據。
+- Windows 原生 IKEv2 不能靠旧腳本寫入 PSK 欄位來使用 PSK 認證；「腳本能執行」並不是「VPN 認證成功」。現在改為 `MachineCertificate`，不需輸入 VPN 帳密。Apple / Android 原 PSK 保留。
+- 非 H 系列 Zyxel USG FLEX 200、韌體 V5.42 上，兩种認證已可共用既有 `.141` 入口：原 PSK 使用 AES256/SHA256；新增 `DVLab_Windows_141` 的 Phase 1 和 Phase 2 都使用 AES128/SHA256，DH14、no PFS、獨立 Windows 位址池。新增連線加入 `IPSec_VPN` 及 `VPN_To_WAN_SNAT`；移除新增物件與群組成員後，running config 與之前逐位元組相同。`write` 成功，未獨立讀回 startup config。
+- 網路出口遵循既有雙 WAN 路由，外部測試觀察到 `.141` 和 `.145`；連線入口 `.141` 不代表外網出口固定 `.141`。Windows 驗證腳本接受這兩個實驗室 WAN 位址。
+- `.138:9443` 保留 HTTPS 自動簽發；`.138` 的 strongSwan 憑證 VPN 是已驗證備案，新包不使用它作為 VPN 入口。舊 `.143` EAP 維持停用。
+- 以前記載的「Windows 使用 PSK」是舊安裝腳本／使用者回報，未證明 Windows 原生 IKEv2 PSK 成功。以下 September PSK 與 EAP 內容為歷史證據，不是現行操作指引。
+
+## 同 IP 選錯規則的根因與補測
+
+- 先前只更換 Phase 1 的 DH group，Phase 2 仍與 PSK 相同，Zyxel 選到 PSK 並回傳 PSK server AUTH。這些失敗不足以宣稱 Windows 必須換 IP。
+- Zyxel 官方員工在 Community discussion「How to run two IKEv2 tunnels (full + split) on the same router?」、comment 79597 指出：不同 VPN 的 Phase 1 和 Phase 2 proposals 都應不同；相同組合可能依規則順序匹配錯誤規則。該官方案例不是完整相同的 PSK + Windows 組合，需本部署補測。
+- 真正補測：原 PSK AES256/SHA256 不變，只在新增憑證規則及 Windows 候選腳本使用 AES128/SHA256（兩階段均不同）。外部 Oracle Linux strongSwan 成功進入 RSA 憑證規則，原 PSK 可同時連線；憑證中斷重連也成功。
+- 一開始新位址池只能進內網、不能上網；將新增連線加入既有 `VPN_To_WAN_SNAT` 群組後，外網和 DNS 通過。不要只驗證 IKE SA 建立就宣稱 VPN 可用。
+
+## 同一支 Windows 腳本自動簽發與驗證邊界
+
+- 使用者要求成員首次安裝可在外網完成，不輸入邀請碼；同一支腳本內含共用 enrollment 密鑰。持有安裝包即能申請 VPN 憑證，僅向原成員範圍發放，不公開密鑰。這不是沒有信任依據的匿名安全簽發。
+- `certreq` 在 LocalMachine 產生不可匯出的 RSA2048 私鑰及 CSR，送 HTTPS enrollment service 取得個別、有效一年、clientAuth 憑證。私鑰留在本機，不共用 PFX，不把 CA 私鑰放入 ZIP；有效憑證會重用，到期前重跑可換發。
+- 服務位於 zeus `<remote-home>/.local/share/dvlab-windows-vpn/`，使用者 unit `dvlab-windows-enroll`；目錄 700、機密檔 600。簽發服務使用共用 client CA；Zyxel `.141` server certificate 是另一張 self-signed 憑證。安裝包內有兩張公開 `.crt`，脚本各自釘選 SHA256 並匯入 LocalMachine Root；client CA 用於 client issuer/EKU filter 和 HTTPS enrollment trust，server cert 用於信任 Zyxel。
+- 外部 Linux 已驗證：HTTPS CA 信任、錯誤 token 403、無效 CSR 400、有效及重試 200；RSA IKEv2（無 IDr）、PSK 同時連線、內網 TCP、DNS 直接查詢、全流量外網和憑證重連。測試私鑰、token、PSK 暫存和 Oracle 臨時 VPN 套件已清理。
+- Linux 測試端 resolvconf 無法自動寫入 system DNS；直接透過 VPN 向 DNS 查詢成功。這是客戶端測試限制，不能把 system DNS 自動設定宣稱通過。
+- **仍待同學 Windows 實機驗證**：PowerShell 5.1 安裝、certreq key attachment、原生無帳密連線、DNS、內網、全流量和重連。PowerShell parser 與 package validator 通過，不能代替 Windows 實機。此部署未重新驗證兩台真實 Apple / Android 使用相同 client ID 的歷史互踢問題。
+
+## 安裝包結構與使用者偏好（2026-10-06）
+
+使用者要求直接在共用 VPN 根目錄放一個目前版本，其他放 archive。`<vpn-root>` 指 NFS 共用 home 下的 `dvlab-vpn`，現在只有：
+
+```text
+<vpn-root>/
+├── DVLab-IKEv2-VPN.zip
+├── DVLab-IKEv2-VPN.zip.sha256
+├── DVLab-L2TP-VPN.zip
+├── DVLab-L2TP-VPN.zip.sha256
+└── archive/
+    ├── latest/
+    ├── releases/
+    └── staging/
+```
+
+- 每個協定只提供一個根目錄下載包；不再讓成員選 latest、日期 release 或 staging。歷史目錄完整移入 archive，沒有刪除。
+- 根目錄 IKEv2 包含 Windows 新憑證腳本、驗證腳本、兩張公開憑證、README、原 Apple 描述檔、原 Windows remover，共七個檔案。Apple profile 和 remover 與舊包逐位元組相同。
+- IKEv2 ZIP SHA256：`1bff4aec5903b4d3f6d30e0c3c82fe1c4150d46f7ea08a795c8a2dc735aca3e8`。
+- L2TP 根目錄保留原目前版本（原 2026-10-06-r2），SHA256：`9b214279f4f7c41f0dbdad6eada9cd3d416e49945e888f727fdb840422b68481`；此任務未改動 L2TP 內容。
+- 根目錄的 checksum 使用新檔名，遠端 `sha256sum -c` 均通過；新版結構 validator 與三支 PowerShell parser 通過。根目錄发布是使用者要求的整理，不代表 Windows 實機已過。
+- 公開 HackMD、Restricted Google Docs 的兩份維運文件及 zeus 私有 Markdown mirrors 已更新下載路徑；HackMD 完整 export 比對、Docs readback 和 Drive text export 都驗證過。機密不放公開指南；Google 與 local mirror 要各自驗證。
+- `<vpn-root>` 不是 Git repository；安裝包是共享 operational artifacts，不要憑空替它建立 Git PR。更新時驗證內容、checksum、下載路徑與實際連線。
 
 ## Windows 腳本 PropertyNotFoundStrict 根因與處置
 
@@ -24,7 +65,7 @@ tags: [vpn, ikev2, windows, powershell, eap, psk, dvlab-mis]
   2. Windows 原生產生的 `rasphone.pbk` 常為 ANSI 或 UTF-8。強制以 Unicode 讀取會使換行無法識別，回傳單一 scalar 字串（或空白檔案為 null）。
   3. 腳本開頭設有 `Set-StrictMode -Version Latest`，存取 scalar 物件的 `.Count` 會直接觸發例外終止。
 - **處置**：
-  - 當時處置為改用 EAP 安裝包，不再呼叫 `Set-RasphonePreSharedKey`；Windows 後續已改用 PSK，勿將此歷史處置當作現行安裝指引。
+  - 當時處置為改用 EAP 安裝包，不再呼叫 `Set-RasphonePreSharedKey`；後續舊腳本嘗試 PSK，但不代表原生連線成功；現行已改憑證，勿將此歷史處置當作現行安裝指引。
   - 若需維護舊版或撰寫類似 PowerShell 腳本，檔案讀取行數應一律使用強制陣列 `@(Get-Content -LiteralPath $PbkPath)`，並動態偵測檔案 BOM / 編碼；修改電話簿等次要設定需加 `try-catch` 防禦，避免阻斷主體 VPN profile 建立。
 
 ## 文件與公開說明邊界
