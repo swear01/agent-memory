@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-09-25
+updated: 2026-10-07
 tags:
   - shared-memory
   - qmd
@@ -25,6 +25,8 @@ GitHub repository `swear01/agent-memory` 負責在不同 machines 之間同步�
 2026-09-12 使用者核准更新 pre-push-review、personal-pr-workflow 與 shared-memory 的失敗分類規則：本次新增／加重問題要修正；已在未修改基準重現且與本次無關的失敗，記錄證據與影響後，不單獨阻擋已授權提交／同步。環境或工具問題要標示未驗證，不能稱為通過。真實敏感資料暴露、重大正確性或資料損失風險仍需先處理，平台強制 merge/deploy 檢查不豁免。不得為了綠燈自行改檢查器、分支保護或重寫歷史。來源修訂見 shared-skills PR #34。
 
 同步前核對遠端可見性：2026-09-12 `gh repo view swear01/agent-memory --json isPrivate` 回傳 false，不能因通用 skill 稱為 private 就假定此遠端為私有。此次基準 `2a766e4` 的原樣 worktree 以完整 CI validator 重現 Pi 文件個人路徑與歷史檢查兩項失敗；它們已在相同遠端公開，不是本次變更新增。仍逐一檢查待提交檔案沒有新增秘密或禁止的個人路徑，保留既有失敗狀態，不宣称全綠。
+
+2026-10-07 使用者再次重申「之後都要同步」。Codex 的本機 ad-hoc 記憶是暫存／私人來源；新增後須把可公開的長期規則與已驗證工具經驗整理進 canonical repository，完成檢查、commit、push 與遠端核對。只新增本機記憶或刷新 QMD 不能宣稱跨機器同步已完成。逐人成績、私人留言、原始繳交檔等敏感資料保留於私人檔案，不因同步記憶而公開。
 
 記憶有變更時，QMD update/embed/query-check 成功只證明本機索引可用，不代表遠端已同步。完成前必須確認 working tree clean、目前 branch 不再顯示 `ahead`，且 local `HEAD` 等於 remote branch；若 push 缺少授權或失敗，應詢問或明確回報未完成，不得跳過後宣稱完成。若只有 QMD read/update 而 Markdown 沒有變更，則沒有 Git commit 或 push 可做。
 
