@@ -31,6 +31,10 @@ RLE/Mamba 首輪 150 s timeout，450 s 重試成功。三組均取得 GDS/LEF/Ve
 
 OpenFinRAM Release build 成功；補齊依賴後 upstream CTest 11 passed/2 failed/0 skipped。Yosys 0.69+post 把 DFF map 成 `DFFHQx4_ASAP7_75t_R`，hard-coded 檢查要求 `DFFHQNx1_ASAP7_75t_R`，equivalence 六組與實際生成皆在此失敗。這是 mapping 名稱假設失配，未證明硬體功能錯誤。DEF→GDS fixture 含非法 `UNITS DISTANCEMICRONS`，KLayout parse 失敗。未修改 source 或刪除檢查；尚缺 OpenROAD executable，無完整 OpenFinRAM macro views。
 
+同日後續隔離診斷副本確認小修路線：`dfflibmap` 加上 `-dont_use DFFHQx4_ASAP7_75t_R -dont_use DFFHQNx2_ASAP7_75t_R -dont_use DFFHQNx3_ASAP7_75t_R`，保留 structural assertions，六組 formal equivalence 全部通過。正式修補需同步 production generator/tests/golden；尚未實作或驗證 production generation。
+
+DEF fixture 改 `DISTANCE MICRONS`、`TRACKS X` 後，還需修 test 的 layer purpose：fixture 只有 pins、無 routed segments，converter 的 pins_datatype=251，test 錯查 `40/0,50/0`。改查 `40/251,50/251` 後 smoke test 通過（2 cells、2 instances、非空 pins）；保留 DBU/outline warnings，不能推論實際 routed-controller connectivity 已驗證。以上診斷不改原 CTest baseline，port/mask 限制仍未解決。
+
 OpenFinRAM 的「開源模式」表示 Yosys/OpenROAD/KLayout backend，另一路用 DC/Innovus；程式碼公開。開源路徑 single-port、偶數 width、缺現成 bit-mask，不可直接滿足 RLE 45-bit mask/Mamba 1R1W。estimated Liberty、read-path SPICE prototype、controller TT STA、instance/geometry LVS helper 都不等於完整 macro characterization/transistor LVS。
 
 ## Spec2RTL 整合限制
