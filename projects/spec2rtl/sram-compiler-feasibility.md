@@ -2,7 +2,7 @@
 title: Spec2RTL SRAM compiler 可行性與 OpenRAM/OpenFinRAM 驗證邊界
 scope: projects/spec2rtl
 status: research-verified-integration-pending
-updated: 2026-10-08
+updated: 2026-10-09
 ---
 
 # Spec2RTL SRAM compiler 可行性
@@ -47,7 +47,11 @@ Release build 與 14/14 CTest 通過；新增 SPICE failure regression 在 uncha
 
 固定官方 `openroad/orfs` image digest `sha256:b879915e0ec547a7111e4e765f95b8896b3876d2ee36cf48d139355252678711`，controller placement/CTS/routing/TT global-parasitic STA 完成：108 delay INVx1、128 WL buffers、100 constrained max paths、controller route DRC report 空白。不等於整個 SRAM macro signoff。
 
-完整 generation blocker：Calibre `v2lvs` 2026.3_27.19 在 Ubuntu 26 不支援，Rocky 8 既有容器能執行但無法取得 `v2lvs` license；既有 license-host mapping 亦未解決。最終 patch 正確 exit 1，沒有 stub 當 macro。35-pin／容量 GDS 是套用 SPICE failure guard 前的診斷產物，不能部署 NAS。下一步需要可 checkout 的 converter license，或真正的開源 converter；不得假輸出或移除 gate。完整 SPICE/LVS/DRC/PEX/characterization/Spec2RTL regression、port/mask 未完成。
+2026-10-08 的 generation blocker：Calibre `v2lvs` 2026.3_27.19 在 Ubuntu 26 不支援，研究 Rocky 8 wrapper 回報授權取得失敗；當時尚未定位根因。最終 patch 正確 exit 1，沒有 stub 當 macro。當日 35-pin／容量 GDS 是套用 SPICE failure guard 前的診斷產物，不能部署 NAS。
+
+2026-10-09 根因已實測定位於研究 wrapper 讓 v2lvs 成為容器 PID 1；只移除內層 `exec`，相同設定便能取得真實 `calibrelvs` 授權，兩組 A/B 重現失敗／成功。controller SPICE 129,625 bytes、2,805 X instances，與既有 docker-shell 轉換雜湊相同。未變更共用授權環境或 TSRI IP；不是缺少 Siemens 授權。細節見 `domains/eda/calibre-container-licensing.md`。
+
+修後原 512×8 配置生成 exit 0：結果 `sram_x128x8x1_20261009_023319` 的 GDS 1,128,400 bytes、LEF 5,706 bytes、SPICE 5,232 bytes、estimated Liberty 10,035 bytes；35-pin audit 通過、0 fallback rectangles。但 LVS 因缺 tcsh 被 main 警告後跳過；exit 0 不代表 LVS passed。完整 DRC/LVS/PEX/characterization/Spec2RTL regression、netlist connectivity、port/mask 未完成，未部署 NAS。
 
 - `scripts/ci/grade.py` 使用 `CBDK_IC_Contest_v2.5/.../slow.db`，強制 canonical Conv SRAM、拒絕 macro/blackbox；其 PPA 是 SRAM behavioral model 的 standard-cell mapping。需要額外 experimental target，不可偷換 baseline。
 - 45nm/ASAP7 macro 必須配同製程 standard cells 與 RC；不能跨製程混用後宣稱 PPA 可比。
