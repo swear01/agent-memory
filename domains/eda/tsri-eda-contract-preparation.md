@@ -43,3 +43,7 @@ Synopsys 的 Site No.、Agreement No. 與合約 effective date 不是教授簽�
 eTAS 送審可能回傳解析錯誤，但後端已受理。先重新載入讀回實際狀態，避免盲目重送。上一份送審造成畫面重繪時，下一份檔案選擇可能未完成；逐份等到 upload-success 且送審按鈕可用，再送出。重新載入後合約顯示「送出審核」才確認受理，軟體列仍「申請中」則尚未授權。
 
 Drive 同步資料夾的副本一致只證明本機保存；另讀取雲端網頁並確認目標資料夾內各檔存在，才回報雲端保存已確認。這仍不等於從雲端重新下載做雜湊驗證。私人申請狀態與簽名文件留在原私有紀錄，不放入公開記憶庫。
+
+# 2026-10-08 核准完成
+
+重新載入 eTAS 申請軟體頁面確認：TSRI、Cadence、Siemens、Synopsys 四份合約皆審核通過；ARM T18、ARM EDA、Cadence EDA、Siemens EDA、Synopsys EDA、TSRI FreePDK45 六項申請皆已核准。此狀態取代先前送出審核／申請中的個案快照；不代表所有工具或 PDK 的實際授權 checkout 與功能均驗證。

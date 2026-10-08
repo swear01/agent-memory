@@ -15,6 +15,16 @@ tags:
   - yosys
 ---
 
+# SAED32/28nm RVT 補充庫與 compiler 移除（2026-10-08）
+
+- 新增 `/apps/cad/cell_library/SAED_EDK32_28nm/01132015/CORE_RVT/SAED32_EDK/lib/stdcell_rvt`；既有 `/apps/cad/cell_library/SAED32_EDK` 未修改，未變更 cur、預設庫、登入環境或群組成員。
+- RVT 官方包 `SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz`：1,029,183,436 bytes，MD5 `0112468df6e73a64d5223a34fcbb4269`，SHA-256 `32e8e51396544d4fd8519cfac3854dfc26513998d89eaa2893b0cb06718f7d66`。原始包保留在版本目錄 archives/；安全解壓及 staging→NAS 內容校驗通過。
+- Mazu 一般帳號從正式 NAS 路徑使用 `source /apps/eda/synopsys/synthesis.sh 2026.03` 合成 8-bit counter：29 cells、area 104.707330，日誌有 `SAED32_RVT_NAS_SYNTHESIS_OK`。代表 DB 是 `db_nldm/saed32rvt_tt1p05v25c.db`，SHA-256 `9ac1079a5f355e690610b0cb27a0e8241a15c9d920eb94eeac0dce7da2b51dd1`。
+- Mazu、Cthulhu、Valkyrie、Zeus 均可讀該 DB 且雜湊相同；Athena 送修中，未測試。完整 P&R／signoff 尚未驗證，不能外推所有 PDK 流程可用。
+- SRAM 2015 包 `SAED_EDK32.28nm_SRAM_v_01132015.tar.gz`：2,268,566,367 bytes，MD5 `9c1329ef944957998dd313d64efc04a7`，SHA-256 `e5e5d2f42acb729d3dede8f3c5a64991ea936f7f5138dc881e8a562d06b6a11b`。366 個檔案逐檔 SHA 與既有庫相同，缺漏／差異皆空，不重複展開；原始包保留在新版 archives/。此包不含 compiler 執行程式。
+- 獨立 `saed_mc_v2.1.0_30042013.tar.gz` 曾下載及安裝，但原始程式缺 single_32.cfg、Verilog/SPICE 尺寸不一致、Verilog 區塊註解未結束。使用者明確不要此工具；`MC_2.1.0_20130430`、其原始包、本機手冊與測試產物皆已刪除，四台已確認移除。不要重新安裝、下載或排入重試佇列。此決定只針對 SAED 2013 compiler，原有 ARM memory compiler 保留。
+- 新庫目錄 root:student 750、檔案 640。版本目錄 README.md、INSTALLATION.md 已同步最終狀態；保留 RVT 合成與 SRAM 比對證據。
+
 # ARM memory compiler：四台依賴已補，Athena 送修待補（2026-10-08）
 
 - 使用者要求實驗室五台都補相同依賴。Mazu、Cthulhu、Valkyrie、Zeus 已完成系統套件安裝；Athena 未安裝／未驗證，使用者確認送修中，連不上正常。回機後再補相同套件與驗證，不要反覆把送修當成 SSH 故障處理，也不要宣稱五台完成。
