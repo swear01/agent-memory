@@ -13,7 +13,7 @@ updated: 2026-10-09
 
 - OpenRAM stable：`b2b069ce119d1488cbe6883b2240bceb5c7ce29a`，BSD-3-Clause LICENSE。
 - OpenFinRAM：`36be702767b2c45b842fbc800ee84c6dde4d34a4`，README 宣稱 BSD-3-Clause，但根目錄 LICENSE 缺失、GitHub license metadata 為 null；正式授權文字仍待釐清。
-- Spec2RTL develop：`c8f82db743f1be8e5565ef8c8d36cc4990364ddb`；固定 CI benchmark `ad97739f1bad6ad78fb7ec5fe12da4ce437718c2`。較新 HW-Benchmark 需求查閱 `94bcd8e6af001019d433ac9f4d03049146061513`，不能当成固定 CI 已涵蓋。
+- Spec2RTL develop：`c8f82db743f1be8e5565ef8c8d36cc4990364ddb`；固定 CI benchmark `ad97739f1bad6ad78fb7ec5fe12da4ce437718c2`。初輪較新 HW-Benchmark 需求查閱 `94bcd8e6af001019d433ac9f4d03049146061513`，不能當成固定 CI 已涵蓋。2026-10-09 最新 `ed2c429f5cd8a36876081fb0b0b9769935994c3f` 的七個 40nm designs、RLE 介面變更及 ASAP7 subset 實測見 `asap7-benchmark-feasibility.md`。
 
 ## 實測與採用方向
 
@@ -35,7 +35,7 @@ OpenFinRAM Release build 成功；補齊依賴後 upstream CTest 11 passed/2 fai
 
 DEF fixture 改 `DISTANCE MICRONS`、`TRACKS X` 後，還需修 test 的 layer purpose：fixture 只有 pins、無 routed segments，converter 的 pins_datatype=251，test 錯查 `40/0,50/0`。改查 `40/251,50/251` 後 smoke test 通過（2 cells、2 instances、非空 pins）；保留 DBU/outline warnings，不能推論實際 routed-controller connectivity 已驗證。以上診斷不改原 CTest baseline，port/mask 限制仍未解決。
 
-OpenFinRAM 的「開源模式」表示 Yosys/OpenROAD/KLayout backend，另一路用 DC/Innovus；程式碼公開。開源路徑 single-port、偶數 width、缺現成 bit-mask，不可直接滿足 RLE 45-bit mask/Mamba 1R1W。estimated Liberty、read-path SPICE prototype、controller TT STA、instance/geometry LVS helper 都不等於完整 macro characterization/transistor LVS。
+OpenFinRAM 的「開源模式」表示 Yosys/OpenROAD/KLayout backend，另一路用 DC/Innovus；程式碼公開。開源路徑 single-port、偶數 width、缺現成 bit-mask，不可直接滿足初輪 RLE 45-bit mask/Mamba 1R1W。注意最新版 HW-Benchmark RLE 已換成 whole-word WEN，無 BWEB；45-bit 寬度與 macro 時序仍需驗證，詳見 `asap7-benchmark-feasibility.md`。estimated Liberty、read-path SPICE prototype、controller TT STA、instance/geometry LVS helper 都不等於完整 macro characterization/transistor LVS。
 
 ## Spec2RTL 整合限制
 
@@ -56,6 +56,6 @@ Release build 與 14/14 CTest 通過；新增 SPICE failure regression 在 uncha
 - `scripts/ci/grade.py` 使用 `CBDK_IC_Contest_v2.5/.../slow.db`，強制 canonical Conv SRAM、拒絕 macro/blackbox；其 PPA 是 SRAM behavioral model 的 standard-cell mapping。需要額外 experimental target，不可偷換 baseline。
 - 45nm/ASAP7 macro 必須配同製程 standard cells 與 RC；不能跨製程混用後宣稱 PPA 可比。
 - Conv canonical 512×8 model asynchronous reset 整個 array、posedge read、write 保持 Q；OpenRAM 沒有相同 reset/init 契約，posedge capture/negedge operation，Q 會變 X。需驗證 wrapper/init/latency，而不是改 golden 或靜默 FF fallback。
-- RLE mask 極性、sleep pins；Mamba 同址 collision 與寬記憶體 partitioning 仍需設計和驗證。
+- 初輪 RLE mask 極性、sleep pins；Mamba 同址 collision 與寬記憶體 partitioning 仍需設計和驗證。最新版 RLE whole-word write 契約另見 ASAP7 benchmark note，不可沿用舊 mask blocker。
 
 證據：研究 workspace 的 `outputs/sram-compiler-research-20261008/`，Mazu `/var/tmp/sram-compiler-research-20261008/` 保留 config、logs、benches、views audit/hash manifest 和 macro 產物。後者是暫存資料，尚未部署 NAS。Issue #18 comment 保存配置、結論與驗證範圍。
