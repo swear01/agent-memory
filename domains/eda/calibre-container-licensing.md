@@ -15,6 +15,8 @@ Mazu 的 Calibre 2026.3_27.19 在既有 Rocky 8 image 中實測。授權 server 
 
 修正只套用於 SRAM compiler 隔離研究 wrapper，不變更共用 `/apps`、授權環境、TSRI IP 登錄或服務。實際 controller 轉換得到 129,625-byte SPICE、2,805 個 X instances；與既有 docker-shell 轉換結果 SHA-256 相同。這證明此 Mazu 路徑能使用實際授權，不表示其他主機或所有產品也驗證。
 
-TSRI 官方 EDA 須知要求登錄實驗室實體 IP 與學術網域。此次登入頁 session 過期，沒有即時讀回使用者申請清單／IP 表；先前核准紀錄與當日成功 checkout 分開陳述，不臆測或修改 IP。
+TSRI 官方 EDA 須知要求登錄實驗室實體 IP 與學術網域。2026-10-09 使用者重新登入後，即時讀回 eTAS：四份合約全部審核通過、六項軟體全部已核准（含 Siemens EDA Tool Suite），IP 表五筆全部已啟用。Mazu 當時的公開 DNS 與實測 HTTPS 對外 IP 相同，且在已啟用表內；先前的 v2lvs 問題不需要靠修改 IP 登錄解決。這不是其他四台主機的 checkout 證據，後續仍須現場讀回狀態。
+
+同次 Calibre 下載清單含 `2026.3_27.19`，與共用 `/apps/eda/siemens/calibre/2026.3_27.19` 現有安裝一致。此次流程沿用伺服器安裝及實際 TSRI floating license 即可，不需重新下載安裝包，也沒有執行軟體下載或 IP 匯入；IP 匯入頁明示會全量覆蓋既有資料，不能當成增量更新。
 
 OpenFinRAM 512×8 生成 exit 0 並輸出 SPICE/GDS/LEF/estimated Liberty，35 個 GDS/LEF pins 同層金屬 audit 通過、0 fallback rectangles；完整 LVS 因 native 環境缺 tcsh 被跳過。輸出不是已通過 signoff 的 macro，DRC/LVS/PEX/characterization 與專案整合仍待驗證。
