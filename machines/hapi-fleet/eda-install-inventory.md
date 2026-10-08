@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-09-30
+updated: 2026-10-08
 tags:
   - eda
   - abc
@@ -14,6 +14,18 @@ tags:
   - tsri
   - yosys
 ---
+
+# ARM memory compiler：四台依賴已補，Athena 送修待補（2026-10-08）
+
+- 使用者要求實驗室五台都補相同依賴。Mazu、Cthulhu、Valkyrie、Zeus 已完成系統套件安裝；Athena 未安裝／未驗證，使用者確認送修中，連不上正常。回機後再補相同套件與驗證，不要反覆把送修當成 SSH 故障處理，也不要宣稱五台完成。
+- 四台 Ubuntu 26.04 原本均缺 `libxt6t64:i386`、`libxtst6:i386`、`libxp6:i386`。現已安裝 `libxt6t64:i386 1:1.2.1-1.3build1`、`libxtst6:i386 2:1.2.5-1build1`、`libxp6:i386 1:1.0.2-1ubuntu1`；依賴包括 `libice6:i386`、`libsm6:i386`、`libuuid1:i386`。安裝沒有移除或升級既有套件。
+- 舊 Ubuntu `libxp6` DEB 有 `Pre-Depends: multiarch-support`，Ubuntu 26.04 的 APT 索引不再提供此過渡套件。從官方 archive 取得 `multiarch-support_2.27-3ubuntu1.6_amd64.deb` 補依賴；它標示 `Multi-Arch: foreign`，內容只有文件與套件資訊，沒有替換 glibc 或新增執行程式。Zeus 原本已有此版本，其餘三台新裝。
+- 官方來源：`https://archive.ubuntu.com/ubuntu/pool/main/libx/libxp/libxp6_1.0.2-1ubuntu1_i386.deb`（SHA-256 `972b6d5d8453364b81e78a097b5df4a56f13d9e9d5f010f4282bb0a9a09480ea`）、`https://archive.ubuntu.com/ubuntu/pool/main/g/glibc/multiarch-support_2.27-3ubuntu1.6_amd64.deb`（SHA-256 `70c0efcf6299aeedcf374e54eeb826f9f0e49c3359267aa6e61bf749dde449c1`）。下載核對 SHA 後以 `apt-get -s install` 確認不升級／不移除，再用 `apt-get -y --no-remove install` 安裝上述套件與兩個本地 DEB。
+- 查核代表工具：`/apps/cad/cell_library/CBDK_TSMC40_Arm_f2.0/CIC/Memory/sram_sp_hde_rvt_hvt_rvt/r11p2/bin/sram_sp_hde_rvt_hvt_rvt`（compiler r11p2、GUI 7.0.18）。啟動腳本硬編碼 `lib/linux/jre/bin/java`，清空 `JAVA_HOME`／`LD_LIBRARY_PATH`，使用內附的 Intel i386 32-bit Java `1.4.2_04`；不是主機只支援 32-bit，也不是 ARM CPU 執行檔。
+- 根因：內附 JRE 的 `lib/i386/libawt.so` 明確連結 `libXt.so.6`、`libXtst.so.6`、`libXp.so.6`。這是舊 GUI runtime 的系統依賴，沒有使用列印仍可能因為缺 `libXp` 載入失敗。用主機的 64-bit 同名 library 不能滿足 32-bit runtime；升級系統 Java 也不會改變硬編碼入口。
+- 四台分別通過 `apt-get check`、空的 `dpkg --audit`、套件狀態 `ii`、JRE AWT 的完整 `ldd` 解析，以及上述 compiler `-help`（exit 0）。檢查 AWT 時，要將此 JRE 的 `lib/i386`、`lib/i386/client`、`lib/i386/native_threads` 加到該次 `LD_LIBRARY_PATH`，避免把 JRE 自帶 library 誤報為缺少的系統套件。
+- Java 升級僅有初步證據：Cthulhu 主機的 64-bit Temurin Java `21.0.10` 以 `-cp <compiler-root>/lib/gui.zip -Dbasedir=<compiler-root> Main -help` 與 `Main verilog -help` 均 exit 0。GUI 在 headless 測試到建立 JFrame 時出現 `java.awt.HeadlessException`，最後由 timeout 結束；這不是 GUI 成功證據。`jdeps --jdk-internals gui.zip` 也因 `ConstantPool$InvalidEntry` 失敗，不能據此宣稱沒有內部 API 依賴。
+- 未修改共享 compiler、原啟動腳本或 Java runtime；完整 GUI、實際 SRAM 產生及 Verilog／LEF 等產物比對未驗證，不能把 `-help` 通過當成可全實驗室切換 Java 21。也沒有同學的實際指令／錯誤訊息，不能宣稱其個案已端到端修復。此處驗證範圍只涵蓋代表工具與指定依賴。
 
 # 舊版 DC 統一啟動入口（2026-09-28）
 
