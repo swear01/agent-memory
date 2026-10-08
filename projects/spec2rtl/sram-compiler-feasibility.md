@@ -39,6 +39,16 @@ OpenFinRAM 的「開源模式」表示 Yosys/OpenROAD/KLayout backend，另一�
 
 ## Spec2RTL 整合限制
 
+### OpenFinRAM 正式 patch 與目前 blocker
+
+同日已建立 upstream OpenFinRAM PR #8（ready-for-review），fork branch `fix/open-flow-dff-def-20261008`，commit `d7e66ff0b20e48498a9c8295ba39a0d8c533185f`，remote SHA 讀回一致；upstream 尚未審核/合併。修 production/formal/golden DFF mapping、合法且含 routed segments 的 DEF fixture、保留 control/address pin 的原 M4/M5 layer；移除 `v2lvs` missing/failure 的 stub/partial-netlist 假成功，拒絕成功但缺 output。
+
+Release build 與 14/14 CTest 通過；新增 SPICE failure regression 在 unchanged upstream 兩案例均失敗。KLayout pin audit 在舊產物抓到 16 個 label 缺同層金屬，修正後 35 GDS/LEF pins 都有金屬、0 LEF fallback rectangles。此診斷 GDS 含 4,096 個 `sram_cell_6t_122` bitcells，8-bit data/9-bit address 對應 512×8；`sram_x128x8x1` 名稱的 128 是 physical WL geometry，不能當 logical depth。
+
+固定官方 `openroad/orfs` image digest `sha256:b879915e0ec547a7111e4e765f95b8896b3876d2ee36cf48d139355252678711`，controller placement/CTS/routing/TT global-parasitic STA 完成：108 delay INVx1、128 WL buffers、100 constrained max paths、controller route DRC report 空白。不等於整個 SRAM macro signoff。
+
+完整 generation blocker：Calibre `v2lvs` 2026.3_27.19 在 Ubuntu 26 不支援，Rocky 8 既有容器能執行但無法取得 `v2lvs` license；既有 license-host mapping 亦未解決。最終 patch 正確 exit 1，沒有 stub 當 macro。35-pin／容量 GDS 是套用 SPICE failure guard 前的診斷產物，不能部署 NAS。下一步需要可 checkout 的 converter license，或真正的開源 converter；不得假輸出或移除 gate。完整 SPICE/LVS/DRC/PEX/characterization/Spec2RTL regression、port/mask 未完成。
+
 - `scripts/ci/grade.py` 使用 `CBDK_IC_Contest_v2.5/.../slow.db`，強制 canonical Conv SRAM、拒絕 macro/blackbox；其 PPA 是 SRAM behavioral model 的 standard-cell mapping。需要額外 experimental target，不可偷換 baseline。
 - 45nm/ASAP7 macro 必須配同製程 standard cells 與 RC；不能跨製程混用後宣稱 PPA 可比。
 - Conv canonical 512×8 model asynchronous reset 整個 array、posedge read、write 保持 Q；OpenRAM 沒有相同 reset/init 契約，posedge capture/negedge operation，Q 會變 X。需驗證 wrapper/init/latency，而不是改 golden 或靜默 FF fallback。
