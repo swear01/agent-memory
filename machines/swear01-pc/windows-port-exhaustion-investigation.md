@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # 已驗證線索；根因尚未確認
@@ -56,6 +56,8 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 後續查 bind 失敗 0xC0000209（STATUS_TOO_MANY_ADDRESSES），結合 endpoint建立事件與快照行程啟動時間；payload Process 是指標，不能直接當 PID，HeaderPID 也需相關事件佐證。失敗呼叫者未必是消耗資源的來源。沒有匹配失敗不代表保留窗之外從未耗盡。
 - 10/4 01:11:35 的新 TCP4231（RecordId89597）已成功觸發凍結循環 ETL。AFD事件1029在同一時間回傳 0xC0000209，HeaderPID與同一endpoint建立事件1000的payload ProcessId相符，均指向 Brave network.mojom.NetworkService；快照啟動時間確認是同一行程。這證實 Brave 網路服務是本次分配失敗的呼叫者，不能證明它消耗所有port；當下 TCP238、UDP90、AFD最高javaw102/Brave51、可用記憶體約11GB，audiodg Key51仍穩定。追蹤狀態Captured且Enabled=false，保留檔案未重啟。失敗前同一指標曾用於UDP，後來重新建立TCP；指標會重用，必須以時間與建立事件判讀，不能混算endpoint生命周期。低影響下一步是使用者方便時保存工作、重啟Brave做對照，不能直接停用VPN或宣稱Brave是耗盡根因。
 - 10/4 使用者要求繼續追蹤後，已封存該次256MB ETL，01:42重新啟動下一輪循環檔，仍維持原七天期限。後續分析：保留窗00:55:33–01:11:36約16.05分鐘，Brave socket建立與關閉呼叫各1716（建立TCP703、UDP1013）；這些是進入事件的呼叫次數，不能當成功數或精確生命周期結餘。三小時同一行程取樣TCP27–58、UDP9–27、句柄548–769、PrivateMB32.2–38.1，未支持簡單持續累積未關閉socket的解釋。動態範圍重查仍16384、動態區間預留僅60，不是範圍被縮小。下一步比較新事件失敗呼叫者是否仍為Brave，暫未改其設定。
+- 10/8 再檢查捕獲三筆未通知事件：10/7 00:32 UDP90106、01:52 TCP90115、10/8 21:45 TCP90548。實際ETL停在10/7 00:32，AFD1029 0xC0000209對應新Brave行程，啟動時間10/6 23:18；相同endpoint建立事件1000確認UDP與PID相符。瀏覽器網路行程換新後仍復發，單純重啟不足以防止復發，但仍只證明失敗呼叫者，未證明資源消耗根因。三次快照TCP196/192/571、UDP116/89/95，記憶體仍充足。
+- 發現Freeze在session已停止時仍覆寫Captured時間，後續事件使state表面日期比ETL新，會誤判追蹤歸屬。已改為Freeze且未running直接return，以不存在session模擬驗證state hash保持不變，語法通過；更正state時間為ETL LastWriteTime並標記來源。不能僅憑Captured時間認定ETL覆蓋當次事件。後續90115/90548只有incident快照，沒有對應ETL。維持追蹤停用並保留證據，原五分鐘監測正常。
 ## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
