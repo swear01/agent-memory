@@ -45,4 +45,20 @@ Mazu 隔離研究，DC Y-2026.03／VCS 2026.03。OpenFinRAM repaired source `d7e
 
 ASAP7 是 predictive PDK，優勢是先進節點研究的公開可重現性，不代表比 foundry TSMC 40nm characterization 更準。40nm SS 0.81 V／125 C 與本輪 ASAP7 TT 0.7 V／25 C 不可直接比較 PR PPA。ASAP7 官方 README 與 ORFS stdcell README 為來源。
 
+## 完整 Mamba 的 exp ROM 後續實測
+
+2026-10-09 以相同 HW-Benchmark snapshot 測 `exp_pwl_q12_20_to_q4_12_pipelined`。discretization 算 `A_bar=exp(delta*A)`，此實作用 base/delta PWL 表與線性內插；單 lane 兩張 64×16，共 2,048 bits，預設 tile producer 64 lanes，不能當成整顆 accelerator 總面積。固定 lookup 可合成成標準元件邏輯，不要求 OpenRAM ROM compiler；Mamba 數學需要 exponential，不要求所有實作都用 ROM。
+
+發現原 `initial/$readmemh` 被 DC Y-2026.03 `VER-281` 忽略。原 RTL 69,640 checks passed，原 netlist 在 vector 4096/input `ff7aea43` expected `0001` 得 `0000`，with/without SDF 均重現。這輪 `vcs -R` 的 `$fatal` 仍 return 0，驗證必須要求 PASS marker 並拒絕 Fatal/MISMATCH，不能只信 RC。
+
+改為 128 個原係數的 `localparam` 常數；數值與 `.mem` reference copies 完全相同，arithmetic、pipeline、ports、goldens 未改。HW-Benchmark PR #7 已 merged，patch `e0f608a9cb18d50bf5c985559c7efd473c7b28eb`，main merge `00d21352739089b72d192508148f8fcdb2fc68ff`；讀回 main RTL 與實測 source 相同。最新 head 的 Cursor Bugbot terminal success/no issues found；repo 未配置 GitHub CI workflow，本地 EDA checks 為驗證證據。
+
+- 原與修後 RTL 各 69,640 checks passed：64 segments×64 offsets×16 integer branches，加 8 boundaries 與 4,096 deterministic full-width random。全寬 random 是 preservation，不是對整個 Q12.20 domain 的 exp mathematical accuracy 保證。
+- base coefficients 等於 rounded `4096*2^(i/64)`，delta 等於相鄰 quantized base 差分。在被掃描 `[-9,0]` domain 對 rounded float exp 最大 absolute error 1 LSB，未評估整體模型 accuracy。
+- 修後 ASAP7：865 standard cells、74 sequential、0 macros/blackboxes；2 ns synthesis constraint report minimum max-path slack +0.04 ns。
+- SDF gate：69,640 passed、0 observed runtime timing violations、36 model types resolved；gate bench 4 ns，因 stimuli 在 falling edge 切換，不能當成 2 ns gate qualification。
+- 完整六層 Mamba 原始 RTL `pat0` passed、757407 ns、final output bit-exact；未用 report-only demo mode。首輪 Mac tar AppleDouble metadata 阻擋編譯，移除確認為 metadata 的單檔後重跑，未改 design/TB/goldens。
+
+FAx1 有 3,906 missing IOPATH warnings、DFFASRHQN 441 negative recovery/removal warnings，仍非完整 timing annotation/signoff。整顆 Mamba ASAP7 ASIC synthesis/gate simulation、SRAM integration、P&R/signoff/baseline 未完成。研究回報於 issue #22 comment `6067602499`；證據 `<research-root>/outputs/mamba-rom-research-20261009/` 與 Mazu `/var/tmp/mamba-rom-research-20261009`，未部署 NAS。
+
 本機研究證據 `<research-root>/outputs/asap7-benchmark-research-20261009/` 含 source SHA、18-file hash check、commands/results、2.4 MB evidence.tar.gz 及 issue body/readback；Mazu `/var/tmp/asap7-benchmark-research-20261009` 保留完整 models、reports/netlists、失敗與重跑 logs。這是研究 scratch，沒有部署 NAS。
