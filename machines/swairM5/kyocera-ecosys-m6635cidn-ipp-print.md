@@ -3,7 +3,7 @@ title: SwairM5 Kyocera ECOSYS M6635cidn 列印（IPP / 紙匣）
 scope: machines/swairM5
 status: active
 created: 2026-09-29
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 
 # Kyocera ECOSYS M6635cidn 列印注意事項
@@ -38,3 +38,10 @@ updated: 2026-10-05
 - 經 `Validate-Job` 接受後，直接 `Print-Job` 指定 `media-col.media-source=tray-2`、A4、`copies=1`、`print-color-mode=monochrome`、`sides=one-sided`、`print-scaling=fit`，本次兩份既有 PDF 成功列印。
 - 完成必須由印表機的 `Get-Job-Attributes` 回報 `job-state=completed`、`job-state-reasons=job-completed-successfully`，並核對 `job-impressions-completed` 等於 PDF 頁數；本機佇列接收或 HTTP 成功不足以證明印完。此次第二冊漢字詞練字紙第 13–18 課完成 30 頁，片假名練字紙完成 11 頁，最後印表機 `idle`、佇列 0。
 - VPN profile、印表機位址、紙匣紙量與 PDF 版本都需下次重查；此完成紀錄不授權再次列印。
+
+## 雙面原尺寸練習紙（2026-10-08）
+
+- 雙面必須明確指定 `sides=two-sided-long-edge`；原尺寸用 `print-scaling=none`，不只依賴 PDF 的 ViewerPreferences。沿用紙匣 2、A4、黑白、copies=1，Validate-Job 接受後送出一個 Print-Job。
+- 片假名六字／七字單字練習紙 16 面已由設備回報 completed / job-completed-successfully / job-impressions-completed=16，且讀回 sides=two-sided-long-edge、print-scaling=none，共 8 張 A4。未現場檢查出紙，紀錄不授權重印。
+- 本次資源路由是本地 en0，型號及 UUID 與原設備吻合；直接可達時不必要求 VPN tunnel。執行 VPN 連線捷徑的返回值不足以證明隧道建立，最後已恢復無 VPN tunnel 的原始狀態。
+- 版型、詞表與原檔位置見 `projects/japanese-study/katakana-word-penmanship.md`。
