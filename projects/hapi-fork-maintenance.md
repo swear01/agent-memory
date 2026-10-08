@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-09-28
+updated: 2026-10-08
 tags:
   - hapi
   - fork
@@ -157,3 +157,11 @@ Project-group keyboard handlers must ignore events whose target is a child contr
 - 補丁修復：透過 pnpm patch 建立 `@assistant-ui/core` 補丁（針對 0.2.23 版），修正訂閱對象並在 `LazyMemoizeSubject.getState()` 加入 `shallowEqual` 快取。
 - 自動化驗證：Playwright 對線上 Production Session 進行 40 次快速滾動測試，確認 0 page errors。
 - 部署驗證：發布 `v0.30.7.2`（9 項 release assets），平滑滾動更新全 fleet 8 節點（`mazu`, `cthulhu`, `athena`, `valkyrie`, `zeus`, `oracle`, `mac`, `swop`）與 `mazu-hub`，100% 保留所有運作中工作 session。
+
+## 2026-10-08：更新既有 upstream PR 的已驗證陷阱
+
+- GitHub PR 的 `base.ref=main` 不保證 `base.sha` 是最新 main。此次 #1542、#1662 的 SHA 仍指向 9 月舊版本；新的審查工作流依該 SHA checkout trusted policy，因當時還沒有 `.github/scripts/pr-review.cjs` 而失敗。對同一 PR 執行 `PATCH /repos/tiann/hapi/pulls/<number>`、body `{"base":"main"}`，可在不改目標分支或 head SHA 的情況下刷新 base SHA。相同分支的刷新沒有自行啟動新 review；更新具體維護說明才觸發 `edited`。刷新後兩個 review 都通過 prepare 階段；模型通道 503 是另一個外部服務故障，不能當成程式碼 finding 或 clean review。
+- 以新的 upstream-main worktree merge 既有 PR head，可保留原 head 為 ancestor，並 fast-forward push 回原分支，不必 force push。推送前同時核對 PR head 與遠端 branch SHA；既有使用者 worktree 不跟著 reset。已 staged 的刪除路徑不應再次列入 `git add`，只 stage 尚未 staged 的變更。
+- #1822 的 Cursor ACP wire/effort 實作已經由合併的 #1819 納入 main。直接重整舊 PR 會留下重複 `findCatalogBaseKey`，造成 typecheck 失敗；先檢查已合併 PR 的原始 head 與最終程式碼，再判斷是否過時。
+- #1436 的失敗語音傳送 recovery 必須區分「沒有 live composer」與「使用者已把 live composer 清成空字串」。後者不能回退到 debounce 尚未更新的 persisted draft，否則已刪除的 follow-up 會復活。使用真實 `useComposerDraft` 的 hydrate → clear → late failure → unmount regression 已驗證此差別；standard/realtime 共用 `recoverFailedVoiceSend`。
+- 大量訊息的 browser fixture 在受限 CPU 上可能因 render 超過 polling budget 而失敗，即使 trace 最終讀到正確 row count。保持功能 assertions，給足有證據支持的等待時間，並在足量 ingests 後停掉有限驗證用 timer 再測 viewport；另一個 continuous-streaming scenario 仍需保留。未修改 upstream 的同一 scrollbar assertion 也失敗時，應記錄 matching baseline，不能把它當成 feature regression。
