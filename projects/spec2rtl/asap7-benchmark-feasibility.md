@@ -7,7 +7,7 @@ updated: 2026-10-09
 
 # ASAP7 benchmark 可行性
 
-研究追蹤：DVLab-NTU/spec2rtl issue #22；SRAM compiler 詳細研究接續 #18 與 `sram-compiler-feasibility.md`。使用者明確把 performance baseline 留待後續；未遷移 production CI、變更 golden、共享 PDK 或 NAS。
+研究追蹤：DVLab-NTU/spec2rtl issue #22；SRAM compiler 詳細研究接續 #18 與 `sram-compiler-feasibility.md`。使用者明確把 performance baseline 留待後續；未遷移 production CI 或變更 golden。2026-10-09 後續已依要求部署共用研究套件，位置與資格界線見末節。
 
 ## 來源與七個設計
 
@@ -82,3 +82,15 @@ DFFASRHQN unconditional D setuphold 的 `timecheck_condition` 加 `adacond0`；r
 ASAP7整體default仍不qualified：其餘五個 benchmark 未重跑、完整 macro DRC/LVS/PEX/characterization、全晶片 P&R/STA/corner coverage與Mambagate均未完成。將校準與 controls 固定成可重跑流程後再考慮CI；performance baseline繼續按使用者要求延後。
 
 本輪 `<research-root>/outputs/asap7-default-readiness-20261009/` 保存 summary、audits、原始/校準 models、失敗與重跑 archives、SHA-256 manifest、完整 LVS comparison evidence。Mazu research root `/var/tmp/asap7-default-readiness-20261009`；不是部署位置。
+
+## 共用 ROM / RAM 套件部署（2026-10-09）
+
+使用者要求先停止擴大研究，將 ROM/RAM 放入共用 ASAP7 套組並標示整合方式。已部署 `/apps/cad/cell_library/ASAP7_EDK`：`orfs-platform/` 為原 ORFS v1.7 固定 commit `5ebf29b3897b2b5a3d3a5b2b60b0d3721405a874` 的185-file byte-for-byte副本，保留原開發者目錄；不是完整foundry signoff PDK。
+
+`memory-20261009/README.md` 是整合入口，附Exp修正版RTL/係數/69,640 vectors、netlist/raw與derived SDF/reports、五份RVT TT DB/LIB、calibrated Verilog/UDP/converter及controls。原DB/LIB/model version分開保存，未替換原platform標準元件。ROM不是hard macro，HW-Benchmark PR#7已merged，舊分支才需更新RTL，勿重複編譯同名module。
+
+RAM同包：官方ASAP7 SRAM固定 `9f5af0939e8dd3cc1a9693a50b23441691dd7d25` 完整source/views；OpenFinRAM512×8 GDS/LEF/estimatedLiberty/攤平完整SPICE與STATUS=LVS_FAILED/修補patch；OpenRAM FreePDK45三組views/config僅參考，不可混進ASAP7。OpenFincompiler本體未vendor。官方root verilog同名256×64 candidate其實宣告1024×64，實測使用generated/verilog的256×64版本；必須配同depth/width/scale的generated LIB/LEF，原始bank GDS不等於任意generated macro的同名physical view。
+
+從新共享位置複製到可寫scratch重跑：ROM RTL與4ns SDF gate各69,640 checks PASS，0 runtime timing violation/INF/NL/CFTC/NTCDNC；converter輸出與既有validated derived SDF byte-identical。Mamba128×64對官方single-port的兩個反例重現（counterexamples PASS不代表RAM integration PASS）。部署proof在 `verification/relocated-rom-proof.json`；每檔hash在 `memory-20261009/verification/SHA256SUMS`（234files）及 `verification/orfs-platform-sha256.json`（185files）。
+
+`/apps/eda/README.md`已新增入口。套件沿既有共用library採directory755/file644唯讀；Zeus的swear02帳號未加入student群組，原750/640會permission denied，不能把Mazu可讀當成全fleet可讀。Mazu/Cthulhu/Valkyrie/Zeus均以各自登入帳號讀回全部185+234檔hash一致，無symlink；Athena仍在維修，未驗證。部署研究套件不等於RAM qualified、完整Mamba/gate/signoff或ASAP7 default完成；baseline與production CI維持既有設定。

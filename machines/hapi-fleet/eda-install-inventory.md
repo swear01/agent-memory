@@ -210,3 +210,7 @@ source /apps/eda/cadence/xcelium.sh 25.03.005
 - 早期開機與非登入 shell 不可自動觸碰 NFS `/apps`。禁止把 `/apps/bin` 放回 `/etc/environment` 或在 `/etc/zsh/zshenv` source NFS；登入入口與手動工具選版是不同層次。開機修復的最新紀錄見 `ubuntu-gpu-maintenance-plan.md`。
 - 下面幾份相容性筆記中的舊 launcher、CIC 路徑與歷史測試只供根因參考；新的操作入口以上方 `/apps/eda` 選版為準。不要依舊筆記把 VCS／Verdi 綁成不可選版的自動環境。
 - 保留舊樹供既有使用者與容器，刪除或改動共用 vendor 檔前需確認依賴與 hardlink；本次文件及記憶更新未修改主機工具、授權或系統設定。
+
+## ASAP7 共用研究套件（2026-10-09）
+
+`/apps/cad/cell_library/ASAP7_EDK`新建為共用研究位置：原ORFS v1.7 platform副本在orfs-platform，ROM/RAM與固定RVT TT/simulation校準資源在memory-20261009，整合說明在其README；`/apps/eda/README.md`已有入口。原平台185檔hash一致、memory套件234檔manifest；ROM relocated RTL/gate69,640 checks PASS，RAM OpenFinLVS_FAILED、OpenRAM FreePDK45 reference only。directory755/file644沿其他共用library，避免Zeus帳號未加入student群組造成permission denied。完整Mamba/default/CI未切換；詳見projects/spec2rtl/asap7-benchmark-feasibility.md。Athena仍在維修，本次不作五台驗證宣稱。
