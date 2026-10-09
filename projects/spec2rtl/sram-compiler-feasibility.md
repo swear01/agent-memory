@@ -59,3 +59,13 @@ Release build 與 14/14 CTest 通過；新增 SPICE failure regression 在 uncha
 - 初輪 RLE mask 極性、sleep pins；Mamba 同址 collision 與寬記憶體 partitioning 仍需設計和驗證。最新版 RLE whole-word write 契約另見 ASAP7 benchmark note，不可沿用舊 mask blocker。
 
 證據：研究 workspace 的 `outputs/sram-compiler-research-20261008/`，Mazu `/var/tmp/sram-compiler-research-20261008/` 保留 config、logs、benches、views audit/hash manifest 和 macro 產物。後者是暫存資料，尚未部署 NAS。Issue #18 comment 保存配置、結論與驗證範圍。
+
+## 完整 Calibre LVS 續查與拒絕 qualification（2026-10-09）
+
+不再停在缺 tcsh：隔離研究用等價 bash 直接跑已授權 Rocky8 Calibre，保留 child-process wrapper；先校正 build/src paths，補齊 CDL，排除沒有 terminals/devices 的 physical-only FILLER/TAPCELL instances，沒有刪除有 pins 的 logic/data instances。
+
+實際完整 compare 結果 **LVS INCORRECT**，提供的 ASAP7 deck/layout/source：ports32/35，nets10538/11297，initial transistors33337/28580；抽取 log 顯示 D[0]、D[4]、vdd、vss 為同一 net。裸 bitcell 對照亦不正確（8/5 ports），因此 source/layout/deck 相容性與供電 connectivity 校準仍未完成。這不是 foundry certification；但足以拒絕目前 macro 作為 qualified SRAM。先前35-pin同層金屬audit只證明label/geometry存在，不保證electrical separation或LVS。未跑完整macroDRC/PEX/SPICE characterization，未部署NAS。
+
+官方 `The-OpenROAD-Project/asap7_sram_0p0` 有現成views；抽查256×64是 single-port、whole-word write。隔離bench對原Mamba128×64 1R1W wrapper重現兩個反例：同時讀addr0/寫addr1回AAAA而candidate保持BBBB；masked寫5回AAA5而candidate覆寫0005。不要把rename/padding當成multi-port/mask integration；需要合適同製程SRAM或修改並驗證存取protocol。
+
+完整MambaASAP7synthesis/白箱gateharness與SDF校準現況接續 `asap7-benchmark-feasibility.md`。完整LVScomparison及failed/retry evidence保留於 `<research-root>/outputs/asap7-default-readiness-20261009/`，production CI/baseline/goldens/shared PDK皆未修改。
