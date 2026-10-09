@@ -1,7 +1,7 @@
 ---
 title: HW-Benchmark 七個 40nm designs 的 ASAP7 與 RAM ROM 整合研究
 scope: projects/spec2rtl
-status: subset-functional-verified-timing-and-sram-pending
+status: subset-timing-verified-full-mamba-and-sram-pending
 updated: 2026-10-09
 ---
 
@@ -62,3 +62,23 @@ ASAP7 是 predictive PDK，優勢是先進節點研究的公開可重現性，�
 FAx1 有 3,906 missing IOPATH warnings、DFFASRHQN 441 negative recovery/removal warnings，仍非完整 timing annotation/signoff。整顆 Mamba ASAP7 ASIC synthesis/gate simulation、SRAM integration、P&R/signoff/baseline 未完成。研究回報於 issue #22 comment `6067602499`；證據 `<research-root>/outputs/mamba-rom-research-20261009/` 與 Mazu `/var/tmp/mamba-rom-research-20261009`，未部署 NAS。
 
 本機研究證據 `<research-root>/outputs/asap7-benchmark-research-20261009/` 含 source SHA、18-file hash check、commands/results、2.4 MB evidence.tar.gz 及 issue body/readback；Mazu `/var/tmp/asap7-benchmark-research-20261009` 保留完整 models、reports/netlists、失敗與重跑 logs。這是研究 scratch，沒有部署 NAS。
+
+## ASAP7 default readiness 續查（2026-10-09）
+
+使用者期望所有阻礙排除後才能切 ASAP7 default；本輪未改 production/default、baseline、goldens 或共享 PDK/NAS。HW-Benchmark source 固定 merged main `00d21352739089b72d192508148f8fcdb2fc68ff`。
+
+隔離實測排除 FAx1/HAxp5（DC `set_dont_use [get_lib_cells */FAx1_ASAP7_75t_R]`，不接受尾隨 `true`），三份新 netlist 都沒有這兩種 cells。DFFASRHQN 四組 recovery/hold checks 換 `$recrem`，derived SDF 3.0 將 RECOVERY/HOLD 配對，原始三元組/負值保留。
+
+僅改 `$recrem` 後 Exp 有 NTCDNC：DC constant propagation 省略四項 redundant constraints，而 HDL 未 annotation 的零值 check 與負值 checks 共用 delayed wires。核對此固定 SEQ Liberty：RESETN/SETN conditional/default recovery/removal tables 完全 byte-identical；校準只補回相同 tables 的四項 checks，NTCDNC 消失。這是固定 library 的實測，不能泛化成任意 SDF 複製 fallback。DC/LC Y-2026.03 `write_lib -format verilog` 回 UIL-23，不能依賴它自動輸出正確 cell model。
+
+DFFASRHQN unconditional D setuphold 的 `timecheck_condition` 加 `adacond0`；reset/set active 時不誤檢查 data setuphold，原事件/ports/function primitives 不變。原 Keccak 三組各有八次 reset-held startup violation，修後無 violation。Controls：reset release 後 5ps/20ps safe，13.5ps 真正觸發 −13ps/14ps `$recrem`；active 狀態 D 提前 5ps 改變觸發 11ps setup，reset-held 同樣變化 safe。沒有關 timing checks或歸零 limits。
+
+最終 Keccak m00/m01/m11 3/3、LBP pat0 1/1、Exp 69,640 gate checks 都 passed；missing paths/negative-limit/convergence warnings 及 observed runtime violations 均 0。Keccak SWC1591 明示 delay still annotated，LBP AOUP3 是 TB override 無 gate parameters；native unsupported-kernel warning 仍在。Exp gate仍4ns；不能當2ns qualification。排除 adder cell會改PPA：Exp865→1240cells，新2ns minimum max-path slack+0.52ns，不是相同 cell-policy baseline。
+
+完整六層 ASAP7 synthesis 真正試跑：原 analyze 包含 `aoc_dram_model.sv`，string 參數/變數導致 VER-700，未到 compile。診斷只省略 simulation DRAM 檔案則 top 仍實例化該 module、缺 external DRAM AXI top ports，留下 unresolved reference；這不是合格修法。後續 elaboration 在 `aoc_local_buffers_reg` process exit137/Killed；觀察RSS達約46 million KiB，未取得 kernel OOM proof，確切 kill 根因未定。無完整 mapped netlist、未跑整顆 gate。
+
+需要正確拆硬體 DRAM boundary/TB model、診斷 local-buffer elaboration、提供合格 ASAP7 multi-port/mask SRAM、改用硬體介面載入/比對的 gate harness（現有 golden TB white-box memories不能直接用）。官方 ASAP7 single-port whole-word SRAM 的 concurrent/mask 兩個替換反例與 OpenFinRAM **實際 LVS INCORRECT** 見 `sram-compiler-feasibility.md`。
+
+ASAP7整體default仍不qualified：其餘五個 benchmark 未重跑、完整 macro DRC/LVS/PEX/characterization、全晶片 P&R/STA/corner coverage與Mambagate均未完成。將校準與 controls 固定成可重跑流程後再考慮CI；performance baseline繼續按使用者要求延後。
+
+本輪 `<research-root>/outputs/asap7-default-readiness-20261009/` 保存 summary、audits、原始/校準 models、失敗與重跑 archives、SHA-256 manifest、完整 LVS comparison evidence。Mazu research root `/var/tmp/asap7-default-readiness-20261009`；不是部署位置。
