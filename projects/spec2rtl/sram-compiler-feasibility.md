@@ -69,3 +69,9 @@ Release build 與 14/14 CTest 通過；新增 SPICE failure regression 在 uncha
 官方 `The-OpenROAD-Project/asap7_sram_0p0` 有現成views；抽查256×64是 single-port、whole-word write。隔離bench對原Mamba128×64 1R1W wrapper重現兩個反例：同時讀addr0/寫addr1回AAAA而candidate保持BBBB；masked寫5回AAA5而candidate覆寫0005。不要把rename/padding當成multi-port/mask integration；需要合適同製程SRAM或修改並驗證存取protocol。
 
 完整MambaASAP7synthesis/白箱gateharness與SDF校準現況接續 `asap7-benchmark-feasibility.md`。完整LVScomparison及failed/retry evidence保留於 `<research-root>/outputs/asap7-default-readiness-20261009/`，production CI/baseline/goldens/shared PDK皆未修改。
+
+## 共用保存位置（2026-10-09 後續部署）
+
+研究產物已依使用者要求保存在 `/apps/cad/cell_library/ASAP7_EDK/memory-20261009/ram/`：`openfinram-experimental/`有512×8 GDS/LEF/estimatedLiberty與攤平本次failed-LVS source的完整SPICE，保留SOURCE-HASHES與STATUS=LVS_FAILED；只是移除暫存includes依賴，未修connectivity。compiler僅附repair.patch，原source缺LICENSE仍待釐清。
+
+`official-asap7-sram/`為官方固定 `9f5af0939e8dd3cc1a9693a50b23441691dd7d25` 的完整source/views。256×64 probe用generated/verilog，root verilog同名module容量不同不可混用；interface-counterexamples重現兩個反例。`openram-freepdk45-reference/`保存三組45nm views/config/LICENSE，不能充作ASAP7 macro。整合README與部署/重跑證據見 `asap7-benchmark-feasibility.md` 最後一節。上述舊段落「未部署NAS」描述部署前研究階段；現為共用研究保存，RAM資格仍未通過。
