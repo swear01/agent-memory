@@ -3,7 +3,7 @@ title: Minecraft Prism 復原最終交付與清理
 scope: project
 project: minecraft-prism-recovery
 status: completed
-updated: 2026-10-07
+updated: 2026-10-10
 tags:
   - minecraft
   - prism
@@ -44,3 +44,16 @@ tags:
 - `<project-root>/state/minecraft-prism-current-cloud-inventory.json`：最後回讀的雲端清單。
 - `<project-root>/outputs/minecraft-final-delivery-20261007/recovery-info/final-folder-cleanup.json`：小型交付摘要。
 - Drive `minecraft mod instances/recovery-info/restoration-index.json`：package 欄位相對於 SomethingWouldDisappear。其他舊報告中的 53／54 包數、容量和路徑屬歷史證據，不能當現況。
+
+## Vault Hunters S4 裁剪存檔（2026-10-10）
+
+- 使用者確認語音中的 Bot Hunter 是 `Vault Hunters S4`，來源為 utux 的 Vault Hunters Remastered。此次「壓縮地圖」包括沿用先前的地形區塊裁剪；允許清除無需保留的地形及過期 Vault 地形，但 Vault 歷史與進度紀錄必須完整保存。這是對 S4 的新要求，不沿用上方 2026-10-07 停止縮減的決定。
+- 正式包為 `SomethingWouldDisappear/minecraft maps/Vault Hunters S4 - 20261010.mrpack`；模組世界也放進使用者指定的 maps 資料夾。世界快照時間為臺灣 2026-10-10 14:41:58；無在線玩家時正常停服、完成存檔再複製與重啟。原伺服器未裁剪，既有 daily／weekly 備份不變。
+- Minecraft 1.18.2、Forge 40.3.11、Java 17；160 個精確模組下載參照，156 個 server mods 與 client 同名檔逐一雜湊吻合，另有 4 個 client-only mods。不要用最新版本取代；Prism 匯入需連網下載。客戶端資源與操作設定保持原檔，gameplay config 以伺服器為準，衝突版本另留於 recovery-info。
+- 沿用歷史裁剪程式，保護出生點、玩家位置、床位、可辨識的建築／機器／已用倉庫及玩家實體。此次主世界、地獄、終界均保留 8 區塊建築緩衝，未縮至 6／4；長時間活動區另有緩衝。
+- 地形區塊數：主世界 58,237 → 6,525，地獄 11,397 → 1,017，終界 19,618 → 560。世界原始資料 642,645,925 → 95,817,637 bytes；封裝 519,215,723 → 155,320,363 bytes，縮小 70.1%。
+- `data/the_vault_VaultSnapshots.dat` 的 `snapshot_refs` 有 85 筆；對應 `data/vault_snapshots/*.dat` 的 85 份 NBT 全部可讀、無缺檔，索引與快照逐檔 SHA256 不變。`the_vault_Vaults.dat` 活動 Vault 及 `the_vault_VirtualWorlds.dat` entries 均空；此快照的歷史 Vault 維度已無 region 地形可刪，沒有刪除任何 Vault 紀錄。
+- 249 個非地形檔案與 9,412 筆保留的 terrain／entities／POI 紀錄核對 SHA256 不變；封裝排除暫態 session.lock。ZIP CRC、5,212 個成員雜湊、所有未改客戶端資源及 160 個下載參照均通過；Drive 完整讀回 155,320,363 bytes 的 SHA256／MD5 相符。
+- 正式包 SHA256：`5d50c25847e13c7759eaa777cf2643b318d2d5f7e02d04e18e9d2f7ec185dd32`；MD5：`ec3a762d3770561452742ee32a53b1f0`。RESTORE、restoration、verification、backup-report、trimming、maps README 與共用 restoration-index 已同步並逐檔讀回；原有 20 份地圖 ZIP 的 ID／大小／MD5 未變。上方 2026-10-07 包數與容量只代表歷史快照。
+- 完整 519 MB 原包及前版文件仍在 `<S4-task-root>/work/full-before-trim`，原始世界在 `<S4-task-root>/work/server-snapshot`；這些是本機保留副本，不是另存的完整雲端包。S4-task-root 為 `<user-documents>/Codex/2026-10-10/wduce-utx-bot-hunter-server-minecraft`；證據包括 `work/final-trimmed-verification.json`、`work/cloud-trimmed-full-readback.json` 與 `outputs/Vault Hunters S4 - trimming.json`。
+- 未進遊戲實測；建築辨識為啟發式，可能漏判人工方塊，裁掉區域再次探索會重新生成。需要舊地形時取回完整原包；不可把雜湊完整性宣稱為所有建築或遊戲功能已驗證。
