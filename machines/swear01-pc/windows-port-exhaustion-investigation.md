@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 
 # 已驗證線索；根因尚未確認
@@ -61,6 +61,9 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 10/9 彙整目前保留的System日誌（8/1起）共45次耗盡：TCP21、UDP24；9/28開始監測後10次（TCP/UDP各5）。423筆定期取樣到10/9 01:24，最高不同動態本機port TCP258/UDP79、非分頁池865.3MB、commit79%。八次事件後快照延遲1.4–3.1秒，TCP155–571/UDP82–130、commit27.7–67.2%，皆未顯示全機記憶體耗盡；不能排除更短瞬間峰值或分配器狀態。
 - 全45次中僅兩次距最後Wake事件不超過120秒（10/2約23秒、10/8約111秒）；最新10次另有多次醒後約65–177分鐘發生，不能判為僅睡眠恢復觸發。9/4完整BootType0後約14.3/17.3分鐘已分別UDP/TCP失敗，反駁只有開機十天才出問題。power事件是否完整及時間校正仍限制相關性解讀。
 - 9/27 09:24存儲驅動stornvme/storahci共5個Event56無法分配記憶體重新核對成立；這支持當天確有嚴重資源問題，但沒有記憶體dump或allocator證據將其連到之後反覆port分配失敗。音訊改善後port仍多次復發，也不能將音訊句柄累積直接當成port根因。
+- 10/10補查10/9 18:48:44 UDP4266 Record91057，距完整BootType0 18:46:46約118秒，非快速啟動必要條件。事件後1.5秒TCP290/UDP117、非分頁池413MB、commit約30%、可用21811MB。Brave11448、Steam15028、SteamWebHelper17636分別在錯誤前約10/11/7秒啟動，端點97/57/22；AFD可見Steam78、Brave73。僅支持啟動集中連網時間相關，不能指認消耗根因或失敗呼叫者。
+- 已確認監測缺口：logman -ets session不跨重啟，既有Interactive五分鐘排程不能保證開機第一分鐘有AFD；91057沒有覆蓋ETL。10/10 14:35 trace-state Running是後續重建，不能分析現ETL來指認91057。舊ETL封存89597與90106；第三輪仍原期限10/10 23:25，不自動延長。
+- HiberbootEnabled=1；9/30至10/8十筆Kernel-Boot27 BootType1，先前稱Wake不可一律視為一般S3睡眠；須結合Boot27/Power42/107/Power-Troubleshooter1分類。10/10重查IPv4/IPv6 TCP/UDP動態範圍49152起16384個；動態區預留50000–50059僅60個，無大規模範圍縮小證據。
 ## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
