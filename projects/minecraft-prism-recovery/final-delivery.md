@@ -13,7 +13,7 @@ tags:
 
 # 最終交付快照（2026-10-07）
 
-使用者已接受目前包的大小，不繼續削減快取、小地圖影像或內嵌 JAR。正式交付位於 `<Drive-root>/SomethingWouldDisappear/`：
+此段為 2026-10-07 歷史決定；2026-10-10 已依新授權再次精簡，現況見下方。當時使用者已接受包的大小，不繼續削減快取、小地圖影像或內嵌 JAR。正式交付位於 `<Drive-root>/SomethingWouldDisappear/`：
 
 | 資料夾 | 內容 | 包檔容量 |
 |---|---|---:|
@@ -57,3 +57,18 @@ tags:
 - 正式包 SHA256：`5d50c25847e13c7759eaa777cf2643b318d2d5f7e02d04e18e9d2f7ec185dd32`；MD5：`ec3a762d3770561452742ee32a53b1f0`。RESTORE、restoration、verification、backup-report、trimming、maps README 與共用 restoration-index 已同步並逐檔讀回；原有 20 份地圖 ZIP 的 ID／大小／MD5 未變。上方 2026-10-07 包數與容量只代表歷史快照。
 - 完整 519 MB 原包及前版文件仍在 `<S4-task-root>/work/full-before-trim`，原始世界在 `<S4-task-root>/work/server-snapshot`；這些是本機保留副本，不是另存的完整雲端包。S4-task-root 為 `<user-documents>/Codex/2026-10-10/wduce-utx-bot-hunter-server-minecraft`；證據包括 `work/final-trimmed-verification.json`、`work/cloud-trimmed-full-readback.json` 與 `outputs/Vault Hunters S4 - trimming.json`。
 - 未進遊戲實測；建築辨識為啟發式，可能漏判人工方塊，裁掉區域再次探索會重新生成。需要舊地形時取回完整原包；不可把雜湊完整性宣稱為所有建築或遊戲功能已驗證。
+
+## 電腦備份清理與精簡包覆核（2026-10-10）
+
+本次新授權要求可重建的模組以**原版本、原位元組的下載參照**保存，同時保留設定、操作按鍵及繁中語言包。這取代上方 2026-10-07 停止縮減內嵌 JAR 的決定；不代表授權刪除既有歷史世界。
+
+- 兩套 Drive 電腦備份根目錄 `My Computer` 與 `我的電腦` 均已確認 `trashed=true`、`explicitlyTrashed=true`；TJ TEST 已另移垃圾桶，未納入本次設定備份。未操作 SWOP／M5 使用中的實例，未清空垃圾桶，不能宣稱 Drive 配額已釋出。
+- `document/Setting Backup/app setting/Minecraft_Prism_設定精簡包_20261010.zip` 為 3,608,743 bytes，含 56 份原生 Prism 實例設定 ZIP，皆通過 CRC／結構檢查且沒有 JAR、世界或 TJ TEST。這是設定補充包，不能單獨恢復全部模組；原生 ZIP 匯入會重設遊玩時間，原始記錄另存。兩個 Opolis 來源缺少 cfg，已明示產生最小 OneSix cfg，沒有捏造遊玩時間。同名設定包有兩份雲端副本，大小／MD5 相同，本次未去重。
+- 新增 `minecraft mod instances/SkyFactory4-4.2.4-Prism-compact-20261010.mrpack`：253,185,979 → 36,848,120 bytes；Minecraft 1.12.2／Forge 14.23.5.2860／Java 8。203 個下載項目均完整下載並核對 SHA256／SHA512；1,437 個保留成員核對來源 SHA256。保留設定、資源、兩份繁中語言包，不含世界。原生 cfg／mmc-pack／圖示放在 `overrides/recovery-info/original-native-instance/`，Prism 專屬設定與遊玩時間必要時手動還原。
+- 新 SkyFactory 4 保留唯一已證實修改的 `SkyOrchards-0.0.12.jar`（80,532 bytes）：與官方同版本 81,239 bytes 相比有三個 class 改變。來源 SHA256 為 `ea07b5baf5e0c33b6079b946b1da4664470fecfe658ca2804824aaac19cd5e9c`，官方為 `fa0d780ca747bcc7e3ba6366529d41125b4b93ddf68e4bf6a72248fc3cb229b3`；不能因檔名／版本相同就替換。舊 SkyFactory 4 4.0.8 的同名 JAR 恰與官方相符，已改為下載項目，兩者不能混用。新包 SHA256 為 `1c25142c3ff649f9d67edf187c9a310befe08d7411c676694abcf1a0a84db068`。
+- 盤點原有 31 個 MRPACK，更新其中 11 包，將 41 份內嵌 JAR 改成經完整下載雜湊驗證的參照。舊包仍有 **23 包／342 份 JAR（282 個不同 SHA256）**未取得精確下載證據，原檔保留；不能一律稱為自訂模組，也不能記成全部已符合零 JAR 規則。公開 CurseForge 歷史查詢遇到 403、GTNH 歷史目錄遇到 404，這僅代表查詢受限，不能證明檔案不存在。
+- `minecraft mod instances` 現有 32 個 MRPACK（原 31 包加新 SkyFactory 4）。Vault Hunters S1／S2／S4 均無內嵌 JAR，下載項目分別為 151／167／160；S2 最後兩個 `unobtainium-1.7.0.jar`、`vhapi-3.4.0.jar` 已轉為精確下載。S4 位於 `minecraft maps`，本輪僅覆核，未修改另一任務的世界裁剪結果。
+- 原 31 包的歷史世界壓縮後約 2.69 GB，本輪保持不變；改用下載清單不代表每包只剩數 MB。更新包通過 ZIP CRC、未改成員壓縮內容 SHA256 及 Drive 完整讀回 SHA256，之後才將 11 個被替換舊包及新 SkyFactory 4 的舊完整 ZIP 移到可恢復垃圾桶。沒有例行匯入 Prism、啟動遊戲或進入世界；完整性證據不等於遊戲實測。
+- 雲端 `recovery-info/restoration-index.json` 已保留 S4 並增補新 SkyFactory 4 至 56 筆；README、例外清單與盤點報告均更新並完整讀回。本輪暫存 originals／updated／updated-final 合計 2,855,046,673 bytes 已刪，證據與交付保留；不要重開已完成佇列或依賴已刪暫存路徑。
+
+查證入口：`<user-documents>/Codex/2026-10-08/new-chat/outputs/minecraft-compact-standard-audit-20261010.{md,json}`、`outputs/minecraft-computer-backups-trash-20261010.{md,json}`；同任務 `work/minecraft-compact-standard-20261010/` 下的 `cloud-replacements.json`、`updated-package-proofs.json`、`skyfactory-compact-proof.json`、`remaining-exceptions.json`、`documentation-update-proof.json`、`audit-report-cloud-proof.json` 與 `preset-cloud-copies-proof.json`。上方 Oct 7 的包數、容量及清單入口僅是歷史快照。
