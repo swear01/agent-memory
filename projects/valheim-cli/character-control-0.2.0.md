@@ -7,7 +7,7 @@ updated: 2026-10-10
 
 # 人物控制：改用遊戲內部方法
 
-使用者希望 Agent 完整遊玩自己的角色，並明確要求「用遊戲內部方法，不應該用模擬鍵鼠」。最新 0.2.0 source head `e5c24fb233392a11bfec0bfb4173154acea6edcd` 已移除 WindowsInput.cs / SendInput，不能再沿用舊 head f77bf26 的按鍵／mouse 操作說明。
+使用者希望 Agent 完整遊玩自己的角色，並明確要求「用遊戲內部方法，不應該用模擬鍵鼠」。最新 0.2.0 source head `c1ebd0a8c281a40354bc4aefb583149230719c99` 已移除 WindowsInput.cs / SendInput，不能再沿用舊 head f77bf26 的按鍵／mouse 操作說明。
 
 原始碼 GitHub `swear01/valheim-cli`，PR https://github.com/swear01/valheim-cli/pull/2 ，同一 concern branch `feat/character-control`。續作先查 PR／main／工作樹 live state，不要假設舊 pending 狀態仍成立。
 
@@ -23,6 +23,8 @@ updated: 2026-10-10
 - F12 撤權，stop 由網路執行緒只取消 managed lease；20 ms watchdog 不碰 Unity。下一遊戲控制 tick 送 neutral frame，再恢復人工輸入。處理 toggle block 與既有 autorun；切換人物、失焦、撤權、stop invalidates queued controls。卡住的 Unity thread 恢復前不能更新人物狀態。
 - 固定最多 65,536 個 started/uncertain 寫入 ID，達限要求重啟（每秒一筆約 18 小時）；此限制未改。不能自動重送結果未知的寫入。
 
+預期的執行前拒絕（空快捷列、沒有準星目標、UI 無命中）使用 ActionRefusedException，由 Dispatcher 回覆具體原因與 cancelled，Server 不保留寫入 ID。遊戲 callback 執行後的例外仍回覆 uncertain 並保留 ID，不能廣泛 catch InvalidOperationException 當 cancelled；TCP regression 已覆蓋兩條路徑。
+
 ## 驗證邊界
 
 本輪 bridge build、C# game/Harmony/UI fixture、9 項 Node tests（含 Node → production C# TCP 與新 write operations 防重送）、Windows/Ubuntu CI、打包與模擬 profile 安裝雜湊均通過。實際 1.0.17 assembly_valheim.dll 的獨立編譯 0 warnings/errors；metadata 核對私有欄位、Harmony 參數名稱、產物無 P/Invoke/WindowsInput。compile-only UI reference 新增 Unity3D.UnityEngine.UI 2018.3.5.1，排除其舊 UnityEngine 依賴；不隨包發佈，遊戲提供 runtime。
@@ -33,6 +35,6 @@ updated: 2026-10-10
 
 ## 交付位置
 
-`<project-root>/outputs/ValheimCli-0.2.0-experimental.zip` SHA256 `96f8241446a92decc725cd43134f614a257d4cf21eb61f69c35d7980e12596ef`。
-`<project-root>/outputs/valheim-agent-cli-0.2.0.tgz` SHA256 `34a9be5979599753f59108974dd1af9dbbc86d928e2b0b73cb7d90e89fdccc1c`。
+`<project-root>/outputs/ValheimCli-0.2.0-experimental.zip` SHA256 `59c155cf8173f65356eb5bfd9c6e2ab4f50b53029dee965a71507639cd214f4d`。
+`<project-root>/outputs/valheim-agent-cli-0.2.0.tgz` SHA256 `7cbf44da398888edbbcc4a3c263db801071183a5e9654ee29fc260fb8316304d`。
 中文操作方式與當次完整驗證記錄為 `<project-root>/outputs/ValheimCli-0.2.0-操作方式.md`、`<project-root>/outputs/ValheimCli-0.2.0-驗證結果.json`。project-root 是 2026-10-08/new-chat-4 工作目錄。
