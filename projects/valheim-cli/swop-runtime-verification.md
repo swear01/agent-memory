@@ -30,4 +30,10 @@ GitHub PR #1 已合併到 main `7be7f419030ce2a04c1c6cf1525eb92bc94502d6`；最�
 
 GitHub experimental prerelease `https://github.com/swear01/valheim-cli/releases/tag/v0.1.0` 已發布，同時提供原實測 CLI tgz 與 `ValheimCliBridge-0.1.0-Thunderstore.zip`，兩資產下載讀回 SHA256 相符。社群 ZIP 根目錄有 manifest.json / README.md / icon.png / CHANGELOG.md / LICENSE.txt，DLL 在 BepInEx/plugins/swear01-ValheimCliBridge/；僅依賴 denikson-BepInExPack_Valheim-5.4.2351，不含 token、設定、私人日誌或遊戲 DLL。ZIP SHA256 `0ac0c34a15a7fe4c32a3972b58bf498ba8978a3d0830d1192511414bf65a26e2`。
 
-Thunderstore Valheim 社群已上架 `https://thunderstore.io/c/valheim/p/swear01/ValheimCliBridge/`，dependency string 為 `swear01-ValheimCliBridge-0.1.0`。本人登入後建立 swear01 Team（本人為 owner），官方 manifest validator 回報 No errors found!；上傳成功、社群列表版本／相依套件正確，新站未登入頁面也可讀取。從公開 Manual Download 下載 ZIP，SHA256 與原準備包相符，內部 DLL 雜湊仍為實測版本。分類 Mods / Tools / Client-side / AI Generated；網站明示 significant AI content 需標示，已遵循。新版網站登入狀態與 legacy 分開，實際透過已登入 old.thunderstore.io 上傳。CLI tgz 保留最初打包 README / runtimeVerified=false 建置資訊，更新實測範圍載於 release notes 與社群 ZIP README；npm registry 仍未發布。
+Thunderstore Valheim 社群最初上架 `https://thunderstore.io/c/valheim/p/swear01/ValheimCliBridge/`（現已 Deprecated，見下方更新），dependency string 為 `swear01-ValheimCliBridge-0.1.0`。本人登入後建立 swear01 Team（本人為 owner），官方 manifest validator 回報 No errors found!；上傳成功、社群列表版本／相依套件正確，新站未登入頁面也可讀取。從公開 Manual Download 下載 ZIP，SHA256 與原準備包相符，內部 DLL 雜湊仍為實測版本。分類 Mods / Tools / Client-side / AI Generated；網站明示 significant AI content 需標示，已遵循。新版網站登入狀態與 legacy 分開，實際透過已登入 old.thunderstore.io 上傳。CLI tgz 保留最初打包 README / runtimeVerified=false 建置資訊，更新實測範圍載於 release notes 與社群 ZIP README；npm registry 仍未發布。
+
+## 公開名稱與圖示更新
+
+依使用者要求，公開名稱改為 **ValheimCli**。管理 UI 沒有改名欄位，因此以新 package 上架 `https://thunderstore.io/c/valheim/p/swear01/ValheimCli/`，dependency string 為 `swear01-ValheimCli-0.1.0`；舊 ValheimCliBridge 在管理 UI 讀回狀態為 Deprecated，歷史下載保留。舊套件已安裝者需先移除再安裝新套件，避免重複 DLL。
+
+imagegen 生成北歐奇幻 ValheimCli 圖示，原圖與 256×256 PNG 已留 workspace outputs 並上傳同一 GitHub v0.1.0 release。公開 ZIP 下載 SHA256 `dd1dbddc0ff0702cb0fdc465578c24fcf0617847aa17c394274cd37e4c66318d` 與本機包相符，icon.png 與生成的 256px 檔一致；內部 DLL SHA256 不變。plugin GUID / DLL / cfg / token 名稱保留 ValheimCliBridge，程式行為與 CLI 指令不變。本次沒有重跑遊戲，僅核對封裝、公開頁面、圖示與二進位雜湊。GitHub release 標題／說明已指向新名稱；舊 ZIP 以歷史資產保留。證據 `<project-root>/outputs/ValheimCli-0.1.0-發布驗證.json`。
