@@ -7,7 +7,7 @@ updated: 2026-10-10
 
 # 官方 API 與實際遊戲方法
 
-使用者要求核對官方 API、更新 QMD 後測試，後續再要求移除模擬鍵鼠。保留不干擾 SWOP 正式遊戲的限制。前次 f77bf26 API audit 已先同步 commit 5c5755a／QMD，再通過 fixture 與 actual-game assembly build；那份 SendInput 架構現已被 e5c24fb 取代。
+使用者要求核對官方 API、更新 QMD 後測試，後續再要求移除模擬鍵鼠。保留不干擾 SWOP 正式遊戲的限制。前次 f77bf26 API audit 已先同步 commit 5c5755a／QMD，再通過 fixture 與 actual-game assembly build；那份 SendInput 架構現已被 c1ebd0a 取代。
 
 2026-10-10 查閱 Iron Gate FAQ、Regarding Mods、1.0 FAQ：沒有官方 mod support，未找到保證相容的 Agent／角色控制 SDK。官方 SoftReference assets API 用於資產，不是角色行走／戰鬥。BepInEx 是社群框架，console 開發指令也不是完整 Agent 控制 API。
 
@@ -17,7 +17,7 @@ updated: 2026-10-10
 - https://www.valheimgame.com/support/modding-faq-for-the-asset-bundle-update-0-217-40/
 - https://www.valheimgame.com/support/how-to-enable-developer-mode/
 
-## 最新 e5c24fb 對照
+## 最新 c1ebd0a 對照
 
 | CLI | 遊戲內方法／入口 |
 | --- | --- |
