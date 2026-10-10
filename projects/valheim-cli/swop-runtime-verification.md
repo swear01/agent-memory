@@ -23,3 +23,11 @@ updated: 2026-10-10
 測試 profile 在 `%APPDATA%\com.kesomannen.gale\valheim\profiles\Valheim-CLI-Test-v20`；CLI 在 `%LOCALAPPDATA%\ValheimCliTest\cli\node_modules\.bin\valheim.cmd`。token 只留在 profile，不得打包或公開。測試報告放於 `<project-root>/outputs/ValheimCLI-SWOP-實機測試-20261010.{md,json}`；原始報告含私人機器資訊，公開前另寫去識別摘要。
 
 交付 tgz SHA256：`b257e5948a51b7650f98f38ed76cf6d54daec55ed1f9f96ed513fc36256e3c7f`；Bridge DLL SHA256：`859297b57d1566c5d3802d68c8154653523b8d59118331fa7b9d44e65c7ae552`。
+
+## 公開交付 2026-10-10
+
+GitHub PR #1 已合併到 main `7be7f419030ce2a04c1c6cf1525eb92bc94502d6`；最新 head 的 Gemini 無新增建議，Windows / Ubuntu CI 通過，合併後兩平台 CI 亦通過。本機重新驗證使用現有 .NET 9 執行檔與 DOTNET_ROOT；系統預設 .NET 10 無法直接執行 net9 fixture，非測試邏輯失敗。C# checks 與 5 個 Node tests 皆通過。
+
+GitHub experimental prerelease `https://github.com/swear01/valheim-cli/releases/tag/v0.1.0` 已發布，同時提供原實測 CLI tgz 與 `ValheimCliBridge-0.1.0-Thunderstore.zip`，兩資產下載讀回 SHA256 相符。社群 ZIP 根目錄有 manifest.json / README.md / icon.png / CHANGELOG.md / LICENSE.txt，DLL 在 BepInEx/plugins/swear01-ValheimCliBridge/；僅依賴 denikson-BepInExPack_Valheim-5.4.2351，不含 token、設定、私人日誌或遊戲 DLL。ZIP SHA256 `0ac0c34a15a7fe4c32a3972b58bf498ba8978a3d0830d1192511414bf65a26e2`。
+
+Thunderstore 上架仍待本人登入與 Team；不可把 GitHub prerelease 或已備妥 ZIP 描述成 Thunderstore 已上架。官方 manifest validator 也要求登入 Team，只有本機 ZIP 結構／內容檢查完成。CLI tgz 保留最初打包 README / runtimeVerified=false 建置資訊，更新實測範圍載於 release notes 與社群 ZIP README；npm registry 仍未發布。
