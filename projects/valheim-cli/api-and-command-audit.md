@@ -1,7 +1,7 @@
 ---
 title: ValheimCli official API and internal command mapping audit
 scope: projects/valheim-cli
-status: source-verified-tests-pending
+status: static-api-build-and-fixtures-verified-runtime-pending
 updated: 2026-10-10
 ---
 
@@ -41,6 +41,14 @@ bridge 沒有 Terminal.ConsoleCommand 註冊、TryRunCommand、Harmony input hoo
 
 本機 README 的走路／跳躍／閃避／攻擊例子明確假設預設按鍵。改鍵後須由 Agent 校準，不能視為已與語意操作綁定。原專案編譯 reference package 是 Digitalroot.Valheim.Common.References 1.0.16；本輪規劃用實際 1.0.17 DLL 在獨立暫存專案編譯，區分 API 簽章相容與真正載入遊戲的驗證。
 
-## 下一步測試
+## 先更新 QMD 後的測試結果
 
-此文件先同步並更新 QMD，再執行 C# fixture、Node tests、原 bridge 編譯與實際 1.0.17 DLL 參照編譯。結果尚未執行，不能把靜態方法存在當成遊戲實測通過。
+此文件先以 commit 5c5755a 同步遠端，qmd update 後搜尋 ValheimCli / SetControls 能讀到，再執行以下測試，順序符合使用者要求。
+
+- `npm run test:bridge`：C# protocol / transport / dispatcher / control / screenshot fixture 全部 PASS。
+- `npm test`：9 passed / 0 failed，包括 Node → production C# TCP fixture。
+- `npm run build:bridge`：原本 1.0.16 reference package 編譯成功，0 warnings / 0 errors。
+- 獨立暫存 ActualGameApiAudit.csproj：移除原 Common.References package，改為直接 reference 未 publicize 的實際 1.0.17 assembly_valheim.dll；其他遊戲輔助 DLL 與 Unity / BepInEx 仍沿用現有編譯參照。原 bridge/*.cs 完整編譯成功，0 warnings / 0 errors。這證明目前呼叫在該 Valheim DLL 中存在、可存取與簽章相容，不能當成實際遊戲載入或 UI／鍵鼠成功。
+- CLI 原始碼無變更，工作樹仍乾淨。沒有修改或重新發布 0.2.0，也沒有操作 SWOP 正式遊戲。
+
+本機結果與編譯 log 另存 `<project-root>/outputs/ValheimCli-API核對與測試-20261010.json` 與 `<project-root>/work/valheim-api-audit/actual-game-build.log`；反編譯檔僅在 work 下供本機研究，不能公開。遊戲內移動、戰鬥、焦點切換、多玩家與耐久仍待使用者安排獨立實機時段。
