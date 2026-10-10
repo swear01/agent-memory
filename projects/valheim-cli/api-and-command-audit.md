@@ -1,54 +1,43 @@
 ---
-title: ValheimCli official API and internal command mapping audit
+title: ValheimCli official API and internal action mapping audit
 scope: projects/valheim-cli
 status: static-api-build-and-fixtures-verified-runtime-pending
 updated: 2026-10-10
 ---
 
-# 官方 API 與實際遊戲介面對照
+# 官方 API 與實際遊戲方法
 
-使用者要求先確認官方 API 與自製模組是否對到遊戲內指令，更新 QMD 後再測試。保留原先不干擾 SWOP 正式遊戲的限制，本輪不啟動遊戲、不安裝、不操作角色。
+使用者要求核對官方 API、更新 QMD 後測試，後續再要求移除模擬鍵鼠。保留不干擾 SWOP 正式遊戲的限制。前次 f77bf26 API audit 已先同步 commit 5c5755a／QMD，再通過 fixture 與 actual-game assembly build；那份 SendInput 架構現已被 e5c24fb 取代。
 
-## 官方文件
-
-2026-10-10 查閱 Iron Gate 官方 FAQ、Regarding Mods 與 1.0 FAQ，仍表示沒有官方 mod support，更新相容性不保證。未找到官方公開並承諾相容的 Agent／角色控制 SDK 或遠端控制 API。BepInEx 是社群的 Mono plugin framework，不是 Iron Gate 的官方 API。
+2026-10-10 查閱 Iron Gate FAQ、Regarding Mods、1.0 FAQ：沒有官方 mod support，未找到保證相容的 Agent／角色控制 SDK。官方 SoftReference assets API 用於資產，不是角色行走／戰鬥。BepInEx 是社群框架，console 開發指令也不是完整 Agent 控制 API。
 
 - https://www.valheimgame.com/faq/
 - https://www.valheimgame.com/news/regarding-mods/
 - https://www.valheimgame.com/zh/support/valheim-1-0-faq/
-- https://github.com/BepInEx/BepInEx/wiki/Home
-
-官方確有資產載入介面文件，例如 SoftReference<T>.Load / LoadAsync / Release 以及 Runtime.AddManifest；用途是 assets，不是角色行走／戰鬥。官方也說明 -console、F5、devcommands，但這是開發者 console，不能視為完整 Agent 操控 API。
-
 - https://www.valheimgame.com/support/modding-faq-for-the-asset-bundle-update-0-217-40/
 - https://www.valheimgame.com/support/how-to-enable-developer-mode/
 
-## 0.2.0 實作與 Valheim 1.0.17 DLL 靜態核對
+## 最新 e5c24fb 對照
 
-核對 head f77bf2687d34458484d94ecf6b7c66ec58dc36b0 與先前從 SWOP 取得的 assembly_valheim.dll；只在本機查看遊戲反編譯，不發布或提交遊戲 DLL／程式碼。
+| CLI | 遊戲內方法／入口 |
+| --- | --- |
+| status / players | Player.m_localPlayer、ZNet、GetAllPlayers、位置與血量／體力 |
+| observe | GetInventory().GetAllItems()、Unity ScreenCapture |
+| teleport | Player.TeleportTo，仍 host-only；沒有執行 goto 字串 |
+| input | Harmony prefix 修改每次 Player.SetControls 參數，原版方法照常執行 |
+| look | Player.SetMouseLook，角度增量 |
+| action | Player.Interact（private）、UseHotbarItem、InventoryGui.Show/Hide、Hud.TogglePieceSelection、HideHandItems、StartGuardianPower、UpdatePlacement（private）、m_placeRotation（private） |
+| ui | Unity EventSystem.RaycastAll／ExecuteEvents，遊戲 Canvas click/scroll |
+| stop | 取消 managed lease／epoch，下一 game tick 中性控制 |
 
-| CLI 操作 | 目前遊戲端實作 | 是 console 指令嗎 |
-| --- | --- | --- |
-| status / players | Player.m_localPlayer、ZNet、Player.GetAllPlayers、位置、血量與體力方法 | 否，直接讀取遊戲物件 |
-| observe | GetInventory().GetAllItems() 與 Unity ScreenCapture | 否 |
-| teleport | Player.TeleportTo(Vector3, Quaternion, bool) | 否，直接呼叫遊戲方法；不是執行 goto 字串 |
-| input / mouse | Windows SendInput，後續由遊戲正常讀鍵鼠輸入 | 否；尚未直接接 Player.SetControls 或 ZInput |
-| stop | 停止自己的輸入控制器、嘗試釋放鍵鼠 | 否 |
+沒有 Windows SendInput、Terminal.ConsoleCommand 註冊、TryRunCommand 或任意 console execution。F5 不會新增 valheim/input/observe 指令，它們是外部 Node CLI 操作。
 
-bridge 沒有 Terminal.ConsoleCommand 註冊、TryRunCommand、Harmony input hook 或任意 console execution。F5 內也不會因此新增 valheim / input / observe 指令；這些是外部 Node CLI 的操作。
+1.0.17 PlayerController.FixedUpdate 每次讀 ZInput 呼叫 Player.SetControls，TakeInput=false 也送零控制；因此單次 Plugin.Update 呼叫會被覆蓋。最新版本在原始呼叫處修改參數，並核對 movedir、attack/attackHold、secondaryAttack/secondaryAttackHold、block/blockHold、jump、crouch、run、autoRun、dodge 的實際參數名稱。ToggleBlock 會切換 m_blocking，不能只在結束時送 block=false；prefix 依目標 hold 狀態調整 toggle，並取消原有 autorun。
 
-1.0.17 的 Player.SetControls 實際存在，參數為 movedir、attack/attackHold、secondaryAttack/secondaryAttackHold、block/blockHold、jump、crouch、run、autoRun、可選 dodge。PlayerController.FixedUpdate 在 network owner 檢查與 TakeInput UI 檢查後，每個物理更新會讀 ZInput 並呼叫 SetControls；TakeInput=false 時會呼叫零輸入。因此不能只在 Plugin.Update 單次呼叫 SetControls 就宣稱穩定控制，原版下一個物理更新可能覆蓋該值。未實作這個替代介面；相機、背包、建造與文字輸入仍需各自核對。
+Placement 必須進原版 UpdatePlacement 驗證／扣材料／體力／技能／耐久路徑；TryPlacePiece 本身不能替代這整段流程。原版電腦 InventoryGrid.OnLeftDown 已支援點物品再點目的地，UI 不需要 OS drag。
 
-本機 README 的走路／跳躍／閃避／攻擊例子明確假設預設按鍵。改鍵後須由 Agent 校準，不能視為已與語意操作綁定。原專案編譯 reference package 是 Digitalroot.Valheim.Common.References 1.0.16；本輪規劃用實際 1.0.17 DLL 在獨立暫存專案編譯，區分 API 簽章相容與真正載入遊戲的驗證。
+## 已驗證範圍
 
-## 先更新 QMD 後的測試結果
+原 production 1.0.16 references build 與替換成實際未 publicize 的 1.0.17 assembly_valheim.dll 獨立 build 都 0 warnings/errors。輔助 DLL、Unity/BepInEx/UI 參照沿用現有 compile-only packages，沒有聲稱全部 helper runtime 相同。metadata audit 確認所用 private fields、Harmony 參數名稱與產物沒有 P/Invoke/WindowsInput。C# fixtures、Node 9/9、Windows/Linux CI、打包／假 profile 安裝雜湊也通過。
 
-此文件先以 commit 5c5755a 同步遠端，qmd update 後搜尋 ValheimCli / SetControls 能讀到，再執行以下測試，順序符合使用者要求。
-
-- `npm run test:bridge`：C# protocol / transport / dispatcher / control / screenshot fixture 全部 PASS。
-- `npm test`：9 passed / 0 failed，包括 Node → production C# TCP fixture。
-- `npm run build:bridge`：原本 1.0.16 reference package 編譯成功，0 warnings / 0 errors。
-- 獨立暫存 ActualGameApiAudit.csproj：移除原 Common.References package，改為直接 reference 未 publicize 的實際 1.0.17 assembly_valheim.dll；其他遊戲輔助 DLL 與 Unity / BepInEx 仍沿用現有編譯參照。原 bridge/*.cs 完整編譯成功，0 warnings / 0 errors。這證明目前呼叫在該 Valheim DLL 中存在、可存取與簽章相容，不能當成實際遊戲載入或 UI／鍵鼠成功。
-- CLI 原始碼無變更，工作樹仍乾淨。沒有修改或重新發布 0.2.0，也沒有操作 SWOP 正式遊戲。
-
-本機結果與編譯 log 另存 `<project-root>/outputs/ValheimCli-API核對與測試-20261010.json` 與 `<project-root>/work/valheim-api-audit/actual-game-build.log`；反編譯檔僅在 work 下供本機研究，不能公開。遊戲內移動、戰鬥、焦點切換、多玩家與耐久仍待使用者安排獨立實機時段。
+這些不證明實際遊戲載入、Harmony 與其他 mod 並存、真實 UI、GPU、多人或耐久已通過。沒有重開、安裝或操作 SWOP 正式遊戲。最新介面、產物雜湊與完整限制見 character-control-0.2.0.md；當次 evidence 在 `<project-root>/outputs/ValheimCli-0.2.0-驗證結果.json`。本機實際 DLL／反編譯不可公開。
