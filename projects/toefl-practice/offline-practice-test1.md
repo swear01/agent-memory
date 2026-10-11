@@ -13,7 +13,7 @@ updated: 2026-10-11
 - 最終檔案位於 `<user-documents>/Codex/2026-10-10/new-chat/outputs/`：`TOEFL_2026_Practice_Test_1_全科作答練習.html`、`TOEFL_2026_Practice_Test_1_全科離線練習包.zip`、`全科版使用說明.txt`、`全科作答畫面預覽.png`、原始 `toefl-ibt-full-length-practice-test1.pdf`。
 - HTML 自帶 43 個官方影音資源（34 個題目／提示檔、9 個說明檔），離線可用；ZIP 包含 HTML、說明與原始 PDF，已驗證解壓及內容位元組。
 - 原始 `完整互動版`、`含官方影音` 與 `閱讀介面參考版` 均保留。後續以「全科作答練習」為準，勿把第一輪閱讀介面當作最終版。
-- 原始碼基線在 `<task-root>/work/interface-source`；全科初版為 `task/official-interface` 的 `a74aac5`。2026-10-11 最新修正版在 `<worktree-root>/toefl-practice-<task-id>/reading-cloze-repair`，分支 `task/reading-cloze-repair`，commit `c3e0dd7`。核心檔案為 `practice.html`、`README.md`、`full-check.cjs`、`cloze-check.cjs`。此原始碼 repo 沒有 remote，只有本機提交，不能稱已推送或已有 PR。
+- 原始碼基線在 `<task-root>/work/interface-source`；全科初版為 `task/official-interface` 的 `a74aac5`。2026-10-11 填字修正版在 `<worktree-root>/toefl-practice-<task-id>/reading-cloze-repair`，分支 `task/reading-cloze-repair`，commit `c3e0dd7`；最新麥克風修正版在同層 `microphone-session`，分支 `task/microphone-session`，commit `9585370`。核心檔案為 `practice.html`、`README.md`、`full-check.cjs`、`cloze-check.cjs`、`microphone-check.cjs`。此原始碼 repo 沒有 remote，只有本機提交，不能稱已推送或已有 PR。
 
 ## 官方參考與實作範圍
 
@@ -51,3 +51,15 @@ updated: 2026-10-11
 - 原生頁面 `pagehide` 會 `save()`：直接改 localStorage 後 reload，可能被舊記憶體 state 覆寫。應重載新版後走既有 JSON 匯入流程，同步更新記憶體 state、儲存及畫面。
 - `cloze-check.cjs` 通過兩模組 20 個字母格數、舊游標修復、跳題／模組漏答警告、原生打字與長度限制、重載、合法已開始游標保留、逾時關閉確認框、手機排版。另以實際備份在隔離瀏覽器驗證答案／計時保留；`full-check.cjs` 再次通過全 97 任務、84 客觀答案、23 播放與 11 錄音及完整備份流程。
 - 同路徑 HTML 及完整離線 ZIP 已替換、ZIP 三檔內容逐位元讀回相符；題目、答案與全部內嵌媒體未改動。證據在 `<task-root>/work/cloze-verification/`、`<task-root>/work/cloze-full-verification/`。新增示意圖 `outputs/填字題修復畫面.png`。
+
+
+## 2026-10-11 口說逐題重複要求麥克風權限修復
+
+- 使用者回報每題都重問麥克風權限。可確認的程式原因是 `startSpeaking()` 每次呼叫 `getUserMedia()`，而 `MediaRecorder.onstop` 每次把所有 track `.stop()`；本機 HTML 不應依賴瀏覽器永久保留 file URL 權限來遮蓋這個流程問題。
+- 同一口說階段沿用仍為 live 的 `speechStream`；提示播放與題間把 audio track `enabled=false` 靜音，真正錄音前再啟用。停止單題錄音只停止 MediaRecorder，不停止 stream。
+- 離開口說、完成測驗、成功匯入、清除進度、pagehide，以及原有的初始化／裝置錯誤路徑會釋放連線。裝置已 ended 時重新申請；被拒絕仍可重試並保留原錄音。重新開頁或裝置中斷可能仍需允許一次，不應聲稱永久免權限或繞過瀏覽器設定。
+- 新增 `microphone-check.cjs`：隔離 Brave 與測試音源，實際兩題 MediaRecorder 輸出只呼叫一次 getUserMedia；驗證提示／題間靜音、錄音期間啟用、舊檔位元組保留、裝置中斷重取、拒絕保留原檔，以及離開／完成／匯入／清除／pagehide 的 ended tracks。原本權限拒絕案例先模擬連線釋放再拒絕，維持原案例的語意。
+- `full-check.cjs` 再次通過全 97 任務、84 客觀答案、23 次播放、11 段錄音及真實 8／45 秒截止、完整備份與拒絕處理；11 段新測試錄音皆完整解碼且非零音量。填字 regression 亦再次通過。題目／答案資料及全部內嵌媒體逐位元不變。
+- 使用者原生 Brave 在目前錄音結束後才備份與更新同路徑 HTML，重載後讀回新版函式、答案／作文／位置／剩餘時間，以及既有錄音 SHA-256 一致。本機備份保留在 outputs，禁止把實際作答或聲音提交到 source／memory repo。normalizeState 會為舊時計欄位補 `paused:false`；驗證比較其等價語意，不把補預設欄位誤報成時間改變。
+- 最終 HTML、使用說明與三檔離線 ZIP 已更新，解壓逐位元讀回相符。證據在 `<task-root>/work/microphone-verification/`、`microphone-full-verification/`、`microphone-cloze-verification/`。source 提交 `9585370` 工作樹乾淨，但仍無 remote；保留本機 worktree，沒有 PR／推送證據。
+- 未代替使用者操作實體麥克風或權限對話框；自動化證據是 API 呼叫次數與假音源錄音，不是原生權限提示次數或實體裝置收音品質。實體使用需由本人接著作答觀察。
