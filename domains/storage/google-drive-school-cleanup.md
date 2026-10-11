@@ -10,6 +10,8 @@ tags: [google-drive, school, deduplication, 7z, powerpoint, git, videotoolbox]
 
 整理範圍為 Drive `document/學校講義`、`document/學習紀錄`。保留簡潔的原始名稱與資料夾結構；同內容選一份保留，不加長括號名稱。壓縮後直接更新原檔，保留 Drive ID、名稱及父目錄，不在旁邊留另一份新版。移除用可恢復垃圾桶；本次未永久刪除，也未清空垃圾桶。
 
+2026-10-11 使用者更正：照片應沿用 **HEIC Q70**，PDF／PPTX 內嵌圖片也應採同一壓縮方針；格式限制與替代品質須先查證並說明。下方 JPEG Q90／Q92 及 PDF Q88／92／95 是歷史實作，不能當成通用標準。詳見 [統一照片壓縮標準](../media/photo-compression-standard.md)。本次記憶更新未將舊檔重新轉成 HEIC Q70。
+
 以下是 2026-10-09 至 10-11 的已驗證操作紀錄，不能當成往後的即時容量或繼續刪除授權。證據工作區 `<workspace-root>` 為 Mac 的 `<home>/Documents/Codex/2026-10-08/new-chat`。
 
 ## 2026-10-10 去重及文字封存
@@ -69,3 +71,9 @@ OOXML 處理教訓：ElementTree 把根節點寫成 `ns0:Types`／`ns0:Relations
 - 全部 gainmap／影片雜湊不變，附帶影片完整解碼，93 張更新後皆從雲端完整下載逐份比對。抽樣另用 ExifTool 獨立抽出 MPImage2／MotionPhotoVideo／EXIF／XMP／ICC 比對，並以原像素裁切檢視；最低 PSNR 36.63 dB。手機原生 HDR／動態播放未測，原照片仍保留本機。
 
 回條：`pdf-compression-completed-20261010.json`、`昆蟲與簡報壓縮完成_20261011.json`、`雲端硬碟整理結果_20261011.json`；最近整輪摘要見 [十月整理總結](google-drive-cleanup-202610.md)。容量是當時快照，下一次盤點仍須更新。
+
+## 2026-10-11 國防照片移除動態影片
+
+依新授權移除 93 張照片的 Motion Photo MP4 與相應 XMP 標記：621,707,529 → 363,959,922 bytes，減少 257,747,607 bytes。靜態編碼與解碼像素相同，98,715,509 bytes 的 HDR gainmap 原位元組保留，EXIF／ICC 保留；MPF 索引已修正。93 張全部同 ID、原名、原父目錄替換並完整下載比對，ExifTool 獨立提取 gainmap 及確認無動態影片通過。手機 HDR 顯示未測，本機原始照片仍保留。
+
+這次只移除動態部分，沒有再縮圖或改成 HEIC；仍屬 JPEG Q90，不能記為符合 HEIC Q70 標準。回條為 `<workspace-root>/outputs/國防照片移除動態影片_20261011.json`。
