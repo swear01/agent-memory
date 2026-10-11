@@ -17,6 +17,7 @@ updated: 2026-10-12
 - 低影響對照順序：先由使用者方便時結束通話但保持 Discord 存活，記錄時間並比較至少 30 分鐘增長率；需要時再獨立測試 Standard 音訊子系統。切換可能需重新啟動 Discord，不在通話中自動改動。不能因既有句柄未立即下降便判無改善，也不能一次停用多個音訊裝置而失去可比性。
 - 原有每小時 heartbeat 已加入 Discord 行程身份、Key 明細與停止增長的對照追蹤；五分鐘一般快照繼續。AFD 追蹤仍維持到期停止，未因此延長。證據存於 <workspace>/outputs/port-monitor/discord-investigation-20261012.json 與兩份 discord-22908-*.csv；原始私人日誌不入記憶庫。
 - 10/12 公開資料比對：WebRTC 官方 issue 42222526（2021-01-22 回報，狀態 Fixed）記錄通話後 MMDevices 登錄句柄增加，報告與修補範例指出 `_GetListDevice` 成功取得 `IMMDeviceCollection` 後漏掉 `SAFE_RELEASE(pCollection)`。這是與本機現象相似的歷史機制，未查得目前 Discord 1.0.9261 對應的呼叫堆疊或修復版本，不能宣稱同一缺陷仍存在。來源：https://issues.webrtc.org/42222526 。Discord 官方排查建議比較 Standard/Legacy 子系統，但沒有確認 Experimental 是本機累積原因；來源：https://support.discord.com/hc/en-us/articles/31623498041623-Discord-Troubleshooting-Guide 。
+- 10/12 使用者要求切換 Standard。實際新版 Voice & Video UI（含展開進階語音與診斷）未見子系統選單；本機 `modules/discord_voice-2/discord_voice/index.js` 確認 Windows 預設為 experimental，啟動時讀取 settings.json 的 audioSubsystem，切換需重新啟動。00:55 已備份並只將該欄位改成 standard、核對其他欄位相同；未重啟，尚不能宣稱執行中生效。記錄於 <workspace>/outputs/port-monitor/discord-intervention.json；後續須核對新啟動的 Initializing 訊息及可能的 Deferring 排程值，再建立新行程基準。檔案值、啟動值、下次啟動值需分開判讀，不可因名稱 experimental 就假設使用者自行選了測試版。
 
 - 2026-08-01 至 09-26 的 System 日誌有 Tcpip 4231 共 16 筆、4266 共 19 筆。事件 XML 的 Execution ProcessID=4 是記錄事件的系統行程，不能當成洩漏來源 PID。
 - IPv4/IPv6 TCP/UDP 動態範圍均為 49152–65535；IPv4 只有 50000–50059 的 60 個動態埠被預留，沒有發現大量預留或縮小範圍。
