@@ -3,10 +3,19 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 
 # 已驗證線索；根因尚未確認
+
+## 10/12：Discord 通話時累積音訊裝置登錄機碼句柄
+
+- 使用者確認 10/11 約 23:00 起持續語音通話。Discord 1.0.9261 的同一 renderer 行程在 23:04 至 10/12 00:34 共 90 分鐘，句柄 1875→14648，PrivateMB 513→620；TCP1、UDP1，不能將句柄數當成 endpoint 數。
+- 00:35:45 與 00:37:00 的兩份 Handle CSV 相隔約 75 秒，Key 13527→13698。以 trim 後的 Handle+Name 比對，原有 13527 個全數仍在，新增 171、未觀察到釋放；三個 Render/Properties 各增加 57，對應 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 USB Microphone。選用中的 PHL 276E8V / NVIDIA 播放端 Properties 只有 2 個句柄。
+- WebRTC 日誌於 23:02:39 記錄成功開啟 PHL 播放及 AM310 錄音，早於取樣首次增長。settings.json 的 audioSubsystem=experimental、useLegacyAudioDevice=false；日誌也顯示 win_audio_device::play/record。這縮小到 Discord 通話音訊裝置處理路徑，尚未取得呼叫堆疊，不能指認特定函式、驅動或 Experimental 設定為根因。
+- Handle 有 305 個 Unknown type，部分類型不可辨識；大量 Key 及其路徑可讀，不應宣稱所有句柄已完整分類。audiodg 同時 Key29 維持約 90 分鐘平台，與 Discord 的持續增長不同。當時無新 Tcpip 4231/4266，非分頁池約 702MB、提交約 53–54%；尚未建立這次音訊累積與 Port 耗盡的因果關係。
+- 低影響對照順序：先由使用者方便時結束通話但保持 Discord 存活，記錄時間並比較至少 30 分鐘增長率；需要時再獨立測試 Standard 音訊子系統。切換可能需重新啟動 Discord，不在通話中自動改動。不能因既有句柄未立即下降便判無改善，也不能一次停用多個音訊裝置而失去可比性。
+- 原有每小時 heartbeat 已加入 Discord 行程身份、Key 明細與停止增長的對照追蹤；五分鐘一般快照繼續。AFD 追蹤仍維持到期停止，未因此延長。證據存於 <workspace>/outputs/port-monitor/discord-investigation-20261012.json 與兩份 discord-22908-*.csv；原始私人日誌不入記憶庫。
 
 - 2026-08-01 至 09-26 的 System 日誌有 Tcpip 4231 共 16 筆、4266 共 19 筆。事件 XML 的 Execution ProcessID=4 是記錄事件的系統行程，不能當成洩漏來源 PID。
 - IPv4/IPv6 TCP/UDP 動態範圍均為 49152–65535；IPv4 只有 50000–50059 的 60 個動態埠被預留，沒有發現大量預留或縮小範圍。
