@@ -2,7 +2,7 @@
 title: Google Drive 學校講義與學習紀錄整理完成紀錄
 scope: domain
 status: verified-with-limits
-updated: 2026-10-11
+updated: 2026-10-12
 tags: [google-drive, school, deduplication, 7z, powerpoint, git, videotoolbox]
 ---
 
@@ -77,3 +77,13 @@ OOXML 處理教訓：ElementTree 把根節點寫成 `ns0:Types`／`ns0:Relations
 依新授權移除 93 張照片的 Motion Photo MP4 與相應 XMP 標記：621,707,529 → 363,959,922 bytes，減少 257,747,607 bytes。靜態編碼與解碼像素相同，98,715,509 bytes 的 HDR gainmap 原位元組保留，EXIF／ICC 保留；MPF 索引已修正。93 張全部同 ID、原名、原父目錄替換並完整下載比對，ExifTool 獨立提取 gainmap 及確認無動態影片通過。手機 HDR 顯示未測，本機原始照片仍保留。
 
 這次只移除動態部分，沒有再縮圖或改成 HEIC；仍屬 JPEG Q90，不能記為符合 HEIC Q70 標準。回條為 `<workspace-root>/outputs/國防照片移除動態影片_20261011.json`。
+
+## 2026-10-11 Q70 重壓與 10-12 最後一批
+
+這段取代上述「仍為 JPEG Q90／尚未重壓」的當時狀態。93 張國防照片已使用原始來源轉為原解析度 HEIC Q70：363,959,922 → 231,154,703 bytes，保留檔名主幹、原 ID／父目錄，副檔名改為 `.HEIC`。EXIF／ICC 與 HDR gainmap 資訊經檢查，HDR 不宣稱位元組無損或手機原生顯示已測。
+
+先前 71 份 PDF 全部重新評估並渲染 4,058 頁，55 份採用、16 份保留；1,226,803,303 → 921,633,119 bytes。內嵌 JPEG／JPEG2000 以實際 HEIC Q70 參考圖的 PSNR 校準，不等於視覺完全相同，也沒有新增降採樣。這輪 148 份替換皆完整雲端讀回，164 個目標皆最終 metadata 核對；來源保留本機，未從垃圾桶還原、未清空垃圾桶。回條：`<workspace-root>/outputs/照片與講義依Q70重壓_20261011.json`。
+
+最後一批另完成 68 支影片、4 份教科書 PDF、224 個 PPTX 上傳項目與 1 個捷徑、33 個 WAV 的檢查／試壓，採用結果與 **28.11 GB** 淨檔案節省詳見 [十月結案索引](google-drive-cleanup-202610.md#2026-10-12-最後一批瘦身結案)。一般影片上限已依新授權降為 720p，不能再把舊批次的最大 1080p 當成本次結果。最新非垃圾桶 **79.32 GB** 是 2026-10-12 02:19:49（臺灣）的快照。
+
+23 個 WAV 保留是實際消費端未驗證，並非已證實不支援 FLAC。原生 PowerPoint 動畫、PDF 內嵌播放、手機 HDR、Resolve 與舊遊戲程式開啟仍不在驗證範圍。本輪完成不是後續刪除來源或重開壓縮佇列的授權。
