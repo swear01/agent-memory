@@ -63,3 +63,15 @@ updated: 2026-10-11
 - 使用者原生 Brave 在目前錄音結束後才備份與更新同路徑 HTML，重載後讀回新版函式、答案／作文／位置／剩餘時間，以及既有錄音 SHA-256 一致。本機備份保留在 outputs，禁止把實際作答或聲音提交到 source／memory repo。normalizeState 會為舊時計欄位補 `paused:false`；驗證比較其等價語意，不把補預設欄位誤報成時間改變。
 - 最終 HTML、使用說明與三檔離線 ZIP 已更新，解壓逐位元讀回相符。證據在 `<task-root>/work/microphone-verification/`、`microphone-full-verification/`、`microphone-cloze-verification/`。source 提交 `9585370` 工作樹乾淨，但仍無 remote；保留本機 worktree，沒有 PR／推送證據。
 - 未代替使用者操作實體麥克風或權限對話框；自動化證據是 API 呼叫次數與假音源錄音，不是原生權限提示次數或實體裝置收音品質。實體使用需由本人接著作答觀察。
+
+
+## 2026-10-11 答後診斷評分流程與音訊界線
+
+- 使用者答完後，先從原生頁面匯出最新完整 ZIP，確認 finished／各 completed、客觀答案、兩篇作文及 11 段錄音齊全，再分析；不要求本人重新抄錄或重做。私人備份、報告、逐題明細及轉錄只留本機 outputs／work，禁止提交原始答案、分數或聲音到共享記憶／source repo。
+- 客觀題要再次從原始 ETS PDF 的答案頁獨立核對；全題本 84 個鍵可用 pdftotext 與 DATA 逐項比對。組句只用字串相等可能誤拒合理語序，須區分「符合給定標準答案」與「文法可接受但官方接受狀態未知」，不要擅稱替代語序已獲 ETS 認可。
+- 本輪文字介面的 audio helper 明確回覆 `audio content omitted because you do not support audio input`。不能宣稱實聽發音／語調；本機 ASR 與聲學時長／低音量間隔只支援有界的暫評。單一 ASR 會漏詞、改寫或同音誤辨；兩模型分歧要明示，不能直接當成發音錯誤扣分。
+- 已用既有 whisper-cli、small-q5_1 與官方 whisper.cpp 模型來源的 large-v3-turbo-q5_0 作本機交叉辨識；先保留第一輪 txt／JSON，再跑第二輪，避免輸出覆寫失去比較證據。不向模型提供正確題句作引導，不把辨識字詞錯誤率當作 ETS 的評分公式。
+- 每段原錄音轉為 16 kHz mono WAV，ffmpeg 解碼、非零音量、ffprobe 時長與兩版轉錄可作完整性證據；silencedetect 的低音量間隔不是已確認的猶豫，字數／短題提早停止也不應自動扣分。
+- 依 ETS 現行 writing／speaking rubrics 給逐題診斷及不確定範圍，再對各科作有界程度判斷；固定題本沒有已驗證的 ETS raw-to-scale 表，不線性乘 6。總分以四科平均再四捨五入至最近 0.5，最後對照官方 0–120 比較帶；診斷工作範圍不能稱統計信賴區間。
+- Email 的此份原始題本沒有明列至少 100 字，Discussion 有至少 100 字提示；評分須依個別任務原文，不能共用字數門檻。原本填字補作及麥克風中斷也須在診斷報告保留。
+- 本機入口為 `outputs/TOEFL_Practice_Test_1_AI評分報告_20261011.txt`、`TOEFL_AI評分明細_20261011.json`、`TOEFL_口說辨識逐題對照_20261011.txt`；證據在 `work/scoring-20261011/`。記憶只記方法及位置，不複製本次私人得分與作答。
