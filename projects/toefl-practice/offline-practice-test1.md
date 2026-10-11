@@ -69,9 +69,18 @@ updated: 2026-10-11
 
 - 使用者答完後，先從原生頁面匯出最新完整 ZIP，確認 finished／各 completed、客觀答案、兩篇作文及 11 段錄音齊全，再分析；不要求本人重新抄錄或重做。私人備份、報告、逐題明細及轉錄只留本機 outputs／work，禁止提交原始答案、分數或聲音到共享記憶／source repo。
 - 客觀題要再次從原始 ETS PDF 的答案頁獨立核對；全題本 84 個鍵可用 pdftotext 與 DATA 逐項比對。組句只用字串相等可能誤拒合理語序，須區分「符合給定標準答案」與「文法可接受但官方接受狀態未知」，不要擅稱替代語序已獲 ETS 認可。
-- 本輪文字介面的 audio helper 明確回覆 `audio content omitted because you do not support audio input`。不能宣稱實聽發音／語調；本機 ASR 與聲學時長／低音量間隔只支援有界的暫評。單一 ASR 會漏詞、改寫或同音誤辨；兩模型分歧要明示，不能直接當成發音錯誤扣分。
+- 本輪文字介面的 audio helper 明確回覆 `audio content omitted because you do not support audio input`。不能宣稱實聽發音／語調；本機 ASR 與聲學時長／低音量間隔只支援轉錄內容診斷與完整性檢查，不能給需要原音的完整 rubric 題分。單一 ASR 會漏詞、改寫或同音誤辨；兩模型分歧要明示，不能直接當成發音錯誤扣分。
 - 已用既有 whisper-cli、small-q5_1 與官方 whisper.cpp 模型來源的 large-v3-turbo-q5_0 作本機交叉辨識；先保留第一輪 txt／JSON，再跑第二輪，避免輸出覆寫失去比較證據。不向模型提供正確題句作引導，不把辨識字詞錯誤率當作 ETS 的評分公式。
 - 每段原錄音轉為 16 kHz mono WAV，ffmpeg 解碼、非零音量、ffprobe 時長與兩版轉錄可作完整性證據；silencedetect 的低音量間隔不是已確認的猶豫，字數／短題提早停止也不應自動扣分。
-- 依 ETS 現行 writing／speaking rubrics 給逐題診斷及不確定範圍，再對各科作有界程度判斷；固定題本沒有已驗證的 ETS raw-to-scale 表，不線性乘 6。總分以四科平均再四捨五入至最近 0.5，最後對照官方 0–120 比較帶；診斷工作範圍不能稱統計信賴區間。
+- 依 ETS 現行 writing／speaking rubrics 作逐題診斷；完整口說題分需要原音評估。固定題本沒有已驗證的 raw-to-scale 表時，保留客觀正確率與可支持的寫作任務評分，不主觀指定四科分帶後套官方比較表。只有可靠的四科分數才可平均取最近 0.5 並解讀官方比較帶；沒有獨立預測誤差資料的範圍不能稱統計信賴區間。
 - Email 的此份原始題本沒有明列至少 100 字，Discussion 有至少 100 字提示；評分須依個別任務原文，不能共用字數門檻。原本填字補作及麥克風中斷也須在診斷報告保留。
 - 本機入口為 `outputs/TOEFL_Practice_Test_1_AI評分報告_20261011.txt`、`TOEFL_AI評分明細_20261011.json`、`TOEFL_口說辨識逐題對照_20261011.txt`；證據在 `work/scoring-20261011/`。記憶只記方法及位置，不複製本次私人得分與作答。
+
+
+## 2026-10-11 官方規準對標與換分校正
+
+- 使用者要求上網對準官方標準。已重新查閱 ETS 最新公開規準、教案、Test Overview 及 2026 尺度研究，並重新下載 Test Overview 與既有檔案 SHA-256 比對一致、查看實體評分頁。
+- Test Overview 第 14–15 頁提供與 Practice Test 1 相同的詩刊投稿 Email 題及明確的 4 分示例；第 15–17 頁提供相同的強制志工 Discussion 題及明確的 5 分示例。這些是任務評分錨點，不能作原始分數換分表。官方高分示例仍有少量錯誤，須比較任務達成、展開及整體清楚程度，不能自訂逐字扣分。
+- 2026 尺度研究第 12–13 頁說明寫作／口說先經標準設定，再以等百分位連結接到新版基準題本；閱讀／聽力使用 IRT 尺度連結。本次未找到固定 Practice Test 1 的可驗證原始換分表，不能借官方 0–120 比較帶替未校準的四科猜測背書。
+- 已校正本機評分報告、JSON 明細及估分方法：撤回未校準的科分／總分及僅憑 ASR 推定的完整口說數字，保留有證據的客觀分數、寫作任務判斷、轉錄疑點與相鄰級別理由。原始完整 ZIP 雜湊不變；歷史 v1 留在 `<task-root>/work/scoring-20261011/superseded-v1/`，不要把它當最新結論。
+- 證據補充在 `<task-root>/work/scoring-20261011/ets-overview-current.pdf`、`official-email-score4.png`、`official-discussion-score5.png`。本次方法校正不修改作答頁或原音，不保存私人評分於共享記憶。後續若有官方測評與練習配對資料，僅在驗證校準及誤差後給正式分數預測。
