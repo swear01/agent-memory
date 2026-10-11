@@ -2,7 +2,7 @@
 title: 照片與 PDF／PPTX 內嵌圖片的統一壓縮標準
 scope: domain
 status: user-confirmed
-updated: 2026-10-11
+updated: 2026-10-12
 tags: [photo, compression, HEIC, Q70, PDF, PPTX, quality]
 ---
 
@@ -26,7 +26,15 @@ tags: [photo, compression, HEIC, Q70, PDF, PPTX, quality]
 
 原因是 agent 為保留原解析度、HDR／動態容器以及文件可讀性，自行採取保守 JPEG 方案，卻未先核對既有標準或說明差異。這是流程疏漏；不能歸因於使用者要求改標準，亦未證明 HEIC 做不到。
 
-93 張照片的動態影片後來已移除：621,707,529 → 363,959,922 bytes，靜態像素與 HDR gainmap 不變，全部雲端讀回通過。這仍是 JPEG Q90。本次更新記憶並核對舊參數，**未完成 HEIC Q70 重轉，也未重新替換 PDF／PPTX**；後續不能把記憶更新當成媒體已重做。回條見 `<workspace-root>/outputs/國防照片移除動態影片_20261011.json`，工作區為 `<user-documents>/Codex/2026-10-08/new-chat`。
+93 張照片先移除動態影片：621,707,529 → 363,959,922 bytes，當時仍是 JPEG Q90。後續已完成 HEIC Q70 重轉及 PDF／PPTX 重評估，以下為更新後狀態；不要再把舊「尚未重做」當成待辦。工作區 `<workspace-root>` 為 `<user-documents>/Codex/2026-10-08/new-chat`。
+
+## 2026-10-12 已驗證執行結果
+
+- 93 張照片已從保留的原始來源產生原解析度 HEIC Q70，363,959,922 → 231,154,703 bytes；保留主幹、ID／父目錄，改真實 `.HEIC` 副檔名。EXIF／ICC 與 HDR gainmap 資訊檢查通過；gainmap 重編不宣稱位元組相等，手機原生 HDR 未測。
+- 71 份既有 PDF 全部重評估、4,058 頁渲染，採用 55 份、16 份保留。照片及 PDF 這輪 148 份替換完整雲端讀回，原始來源仍保留。回條：`<workspace-root>/outputs/照片與講義依Q70重壓_20261011.json`。
+- 文件內嵌照片使用 JPEG／JPEG2000 與實際原生 HEIC `quality=0.7` 參考圖比較全圖 PSNR，允許最多低 0.25 dB，另設最低 32 dB；已採用文件的全部頁／投影片再前後渲染核對。這是可量測校準，**不是跨編碼器的感知品質等效證明**。不新增降採樣，文字、向量及可編輯結構保留。
+- 224 個 PPTX 上傳項目中 184 份採用並全投影片渲染通過；1 個捷徑另保留。平坦 logo／線稿、透明 PNG 使用無損或保留原編碼，不能只因是 JPEG 就有損重壓。原生 PowerPoint 動畫未測。
+- 教科書 PDF 試壓採用 1／4；若候選縮小不足 2%，保留原件，不為少量節省強制替換，也不宣稱未採用候選已完整渲染。後兩項回條：`<workspace-root>/outputs/剩餘檔案壓縮完成_20261012.json`。
 
 ## 格式依據
 

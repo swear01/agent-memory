@@ -2,13 +2,13 @@
 title: Google Drive 2026 年 10 月整理總結與保留邊界
 scope: domain
 status: verified-with-limits
-updated: 2026-10-11
+updated: 2026-10-12
 tags: [google-drive, cleanup, anime, mega, goodnotes, lda, sparse, motion-photo]
 ---
 
 ## 定位與偏好
 
-這是 2026-10-08 至 10-11 已授權整理的結案索引，不能當作後續刪除授權或即時容量。工作區 `<workspace-root>` 為 `<user-documents>/Codex/2026-10-08/new-chat`；詳細 JSON 回條保留在該工作區 `outputs/`，不把私人逐檔清單、Drive ID 或憑證放入共用記憶。
+這是 2026-10-08 至 10-12 已授權整理的結案索引，不能當作後續刪除授權或即時容量。工作區 `<workspace-root>` 為 `<user-documents>/Codex/2026-10-08/new-chat`；詳細 JSON 回條保留在該工作區 `outputs/`，不把私人逐檔清單、Drive ID 或憑證放入共用記憶。
 
 - 保留原本簡潔的名稱及資料夾結構；壓縮後同 ID、同名、同父目錄取代，不在旁邊另放「新版」或加長括號名稱。
 - 去重要兼顧程式、資料集分區及專案引用，不能只憑全域雜湊相同刪除。封存保留相對路徑，完整解壓與逐檔雜湊驗證、雲端讀回成功後才清來源。
@@ -43,9 +43,31 @@ GoodNotes 最終封存 2,181,076,835 bytes；使用 `7zz` 的 `-t7z -mx=9 -m0=lz
 
 `comments_classifier` 的 PR #2 已合併，master 為 `7c263d091d52a1c308547d5144ae2d1fcbcd2694`，repo 已重新封存，工作樹／任務分支已清。不要再次解除封存或重開審查。原 scikit-learn 0.22.1 與完整分析 pipeline 未測；`lda_abstract.py` 原本指定缺失的 `lda_model20.pickle`，不能默換成 10-topic 模型。
 
+## 2026-10-12 最後一批瘦身結案
+
+本批已完成，不能重開已完成佇列。329 個上傳檔案加 1 個捷徑全部核對，選定檔案由 40,020,825,685 → 11,907,706,461 bytes；扣除 3 個引用檔增加的 12 bytes，淨縮小 **28,113,119,212 bytes（28.11 GB）**。這是本批檔案大小差，不能與歷史批次容量直接相加，也不等於清空垃圾桶後的帳戶配額釋放。
+
+| 類別 | 結果 | 減少 bytes |
+| --- | --- | ---: |
+| 近代物理錄影 | 32／32 原位替換 | 24,503,395,438 |
+| 音遊譜面影片 | 36／36 原位替換 | 3,077,777,572 |
+| 教科書 PDF | 4 份試壓，採用 1 份；其餘 3 份縮小不足而保留 | 139,516,344 |
+| PPTX | 224 個上傳項目採用 184 份，保留 40；另 1 個 Drive 捷徑保留 | 289,365,790 |
+| WAV | 33 份試轉，採用 10 份無損 FLAC，保留 23 份 WAV | 103,064,080 |
+
+- 68 支影片使用 `hevc_videotoolbox` Q60、2 B-frames、停用軟體 fallback，最高 1280×720、不放大，保留原幀率及原 AAC 封包／時間戳。完整解碼、幀數／時間戳、音訊雜湊及品質抽樣通過。快速 seek 的不同 B-frame 不能當畫質退化證據，改用同一解碼幀索引比對。
+- PDF 採用的是 117 頁掃描解答，182,092,264 → 42,575,920 bytes；頁面、文字、內容串流、附件與渲染檢查通過。其餘 3 份試壓不足 2% 而保留；未採用候選不宣稱已完整渲染。教材與簡報採 [Q70 實測品質標準](../media/photo-compression-standard.md)，不是任意指定相同 JPEG Q 值。
+- 184 份採用簡報的所有投影片均以相同 LibreOffice 環境前後渲染，最低 PSNR ≥32 dB；非圖片部件保持位元組一致。平坦 logo／線稿及透明圖優先無損或保留原圖，某張 sponsor logo 因初次渲染低於門檻而恢復原 JPEG 後通過。Drive 檔名中的斜線僅在本機輸出路徑轉義，雲端名稱未改。
+- PPTX 保留 40 個項目包含：35 個未顯著縮小、3 個既有 ZIP／CRC 錯誤來源、1 個 Office owner lock、1 個相對路徑文字指標；不是 40 份都因壓縮無效。損毀來源雜湊與雲端一致，保留原件；Office 能否修復未測。
+- 33 個 WAV 都完成 FLAC level 12 試轉與解碼 PCM 雜湊比對。採用的 10 份同時更新 `DampTest.py`、`RevealVideo.tsx` 及素材對照表的相關引用；5 個網頁音效另以 Chromium 實際解碼，樣本差為 0。
+- 23 個 WAV 的準確狀態是「尚未確認替換後仍能正常使用，因此保留原格式」：17 個 Resolve／DRP 素材、5 個 pygame 1.9.6 音效、1 個譜面固定命名 `out.wav`。不能寫成 FLAC 已證實不相容，也不能僅因 codec 支援就改 DRP 的序列化格式資訊。
+- 每份採用檔案及 3 個引用檔均完整雲端讀回比對；全部目標另有最終 metadata 核對。原始來源保留本機；沒有新增清空垃圾桶或清除本機原件的授權。
+
+回條：`<workspace-root>/outputs/剩餘檔案壓縮完成_20261012.json`；逐檔證據在 `<workspace-root>/work/remaining-compression-20261012/`。原生 PowerPoint 動畫、Resolve 開啟／重連、上述保留 WAV 的實際消費端未測。
+
 ## 最新容量與後續驗證
 
-2026-10-11 18:17（臺灣）官方 `usageInDrive - usageInDriveTrash` 為 **108,106,120,357 bytes**。最後一批 ZIP、Minecraft 殘留及國防照片令非垃圾桶用量減少 1,227,459,392 bytes，與官方配額差值完全相符。這是當時快照，不是即時容量，也不代表清空垃圾桶或總配額釋放。
+最新已驗證快照為 **2026-10-12 02:19:49（臺灣）**，官方 `usageInDrive - usageInDriveTrash` 為 **79,318,268,341 bytes（79.32 GB）**。這是結案回條的量測時間，不是日後查詢當下的即時容量，也不代表清空垃圾桶或總配額釋放。先前 2026-10-11 18:17 的 108,106,120,357 bytes 已被本快照取代；檔案 `size` 差與 `quotaBytesUsed` 差可能不完全一致，不能硬湊成相同精確值。
 
 盤點須依檔案自己的 `ownedByMe`／`trashed`，不能因祖先已刪就排除其非垃圾桶子檔。全量基線加 Drive changes token 可續接盤點；批次 API 要逐份核對內層 HTTP 狀態及操作後 metadata，外層 HTTP 200 不等於全部成功。
 
