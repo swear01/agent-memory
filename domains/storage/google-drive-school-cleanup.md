@@ -2,7 +2,7 @@
 title: Google Drive 學校講義與學習紀錄整理完成紀錄
 scope: domain
 status: verified-with-limits
-updated: 2026-10-10
+updated: 2026-10-11
 tags: [google-drive, school, deduplication, 7z, powerpoint, git, videotoolbox]
 ---
 
@@ -10,7 +10,7 @@ tags: [google-drive, school, deduplication, 7z, powerpoint, git, videotoolbox]
 
 整理範圍為 Drive `document/學校講義`、`document/學習紀錄`。保留簡潔的原始名稱與資料夾結構；同內容選一份保留，不加長括號名稱。壓縮後直接更新原檔，保留 Drive ID、名稱及父目錄，不在旁邊留另一份新版。移除用可恢復垃圾桶；本次未永久刪除，也未清空垃圾桶。
 
-以下是 2026-10-09 至 10-10 的已驗證操作紀錄，不能當成往後的即時容量或繼續刪除授權。證據工作區 `<workspace-root>` 為 Mac 的 `<home>/Documents/Codex/2026-10-08/new-chat`。
+以下是 2026-10-09 至 10-11 的已驗證操作紀錄，不能當成往後的即時容量或繼續刪除授權。證據工作區 `<workspace-root>` 為 Mac 的 `<home>/Documents/Codex/2026-10-08/new-chat`。
 
 ## 2026-10-10 去重及文字封存
 
@@ -45,7 +45,7 @@ JPEG Q92、4:4:4、最長邊 2560；透明／平面 PNG 保留，GIF、影片、
 
 OOXML 處理教訓：ElementTree 把根節點寫成 `ns0:Types`／`ns0:Relationships` 曾使 LibreOffice 無法載入，序列化需保留正確預設 namespace。中文字型渲染用該程序的 `FONTCONFIG_FILE=/opt/homebrew/etc/fonts/fonts.conf`，未改全域設定。
 
-電腦視覺 `hw2_data.zip` 的 7z 測試僅在本機進行，**沒有上傳或取代雲端 ZIP**；不要把測試壓縮包當成已完成的雲端整理。
+電腦視覺 `hw2_data.zip` 的早期 7z 測試僅在本機；2026-10-11 已進一步完成全 ZIP 內容比對並依新授權將原 ZIP 移入垃圾桶，詳見下方。沒有把測試壓縮包上傳成另一份新版。
 
 ## 2026-10-09 環境與影片
 
@@ -56,4 +56,16 @@ OOXML 處理教訓：ElementTree 把根節點寫成 `ns0:Types`／`ns0:Relations
 
 主要回條均在 `<workspace-root>/outputs/`：`school-cleanup-result-20261010.json`、`school-text-archive-result-20261010.json`、`school-git-audit-20261010.json`、`school-presentation-replacement-20261010.json`、`cv-environment-cleanup-result-20261009.json`、`school-video-compression-result-20261009.json`。
 
-最新本機清單是當天盤點基線加上本次已驗證操作，沒有重新列舉無關雲端變更；若要現在的兩資料夾容量，重新盤點。原檔進垃圾桶與簡報同 ID 更新也不代表舊版本或帳戶配額已清除。不要重跑已完成佇列，下一輪刪除需依新的明確範圍執行。
+2026-10-10 的本機清單只接續當天基線與該批操作；2026-10-11 已另續接完整 Drive changes 並核對配額。兩者均為當時快照，若要現在的兩資料夾容量，重新盤點。原檔進垃圾桶與簡報同 ID 更新也不代表舊版本或帳戶配額已清除。不要重跑已完成佇列，下一輪刪除需依新的明確範圍執行。
+
+## 2026-10-10 至 11：PDF、簡報與國防照片續作
+
+- 生物科學通論 31 份 PDF：604,184,280 → 411,574,679 bytes；園遊會收據目錄內的 10 份生物學 PDF：659,085,984 → 541,382,363 bytes；國防科技考察心得：192,997,276 → 4,197,798 bytes。42 份均同 ID 原位更新，3,426 頁渲染／閱讀檢查及完整雲端下載比對通過。
+- 生物講義內 26 支影片全部降至不超過 1280×720、不放大；優先 `h264_videotoolbox Q50 B2`，不夠小時用 `libx264 CRF26 slow`。音訊 bitstream、幀數、時長與完整解碼已核對，視覺抽查可讀；不是原生 PDF reader 的內嵌播放實測，也不是將一般影片的 HEVC Q60 規則套到所有 PDF。
+- 昆蟲與人生 5 份、食用昆蟲學 22 份 PDF 共 632 頁；26 份縮小後原位替換，1 份未縮小而保留。另 3 份簡報共 251 張投影片原位替換；此批共減少 179,860,491 bytes，全部 PDF 頁及投影片已渲染，原生 PowerPoint 動畫／媒體播放未測。
+- `電腦視覺/hw2/hw2_data.zip`（159,555,475 bytes）已進 Drive 垃圾桶。ZIP CRC、59,488 個檔案的路徑／大小／MD5 全部對應到解壓資料夾，無缺失或內容不同；解壓資料夾保留，另有 53 個零位元組副本亦未刪。完整比對及後續 changes／檔案 metadata 回讀通過。
+- `國防科技/期中報告/raw` 剩餘 93 張 JPG：811,412,178 → 621,707,529 bytes（減少 23.4%），JPEG Q90，保留原解析度、原 ID／名稱／父目錄。先前與 `media/` 相同的 20 張 raw 副本已去重，不能把本次 93 張當成仍可整批刪除的重複圖。
+- 這 93 張實際含 HDR gainmap 與 Motion Photo MP4，並非只有靜態 JPG。重編主圖時逐段保留 EXIF／XMP／ICC，保留尾端 gainmap 與影片原位元組，更新 MPF 主圖長度與次圖位移；MotionPhoto 標記本身不足以證明影片存在，需讀完整容器。
+- 全部 gainmap／影片雜湊不變，附帶影片完整解碼，93 張更新後皆從雲端完整下載逐份比對。抽樣另用 ExifTool 獨立抽出 MPImage2／MotionPhotoVideo／EXIF／XMP／ICC 比對，並以原像素裁切檢視；最低 PSNR 36.63 dB。手機原生 HDR／動態播放未測，原照片仍保留本機。
+
+回條：`pdf-compression-completed-20261010.json`、`昆蟲與簡報壓縮完成_20261011.json`、`雲端硬碟整理結果_20261011.json`；最近整輪摘要見 [十月整理總結](google-drive-cleanup-202610.md)。容量是當時快照，下一次盤點仍須更新。
