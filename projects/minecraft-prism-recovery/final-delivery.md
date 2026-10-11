@@ -3,7 +3,7 @@ title: Minecraft Prism 復原最終交付與清理
 scope: project
 project: minecraft-prism-recovery
 status: completed
-updated: 2026-10-10
+updated: 2026-10-11
 tags:
   - minecraft
   - prism
@@ -72,3 +72,9 @@ tags:
 - 雲端 `recovery-info/restoration-index.json` 已保留 S4 並增補新 SkyFactory 4 至 56 筆；README、例外清單與盤點報告均更新並完整讀回。本輪暫存 originals／updated／updated-final 合計 2,855,046,673 bytes 已刪，證據與交付保留；不要重開已完成佇列或依賴已刪暫存路徑。
 
 查證入口：`<user-documents>/Codex/2026-10-08/new-chat/outputs/minecraft-compact-standard-audit-20261010.{md,json}`、`outputs/minecraft-computer-backups-trash-20261010.{md,json}`；同任務 `work/minecraft-compact-standard-20261010/` 下的 `cloud-replacements.json`、`updated-package-proofs.json`、`skyfactory-compact-proof.json`、`remaining-exceptions.json`、`documentation-update-proof.json`、`audit-report-cloud-proof.json` 與 `preset-cloud-copies-proof.json`。上方 Oct 7 的包數、容量及清單入口僅是歷史快照。
+
+## 2026-10-11：補清已刪祖先下的檔案級殘留
+
+Drive 的 `我的電腦/Minecraft Instances/.tmp/` 祖先雖已進垃圾桶，仍有 9,654 個檔案的自身 `trashed=false`，合計 878,199,268 bytes，仍占非垃圾桶統計。依使用者新授權，逐批以現行名稱／父目錄／大小／MD5 守衛後將這些檔案移入可恢復垃圾桶，每個 ID 都重新讀回 `trashed=true`；完整 changes 續接覆核為零殘留，未清空垃圾桶。
+
+本次只補清上述舊電腦暫存，不修改 SomethingWouldDisappear 的 MRPACK／世界、TJ TEST 保留決策或 SWOP／M5 使用中的實例；沒有再次啟動遊戲。查證 `<user-documents>/Codex/2026-10-08/new-chat/outputs/雲端硬碟整理結果_20261011.json` 及同工作區 `work/cleanup-cv-minecraft-defense-20261011/minecraft-trash-batches/`。
