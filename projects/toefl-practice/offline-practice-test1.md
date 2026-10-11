@@ -2,7 +2,7 @@
 title: TOEFL 2026 Practice Test 1 全科離線作答練習完成紀錄
 scope: projects/toefl-practice
 status: verified-with-limits
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # TOEFL Practice Test 1 全科版
@@ -13,7 +13,7 @@ updated: 2026-10-10
 - 最終檔案位於 `<user-documents>/Codex/2026-10-10/new-chat/outputs/`：`TOEFL_2026_Practice_Test_1_全科作答練習.html`、`TOEFL_2026_Practice_Test_1_全科離線練習包.zip`、`全科版使用說明.txt`、`全科作答畫面預覽.png`、原始 `toefl-ibt-full-length-practice-test1.pdf`。
 - HTML 自帶 43 個官方影音資源（34 個題目／提示檔、9 個說明檔），離線可用；ZIP 包含 HTML、說明與原始 PDF，已驗證解壓及內容位元組。
 - 原始 `完整互動版`、`含官方影音` 與 `閱讀介面參考版` 均保留。後續以「全科作答練習」為準，勿把第一輪閱讀介面當作最終版。
-- 原始碼基線在 `<task-root>/work/interface-source`；保留的 task worktree 在 `<worktree-root>/toefl-practice-<task-id>/interface-reference`，分支 `task/official-interface`，最終 commit `a74aac5`。核心檔案為 `practice.html`、`README.md`、`full-check.cjs`。此原始碼 repo 沒有 remote，只有本機提交，不能稱已推送或已有 PR。
+- 原始碼基線在 `<task-root>/work/interface-source`；全科初版為 `task/official-interface` 的 `a74aac5`。2026-10-11 最新修正版在 `<worktree-root>/toefl-practice-<task-id>/reading-cloze-repair`，分支 `task/reading-cloze-repair`，commit `c3e0dd7`。核心檔案為 `practice.html`、`README.md`、`full-check.cjs`、`cloze-check.cjs`。此原始碼 repo 沒有 remote，只有本機提交，不能稱已推送或已有 PR。
 
 ## 官方參考與實作範圍
 
@@ -40,3 +40,14 @@ updated: 2026-10-10
 - 組句答案正規化移除標點後可能留下尾端空白，造成正確句子被判錯；`normSentence` 最後再 `.trim()`，以全 10 題答案驗證。
 - CSS 的 `.btn { display:flex }` 曾蓋過原生 hidden 屬性，須保留 `[hidden]{display:none!important}`。逾時時要關閉尚未確認的對話框，避免確認後再跳一題。
 - 匯入音訊須先完整驗證／解碼再變更狀態；IndexedDB 以 transaction 完成作為持久化成功證據；晚到的非同步貼上不得改動已逾時或切換的題目。
+
+
+## 2026-10-11 填字題修復與答後估分要求
+
+- 使用者要求作答留存，完成後由 AI 讀取完整備份，依 ETS 新版 rubric 分析作文、口說及客觀題型表現，提供 1–6 與 0–120 的診斷估分範圍。頁面沒有自動換分不等於拒絕 AI 評估；不可捏造這份固定題本的 ETS 原始分數等化表。
+- Module 1 實際出現 Q1–10 全空白但已完成模組，起始畫面曾直接顯示 Q11。可重現原因是舊 `readingStep:1` 被當成新單元游標。尚未開始且填字全空白的閱讀模組，`normalizeState` 現在把位置回到 0；已開始或已完成的合法游標保留。
+- 兩模組原先只有寬度不同的灰色輸入框，欠缺明確字母格。現在按缺字數繪製字母格／底線，提供相同 maxlength 與 aria-label。未填完按 Next 先警告；模組結束確認列出全部未作答題號。
+- 原生 Brave 作答先暫停並匯出完整 ZIP，再解除受影響 Module 1 完成狀態並回到填字頁；既有答案與兩模組剩餘時間不變，維持暫停讓本人恢復。補作中斷紀錄留在 `<task-root>/outputs/TOEFL_填字修復作答紀錄_20261011.txt`，估分不能當作未中斷的標準施測。
+- 原生頁面 `pagehide` 會 `save()`：直接改 localStorage 後 reload，可能被舊記憶體 state 覆寫。應重載新版後走既有 JSON 匯入流程，同步更新記憶體 state、儲存及畫面。
+- `cloze-check.cjs` 通過兩模組 20 個字母格數、舊游標修復、跳題／模組漏答警告、原生打字與長度限制、重載、合法已開始游標保留、逾時關閉確認框、手機排版。另以實際備份在隔離瀏覽器驗證答案／計時保留；`full-check.cjs` 再次通過全 97 任務、84 客觀答案、23 播放與 11 錄音及完整備份流程。
+- 同路徑 HTML 及完整離線 ZIP 已替換、ZIP 三檔內容逐位元讀回相符；題目、答案與全部內嵌媒體未改動。證據在 `<task-root>/work/cloze-verification/`、`<task-root>/work/cloze-full-verification/`。新增示意圖 `outputs/填字題修復畫面.png`。
