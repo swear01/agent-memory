@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-08
+updated: 2026-10-12
 tags:
   - hapi
   - fork
@@ -165,3 +165,7 @@ Project-group keyboard handlers must ignore events whose target is a child contr
 - #1822 的 Cursor ACP wire/effort 實作已經由合併的 #1819 納入 main。直接重整舊 PR 會留下重複 `findCatalogBaseKey`，造成 typecheck 失敗；先檢查已合併 PR 的原始 head 與最終程式碼，再判斷是否過時。
 - #1436 的失敗語音傳送 recovery 必須區分「沒有 live composer」與「使用者已把 live composer 清成空字串」。後者不能回退到 debounce 尚未更新的 persisted draft，否則已刪除的 follow-up 會復活。使用真實 `useComposerDraft` 的 hydrate → clear → late failure → unmount regression 已驗證此差別；standard/realtime 共用 `recoverFailedVoiceSend`。
 - 大量訊息的 browser fixture 在受限 CPU 上可能因 render 超過 polling budget 而失敗，即使 trace 最終讀到正確 row count。保持功能 assertions，給足有證據支持的等待時間，並在足量 ingests 後停掉有限驗證用 timer 再測 viewport；另一個 continuous-streaming scenario 仍需保留。未修改 upstream 的同一 scrollbar assertion 也失敗時，應記錄 matching baseline，不能把它當成 feature regression。
+
+## iOS cell recycling：先查維護版現有 patch
+
+PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTranscriptPresentationTests.testPlanPublicationUpdatesRecyclingAndInspectorPreserveTheDocumentAndAnchor` 的 cell 回收斷言失敗。相同測試已在維護版 `v0.30.7.4` 的 `tools/maintenance/releases/v0.30.7.4/patches/0032-test-ios-wait-for-transcript-cell-recycling.patch` 修正：捲走後等 `cellForItem == nil`，捲回後等 `cellForItem != nil`，取代固定 150ms／200ms sleep，保留回收、高度與閱讀位置 assertions。遇到此失敗時，先比對 audited patch queue，避免重做已有修法。這是可重用的候選修法，不代表尚未套用它的 PR 已通過原生 CI。
