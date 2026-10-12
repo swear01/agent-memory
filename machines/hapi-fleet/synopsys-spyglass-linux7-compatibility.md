@@ -1,49 +1,92 @@
 ---
-title: DVLab fleet 的 Synopsys SpyGlass X-2025.06 與 Linux 7 相容性
+title: DVLab SpyGlass Linux 7、NSS 與 snpsmem 相容性
 scope: machines/hapi-fleet
 project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-05
-updated: 2026-09-16
+updated: 2026-10-12
 tags:
   - synopsys
   - spyglass
   - ubuntu
   - linux
   - eda
+  - nss
+  - snpsmem
 ---
 
-> 2026-09-16 操作介面更新：本文保留舊版部署與驗證紀錄；當時「登入直接執行、launcher 自動 source CIC」已不是現行學生流程。現在於 Bash 手動 `source /apps/eda/<vendor>/<tool>.sh <version>`，工具入口、nWave、文件偏好及原生相容性未完成項目以 [EDA 安裝盤點](eda-install-inventory.md) 為準。
+## 2026-10-12 現況
 
-# 已確認根因
+SpyGlass Y-2026.03 在 Mazu、Cthulhu、Valkyrie、Zeus 已保留原廠 `OPTIMIZE_PERF = snpsmem`，修正主機 NSS 查詢順序後通過原生啟動、GUI、RTL 編譯與 lint。這次沒有把 2026.03 改成 `runtime`，也沒有修改共享 vendor binary、授權、compiler 或重啟 HAPI。
 
-- 五台 DVLab 主機升至 Ubuntu 26.04、Linux kernel 7 後，SpyGlass X-2025.06 的 platform selector 與 bundled Perl 只辨識 Linux 2–6，因而回報 `Unknown platform: Linux-7...`。
-- 共用設定原本使用 `OPTIMIZE_PERF = snpsmem`；其 `check.Linux4` 在 Ubuntu 26.04 / glibc 2.43 會 SIGSEGV。實測 `runtime`、`memory`、`tcmalloc` 均可運作，部署採用 `runtime`。
-- Vendor `sg_shell` 以 `/bin/sh` 執行，卻使用 Bash 專屬的 `${PIPESTATUS[0]}`，在 Ubuntu 的 dash 下會出現 `Bad substitution`。
+| 主機 | passwd／group 的來源順序 | 狀態 |
+|---|---|---|
+| Mazu、Cthulhu、Valkyrie | `files nis sss systemd` | 已部署並驗證 |
+| Zeus | `files nis systemd` | 已部署並驗證，保留 NIS-only |
+| Athena | 尚未核對回機後設定 | 送修紀錄仍有效，live HAPI 離線；待回機同步，不能宣稱五台完成 |
 
-# 已部署解法
+Oracle 的帳號來源只有 `files`，且沒有這套 SpyGlass 安裝；Mac／Windows 不適用 Linux NSS 修正。同步的是讓 `systemd` 排在原有 NIS／SSSD 後方的規則，不能把有 `sss` 的完整檔案盲目複製到 Zeus。
 
-- 共用安裝的 standard environment、主要 bundled Perl 與選配 SpyGlass-VCS bundled Perl 均加入 Linux 7 判斷。
-- 共用 `sg_shell` 改由 Bash 執行，allocator 設為 `runtime`。
-- 2026-09-14 起五台入口是 `/apps/bin/spyglass` 與 `/apps/bin/sg_shell`（舊 `/usr/local/bin` 同名檔已刪）；launcher 會在子程序內載入共用 SpyGlass 與授權環境，再執行 vendor binary。
-- 被修改的五個共用原始檔已備份在 `<shared-spyglass-root>/.dvlab-backups/20260905-spyglass-linux7/`。
+## 根因與獨立重現
 
-# 學生使用方式
+Mazu 使用 Ubuntu 26.04、kernel 7、glibc 2.43、libnss-systemd 259.5。GDB 在實際 `check.Linux4` 中抓到：
 
-- GUI 使用小寫命令 `spyglass`；CLI 或批次執行使用 `sg_shell`。
-- 現在先於 Bash 執行 `source /apps/eda/synopsys/spyglass.sh <version>`，再使用 `spyglass` 或 `sg_shell`；可用版本以 `@ver` 查詢。環境脚本一併載入授權設定。
-- GUI 仍需既有的圖形桌面、VNC 或 X11 forwarding；純文字 SSH 不會自行產生顯示環境。這是遠端 GUI 的一般條件，不是額外的 SpyGlass 設定。
-- 若舊 shell 曾快取失效路徑，開新 shell 即可；也可在 Bash/zsh 執行 `hash -r`，或在 tcsh 執行 `rehash`。
+```text
+SML::SMLUtil::sml_get_user_name()
+  -> __getpwuid_r()
+  -> _nss_systemd_getpwuid_r()
+  -> glibc __malloc_usable_size() / musable()
+  -> SIGSEGV（SpyGlass exit 255）
+```
 
-# 驗證邊界
+`snpsmem` 的 `libreplacemalloc.so` 替換 `malloc/free/calloc/realloc`，但不提供相符的 `malloc_usable_size`。NSS 的 systemd 模組呼叫該函式時，落到 glibc 實作並解讀非 glibc heap 的記憶體，因此崩潰。這是 allocator 介面缺口與系統函式庫互動，不能只籠統歸因為新版 glibc 或 shell 污染。
 
-- Mazu、Cthulhu、Athena、Valkyrie、Zeus 的 Bash、zsh、fish login shell 在 2026-09-14 後解析到 `/apps/bin` 的 `spyglass` 與 `sg_shell`。
-- 五台均以實際 `sg_shell` Tcl `compile_design` 完成最小 Verilog smoke test 並正常退出；Mazu 另以移除既有 tool 與 license 環境變數的乾淨環境，直接呼叫 launcher，得到 0 fatal、0 errors、0 warnings。
-- `spyglass -help` 可正常完成，且不再出現 unknown-platform 或 internal error；驗證後沒有殘留 SpyGlass 程序。
-- 未更動授權設定、系統 compiler 或 HAPI process。Synopsys 支援矩陣未正式列出 Ubuntu 26.04，因此大型實際專案仍應保留 smoke-test 觀察。
+- 獨立 C 程式加上這個 vendor `LD_PRELOAD` 後，查詢本機 root 正常；查詢網路帳號可重現 SIGSEGV。64-byte `malloc` 搭配 glibc `malloc_usable_size` 得到 0，也不符合正確配置器應有的結果。
+- 清空登入環境仍會 exit 255；`SYSTEMD_NSS_DYNAMIC_BYPASS=1`、`SYSTEMD_BYPASS_USERDB=1` 與兩者合用均沒有修好這次啟動。
+- 隔離測試使用 Mazu 原本的全部 host libraries 與 glibc 2.43，只將 NSS 的 systemd 排到後方即可保留 snpsmem 跑通，之後才部署到主機。
+- 現有 Rocky 8 `docker-shell` 亦保留 snpsmem 通過 GUI 與兩個 lint goals，可作為已驗證的環境替代路徑；不用降級主機 glibc。
 
-# 維運規則
+## 部署與還原原則
 
-- 若同類錯誤重現，先確認 `command -v spyglass`、`command -v sg_shell` 與 kernel major version，再檢查共用 allocator 設定；不要要求學生各自維護 shell profile。
-- 完整操作紀錄與現況仍以 DVLab MIS Google Drive runbook 為準；shared memory 只保存可重用的根因與相容性決策。
+- 使用既有 `su_*` SSH 管理別名與 sudo；先備份 `/etc/nsswitch.conf`，保存已移除密碼欄位的帳號／群組解析基準。
+- 只原子更新 `passwd`、`group` 兩行，把 `systemd` 移到該行最後，保留 `files` 及原本 NIS／SSSD 的相對順序；`shadow`、`gshadow`、DNS 與 PAM 均未修改。
+- 有啟用 nscd 的主機，在驗證前後只 invalidate passwd／group cache，避免舊快取掩蓋行為。保留備份與暫時還原計時，等帳號解析、原生工具及新的 SSH／sudo 都通過才取消計時。
+- 本次備份在各主機 `/var/backups/spyglass-nss*-20261012-*/nsswitch.conf.before`。還原時先核對該主機實際備份，使用單一確定路徑，不能直接將萬用字元當作還原來源。
+
+```bash
+sudo cp -a <verified-backup>/nsswitch.conf.before /etc/nsswitch.conf
+# 僅在 nscd 已啟用時刷新這兩個 cache。
+sudo nscd -i passwd
+sudo nscd -i group
+```
+
+## 已驗證範圍與限制
+
+- Mazu 690、Cthulhu 698、Valkyrie 689、Zeus 676 項帳號／群組解析檢查，總計 2,753 項，修改前後一致；新的使用者 public-key SSH、管理員 SSH 與 sudo 均通過。
+- 四台分別在乾淨的新 SpyGlass 2026.03 程序中讀取自己的 `/proc/<pid>/maps`，確認實際載入 `libreplacemalloc.so`，再跑 RTL `compile_design` 與 `lint/lint_rtl`；均為 0 fatal、0 errors、0 warnings。
+- 另一次 `lint/lint_rtl_enhanced` 四台均為 0 errors、1 個 `CMD_overloadrule01` 規則設定 warning，指向 W339 的 overload 被忽略。不能宣稱 enhanced lint 零 warning。
+- 原生 GUI 視窗均驗證成功：Mazu 使用 Xvfb，另外三台透過既有 SSH X11 forwarding 顯示到 Mazu 的 Xvfb。其他主機缺少 `xvfb-run` 時不必安裝新套件；先確認既有 X11 路徑，轉送認證失敗須重試確認，不能把顯示問題當成 allocator 問題。
+- 驗證後沒有殘留測試 SpyGlass 程序或啟用中的還原 timer。
+- 未測完整大型專案、password-based PAM 登入、重開機或使用者的實際遠端桌面。NSS 順序調整只避開已驗證帳號的觸發點，沒有補齊 vendor allocator API；其他仍經過 systemd 的 NSS 查詢仍可能觸發同一缺口。
+
+## 現行使用方式
+
+於新的 Bash shell 手動選版本，環境腳本會載入 vendor 授權設定：
+
+```bash
+source /apps/eda/synopsys/spyglass.sh 2026.03
+spyglass
+# 批次使用 sg_shell。
+```
+
+GUI 需要既有桌面、VNC 或 X11 forwarding。工具入口、其他版本與安裝狀態參考 [EDA 安裝盤點](eda-install-inventory.md)。
+
+## 2025.06 的歷史修補（2026-09-05 至 09-16）
+
+以下保留舊版決策，不能當成 2026.03 的目前 allocator 設定：
+
+- 五台 Ubuntu 26.04／Linux 7 的 SpyGlass X-2025.06 platform selector 與 bundled Perl 原本只辨識 Linux 2–6，出現 `Unknown platform: Linux-7...`；共享 standard environment、主要與選配 SpyGlass-VCS bundled Perl 加入 Linux 7 判斷。
+- 當時 snpsmem 會 SIGSEGV，`runtime`、`memory`、`tcmalloc` 的 smoke test 可運作，2025.06 部署選擇 `runtime`；這次沒有改回該版本的 allocator。
+- Vendor `sg_shell` 使用 Bash 專屬 `${PIPESTATUS[0]}`，卻由 dash 執行而報 `Bad substitution`；舊版入口改由 Bash 執行。被修改的共用檔案保留於 `<shared-spyglass-root>/.dvlab-backups/20260905-spyglass-linux7/`。
+- 當時五台 shell command resolution、實際 Tcl `compile_design` 與 help smoke 均通過。舊 launcher 自動 source CIC 的學生操作描述已被手動 `source /apps/eda/<vendor>/<tool>.sh <version>` 流程取代，不能恢復登入時固定載入整套環境。
