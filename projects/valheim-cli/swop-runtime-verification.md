@@ -1,11 +1,40 @@
 ---
-title: Valheim CLI Bridge 0.1.0 SWOP runtime verification
+title: ValheimCli SWOP runtime and release verification
 scope: projects/valheim-cli
 status: verified-with-limits
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 
 # SWOP 實機結果與限制
+
+## 目前交付與實測：2026-10-12
+
+- C# Bridge / Thunderstore **0.5.0**、原生 Rust CLI **0.6.0**，兩者版本獨立。GitHub main `db97d123151fe8dce41930251917eef8db2f0d26`；PR #13 已合併，四平台 CI run `38168482002` 通過。
+- [Thunderstore ValheimCli](https://thunderstore.io/c/valheim/p/swear01/ValheimCli/) 已上架 0.5.0；Mods / Tools / Client-side / AI Generated 分類已核對。公開 ZIP 與實測包雜湊一致。主列表曾短暫快取舊版本，版本頁與更新後 API 已確認 0.5.0。
+- [GitHub v0.6.0](https://github.com/swear01/valheim-cli/releases/tag/v0.6.0) 已由 prerelease 改為正式 **Release / Latest**，latest API 讀回確認；9 個附件下載雜湊核對相符。原生 CLI 提供 Windows x64、Linux x64、macOS ARM64 / x64；不是所有平台都已遊戲實測。
+- 模組新增同一 loopback listener 上的 HTTP/1.1 `POST /v1/command`，預設埠 28761、需本機 token，不提供 CORS。原生 CLI 保留 framed TCP；兩種傳輸共用操作、權限與重複寫入 UUID 防護，不必把 CLI 改成 HTTP。
+- 模組、原生 CLI 與 Skill 的 HTTP 操作均不需要 Node.js。Agent 可使用現有 PowerShell / curl，CLI 是可選工具。`npx skills add` 的 Node 需求只屬 skills.sh 安裝器；手動下載／複製 SKILL.md 也可安裝，沒有新增 npm 發布。
+- [valheim-control Skill 頁](https://skills.sh/swear01/valheim-cli/valheim-control) 已能顯示實際 SKILL.md；乾淨安裝與原檔比對通過，同份 Skill 包含於社群 ZIP 與四種 CLI ZIP。個別 skills.sh 頁展示 SKILL.md，獨立 README 不會取代它；使用者決定暫不增加介紹或 skills.sh.json。這是本專案的展示決策，不是所有 Skill 的規則。
+
+### SWOP 真實遊戲測試
+
+Windows、Valheim 1.0.17 / network 40、BepInExPack 5.4.2351；由 v20 測試 profile 複製隔離環境，使用 CLITest1010 角色與 CLITest1011 世界。遊戲動作經 Skill 的 HTTP 客戶端呼叫原版方法／GUI 按鈕事件，沒有模擬 OS 鍵鼠；正式世界未進入，來源 profile DLL / cfg 雜湊未改變。
+
+- 通過主選單、角色／世界選擇、GUI 按鈕發現、過期 UI ID 與遮擋拒絕；500 ms 移動 lease 到期、實際位移 1.673 m、轉向 30°、背包及移動閘門、直接 console help、玩家查詢、緊急停止。
+- 通過背景持續執行、手動暫停時拒絕輸入及繼續、GUI 儲存／登出／退出；HTTP 與 CLI 重複寫入 UUID 跨傳輸拒絕。
+- 100 次循序讀取全通過，中位 13 ms、p95 17 ms、最大 19 ms；8 次並發讀取全通過。這是同機短測讀取延遲，不代表 Agent 整體延遲。
+- 校準過的桌面觀察器於完整啟動至退出約 2 分 40 秒內取得 10,265 筆樣本：前景變更、游標限制變更、新可見 console 視窗皆 0。BepInEx Error / Exception 行數 0；退出後程序與 listener 皆已停止，臨時觀察器／排程已移除。
+- 世界載入時有 4 次唯讀查詢因 2 秒主執行緒佇列期限回覆「Expired before execution; action cancelled」，載入完成後恢復；等待 ready 再重試唯讀。不確定是否執行的寫入不可盲目重送。第一次測試 harness 25 秒期限短於 launcher 的 30 秒等待，調為 60 秒後完整重測，非模組故障。
+
+未驗證：多人／dedicated server、長時間耐久、全部戰鬥／建築／農作動作、全部第三方 GUI、Linux / macOS 真實遊戲、一般桌面啟動或所有輸入裝置。此次也沒有重建 QoL 模組包，不得據此宣稱最新包版本或完整自主遊玩。
+
+社群 ZIP SHA256 `369cf0778a63325b5435638010048b7305519e6ca7eed0f529e0cbff681e38a6`；實測／公開 DLL SHA256 `2938893c136964609cd0dd857598bdd8a4393b69ac1855638d8f6e7be1c0d7e2`。
+
+證據：`<project-root>/outputs/http-live-0.5.0/verification.json`、`outputs/skill-http-0.5.0/{verification,publication-verification,release-status-verification}.json` 與 `outputs/skill-http-0.5.0/public-readback/`。原始日誌、截圖、本機憑證與私人路徑不進公開記憶庫。
+
+## 歷史：0.1.0，2026-10-10
+
+以下是當時的 Node CLI 與功能限制，不代表目前原生 CLI 的需求或功能。
 
 2026-10-10 在 SWOP 的 Windows、Gale 1.23.1、Valheim 1.0.17、Node 24.19.0 實測 GitHub `swear01/valheim-cli` 的 CLI / ValheimCliBridge 0.1.0。以 Gale 複製 `Valheim-QoL` v20 為 `Valheim-CLI-Test-v20`，新增獨立角色／世界 `CLITest1010`，未進入正式世界。CLI 從交付 tgz 本機安裝，沒有 npm 發布；測試未變更 CLI 原始碼。
 
