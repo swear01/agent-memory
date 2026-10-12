@@ -29,4 +29,5 @@ tags: [日文, 漢字, 練字紙, 一字二詞, 單行排版]
 - 原版與兩行版分別保留於 `<task-workspace>/work/previous/` 及 `work/previous-two-lines/`。工作目錄為 `<user-documents>/Codex/2026-10-11-new-chat/`。
 - 已更新 Google Drive 課程資料夾 `document/學校講義/碩一/日文二上/` 的同名 PDF；API 重新下載後，遠端、兩個工作目錄及 DriveFS 的 SHA-256 一致。
 - 最終 PDF SHA-256：`e58110d0acb601d9a807e629a3a1bc5499dd7d1fe3be5c4c493a99189d587840`。
+- 2026-10-12 另依使用者要求，把同一份 28 頁第二冊 PDF 放到 Google Drive `document/學習紀錄/碩一/日文二上/`，與當日 15 頁片假名單字修正版放在一起；兩份均從遠端重新下載核對，內容雜湊及頁數與本機最新版一致。
 - 第一冊與片假名未修改；沒有重新送印，實體列印效果尚未驗證。

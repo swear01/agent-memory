@@ -45,6 +45,7 @@ tags: [日文, 片假名, katakana, 練字紙, 官方詞表, 雙面列印]
 - 修正版 PDF SHA-256：`4ffbc3a3044a6872d0c0c7f6b01da8b8fa2dae3679238c099dc8a1914241cceb`。
 - 已逐頁解析 15 頁 PDF 的 ActualText 並與 manifest 對照：313 行、313 種拼寫、無重複拼寫；原詞表、中文、順序及不同拼寫全部保留。已檢查全部頁面縮圖及最後一頁版面，兩處交付 PDF 雜湊相同。
 - 產生器已移除補詞邏輯，頁數按每頁 22 行計算，並斷言每種拼寫恰出現一次。修正版未重新列印。保留既有單假名及漢字練字紙；不要拿舊生成器覆蓋這版。
+- 2026-10-12 依使用者要求，將 15 頁修正版 PDF 放到 Google Drive `document/學習紀錄/碩一/日文二上/`，並從遠端重新下載；頁數與 SHA-256 均吻合。使用者不需要此次去重前的備份，`<user-documents>/Codex/2026-10-12/new-chat-2/work/before-dedup/` 已移到垃圾桶；不得再把它當作需保留的工作備份。
 
 列印機的紙匣、IPP 與完成判定參照 `machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print.md`。這次列印授權只限一份，不代表以後可自行重印。
 
