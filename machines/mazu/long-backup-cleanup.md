@@ -5,7 +5,7 @@ machine: mazu
 tags: [backup, archive, venv, conda, git, cmake, deduplication]
 status: active
 created: 2026-09-04
-updated: 2026-09-28
+updated: 2026-10-12
 ---
 
 # Mazu 長備份可重建資料清理邊界
@@ -152,6 +152,10 @@ logical／9.8 GiB archive heuristic。規則只含 `CACHEDIR.TAG` tree、pip/npm
 cache、VS Code server/cache、GPU compute cache、Python bytecode、pytest cache 與明確 OS
 測試垃圾；不含 `node_modules`、env、build、log、dataset/model、Trash、AppleDouble 或泛稱
 `tmp/swp/core`。後者仍可另行審查，但不可混入 strict-safe 數字。
+
+以下 NSS 順序是 2026-09-04 歷史快照。2026-10-12 Mazu 為修復 SpyGlass snpsmem
+啟動，已將 passwd/group 改為 `files nis sss systemd`，詳見
+[SpyGlass NSS 修復](../hapi-fleet/synopsys-spyglass-linux7-compatibility.md)；不要依此舊快照還原順序。
 
 2026-09-04 在 Mazu 套用帳號活動 gate：NSS 順序是 `files systemd nis sss`，NIS domain
 為 `ee.ntu.edu.tw`、server 為 Zeus。仍存在於中央身分來源的 `dvlab`、`chinyi0523`、
