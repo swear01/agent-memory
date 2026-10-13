@@ -1,13 +1,15 @@
 ---
-title: "Valheim Duo QoL V32：營火 RGB 調暗與正式包基底"
+title: "Valheim Duo QoL V32：營火 RGB 調暗歷史證據"
 scope: projects/valheim
 status: verified-packaging-runtime-partial
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
-# 正式交付與續作基底
+# V32 歷史交付與營火修正
 
-截至 2026-10-12，最新正式交付為 `Valheim-Duo-QoL-v32.r2z`，profile 名稱 `Valheim-Duo-QoL-20261012-v32`。續作直接讀 V32 與其 lock，不要退回 V20、V27 或 V31。檔案位於模組包工作目錄的 `outputs/`。
+2026-10-13 續作基底已更新至 v41，見 [目前交付與私人雙人設定](duo-qol-current-release.md)。以下只保存 V32 當時的營火修正證據，不代表目前最新版本。
+
+2026-10-12 當時的正式交付為 `Valheim-Duo-QoL-v32.r2z`，profile 名稱 `Valheim-Duo-QoL-20261012-v32`。檔案位於當時模組包工作目錄的 `outputs/`。
 
 - 完整包：`Valheim-Duo-QoL-v32.r2z`，22,595 bytes，SHA-256 `4a176dfc6887ab6a440cabe8c471d417e475fea548196235e6540f81d48f61c3`。
 - 版本／來源／雜湊：`Valheim-Duo-QoL-lock-v32.json`。
