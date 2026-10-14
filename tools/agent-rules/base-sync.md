@@ -5,7 +5,7 @@ tool: agent-rules
 status: active
 confidence: high
 created: 2026-08-20
-updated: 2026-09-05
+updated: 2026-10-14
 tags:
   - agent-rules
   - AGENTS.md
@@ -87,3 +87,37 @@ exact lexical query plus a structured query and source readback.
 `agents_rule init --force` only creates or replaces the managed block. If an
 existing `AGENTS.md` has an older unmanaged copy of the rule outside that block,
 replace the stale wording separately; otherwise Pi still reads both versions.
+
+# Global instructions and fleet deployment
+
+The complete global instruction file has a separate canonical source:
+`<transfer-MAC-root>/stow/agents/.agents/AGENTS.md`. On Mac, the global
+`~/.agents/AGENTS.md` links to this file; Codex, Claude, Gemini, OpenCode and Pi
+use links to the global file. The base template is in the shared-skills
+submodule at `<transfer-MAC-root>/.skillshare/skills/agent-rules/templates/base.md`.
+
+Rules outside `agents_rule-base`, including `Local Preferences and Tools`,
+are also shared across agents and can be deployed across machines. They do not
+have to move into the base merely to support fleet deployment. However,
+`agents_rule update-all` replaces only the managed block and leaves these
+outside rules untouched. Git push publishes the source; it does not apply the
+new global rule on independent hosts. Deploy the changed rule separately,
+preserve other host-specific content, then read it back and verify agent links
+on each host. Write a shared NFS source once and verify every alias separately.
+
+The user-approved concise rule is:
+
+```text
+Auto-push and verify task commits; sync memory via ~/agent-memory, then refresh and verify QMD.
+```
+
+For memory synchronization, inspect the configured shared-memory repository;
+the local Codex note directory lacking a remote is not a synchronization blocker.
+QMD indexing, Git publication and fleet deployment are distinct outcomes.
+
+The 2026-10-14 deployment snapshot verified the shortened rule and all five
+agent links on Mac, mazu, cthulhu, valkyrie, zeus and oracle. Athena's shared
+source was updated but its SSH endpoint refused connections, so direct host
+verification remained pending. Swop was not updated: external SSH refused
+connections and its last known LAN endpoint timed out. Do not turn this
+snapshot into an all-host completion claim; recheck reachability before retrying.
