@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # 已驗證線索；根因尚未確認
@@ -24,6 +24,7 @@ updated: 2026-10-13
 - 使用者最新決定：暫停處理永久固定 Standard，不建立強制啟動捷徑、不反覆改寫設定或修改 Discord 程式；保留既有 Port 與音訊句柄監測。只有新的可處理異常或有效對照結論才通知，不因下次設定仍是 Experimental 重複提醒。
 - 10/12 晚間的新行程再次重現累積：23:01:43 WebRTC 明確記錄 `Creating audio engine: experimental`，23:02:35 開啟 PHL 播放及 AM310 錄音；同一 renderer 在 23:04–10/13 00:39 共 95 分鐘，句柄 1737→8525，TCP1/UDP1，PrivateMB503.7–584.8 有波動。23:44:21 與 23:46:59 的兩份 CSV 相隔 157.7 秒，Key3387→3537，新增 150 個 trim 後 Handle+Name 配對；再到 00:40:41 約 53.7 分鐘，Key3537→7233，新增 3696 對，兩次比較均未觀察到舊配對移除，仍集中 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 三組 Render/Properties，後段各增 1232。最後枚舉 8574、鄰近行程讀值 8573，相差 1，且 298 個 Unknown type，不能宣稱同一瞬間所有句柄均可見或已完整分類。audiodg 新行程 Key29 持續約 95 分鐘平台，FxProperties 自首次基準即有 4 個且未新增；沒有新 Tcpip 耗盡。這確認換新行程後相同現象復發；前次 Standard 的持續通話未驗證，本次通話連續性亦未獨立核實，不能做有效 Standard/Experimental 因果比較、指認驅動或連到 Port 根因。證據存於 <workspace>/outputs/port-monitor/discord-recurrence-20261012-230141.json 與帶時間的 discord-26912-*.csv；不自動重啟或改設定，後續僅通知實質惡化或有效對照結論。
 
+- 10/15 取得同一行程的自然對照：renderer PID13856 / StartTime00:19:08（實際引擎 experimental）在 00:44–01:34 的 50 分鐘，總句柄1475→6569，約101.9個/分鐘。renderer 日誌於01:37:43明確記錄語音 RTC_CONNECTED→DISCONNECTED；WebRTC同時完成錄音、播放與loopback停止，確認當時語音連線與音訊處理均已停止；使用者操作來源未核實。隨後01:39–02:19連續醒後40分鐘，總句柄6781→6866，範圍6769–6880，約2.1個/分鐘，UDP0。02:21:59 CSV列數與擷取前後總數均6866，Key5550，仍有289個Unknown type；三組既有Render/Properties分別1830/1830/1829個，與01:25相比各新增455且既有配對未移除，所選PHL播放及AM310錄音Properties的3個句柄則已移除。這支持句柄快速累積與Discord語音/音訊活動相關，並顯示斷線後既有累積尚保留；不能宣稱特定驅動、Experimental因果、永久修復或Port耗盡根因。40分鐘平台證據屬總句柄，Key分類僅有斷線後單份快照，不能稱Key已驗證30分鐘平台。後續以02:21:59快照追蹤；不重複通知此結論或自行重啟。證據：<workspace>/outputs/port-monitor/discord-control-20261015-013743.json、discord-passive-20261015-022159.json及其CSV。audiodg同PID/StartTime Key有釋放與32–44波動，FxProperties回到0；無新Tcpip事件。
 - 2026-08-01 至 09-26 的 System 日誌有 Tcpip 4231 共 16 筆、4266 共 19 筆。事件 XML 的 Execution ProcessID=4 是記錄事件的系統行程，不能當成洩漏來源 PID。
 - IPv4/IPv6 TCP/UDP 動態範圍均為 49152–65535；IPv4 只有 50000–50059 的 60 個動態埠被預留，沒有發現大量預留或縮小範圍。
 - 09-04 23:15:17 完整啟動（Kernel-Boot 27=0x0）後，23:29:33 即出現 UDP 耗盡；當晚另一次完整啟動後約 17 分鐘出現 TCP 耗盡。不能將問題歸結成「只有連續開機十天才發生」。
