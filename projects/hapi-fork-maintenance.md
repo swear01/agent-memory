@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-12
+updated: 2026-10-14
 tags:
   - hapi
   - fork
@@ -177,3 +177,8 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - UIKit 自 iOS 15 起，`UICollectionView.cellForItem(at:)` 可回傳尚未顯示、留在 prepared-cell cache 的非可見 cell。單靠加長等待不能證明 cell 已回收。若測試目標是強制驗證回收／重建，僅在該 fixture 關閉 `isPrefetchingEnabled`，再保留 nil／重建、高度與閱讀 anchor assertions；產品預取不需改動。模擬捲走時也要像捲回一樣通知 `scrollViewWillBeginDragging`，否則 renderer 保存的 reading anchor 可能在 snapshot 更新後把 viewport 捲回，讓 nil 等待一直失敗。閱讀寬度改變時，bounds 更新不代表 self-sizing 完成，應等實際 cell 的寬度、置中與 anchor 一起穩定，不能只延長固定 sleep 或放寬誤差。
 - `TranscriptFlowLayout` 的 preferred-height invalidation，在寬度／字體改變、重置 measurements 後，不能拿 UIKit 留存的 `originalAttributes.frame` 判斷 row 是在 viewport 上方或部分可見。先 `prepare()` 並使用目前 indexed `frames[index]`，才能計算正確 content-offset compensation。新的 regression 故意傳入舊高度 attrs，期待 delta -50 與 anchor -31；舊公式會得到 -94，修正後原生 iPhone suite 通過。保留一點的閱讀位置斷言，等待並不能修正實際漂移。
 - Session 的 process-only stop 不能因 hub lease 已過期就跳過 CLI 的 `archive:false` intent，也不能在收到 intent 後仍按 session ID 強殺 runner process：SIGTERM cleanup 仍可能寫 archive metadata。先取得 CLI acknowledgment 及其 PID，再只用 raw PID probe 等待退出；目前 runner contract 在缺 start marker 時只觀察、不殺 process。CLI 不可達時 fail closed；明確 delete 的路徑則先使用 archive intent，再刪 cache。regression 覆蓋過期 lease、ack PID 與 metadata PID 不同、退出延遲及 metadata 保持 running。
+
+## 2026-10-14：Composer 版面同步與冷載入測試
+
+- 上游 #2007 將 primary `UnifiedButton` 從 `ComposerButtons` 移到 `HappyComposer` 的側邊欄。同步 #1436 時，不能只在 toolbar 傳 `dictationEnabled`／`dictationCanDirectSend`；側邊 primary 和 toolbar 的 compact fallback 都要保留傳遞，才能讓錄音中的直接 Send 繼續走 session-bound finalization，同時保留大尺寸 Stop。合併兩組按鈕測試，再加同時點 Send／Stop 的 fill-height regression；56 個 focused tests 通過。#1418 的 drop callback 仍要接在 `RichComposerInput`，不能跟著錯位的 conflict context 接到 expanded textarea；5 個實際 HappyComposer browser drag scenarios 通過。
+- 多個 worktree 的完整 gate 在 2 CPU 機器並行時，`claudeRemoteLauncher.launchFailure.test.ts` 首個 case 會把大型 dynamic import 算進預設 5 秒期限。暫時量測確認 import 約 6.6 秒、實際 launcher 約 50ms；診斷修改還原後，原 assertion 在較長的本機執行期限下通過。先減少並行與區分載入／執行時間，不要把這個逾時判成 queue recovery regression 或改動產品重試行為；CI 保留原測試期限。
