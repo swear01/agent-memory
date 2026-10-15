@@ -35,6 +35,7 @@ tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverabl
 ## 完整新備份已完成（2026-10-15 收尾）
 
 - 本節取代 2026-10-13「匯出中、Photos 待完成、舊 B2 保留」的狀態快照；之前的原件清理與容量估算仍是其標示日期的歷史紀錄。全部已授權備份與清理已完成，不因舊 PID、舊 progress 或分項 frozen manifest 的 pending 欄位重跑已完成工作；依使用者要求，監控排程維持 PAUSED。
+- 普通影片沿用最高 1080p、不放大、硬體 HEVC Q60；CVSD 若候選更大則依已授權決定保留較小原片，不擅降品質。
 - Drive 是 2026-10-12 快照，排除根目錄 Share、垃圾桶與已刪除祖先，保留 Git 內部結構。主封存 45,388,302,310 bytes、42,522 檔／6,625 目錄，完整 B2 SHA256 回讀與逐檔實際還原 SHA256 已通過。主封存 SHA256 為 `8e29b230cba2c607f88502483c9c194f08dba7bcbd29820a1b09f56fcdec8e50`；另有 1,062 份 owned extras、108 份共用檔案補充、三份完整 My Maps KMZ 與三份表單 ZIP 的驗證證據。這不是 2026-10-15 重新抓取的 Drive 即時快照。
 - 唯一相簿來源為 2026-10-13 11:15 Asia/Taipei 最新排除 Trash 的匯出，不使用 09:33／09:37 或早先含垃圾桶的作業。三個資料 ZIP 加一個報告 ZIP，共 140,791,207,483 bytes；全部完成完整 B2 SHA256 回讀、ZIP CRC 與逐檔實際還原 CRC／SHA256。第三卷的 20,892 個成員於 2026-10-15 03:23 Asia/Taipei 全數驗證完成，不能再稱只有回讀完成。
 - 最終總稽核確認 245 個還原必要物件，原有 249 個資料與分項證據的 B2 物件版本保持不變。根目錄總清單、物件清單、SHA256SUMS、還原說明與清理回條均已上傳並讀回驗證。根目錄 RESTORE-MAPS.json 修正早期 restore_path 的重複 .kmz 副檔名；KMZ 本體未改，早期 frozen 分項清單不重寫。
@@ -58,7 +59,7 @@ tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverabl
 本輪工作區為 `<workspace-root>/work/backblaze-refresh-20261012/`，以下相對於該目錄；原始遷移專案為 `<home>/Documents/Codex/2026-09-06/google-drive-api-thread-01a0729b-38d4`。只保存相對路徑與統計；不把登入憑證、媒體身分或私人 URL 複製到共享記憶。
 
 - `photos-coexisting-trash-20261013/`：`plan.json`、`result.json`、`completion-check.json`、`trash-readback.json`、`replacement-survival.json`、`album-readback.json`、`retained-media-size-estimate.json`、`quota-after-cleanup.json`。409 個來源的獨立逐件 journal 已標為 trashed_verified；本次暫存登入檔已移除。
-- `takeout-inspection/full-library-audit-20261013/`：`audit-result.json`、`completion-check.json`、`global-original-content-audit.json`、完整 member hashes、B2 保留回讀。這個 read-only audit Goal 已完成，不能因此把仍等 Photos 的整體備份標成完成。
+- `takeout-inspection/full-library-audit-20261013/`：`audit-result.json`、`completion-check.json`、`global-original-content-audit.json`、完整 member hashes、B2 保留回讀。此 read-only audit 完成時 Photos 備份仍待處理；不能只用該舊 audit 推論整體完成，整體狀態以 2026-10-15 根目錄總回條為準。
 - `full-backup-closeout-receipt-20261015.json`、根目錄 `goal-checkpoint.json` 與 `final-backup/` 的 manifest、objects、RESTORE.txt、RESTORE-MAPS.json、SHA256SUMS：完整備份與清理已完成；新根目錄總回條優先於早期分項 pending 快照。
 - `photos-no-trash-backup/b2-manifest-verified-20261015.json` 與各 verified.json：四卷完整回讀／實際還原完成證據；不要重新啟動舊 worker。
 - `b2-cleanup-preflight-20261015.json`、`b2-old-cleanup-result-20261015.json`：65 個精確舊版本、三組中斷分段與保留物件的前後身分核對；原始 fileId 保留在私有回條，不公開到共享記憶。
