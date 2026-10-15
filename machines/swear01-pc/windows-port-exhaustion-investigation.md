@@ -82,11 +82,13 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 - 已確認監測缺口：logman -ets session不跨重啟，既有Interactive五分鐘排程不能保證開機第一分鐘有AFD；91057沒有覆蓋ETL。10/10 14:35 trace-state Running是後續重建，不能分析現ETL來指認91057。舊ETL封存89597與90106；第三輪仍原期限10/10 23:25，不自動延長。
 - HiberbootEnabled=1；9/30至10/8十筆Kernel-Boot27 BootType1，先前稱Wake不可一律視為一般S3睡眠；須結合Boot27/Power42/107/Power-Troubleshooter1分類。10/10重查IPv4/IPv6 TCP/UDP動態範圍49152起16384個；動態區預留50000–50059僅60個，無大規模範圍縮小證據。
 
-## 10/16：一般運行期間再現 UDP 分配失敗
+## 10/16：一般運行期間再現 TCP／UDP 分配失敗
 
 - 10/15 23:58:26.601（+08）真實 Tcpip4266 / Record92982 自動觸發事件收集，排程結果0，collector於2.331秒後開始。TCP182、UDP127，不同動態本機port TCP105/UDP75，非分頁池602.8MB、提交63.3%、可用16196MB。trim欄名/文字後，AFD CSV須限定Type=File且Name以\Device\Afd開頭：394個；原408列另含不符合AFD檔案篩選的項目，不能直接全算socket。最高可見AFD Steam60、Valheim41、Discord34、Brave33；單一存活程式最高endpoint40。各子項是先後/非同步取樣，collector時間不代表所有資料在錯誤後2.331秒同時取得；低數量仍不能排除更短瞬間峰值或分配狀態問題，不能依排名指認來源。
 - 最近Kernel-Boot27為10/15 22:25:33、BootType0，距失敗92.88分鐘；23:56–00:01未見鄰近電源恢復或Wi-Fi變更紀錄。這次再支持完整開機後一般運行也會復發，不能限縮成只有快速啟動或喚醒觸發。AFD ETW仍為原期限到期停用，ETL最後寫入10/10 23:29:06；本次沒有ETW，無法定位分配失敗呼叫者，不得沿用舊Brave歸屬。分析保存於<workspace>/outputs/port-monitor/incident-analysis-92982.json；不自動延長、重啟程式或改網路設定。
 - 同一Discord renderer於23:31:56–00:30:59約59.05分鐘，總句柄6445→11487，Key5199→10239，新增5040個Handle+Name配對、舊Key配對未移除，三組既有Render/Properties各增1680；289個Unknown type仍無法完整分類。語音日誌於22:27:48連線/開始播放且未見後續停止，五分鐘TCP1/UDP1。audiodg同一行程Key39/FxProperties5維持約兩小時，基準/最新Key配對新增及移除均0。Discord屬已通知累積模式持續，仍無本次UDP耗盡的因果證據；證據為discord-passive-20261016-003059.json及帶時間CSV。
+
+- 同次完整開機期間，10/16 01:24:08.759又發生TCP4231 / Record92989，距UDP92982約85.70分鐘、距BootType0約178.58分鐘；01:22–01:27同樣未見鄰近電源/Wi-Fi事件。事件收集成功、2.370秒後開始，TCP158/UDP122、不同動態port TCP87/UDP70、可見AFD384、非分頁池679MB、提交66.4%、可用15283MB。兩次快照Steam AFD60、Valheim41、Discord34均相同，Discord總句柄則8066→16173，仍無法把其Key增長連到Port根因。ETW仍無覆蓋；分析incident-analysis-92989.json。01:26:40日誌顯示語音停止，之後首次CSV僅10.48分鐘，Key15150、Unknown290，尚不能宣稱停止增長；Valheim也在01:24–01:29間退出，不將整機記憶體下降單獨歸因語音。
 
 ## 官方參考
 
