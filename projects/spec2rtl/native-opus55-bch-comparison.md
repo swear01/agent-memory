@@ -2,7 +2,7 @@
 title: BCH native Opus 5.5 high 的 no-skill 修復版與 skills 實驗
 scope: projects/spec2rtl
 status: verified
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # 已完成的比較
@@ -66,4 +66,10 @@ Skills 版 native active time **2,695.016 秒（44.9 分鐘）**；output **216,
 - Skills frozen RTL SHA-256：`cdaa5723b057ca25848b1f19c9746dc37019e85ddaf4558ddf461ea1043a7a12`。
 - Mazu evidence root：`<remote-home>/.cache/spec2rtl-opus55-skills-20261015-controller`。保留 `summary.json`、`summary.md`、`logs/`、`checkpoints/`、`evaluation/assessment.json`、`evaluation/frozen-output/bch/rtl/bch.v`、`evaluation/final-workspace.tar.gz`、independent netlist/SDF/logs 及 `evidence/cost-correction.json`、`evidence/caller-verification.json`。
 - Skills workspace：Mazu `<worktree-root>/spec2rtl/bch-opus55-high-skills-20261015`；不要把獨立 golden grading 放進 agent workspace。
-- 2026-10-15T14:57:41Z 已編輯 Issue #35 的 [原留言](https://github.com/DVLab-NTU/spec2rtl/issues/35#issuecomment-6193091516)，保留 no-skill 修復紀錄並附加 skills 結果，未新增留言；API 回讀與 body byte-for-byte 相符。Body SHA-256：`ef8b35b9c5e6fe0b83d493e29f449eeed232aaf7e1461c592c14cbf565d64f7c`。Mazu `evidence/issue35-comment-update-20261015T145741Z/` 保存 before、payload、PATCH response、readback verification。
+- 歷史長版：2026-10-15T14:57:41Z 已編輯 Issue #35 的 [原留言](https://github.com/DVLab-NTU/spec2rtl/issues/35#issuecomment-6193091516)，保留 no-skill 修復紀錄並附加 skills 結果，未新增留言；API 回讀與 body byte-for-byte 相符。Body SHA-256：`ef8b35b9c5e6fe0b83d493e29f449eeed232aaf7e1461c592c14cbf565d64f7c`。Mazu `evidence/issue35-comment-update-20261015T145741Z/` 保存 before、payload、PATCH response、readback verification。
+
+# 留言格式與最新版本（2026-10-16）
+
+使用者明確修正：在原留言沿用 issue 原有 BCH 表格格式，加入自己的 Opus 5.5 no-skill／with skills 結果；不要附長篇實驗報告。保留 `Config | Model | Clock | Area (µm²) | sum Time/n | Cost | vs best` 欄位與原文精度、原有五列及兩個新列；gate-sim times 表亦沿用格式加入兩個結果。`vs best` 要按合併後七列的最低 cost 重算。文字只交代結果與必要限制，仍須註明 no-skill 是診斷回報後修復版、skills 有 Codex oracle／architecture approval 協助；不可因精簡而隱藏比較條件。
+
+2026-10-15T18:02:20Z（台北 2026-10-16 02:02:20）已將同一則留言改為上述短版，API exact readback 驗證通過；沒有另發留言或重跑實驗。最新 body SHA-256：`e4f794856160544d4b222eba7d600cf6f77a0a94ade706752609a3ca4d59be31`，取代上節歷史長版的 body hash。Mazu evidence root 下 `evidence/issue35-table-format-20261015T180220Z/` 保存改版前全文、短版 payload、PATCH response 與 verified metadata，檔案 checksum 已核對。
