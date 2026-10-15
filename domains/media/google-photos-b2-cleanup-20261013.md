@@ -1,12 +1,12 @@
 ---
-title: Google Photos Q70 並存原件清理、容量口徑與 B2 備份續接
+title: Google Photos Q70 原件清理、完整 B2 備份與 Oracle 暫存收尾
 scope: domains/media
-status: verified-snapshot
-updated: 2026-10-13
+status: verified-closeout
+updated: 2026-10-15
 tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverable-trash]
 ---
 
-# Google Photos 原件清理與備份續接（2026-10-13）
+# Google Photos 原件清理與備份收尾（2026-10-15）
 
 ## 已完成與授權範圍
 
@@ -32,13 +32,26 @@ tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverabl
 - Google 確有免計配額規則，例如 2021-06-01 前以 High quality／Express quality 備份的內容；不能只憑拍攝年份推定免費。批次刪除後配額最多可能需 48–72 小時更新，當時的顯示不是保證最終值。
 - 官方依據：Google Photos Help「About your Google Photos activity & storage」answer/10100180；Google Drive Help「Manage your storage」answer/6374270。需要當前用量時重新讀取頁面，勿把上述快照當成永久現況。
 
-## Backblaze B2 尚未整體完成
+## 完整新備份已完成（2026-10-15 收尾）
 
-- 備份目標維持全 Drive 排除 Share，加上清理後 Google Photos 的非垃圾桶完整 Takeout；既有 Git 目錄保留。普通影片沿用最高 1080p、不放大、硬體 HEVC Q60；CVSD 若候選更大則依已授權決定保留較小原片，不擅降品質。
-- 已有回條證明新 Drive.tar.zst 為 45,388,302,310 bytes、42,522 檔／6,625 目錄，完成 B2 全量 SHA256 回讀及還原檔案 SHA256 驗證。SHA256 為 `8e29b230cba2c607f88502483c9c194f08dba7bcbd29820a1b09f56fcdec8e50`。DriveExtras、NativeForms、DriveSupplement 與 Maps 另有各自回讀證據，不能由較早進度檔的 pending maps 推回未完成。
-- 舊 3 月 B2 備份 65 個物件、535,175,554,940 bytes，在本次稽核回讀時身分／大小未變。完整新 Photos 備份、回讀及還原未完成前，不替換或刪除舊備份，不動無關 GitHub 備份。
-- 依最新本機回條，清理後又於 2026-10-13 11:15 Asia/Taipei 建立 Google Photos 新匯出：34 個相簿選項、僅排除 Trash、Add to Drive／一次／ZIP／50 GB，身分驗證完成。當時 Google 正在建立，備份 worker 未啟動。這是回條快照，本次記憶更新沒有另查即時完成狀態。
-- 後續優先核對 11:15 最新作業，不誤用 09:33／09:37 舊作業，也不要自行再建立重複匯出。按最新作業凍結來源 ZIP 身分、確認全部中央目錄無 Trash，再執行受保護的備份腳本；每卷核對 Drive 大小／MD5、ZIP CRC、B2 全檔 SHA256 回讀及每個還原 member 的 SHA256。
+- 本節取代 2026-10-13「匯出中、Photos 待完成、舊 B2 保留」的狀態快照；之前的原件清理與容量估算仍是其標示日期的歷史紀錄。全部已授權備份與清理已完成，不因舊 PID、舊 progress 或分項 frozen manifest 的 pending 欄位重跑已完成工作；依使用者要求，監控排程維持 PAUSED。
+- Drive 是 2026-10-12 快照，排除根目錄 Share、垃圾桶與已刪除祖先，保留 Git 內部結構。主封存 45,388,302,310 bytes、42,522 檔／6,625 目錄，完整 B2 SHA256 回讀與逐檔實際還原 SHA256 已通過。主封存 SHA256 為 `8e29b230cba2c607f88502483c9c194f08dba7bcbd29820a1b09f56fcdec8e50`；另有 1,062 份 owned extras、108 份共用檔案補充、三份完整 My Maps KMZ 與三份表單 ZIP 的驗證證據。這不是 2026-10-15 重新抓取的 Drive 即時快照。
+- 唯一相簿來源為 2026-10-13 11:15 Asia/Taipei 最新排除 Trash 的匯出，不使用 09:33／09:37 或早先含垃圾桶的作業。三個資料 ZIP 加一個報告 ZIP，共 140,791,207,483 bytes；全部完成完整 B2 SHA256 回讀、ZIP CRC 與逐檔實際還原 CRC／SHA256。第三卷的 20,892 個成員於 2026-10-15 03:23 Asia/Taipei 全數驗證完成，不能再稱只有回讀完成。
+- 最終總稽核確認 245 個還原必要物件，原有 249 個資料與分項證據的 B2 物件版本保持不變。根目錄總清單、物件清單、SHA256SUMS、還原說明與清理回條均已上傳並讀回驗證。根目錄 RESTORE-MAPS.json 修正早期 restore_path 的重複 .kmz 副檔名；KMZ 本體未改，早期 frozen 分項清單不重寫。
+- 使用者明確授權後，已按精確 fileId／fileName 永久移除 65 個三月舊 B2 版本，共 535,175,554,940 bytes；另取消三組同來源中斷 multipart 上傳，46,841,987,072 bytes，合計 582,017,542,012 bytes（582.02 GB）。版本清單已確認舊 ID 全部不存在，新版資料與無關 GitHub 備份未改；原始 Google Drive／Photos 資料保留。這次授權不延伸為日後刪除其他備份。
+
+## Oracle 暫存與工作樹清理
+
+- 本聊天口述的 Synology 實際指 Oracle/swever，沒有另做 Synology NAS 清理。Oracle 來源 ZIP、partial、B2 回讀與還原暫存均已不存在；002／003 的 state／成功 log 支持 worker 已自動清除副本，其餘兩份僅確認不存在，不推定刪除經過。
+- 最終人工檢查額外刪除 0 檔、0 bytes，不能把先前自動清除量重算為本次成果。主 worker 已退出、三個任務鎖已釋放，43 份驗證紀錄／程式／完整 log 的 SHA256 保持不變。2026-10-15 14:43 Asia/Taipei 的可用容量快照約 126.22 GB，不是日後容量保證。
+- 舊 HAPI 清理已移除 69 整副本；八個副本只清理 45 個可重建 node_modules 路徑。另 64 組 unpacked 工具、共 192 檔，全部與 tracked 封存參考 SHA256 相同後移除。22 個近期／使用中／claim／dirty／遠端保存證據不足副本保留，未知附帶資料剩約 275 MB。此次範圍之外的工作樹、Minecraft、研究資料與憑證不重清。
+- 判斷舊工作樹須查真正 reflog／來源活動；批次改寫 Git 記錄檔 mtime 不等於新工作。整副本需 Git 乾淨、無程序／claim 使用且遠端保存有證據，使用普通 Git-aware 移除，不以 force 繞過唯一修改或 ownership。
+
+## 續傳與驗證的可重用做法
+
+- 原生 B2 multipart 可沿用舊分段，但先核對來源 MD5、完整 SHA1 與每個既有分段 SHA1，只補缺段。multipart complete 只證明上傳完成；後續仍需整卷 B2 SHA256 回讀與全部成員實際還原驗證。
+- 全域 singleton 維持非阻塞，單卷採 blocking LOCK_EX；不同卷可上傳／回讀並行，預留最大回讀卷、最大解壓成員與 10 GiB 安全餘量。同卷不得有多個 writer；速度慢但持續前進不重啟。
+- 私有操作 Python 用 -I，避免本機 inspect.py 遮蔽標準函式庫而執行非預期副作用。空間釋放用實際 filesystem／df 核對，不能把跨目錄 hardlink 的 du 加總當成實際釋放量。
 
 ## 可續接證據位置
 
@@ -46,5 +59,7 @@ tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverabl
 
 - `photos-coexisting-trash-20261013/`：`plan.json`、`result.json`、`completion-check.json`、`trash-readback.json`、`replacement-survival.json`、`album-readback.json`、`retained-media-size-estimate.json`、`quota-after-cleanup.json`。409 個來源的獨立逐件 journal 已標為 trashed_verified；本次暫存登入檔已移除。
 - `takeout-inspection/full-library-audit-20261013/`：`audit-result.json`、`completion-check.json`、`global-original-content-audit.json`、完整 member hashes、B2 保留回讀。這個 read-only audit Goal 已完成，不能因此把仍等 Photos 的整體備份標成完成。
-- `photos-no-trash-backup/expected-export.json`、`progress.json`、`self-check.json` 及根目錄 `goal-checkpoint.json`：最新 11:15 匯出、worker 未啟動與下一步；不要只讀較早 Takeout 狀態快照。
-- `drive-current/b2-receipt.json`、`owned-extras/b2-receipt.json`、`maps-b2-receipt-20261013.json`、`native-forms-b2-receipt.json`、`supplement-b2-receipt.json`：分項備份驗證；整體 Photos 備份仍待完成。
+- `full-backup-closeout-receipt-20261015.json`、根目錄 `goal-checkpoint.json` 與 `final-backup/` 的 manifest、objects、RESTORE.txt、RESTORE-MAPS.json、SHA256SUMS：完整備份與清理已完成；新根目錄總回條優先於早期分項 pending 快照。
+- `photos-no-trash-backup/b2-manifest-verified-20261015.json` 與各 verified.json：四卷完整回讀／實際還原完成證據；不要重新啟動舊 worker。
+- `b2-cleanup-preflight-20261015.json`、`b2-old-cleanup-result-20261015.json`：65 個精確舊版本、三組中斷分段與保留物件的前後身分核對；原始 fileId 保留在私有回條，不公開到共享記憶。
+- `oracle-temp-cleanup-20261015/result.json`、`final-backup/oracle-temp-cleanup-20261015.json`、`oracle-hapi-cleanup-result-20261015.json`：Oracle 暫存零殘留、43 份證據保留及舊 HAPI 工作樹清理結果。
