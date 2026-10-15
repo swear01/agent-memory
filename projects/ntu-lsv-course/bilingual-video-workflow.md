@@ -57,7 +57,15 @@ PDF 文字擷取已證實會漏掉底線：PA1 第 2、4 頁實際命令是 `lsv
 - 原始講義索引已補齊 14 份 PDF、1 份 PPT 與專題題目文字檔；PDF 原件保持 byte-identical。講義抽字是搜尋用途，精確符號仍核對 PDF 圖像。保留 lecture02 舊版，主要閱讀採加上 QBF 的 lecture02_v1。
 - 第 1–2 週保留 `transcript.bilingual.json`、`transcript.readable.json/.txt`、`lecture.en.srt`、`context.html`、`context.readable.md` 與全部截圖；這些來源在版型轉換前後逐檔 SHA-256 相同。其 `study-guide.json` 為章節 list；新增影片的檔案為含 `chapters` 的 object，讀取時先確認 schema。
 - 新片完整英文自動字幕保存為 `captions.en.json3`，另有正規化的 `transcript.en.json/.txt`；原檔 hash、cue ID 與時間由 checker 驗證。原片媒體下載本次回傳 HTTP 403，不能宣稱已逐秒重看、取得新片截圖或復原所有板書；圖文閱讀與原片時間連結仍可使用。
-- 新增 `延伸補充.html/.md` 與 `資料說明/延伸補充.json`。10 項主題涵蓋 BDD 跳層計數與 ordering、ZDD terminal、Tseitin output assertion／投影、incremental assumptions、QBF 量詞依賴、cofactor 真值表、care-set miter、prime／irredundant 非 minimum 的反例，以及 weighted column dominance。對應章節有可展開區，另有課程首頁入口。補充不另計為錄影章節。
+- 新增 `延伸補充.html/.md` 與 `資料說明/延伸補充.json`。10 項主題涵蓋 BDD 跳層計數與 ordering、ZDD terminal、Tseitin output assertion／投影、incremental assumptions、QBF 量詞依賴、cofactor 真值表、care-set miter、prime／irredundant 非 minimum 的反例，以及 weighted column dominance。補充直接顯示在對應章節的講解欄，先列講義依據，再列延伸推導與算例；不需展開或另開專頁。獨立頁只作位置索引。補充不另計為錄影章節。
 - 數值例子以真值列舉、未帶 complemented edges 的普通 ROBDD／ZDD 建圖及精確 cover 枚舉核對；結果保存於 `資料說明/延伸補充驗證.json`。這不是執行外部 SAT solver 或效能 benchmark 的證據。
 - 重跑 `python3 資料說明/check-bilingual.py`：核對舊雙語來源 hash、完整英文 cues／時間、章節覆蓋、配圖、講義原件、延伸補充映射與全部本機連結。內建瀏覽器實測搜尋、英文開關、自測、原片圖片放大、章節定位、雙語逐字稿入口及窄螢幕排版。原片的精確用語仍需按時間回看。
 - 寫回 Drive 前在本機保留被修改檔案的備份，驗證來源沒有並行修改，再以內容 hash 確認寫入及 outputs 副本。Google Drive 本機內容已驗證，遠端雲端同步尚未獨立確認。
+
+# 補充與章節並排、先講義後延伸（2026-10-15 使用者確認）
+
+- 本課後續補充的預設位置是對應章節內的講解欄，緊接原內容並直接顯示；桌面與原始講義圖並排，窄螢幕上下排列。不要把核心補充藏在收合區或要求讀者另開補充專頁；獨立頁僅保留章節位置索引。
+- 先讀對應正式講義，核對該頁原例、定義、假設與符號，必要時看 PDF 圖面而非只靠抽字。每段先呈現「講義依據」並附檔名、PDF 頁碼，再接「延伸推導與算例」。
+- 延伸必須接得上當章主題。自製算例、額外條件與外部參考明確標示，不能說成講義原例或教師原話；例如 CNF 講義第 70 頁查輸出 0，末項為 ¬9，自製查輸出 1 的例子才加正相 unit clause。
+- 已實作 10 項補充放入 11 個相關章節，原有 18 支／173 章不變。`資料說明/延伸補充.json` 使用 `placement=inline-with-chapter`、`handout_explanation_md`、`placements` 與對應 anchor；HTML 用直接顯示的 aside，Markdown 同步保留章節旁的說明。
+- 最新 checker 通過 11 個 inline 位置、10 項補充、2,207 個本機連結與原有字幕／講義完整性；桌面核對講義圖與補充同時可讀，390px 窄螢幕無橫向撐寬，章節 anchor 不被搜尋列遮住。Drive 本機與 outputs 已核對，遠端 Drive 同步仍未獨立確認。
