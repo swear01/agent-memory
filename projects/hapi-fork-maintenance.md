@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-14
+updated: 2026-10-15
 tags:
   - hapi
   - fork
@@ -191,3 +191,16 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 
 - Background voice finalization 的 session resolver 不能捕捉 render-time `session.active`。錄音當下在線、final transcript 到達前離線時，舊 resolver 會略過 resume，最後 POST 得到 `session_inactive`。#1436 的 voice-only resolver 在 delivery 前 `api.getSession`，在線直接使用、離線以最新 permissionMode 呼叫既有 `resumeSession`；文字與 upload resolver 不需跟著改。61 個相關 tests 與 Web typecheck 通過，包含真實 resolver 接到 delayed Scribe commit、先 unmount 再離線、最後恰好一次送到 resumed ID 的情境；lookup／resume 失敗沿用 transcript recovery。
 - 上游 Issue #1974 的 `ping_peer` 缺少 localId 問題，不能當作使用者 fork 中全新的缺陷：既有 #1771 和 audited `v0.30.7.4` 都已在 `cli/src/modules/pingPeer/pingPeer.ts` 用 `providedRemitId ?? randomUUID()` 產生穩定 remit UUID，POST 帶 `localId: remitId`。官方缺少的是獨立、容易合併的小修法；後續可以拆出 sender 的最小 patch 與 regression，避免在 fork 重做同一修復。推薦 issue 前要同時查 upstream main、既有個人 PR 和實際 release tree。
+
+## 2026-10-15：Codex 回合識別、Peer 去重與 Cursor／Pi 補修
+
+- Cursor ACP 原地切換至 Auto 期間，backend 暫時為 null；這時啟用 Auto-review，內部 `/auto-review` 如果沿用 `session.model` 舊快照，重啟後 dispatch 會把 Auto 改回舊模型。這是 permission-only 控制訊息，不應附帶 model intent；保留 permissionMode，移除該筆內部訊息的 model。Regression 需等到 slash command 真正送達並斷言最後 `session.model === 'auto'`，只確認 enqueue 或 picker label 不足。補修已在原作者 feature head 與目前 upstream 上通過完整 gate；貢獻 PR `heavygee/hapi#272` 的 commit `11721f36c` 通過最新 Codex App review。Fork 沒啟動 Actions 不代表 CI 通過，必須另外讀 source/merge SHA 的 runs/checks。
+- Pi RPC 的 assistant delta 先排入 `publishChain`；同步 prompt rejection 或 transport cleanup 若直接 flush accumulator，會早於排隊 delta，造成最後一段內容遺失。把 flush 排入相同 promise chain，正常 cleanup 需 await；新增 rejection／transport regression 要先證明原始 production 失敗。圖片本地讀取的 `stat(path)`→`readFile(path)` 有路徑替換與檔案增長競爭，應單次 open、在同一 FD fstat、按已驗證上限有界讀取，最後再檢查 size 並保證 close；使用可用的 nonblocking open 避免 FIFO/device 卡住。PNG magic 必須完整八 bytes，否則上游工具接受後仍可能被既有轉換器丟棄。
+- 給另一位作者現有 feature PR 做小補修時，publication diff 必須以該作者的實際 feature head 為 base；把已合併目前 upstream 的驗證分支直接投向舊 feature branch，會夾帶大量無關 commits。可保留 upstream-integrated worktree 做相容性驗證，再從 feature head 建立獨立補修 worktree、重跑該實際 publication tree 的完整 gate，保留原作者歷史。Clone-local upstream-only hook 若不適用，必須保留 task worktree、實際 target base、精確檔案 scope 與 head guard 的等價檢查，不能全域關閉 hook 或用 no-verify 偽造過關。
+
+- Foreign fork 的 `statusCheckRollup` 可能完全漏掉 `action_required` 的 Test run，因為尚未建立任何 job/check；必須另查 exact source SHA 的 Actions runs。Fork 原先 workflow registry 沒列出審查，不保證 PR 開啟後仍沒有：新 workflow 可能這時才註冊。Pi 補修 `luodeb/hapi#1` 的 Test 等 owner approval，review 在 Codex 執行前因 proxy server-info JSON 缺失而失敗，不能標成 code-test failure 或 clean review；先保留可審核 PR／本機驗證，讓 fork owner 處理核准與缺少的 review configuration。
+
+- #1974 已從既有大 PR／維護版拆成只動共用 sender 與測試的 upstream `tiann/hapi#2024`，head `110d381cac8661dda1290089ee186567e43d3b22` 的四項 CI 與 HAPI Bot requirement／approach／code review 全數通過。每次 intentional send 生成新 UUID localId，既讓原始儲存與 native queue mirror 使用同一筆 row，也保留相同文字連送兩次的語義；不能以內容 hash 去重。實際 CLI source entry 對隔離 HTTP server 的兩次登入／傳訊、一個 inactive resume，再經真實 Hub SQLite native mirror，恰好留下兩筆 row。這是預防新重複，不是清理歷史資料，也沒有證據表示原 bug 讓模型執行兩次。
+
+- Codex 回合耗時應使用獨立 `turn_duration` metadata，避免重送 `token_count` 造成 usage 重複計算。`CodexRoundDuration` 只接受已觀察到的 live start／matching completed turn，重播、完成訊息單獨到達、失敗或中止不能啟動計時。Local transcript 使用原始 record timestamp，避免同批掃描得到假的零秒；remote/shared 要在進入 async projection queue 前捕捉 receipt time。持久化尾頁可能不含起始 user row，UI 需從 metadata 還原，而非依賴仍載入的 user timestamp。
+- Duration／usage 必須綁定 native turn ID；除一般 transcript／remote/shared messages，也要查直接發送的 Code Mode hooks。完成後 clock 已清除，converter 仍須保留 raw payload 的 turn_id，才能關聯 late token_count。針對回應沒有 turn ID、usage 原本卻有 ID 的既有資料，不能讓新 matching 丟掉原本 Round usage/model；只有完全未標記的 latest group 可保留原有 usage attachment，duration 不得猜配。不同 native turn 共用一個 response group 時，晚到的舊 duration／usage 不能覆寫較新 turn 的摘要。兩個 regression 在修正前確實失敗，修正後相關 Web tests 通過。
