@@ -90,6 +90,9 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 
 - 同次完整開機期間，10/16 01:24:08.759又發生TCP4231 / Record92989，距UDP92982約85.70分鐘、距BootType0約178.58分鐘；01:22–01:27同樣未見鄰近電源/Wi-Fi事件。事件收集成功、2.370秒後開始，TCP158/UDP122、不同動態port TCP87/UDP70、可見AFD384、非分頁池679MB、提交66.4%、可用15283MB。兩次快照Steam AFD60、Valheim41、Discord34均相同，Discord總句柄則8066→16173，仍無法把其Key增長連到Port根因。ETW仍無覆蓋；分析incident-analysis-92989.json。01:26:40日誌顯示語音停止，之後首次CSV僅10.48分鐘，Key15150、Unknown290，尚不能宣稱停止增長；Valheim也在01:24–01:29間退出，不將整機記憶體下降單獨歸因語音。
 
+- 10/16 02:43補齊上述語音停止後的同一renderer對照：01:37:09與02:43:07兩份CSV相隔65.97分鐘，Key均15150，Handle+Name配對新增0、移除0；三組Render/Properties各5030/5030/5029，既有配對全保留。01:29–02:44的16筆五分鐘快照總句柄16351→16354，範圍16341–16354；此前50分鐘11833→16167。這比單次斷線後快照更支持持續累積隨語音活動停止，但僅兩端Key快照，不能排除中間短暫開關；既有句柄未釋放，不能稱修好，也未建立Experimental、驅動或Port耗盡因果。Unknown type仍290，分類可見度有限。分析為<workspace>/outputs/port-monitor/discord-control-20261016-012640.json，已通知一次，不因後續平台重複通知。
+- 此輪02:38的Handle取樣雖退出碼0且16354列與總數相符，卻全部Unknown type、Registry名稱呈原始格式；不能把可分類Key數0當成資源釋放。相同參數重試02:43後恢復Key15150/Unknown290，使用重試資料做配對比較，保留首次檔並標記分類不可用；暫無證據確定工具異常原因。解析應同時檢查枚舉數與類型可見度，不能只看退出碼。
+
 ## 官方參考
 
 - Microsoft Learn: TCP/IP port exhaustion troubleshooting
