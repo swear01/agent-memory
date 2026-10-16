@@ -4,7 +4,7 @@ scope: machine
 machine: swairM5
 status: active
 created: 2026-09-03
-updated: 2026-09-03
+updated: 2026-10-16
 ---
 
 # 憑證統一存放位置
@@ -15,12 +15,14 @@ updated: 2026-09-03
 - 結構：
   - `passwords.txt` — 全部帳號/密碼/PIN，`service: value` 格式（含實驗室 server swear01/swear02、snps、jizhong、eduroam、RustDesk、3060 SN、自然人憑證用戶代碼 `\\*S:"\n."`、VC 數位憑證驗證代碼等）
   - `api-keys.txt` — 全部 API keys/tokens，`service: value` 格式（4 個 GitHub PAT、5 個 Google OAuth、Discord/Telegram bot、Blackblaze bucket、Groq、OpenRouter、DeepSeek、OpenAI、ElevenLabs、HackMD、Zenodo 等）
-  - `recovery-codes/` — 每 app 一個 txt，一行一個 code（microsoft、steam、epic、nintendo、slack、blackblaze、cloudflare、discord 系、github、parsec、pixiv、arc 等 21 檔）
+  - `recovery-codes/` — 每 app 一個 txt，一行一個 code。
   - 同資料夾另有舊檔（`SwearPasswords.kdbx`、`Brave Passwords.csv`、`SwearOVPN.ovpn`）
 
 ## 規則
 
 - 以後要查密碼/key/recovery code：直接讀上述檔案，不要再問用戶或翻舊記憶。
 - 新增憑證時寫進對應檔案（密碼→`passwords.txt`、key→`api-keys.txt`、recovery code→`recovery-codes/<app>.txt`），維持既有格式。
+- 2026-10-16：Nexus Mods 備用碼存於 `recovery-codes/nexus-mods.txt`；五行內容已核對、本機權限 600，Drive 網頁已確認檔案出現。未測試登入。
+- 記憶與 QMD 只記錄存放位置、格式及驗證範圍，不收錄任何備用碼內容。
 - 注意：`recovery-codes/pixiv.txt` 原始檔曾含 CRLF，處理舊檔時先 `tr -d '\r'`。
 - 本機 FileVault 已啟用；檔案權限 600、資料夾 700。
