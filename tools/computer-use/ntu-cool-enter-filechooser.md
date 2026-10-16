@@ -2,7 +2,7 @@
 title: NTU COOL 內建瀏覽器 filechooser 逾時改用 Enter
 scope: tools/computer-use
 status: verified
-updated: 2026-10-08
+updated: 2026-10-16
 tags:
   - ntu-cool
   - filechooser
@@ -12,7 +12,7 @@ tags:
 
 # 問題與已驗證解法
 
-2026-10-06 CVSD Lab2 與 2026-10-08 LSV Homework 1 都遇到相同現象：內建瀏覽器的 AX click、locator click 沒有開啟檔案選擇器，`waitForEvent('filechooser')` 因而逾時。檔案尚未選取，不能將此現象稱為上傳傳輸逾時。
+2026-10-06 CVSD Lab2、2026-10-08 LSV Homework 1 與 2026-10-16 LSV Homework 2 都遇到相同現象：內建瀏覽器的 AX click、locator click 沒有開啟檔案選擇器，`waitForEvent('filechooser')` 因而逾時。檔案尚未選取，不能將此現象稱為上傳傳輸逾時。
 
 COOL 上傳優先沿用已驗證的 Enter 方法。先讀取目前 AX，取得 file input 的最新 index，再建立 filechooser 等待並按 Return：
 
@@ -36,8 +36,12 @@ await tab.ax.write();
 
 使用者已明確授權該次繳交時，完成準備與檢查後直接送出，不重問。這次授權不等於未來每次作業都可自動繳交。
 
-完成證據必須包含正確課程與作業的 Submitted 回執、檔名與時間。能下載時，下載已提交檔案，以 SHA-256 和 byte comparison 核對本機原稿。兩次案例均有回執和下載逐位元相同的證據。作業清單可能顯示舊的 No submission；先查看詳情頁回執，避免重複送出。
+完成證據必須包含正確課程與作業的 Submitted 回執、檔名與時間。能下載時，下載已提交檔案，以 SHA-256 和 byte comparison 核對本機原稿。三次案例均有回執和下載逐位元相同的證據。作業清單可能顯示舊的 No submission；先查看詳情頁回執，避免重複送出。
 
 # 共用記憶的位置
 
 其他 agents 應透過 canonical `agent-memory` Markdown 與 QMD `memory` collection 取得此解法。只寫入 Codex 自動記憶或只更新本機 QMD，不構成跨 agent 同步。更新 canonical 筆記後完成檢查、Git push 與遠端核對，再刷新本機 QMD 並搜尋回讀。
+
+# 2026-10-16 再驗證
+
+LSV HW2 再次重現 click 未觸發 filechooser；建立等待後對最新 file input AX index 按 `Return`，立即選到正確 PDF。對目前 Submit Assignment 按 `locator.press('Enter')` 取得 `Submitted!`；`downloadMedia()` 下載回執附件，與本機最終 PDF 逐位元相同。優先搜尋並沿用此方法；多輪 click、顯示視窗或改用私人瀏覽器不是已驗證的解法。具體繳交紀錄見 `projects/ntu-lsv-course/hw2-submission-and-writing.md`。
