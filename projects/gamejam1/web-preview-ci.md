@@ -68,3 +68,11 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - 建置期間只輪詢 `build_status`。要求主執行緒的 `editor_status` 曾逾時，錯誤被納入 BuildReport，即使 result=Succeeded、totalErrors仍為1。保留失敗報告並用相同來源重建，得到0errors；不能忽略該錯誤或放寬檢查。滿版 canvas 的元素截圖會包括覆蓋其上的 DOM toolbar；圖示與斗篷同色，角色偵測須排除已知 toolbar 區域，仍等待真正角色像素而非載入完成／Unity splash。
 - 獨立視覺審查 ship，文件側車對齊最終來源；沒有宣稱 GitHub bot pass，沿用既有人工審查合併授權。28個原生測試、實際寬地板／雙向出口／直式跟隨、全螢幕與設定皆有證據。公開version7已匿名驗證；main乾淨並快轉，自己已關閉Editor的乾淨worktree／分支已清除。
 - 證據保留於 `<user-documents>/Codex/2026-10-17/gamejam1-adaptive-viewport-validation/`：來源patch、native/Web/online結果、截圖、hashes、失敗與乾淨重建報告、Site archive和release metadata。最後乾淨輸出產生於WebClean，歸檔至Web，資產檔名前綴仍為WebClean；部署與線上測試使用完全相同檔案。長建置可能使Site短期credential到期，發布前renew並以hidden stdin傳遞。
+
+## Background Editor operation (2026-10-17)
+
+- 使用者要求 Unity 自動化不要搶走前景焦點。沿用官方 Unity CLI + resident GUI Pipeline；不要用 Batch Mode、冷啟動 run/test/build、editor_focus 或 recompile focus=true。CLI 1.0.0-beta.13 的 unity open 沒有 background launch 選項；Mac 新的 agent Editor 用原生 `open -g -j -n -a <editor-app> --args -projectPath <worktree-root>` 隱藏且不啟用，再全部使用 `unity command --project-path <worktree-root>`。優先重用既有連線。這只是 macOS 視窗啟動，不是 Batch Mode。
+- Pipeline 0.8.0-exp.1 的 `recompile -- --focus false` 可在非焦點 Editor 編譯；`set_autotick -- --interval_ms 16` 維持背景更新並跨 domain reload。結束檢查後關閉 autotick 或關閉自己開的 Editor，避免長時間耗用 CPU。首次乾淨 worktree 匯入約兩分鐘，暫時無 Pipeline 回應不代表需要切換前景；等匯入完成。
+- Unity 的 public `PlayModeWindow.SetPlayModeFocused(false)` 設為 PlayMaximized，不能拿來避免切換焦點。`Verification/BackgroundEditor.cs` 透過已安裝6000.4.7f1的 PlayModeView.enterPlayModeBehavior 設所有既有 Game/Simulator views 為 PlayUnfocused，設定後讀回確認。此 Editor layout 設定已接入 BuildWeb 測試前置步驟；沒有 view 或 Editor API 變動會失敗，不偷偷聚焦建立視窗。
+- `capture_game_view -- --source screen` 讀 Game View render target，無需螢幕前景；不要為了截圖點開 Unity。LiveInput 使用虛擬鍵盤並暫時允許背景輸入，復原原設定，不對使用者前景程式送實體按鍵。Play 時暫開 Application.runInBackground，結束恢復原值。
+- 本機100ms取樣監測涵蓋隱藏啟動、真正新增C#的成功編譯／移除、28個原生測試、live frameCount／controller time前進、移動／跳躍／dash、960x540實際screen渲染截圖與Console0errors0warnings；前景保持Codex。這不保證OS或Unity授權／升級等模態視窗永遠不搶焦點；遇到阻塞回報，不用 activate 或搶走後再搶回。
