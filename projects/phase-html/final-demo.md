@@ -3,7 +3,7 @@ title: PHASE HTML demo 最終版 v10
 scope: projects/phase-html
 status: final-demo
 updated: 2026-10-16
-tags: [PHASE, HTML, demo-final, Sites, tile-grid, pixel-art]
+tags: [PHASE, phase-demo, HTML, demo-final, Sites, GitHub, itch.io, tile-grid, pixel-art]
 ---
 
 # PHASE HTML demo 最終版
@@ -18,6 +18,17 @@ tags: [PHASE, HTML, demo-final, Sites, tile-grid, pixel-art]
 - 已推送的 Sites source commit：`d34a051b7ea157e7bc8ac845fba5c3c9bc7e24e1`，靜態檔是 `dist/index.html`。
 - HTML SHA-256：`64f242b932ffe3803eae744665ca8447ccf098a740bdf1890db6ab0481b61b58`。
 - 工作區 `<codex-root>/2026-10-14/html-2-thread-01a13540-1e2a-7163`：離線檔 `outputs/phase-three-color.html` 與發布原始碼一致；核心、地圖、美術說明在 `outputs/phase-core.md`、`phase-level-design.md`、`phase-art.md`；發布與驗證收據在 `work/phase-inactive-spikes-publication.json`。
+
+## phase-demo 公開封存與 itch.io
+
+- 使用者於 2026-10-16 指定保存為 `phase-demo`，GitHub 必須 **public + archived**。
+- 公開封存 repository：<https://github.com/swear01/phase-demo>。已於首次推送前完成 `gemini-link`，完整保存 73 個專案與定版說明檔。
+- 封存 commit：`2061d8e938ce88e3d2ec468c44e6fe98a33626ba`；定版標籤與 Release：<https://github.com/swear01/phase-demo/releases/tag/demo-final-v10>。
+- Release 附 `phase-demo-final-v10.zip`，19,959 bytes；ZIP SHA-256 `0e6b863914bb1ce7a2698cbcb9bb779c8960e126cb773c538c424a53b01a38ff`。匿名下載解壓後，`index.html` 與上列定版雜湊一致。
+- itch.io：<https://swear01.itch.io/phase-demo>，game ID `5168384`，顯示 Published；免費且不收款、桌面鍵盤、960×640 嵌入、全螢幕按鈕、封面與三張遊戲截圖，已按實際內容填寫 AI disclosure。
+- itch.io HTML upload ID `19800447`；匿名遊戲檔 HTTP 200，engine／CSS／renderer 與最終版一致。匿名公開頁曾暫時回傳 429，後恢復 200，實際頁面內 iframe 的八關 60 Hz 鍵盤通關、換色／衝刺、暫停、重玩與死亡重生檢查通過。
+- 原 Sites 公開網址保留。完整發佈收據為工作區 `work/phase-demo-publication.json`；`outputs/phase-demo-final-v10.zip` 與 `phase-demo-itch-public.png` 保存離線包和頁面證據。
+- itch.io 介紹的 HTML 編輯器只用 `fill()` 再切回富文字時，預覽曾有內容但儲存後為空。輸入後送出 Space、Backspace、Tab，確認具名 `game[description]` textarea 已同步，再儲存並讀回公開段落；不要把編輯器預覽當成已保存。
 
 ## 定版內容
 
