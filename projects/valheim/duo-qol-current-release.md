@@ -21,7 +21,7 @@ updated: 2026-10-16
 - Badgers Straight Structures 0.6.0 只內附私人包，保留作者 `Warp Amount = 0.004`，會一起調整石材、木牆、樑柱與門的視覺扭曲，沒有石材限定設定。作者禁止重新上傳，DLL／私人 ZIP 不進公開 repo、模組站或 Actions。
 - PerfectPlacement 自 v53 移除，F1 精確建築不再使用；PlanBuild 自 v47 移除。保留 Infinity Hammer、World Edit Commands、MovingDay。ComfortTweaks 3.3.11 判定範圍 50、清單開關 J；Home 會衝突 MovingDay 高度重設。
 - AzuCraftyBoxes 取料半徑 50、單箱切換 RightShift；PlantEasily 範圍修飾鍵 RightShift、採收 LeftShift。Infinity Hammer 左右排列 RightAlt＋滾輪，前後排列 RightShift＋滾輪，縮放 None；對著箱子按 RightShift 可能一起切換取料。ValheimTerrainTools Removal 與 Brush 上限 10，Remove builds 沒有材料返還或復原。
-- 營火沿用 v32 RGB 解法：`FirePitIntensityLow = 1.5`、`High = 2`、`FirePitColorLow = 35211AFF`、`High = 402014FF`。舊 1.0.1 的隔離四營火實測不能當成 1.0.2 的畫面驗證。
+- 營火沿用 v32 RGB 解法：`FirePitIntensityLow = 1.5`、`FirePitIntensityHigh = 2`、`FirePitColorLow = 35211AFF`、`FirePitColorHigh = 402014FF`。舊 1.0.1 的隔離四營火實測不能當成 1.0.2 的畫面驗證。
 
 私人交付固定執行 `python3 -m scripts.build_private_package`。必須沿用本機 `<user-home>/.config/valheim-duo-qol/private-admins.json` 的兩位管理員，以及同目錄 BadgersStraightStructures.dll；任一缺失／格式或原始 DLL 雜湊不符就停止，不能以公開包代替。私人名單、permissions.yaml、私人來源內容與其 hash 都不寫共享記憶或公開 Git。私人包會加入 Badgers、權限檔並開啟 Automatic devcommands；GitHub／共享記憶不提供私人名單或 Badgers 備份。
 
