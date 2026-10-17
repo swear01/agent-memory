@@ -2,7 +2,7 @@
 title: Gamejam1 PHASE Web preview and live Pipeline CI
 scope: projects/gamejam1
 status: verified-public-preview-owner-ci-setup-pending
-updated: 2026-10-17
+updated: 2026-10-18
 tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 ---
 
@@ -246,3 +246,10 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - Live keyboard move/jump/dash、advancing frame/controller time與source=screen Game View驗證成功。先前18條compiler stream warnings全為既有測試FindObjectsByType/FindObjectsSortMode CS0618，對應source行未修改；fresh Editor groundTruth0errors0warnings，保留stream後clear得到fresh counts0/0。不要把清空後的0/0寫成整個session無警告。
 - Hidden GUI冷啟動仍有owned Editor到前景的samples，沒有呼叫activate/editor_focus或focus=true；此限制尚未修復。自己的Editor已graceful關閉、autotick/observer停止。live eval設定Application.runInBackground也會序列化ProjectSettings runInBackground；先封存diff，Editor關閉後僅restore這個自有生成差異，沒有stage它。
 - PR29 source64b381dba5f99db93636197f5495f3a2b08f7076，controller CI39053668228通過，人工review授權下合併06ad5de75049b8b21222f0c37fa325b110765079；沒有宣稱bot review通過。證據與完整source/TestResults archive在<user-documents>/Codex/2026-10-18/gamejam1-mechanism-prefabs/。公開Web沒有重建或更新。
+
+## 十一關與Wiki整合（2026-10-18）
+
+- 後續整合加入JumpCrystal、DashCrystal兩個Prefab與PHASE/Add入口，現在共有七個mechanism Prefabs；既有五個資產不覆寫，MechanismPrefabAssets.Run對已存在資產跳過。生成十一關仍記錄instance overrides，所有SavedDemoPrefab檢查讀回全部十一關。
+- 最終140Unity CLI/Pipeline（134Edit+6Play）、108.NET、7Python和Web/map guards；11live routes/10transitions/0deaths，frame/time/actualGameView及freshConsole0/0通過。中文Wiki更新十一關、水晶、多平台和Prefab，六張新增native水晶關PNG；file/HTTP desktop/mobile/no-JS皆過。原五fixtures與手工PhaseDemo1.1不變。
+- 原PR27single-mover需手動移植pickup到共享platform substeps，不能覆蓋PR28/29的陣列與Prefab座標；Grid測試重疊後實際6case，strict counts以報告核對。只整合main、沒有本次Web建置或公開部署；owner-side Web CI條件仍是既有限制。詳細契約與證據見continuous-lasers-and-crystal-research.md最新段落。
+- 整合PR30 head1a8b6bc98c411f703352ef4712d4fe14702401d0，controller CI39054436086通過，合併main為dab002ec4a2015df772dd40815c1fafd7c5317b0。GitHub同步將PR27標MERGED（05117ff225c6d33a3a723c75455629af6e7fcdb0）、PR26標MERGED（1a8b6bc98c411f703352ef4712d4fe14702401d0），沒有open PR。人工review授權下整合，未宣稱bot pass；source heads均為main ancestors。
