@@ -2,7 +2,7 @@
 title: Claude API 實驗用 fleet 環境
 scope: tools/anthropic
 status: active
-updated: 2026-09-30
+updated: 2026-10-17
 tags:
   - anthropic
   - fleet
@@ -22,3 +22,7 @@ tags:
 - 此 identity-linked key 需要每次 API 請求帶 `anthropic-workspace-id` header；只設定 `ANTHROPIC_API_KEY` 會讓模型清單請求回 HTTP 400。Anthropic CLI 可讀 `ANTHROPIC_WORKSPACE_ID`。Python SDK 要用 `default_headers={"anthropic-workspace-id": os.environ["ANTHROPIC_WORKSPACE_ID"]}`，不能假設 SDK 自動讀取這個變數。官方說明：<https://platform.claude.com/docs/en/manage-claude/authentication>。
 - 真實金鑰存於各帳號的 `~/.secrets`，不可放入 Git、筆記、命令參數或工具輸出；本筆記也省略 workspace ID 的值。跨機複製金鑰時透過 SSH stdin 傳送，合併既有檔案並保持 `0600`，不覆蓋其他變數。
 - 憑證稽核只能輸出變數名稱與狀態，不要整段顯示 shell 設定。這次檢查 `.bashrc` 時曾意外讓一把無關的既有 OpenAI key 出現在工具輸出；已告知使用者需要輪替，完成輪替尚未驗證。
+
+## Claude Code 訂閱入口（2026-10-17）
+
+上述 API 金鑰仍供真正 API 程式使用。Claude Code 已另外部署[訂閱啟動入口](claude-subscription-launcher.md)，只移除 Claude 子程序認證變數；不要因這份 API 環境筆記把 Claude 改回 API key 登入。新版 fleet 範圍與 Athena 送修排除以該筆記為準。
