@@ -253,3 +253,11 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - 最終140Unity CLI/Pipeline（134Edit+6Play）、108.NET、7Python和Web/map guards；11live routes/10transitions/0deaths，frame/time/actualGameView及freshConsole0/0通過。中文Wiki更新十一關、水晶、多平台和Prefab，六張新增native水晶關PNG；file/HTTP desktop/mobile/no-JS皆過。原五fixtures與手工PhaseDemo1.1不變。
 - 原PR27single-mover需手動移植pickup到共享platform substeps，不能覆蓋PR28/29的陣列與Prefab座標；Grid測試重疊後實際6case，strict counts以報告核對。只整合main、沒有本次Web建置或公開部署；owner-side Web CI條件仍是既有限制。詳細契約與證據見continuous-lasers-and-crystal-research.md最新段落。
 - 整合PR30 head1a8b6bc98c411f703352ef4712d4fe14702401d0，controller CI39054436086通過，合併main為dab002ec4a2015df772dd40815c1fafd7c5317b0。GitHub同步將PR27標MERGED（05117ff225c6d33a3a723c75455629af6e7fcdb0）、PR26標MERGED（1a8b6bc98c411f703352ef4712d4fe14702401d0），沒有open PR。人工review授權下整合，未宣稱bot pass；source heads均為main ancestors。
+
+## 整合 main 的手動 Web CI（2026-10-18）
+
+- 對 dab002ec4a2015df772dd40815c1fafd7c5317b0 使用 Unity 6000.4.7f1 官方 CLI＋resident GUI Pipeline 完成 fresh140Unity tests（134Edit+6Play）、108.NET、7Python、Web/map guards；11native鍵盤路線/10轉場/0deaths、frame/controller time與actual screen capture通過，Console groundTruth0/0。264tracked source files與開始前SHA逐一相同；不需遊戲程式修正。
+- 真正編譯 integrated11room WebGL 成功：18,254,289bytes、0errors、1warning。警告為未設定 RuntimePipelineConfig，僅停用Player端可選Pipeline，不影響Editor CLI或遊戲；未為消除警告啟用Player control。第一輪Editor在wasm link階段退出、Pipeline消失，原因未明且沒有crash report；保留原紀錄，重開同一工作區利用編譯快取重試成功。不能把中斷的第一輪說成成功。
+- 剛編譯的本機 Web 通過 Chromium156.0.8078.4 實際11路線/10轉場/11native選關、custom-map move/jump、畫面比例、改鍵/雙slot/單項restore/persistence、fullscreen退出後input、載入失敗UI；errors/warnings/failedRequests皆0。三個水晶路線使用controlled browser time，其餘八關real-time；不宣稱Safari、實體mobile或人類關卡平衡已測。Wiki file desktop/mobile/no-JS與mock map browser亦通過。
+- Hidden GUI launch仍有ownedUnity foreground5464/7744samples（約815.44s觀察）；沒有activate/editor_focus/focus=true，但不得宣稱不搶焦點。自己的Editor graceful關閉、autotickoff、observer停止；四個Editor生成settings差異封存後才restore。9個Web檔案與153個TestResults檔案完整SHA驗證封存後才移除測試worktree，其他工作區保留。
+- 證據：<user-documents>/Codex/2026-10-18/gamejam1-manual-ci/release.json、Builds/Web與TaskWorktree/TestResults；首次中斷另存InitialEditorExit。這輪未更新公開網站，未改owner-gated GitHub Web CI設定。這些是整合Web本機證據，不能當成公開站部署證據。
