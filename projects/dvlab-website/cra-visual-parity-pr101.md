@@ -3,7 +3,7 @@ title: DVLab CRA 視覺 parity PR #101
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-10-02
+updated: 2026-10-17
 ---
 
 ## Deployed 2026-10-01
@@ -24,6 +24,6 @@ updated: 2026-10-02
 - Host photo 使用原始 CRA `ric.jpeg`，原 repo path 是 `frontend/public/assets/images/examples/host-profile/ric.jpeg`；不要新增重複的 PI badges。
 - Navbar 使用 liquid-glass / frosted translucent 與 `backdrop-filter`；header/body 的 `padding-top` 透過 ResizeObserver 追蹤 `--site-header-height`。
 - Members 使用 horizontal scrolling tracks/carousel；目前只有三個 categories：形式化驗證（`formal`/`ai-formal`/`verification`）、EDA/3DIC（`eda`/`3dic`/`architecture`）、Quantum。PI 不列入 categories。
-- Body 使用 CRA 的 Helvetica Neue（weight 300），titles 使用 Coolvetica；字型放在 `public/fonts/cra/`。
+- （已被 PR #104 取代）Body 曾用 CRA Helvetica Neue 300 + Coolvetica；PR #104 改為自架 Jost + 系統中文字型，`public/fonts/cra/` 已刪除。見 `starfield-redesign-pr104.md`。
 - Homepage CRA culture typewriter mottos：`#lab-introduction`（PR #102）。
 - Liquid-glass chips / panels（PR #103，deploy `9aff7ee` / inari `20261002-9aff7ee`）：`--glass-bg*` 核准半透明；news date chips、paper list denser panel、paper detail 會議+年份 labeled chips、unified footer。詳見 `liquid-glass-chips-pr103.md`。
