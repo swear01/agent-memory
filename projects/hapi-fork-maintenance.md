@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-15
+updated: 2026-10-17
 tags:
   - hapi
   - fork
@@ -199,6 +199,10 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 給另一位作者現有 feature PR 做小補修時，publication diff 必須以該作者的實際 feature head 為 base；把已合併目前 upstream 的驗證分支直接投向舊 feature branch，會夾帶大量無關 commits。可保留 upstream-integrated worktree 做相容性驗證，再從 feature head 建立獨立補修 worktree、重跑該實際 publication tree 的完整 gate，保留原作者歷史。Clone-local upstream-only hook 若不適用，必須保留 task worktree、實際 target base、精確檔案 scope 與 head guard 的等價檢查，不能全域關閉 hook 或用 no-verify 偽造過關。
 
 - Foreign fork 的 `statusCheckRollup` 可能完全漏掉 `action_required` 的 Test run，因為尚未建立任何 job/check；必須另查 exact source SHA 的 Actions runs。Fork 原先 workflow registry 沒列出審查，不保證 PR 開啟後仍沒有：新 workflow 可能這時才註冊。Pi 補修 `luodeb/hapi#1` 的 Test 等 owner approval，review 在 Codex 執行前因 proxy server-info JSON 缺失而失敗，不能標成 code-test failure 或 clean review；先保留可審核 PR／本機驗證，讓 fork owner 處理核准與缺少的 review configuration。
+
+- 向另一位作者的 feature branch 提交補修 PR，不會直接改動其 branch，也不會更新該作者對官方的原 PR；只有作者接受補修後才會傳遞。回報時分開標示官方 PR、作者 fork 的補修 PR 與已發布維護版。Pi #1830 的主功能已有官方 #1831，不能稱為無實作 issue；2026-10-17 重新確認原 head `0ab08bfc` 的最新審查仍有 queued-text loss 與 unbounded-read finding，CI 綠色僅證明現有測試通過，不表示審查無缺陷。補修目的應說明為修復已重現的缺陷，並揭露作者接受與 fork CI 核准的額外等待。
+
+- 多個 worktree 的 CLI Vitest 若共用預設暫存目錄，`globalSetup.ts` 的固定 `hapi-test-config.json` 會互相覆寫／被另一個 teardown 移除。2026-10-17 的 #2025 gate 在 7 files 通過後，另 256 files 因設定檔遺失而無法 setup；當時觀察到其他任務同時跑 CLI，但沒有直接觀察到歷史 unlink PID，不能指名是哪個程序刪除。沿用現有 TMPDIR 傳遞、給整個 gate 一個短的 task-specific directory，再完整重跑即可隔離：四套 typechecks、8,188 tests 通過，包括原先 setup 被擋的全部檔案。無需更改產品、跳過測試或終止其他任務。此 workaround 不等於已修正共用暫存檔的測試設計。
 
 - #1974 已從既有大 PR／維護版拆成只動共用 sender 與測試的 upstream `tiann/hapi#2024`，head `110d381cac8661dda1290089ee186567e43d3b22` 的四項 CI 與 HAPI Bot requirement／approach／code review 全數通過。每次 intentional send 生成新 UUID localId，既讓原始儲存與 native queue mirror 使用同一筆 row，也保留相同文字連送兩次的語義；不能以內容 hash 去重。實際 CLI source entry 對隔離 HTTP server 的兩次登入／傳訊、一個 inactive resume，再經真實 Hub SQLite native mirror，恰好留下兩筆 row。這是預防新重複，不是清理歷史資料，也沒有證據表示原 bug 讓模型執行兩次。
 
