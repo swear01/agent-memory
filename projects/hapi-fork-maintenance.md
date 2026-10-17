@@ -204,6 +204,8 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 
 - 多個 worktree 的 CLI Vitest 若共用預設暫存目錄，`globalSetup.ts` 的固定 `hapi-test-config.json` 會互相覆寫／被另一個 teardown 移除。2026-10-17 的 #2025 gate 在 7 files 通過後，另 256 files 因設定檔遺失而無法 setup；當時觀察到其他任務同時跑 CLI，但沒有直接觀察到歷史 unlink PID，不能指名是哪個程序刪除。沿用現有 TMPDIR 傳遞、給整個 gate 一個短的 task-specific directory，再完整重跑即可隔離：四套 typechecks、8,188 tests 通過，包括原先 setup 被擋的全部檔案。無需更改產品、跳過測試或終止其他任務。此 workaround 不等於已修正共用暫存檔的測試設計。
 
+- 原生 CI 的第一個失敗會遮蔽後續 stage。修 #2025 時，只移植 #1771 的 cell-recycling fixture 修補後，iPhone 193 tests／7 skipped／0 failures，但原先被擋住的 iPad stage 才暴露 `TranscriptTypographyTests.testReadingWidthAndBoldTextChangesKeepHistoryInPlace` 的 anchor 漂移。還需移植 `AnchoredTranscriptList.swift` 的 current-frame compensation、直接 stale-attributes regression，以及等待實際寬度／置中／anchor 穩定的 typography fixture；不能只加 sleep 或放寬一點誤差。檢查第一個紅燈時，同時查 downstream skipped stages 與既有相關原生修補，避免把第一階段修好當成完整成功。最終 `cefea0cfb364c2b7f7d9d24deee3b2166277558e` 的全部十項 CI 與最新 HAPI Bot review 通過；此次仍僅更新貢獻 PR，未合併或發布維護版。
+
 - #1974 已從既有大 PR／維護版拆成只動共用 sender 與測試的 upstream `tiann/hapi#2024`，head `110d381cac8661dda1290089ee186567e43d3b22` 的四項 CI 與 HAPI Bot requirement／approach／code review 全數通過。每次 intentional send 生成新 UUID localId，既讓原始儲存與 native queue mirror 使用同一筆 row，也保留相同文字連送兩次的語義；不能以內容 hash 去重。實際 CLI source entry 對隔離 HTTP server 的兩次登入／傳訊、一個 inactive resume，再經真實 Hub SQLite native mirror，恰好留下兩筆 row。這是預防新重複，不是清理歷史資料，也沒有證據表示原 bug 讓模型執行兩次。
 
 - Codex 回合耗時應使用獨立 `turn_duration` metadata，避免重送 `token_count` 造成 usage 重複計算。`CodexRoundDuration` 只接受已觀察到的 live start／matching completed turn，重播、完成訊息單獨到達、失敗或中止不能啟動計時。Local transcript 使用原始 record timestamp，避免同批掃描得到假的零秒；remote/shared 要在進入 async projection queue 前捕捉 receipt time。持久化尾頁可能不含起始 user row，UI 需從 metadata 還原，而非依賴仍載入的 user timestamp。
