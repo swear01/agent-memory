@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-17
+updated: 2026-10-18
 tags:
   - hapi
   - fork
@@ -211,3 +211,9 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - Codex 回合耗時應使用獨立 `turn_duration` metadata，避免重送 `token_count` 造成 usage 重複計算。`CodexRoundDuration` 只接受已觀察到的 live start／matching completed turn，重播、完成訊息單獨到達、失敗或中止不能啟動計時。Local transcript 使用原始 record timestamp，避免同批掃描得到假的零秒；remote/shared 要在進入 async projection queue 前捕捉 receipt time。持久化尾頁可能不含起始 user row，UI 需從 metadata 還原，而非依賴仍載入的 user timestamp。
 - Duration／usage 必須綁定 native turn ID；除一般 transcript／remote/shared messages，也要查直接發送的 Code Mode hooks。完成後 clock 已清除，converter 仍須保留 raw payload 的 turn_id，才能關聯 late token_count。針對回應沒有 turn ID、usage 原本卻有 ID 的既有資料，不能讓新 matching 丟掉原本 Round usage/model；只有完全未標記的 latest group 可保留原有 usage attachment，duration 不得猜配。不同 native turn 共用一個 response group 時，晚到的舊 duration／usage 不能覆寫較新 turn 的摘要。兩個 regression 在修正前確實失敗，修正後相關 Web tests 通過。
 - Round summary 可能掛在 response group 的第一張 `update_plan` 卡片。Remote／Shared 若跨回合沿用 `codex-plan-state`，`ensureToolBlock` 會取回舊位置的卡片；新增 turn metadata 時直接重標並清掉 summary，會讓上一回合已保存的耗時與 token/model 摘要消失。兩個 live producers 的 call／result IDs 都需改成 `codex-plan-state:<native-turn-id>`，同回合保持穩定、跨回合分開。兩個 producer regressions 先紅再綠，另驗證兩張 Plan 卡片各自保留摘要。Local proposed-plan 已使用 item-unique IDs；Web/iOS/Android 的 raw `plan_update` legacy normalizer 雖仍有舊 ID，但目前沒有 live producer 送這條路徑，不需為這次補修改寫三份 normalizer。
+
+## 2026-10-18：Pi 圖片功能改投官方與 Pi 1.x 相容性
+
+- 使用者明確決定以目前 upstream/main 重做獨立官方 PR，引用原作者 #1831、保留 Co-authored-by，再整合補修；新官方 #2060 以 `317e39a0b` 為 base、單一 commit `3d9ebb3e04f04baffe3702c2479776eb05330e0d`。這個決定取代等待作者接受 foreign-fork supplement 的路徑，並不授權關閉別人的 #1831、合併官方 PR、更新維護版 main 或部署。
+- `registerGeneratedImageFromAcpBlock` 原本宣告 async，但實際只有有界 base64 decode、MIME sniff 和記憶體 registry；拿掉 async 後 Pi converter 可以保持同步，直接避免圖片功能引入的 publication queue、prompt rejection flush 與 shutdown 排序問題。唯一原有 production caller ACP 仍可 await 普通回傳值；Pi／ACP／registry 的 398 個 focused tests 與完整 8,176 tests、四套 typechecks 通過。不要為純 CPU helper 新增無必要的非同步生命週期。
+- Pi 在 2026-10-01 發布 1.0，10-15 最新 1.3；canonical repo/package 已是 `earendil-works/pi`／`@earendil-works/pi-coding-agent`。查文件時歷史 execute signature 可能混入檢索結果，應回到 pinned tag source；v1.3 execute 仍是 `(toolCallId, params, signal, onUpdate, ctx)`，loader 保留 `@sinclair/typebox` alias。隔離實際 Pi 1.3 RPC、unmodified extension、text-only loopback model 已證明 direct image、builtin Codemode nested image、missing-file isError 全通過；nested child ID 為 parent 加 `/1`，圖片在 RPC 保留完整 bytes，即使非視覺模型收到零 image parts。Converter 要保留 failed status 及 image-bearing results，不需要新增 protocol field 或全域升級 Pi。
