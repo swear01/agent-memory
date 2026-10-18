@@ -4,7 +4,7 @@ scope: projects/hapi-codex-dictation-duplicate
 project: hapi
 status: active
 confidence: high
-evidence: 2026-10-18 讀取正式 hub v0.30.7.4 的 session messages，並對照 v0.30.7.4 原始碼逐段追蹤。
+evidence: 2026-10-18 讀取正式 hub v0.30.7.4 的 session messages、對照原始碼追蹤，並在 PR #1436 修正與測試。
 created: 2026-10-18
 updated: 2026-10-18
 tags:
@@ -38,10 +38,15 @@ hub 內的資料形狀：
 
 上游 main 沒有 #1436，網頁語音不會觸發；但第 2 步的漏洞仍在，任何不帶 localId 的送訊來源（例如 Telegram 回覆）打到 Codex session 都會一樣重複。
 
-# 修法候選（2026-10-18 尚未實作）
+# 修正狀態
 
-- 在 hub `messageService.sendMessage` 對沒有 localId 的使用者訊息補一個 localId：所有 REST／Telegram 送訊都經過這裡，一處修好全部來源。
-- 另外可讓 #1436 的 dictation 送出比照 `useSendMessage` 帶 client localId。
+- 2026-10-18 已修在 PR #1436 本身（使用者授權直接更新該 PR；上游沒有等價的語音直接送出功能）：
+  `web/src/lib/dictationSend.ts` 新增 `sendVoiceMessage`，用 `makeClientSideId('local')` 補 localId；
+  `useDictation`、`useRealtimeDictation`、`HappyComposer` 語音送出、`SessionChat` 跨 session 語音工具送出都改走它。
+  PR head `45bf446`（含 merge upstream/main），root typecheck 與 Web 全套 3,439 tests 通過。
+- 維護版要等下一次 rebuild carry 新的 #1436 head 才會生效；已部署的 v0.30.7.4 仍會重複。
+- 未修：CLI `shared/root.ts` 的 `localId ?? randomUUID()` 洞仍在上游，其他不帶 localId 的來源（例如 Telegram 回覆）打到 Codex session 仍會重複；
+  根治候選是 hub `messageService.sendMessage` 對缺 localId 的使用者訊息補一個。
 
 # 診斷方法
 
