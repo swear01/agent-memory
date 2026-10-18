@@ -32,3 +32,6 @@ Runtime 等待與 transport/native readiness 共用原本 deadline。已回報�
 四個 Hub integration regressions 在修補前 source 失敗：延遲完整回報、僅有預填 model/effort、等待中結束、以及 active wait 已用完同一個 deadline。另四例驗證真實 mismatch、明確 null、end/restart/expiry 清除與 stale heartbeat 不計證據。使用真實 in-memory Store/SyncEngine/SessionCache，僅 stub Runner 和 remit delivery 邊界。
 
 候選 merged tree 的 root typecheck、CLI 3051、Hub 1469、Web 3349、shared 327、relay 118 測試通過；CLI 12 與 Hub 3 個既有 skip。Fixture 重新產生無漂移。這些是本地 source/test 證據；仍須確認新 head 的 CI 與 bot verdict，不能沿用舊 SHA 的綠燈，也不能稱為已發版、部署或實機派工驗證。
+
+
+同一候選 head `8d34df9eac82c789f80b92132ed9e7efe54043c1` 的 GitHub CI 最終全部通過，包含 iPhone/iPad、兩組 Android transcript layout、Runner integration 與 Windows MCP；HAPI Bot 對完整固定 head diff 給出 Requirement Pass、Approach Pass、無可報告問題的 clean review。#1771 是 OPEN、ready、MERGEABLE/CLEAN；上游仍需維護者合併。這份綠燈只屬於此 SHA，不能當成未來 head 或已發佈 binary 的驗證。
