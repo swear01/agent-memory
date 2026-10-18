@@ -17,4 +17,4 @@ updated: 2026-10-19
 
 ## 2026-10-19 套用
 
-`bufferSize: 64.0`、`bufferSec: 60.0`、`preferCodecs: ["HEVC","AVC"]`（未放 AV1，因手機硬解支援未知）。CDN 保持 `aliov`。主檔 SHA-256 `b57178cf80d895e91e575496154c0254f807662dff08bb8932d60fc2721c8c2a`。只驗證檔案；手機匯入與實際播放未驗證。根治需上游 PR #3223「线程撕裂者」多線程分片下載（2026-10-19 尚未合併）。
+`bufferSize: 64.0`、`bufferSec: 60.0`、`preferCodecs: ["AV1","HEVC","AVC"]`（使用者確認手機可硬解 AV1）。CDN 保持 `aliov`。主檔 SHA-256 `d72ff3920dcfa51e0dcd17a4dd4debb312bd527c61a983a3908ccaf229006041`。只驗證檔案；手機匯入與實際播放未驗證。根治需上游 PR #3223「线程撕裂者」多線程分片下載（2026-10-19 尚未合併）。
