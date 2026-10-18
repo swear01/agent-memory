@@ -2,7 +2,7 @@
 title: Gamejam1 PHASE Web preview and live Pipeline CI
 scope: projects/gamejam1
 status: verified-public-preview-owner-ci-setup-pending
-updated: 2026-10-18
+updated: 2026-10-19
 tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 ---
 
@@ -279,3 +279,16 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - PR32 source33a208e760b501fcbbbdc9198b74e1711f6d013f，controller CI39138493753成功；依既有人工review授權合併c48d9402f534501a40b606e1d3b43a8fe006f1d4，main tree與測試source完全一致，main controller39138591919成功。沒有宣稱bot pass；Web39138591992因UNITY_WEB_CI_ENABLED未設為true而停在owner gate；log要求先完成授權desktop runner/Pages，其目前狀態未另驗證，未做hosted Unity build或deploy，本次用已驗證手動成品發布。
 - Site source52da85bd7d1bffd3e88af88307d297337303ac92，v21部署成功並維持原公開網址/audience；archive manifest與9Webfiles先逐SHA核對。公開8JS/binary hashes exact；index僅多一個938byte Cloudflare script，normalized exact，保留raw mismatch。證據<user-documents>/Codex/2026-10-18/gamejam1-demo12-web/，FinalLocal/TestResults與Builds/Web已完成byte-verified archive，原四generatedsettings diff在ownedEditor graceful關閉後才restore。Focus12ownedUnity/9788samples，不能說零搶焦點；沒有activate/editor_focus/focus=true。
 - 最終匿名public Chromium156完整harness通過原十一條路線/十轉場、十二選關及1.2jump/dash、custom-map/viewport/controls/fullscreen/load-failure；0errors0warnings，2conditional304各匹配成功UnityCache readback。公開1.2PNG已視檢，保留FinalPublic/TestResults與FinalLocal分開的SHA驗證封存；owned Editor/autotick/observer已停止，其他工作區保留。
+
+## 十二關整合、選關與機械視覺（2026-10-19）
+
+- PR33 source434e011c51f40c34abe945206557b575881df77f，Claude Opus5.5實際三個本機agent分工及獨立local review皆完成；GitHub controller39150039096成功後依既有人工review/merge授權合併5af44c789f5e90b0360bb82ec4186441dd55a0aa，main controller39150111032成功，main tree與測試source相同。HAPI fresh spawn三次各重試一次皆HTTP502、沒有返回sessionID，故改用已驗證firstParty claude-opus-5-5 CLI，未假稱HAPI成功。沒有bot approval。
+- 十二個builtin scene使用PhaseSandbox.Levels同一順序：Demo1..8、Crystal1..3、Demo12。1.2經Editor AssetDatabase.MoveAsset改12，GUID57ecb81005490214185fc014a0ba02cd不變，原scene僅修改左右links；原22Prefabinstances/14activeplatforms與7sharedPrefabs保留。Demo2..8每個只改一行leftScene。最後右界觸發「你贏了」、重玩或選關，其他scene只透過邊界換場。
+- 選關卡死根因為開modal暫停了0.18s抵達slide，舊Select拒絕InTransition，因此永遠等不到動畫結束；現在只拒絕真正pending load，允許取代cosmetic arrival。Late timeout回覆要恢復button並依controls/map/selector的pause union重算，不關閉新dialog。Web自動化需在click之前註冊原生dialog close事件並真正await事件後再送鍵盤；hidden DOM不代表close callback已跑完，否則releaseControls會吞掉整段持續按鍵，直到下一個all-keys-up。測試以量到的16ms rAF累積對齊60Hz物理、保留每步canvas觀測，沒有改遊戲輸入契約。
+- 回上一關時RightEntry依當前width、phase與靜態安全落點找8px格線landing。Controller.Reset必須clamp spawnX到Width-8：427px視寬右進checkpoint408，縮回320後死亡原本會生在房外並立即再次換場；新regression先重現expected312/got408，修共享Reset後通過。左界回前關已驗證，不代表每關都能由右到左完整反解；三水晶關的完整反向路線沒有驗證。
+- 直橫齒輪solid皆8px厚，共用Profile，3px齒條嵌在collision內，移除舊直牆外伸5px視覺差；導軌改1px暗線及小止擋，保持白灰neutral語意。Portrait下方Y194以後增加低對比礦坑terraces，Y180到194既有fade、碰撞與死亡高度不變，依使用者澄清只改視覺。
+- Crystal1..3重設為1/2/2crystals、3/4/4連續由地面到天花的相位laser，永久安全雙邊landing。各別練jump→dash保色、兩次round refill接updash、square dash refill接round jump。5個必要crystal ablation皆破壞記錄路線；兩條已知第三關捷徑會死。第一關仍有expert可跳過中島補充但需crystal的路線，未證明解法唯一或人類平衡。
+- Fresh official Unity CLI＋resident GUI Pipeline155tests（143Edit＋12Play）、117.NET、7Python及Web/map checks通過；第12關真實nativekeyboard完整232physicsframes、4dashes、零死亡到勝利及retry通過。另有四關native鍵盤frame/time及四張真正source=screen GameView，兩條shortcut阻擋，freshConsole0errors0warnings。WebGL18,258,965bytes、0errors、1既有optional Player RuntimePipelineConfig警告。Compiled local Chromium156全11JSONroutes/11forwardtransitions/12selectors/完整12勝利重玩/三對往返/controls/fullscreen/custommap/viewport通過，errors/warnings/failedRequests各0。
+- Public Site v22原audience部署succeeded；source203c95566fa7a5c301bca85c555f9590ed33bcaa，saved version尾碼appgver_6a1801738ed08191a3e14f7bc1ea0bc6，deployment appgdep_6ad502dc774c8191853aa8e7414bd410。8JS/binaries服務SHA exact；index只有單一Cloudflare challenge插入，移除該node後exact，保留allRawMatch=false/productEquivalent=true。Hosted Web39150110994在UNITY_WEB_CI_ENABLED空值的owner gate明確失敗，未遠端Unitybuild/deploy，不與手動公開版混稱。
+- OwnedEditor graceful close、autotick與observer停止；四generatedsettings封存後restore。Focus觀測41035samples中47samples/約5.059s ownedUnity前景，無activate/editor_focus/focus=true，仍不可保證零切焦點，observer也未涵蓋launch前瞬間。保留<user-documents>/Codex/2026-10-19/phase-polish/完整source archive267entries（含CLAUDE symlink）、FinalBuilds/Web、FinalTests、Local/FinalResults、兩輪失敗測試及review/focus記錄；其他dirtygear/wiki工作區保留。
+- 最終匿名public Chromium156實際11JSONroutes/11forwardtransitions/12selectors、完整12keyboard勝利及replay、2→1/9→8/12→11三對往返、custom-map、controls/fullscreen/load-failure及多畫面比例全通過；errors0/warnings0，兩個conditional304 ERR_ABORTED各嚴格匹配成功UnityCache readback，未隱藏原始failedRequests。公開結果與本機分別封存Public/FinalResults及Local/FinalResults，SHA逐檔驗證。Safari/實體mobile/人類平衡仍未測。
