@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-16
+updated: 2026-10-18
 ---
 
 # 已驗證線索；根因尚未確認
@@ -92,6 +92,13 @@ Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修�
 
 - 10/16 02:43補齊上述語音停止後的同一renderer對照：01:37:09與02:43:07兩份CSV相隔65.97分鐘，Key均15150，Handle+Name配對新增0、移除0；三組Render/Properties各5030/5030/5029，既有配對全保留。01:29–02:44的16筆五分鐘快照總句柄16351→16354，範圍16341–16354；此前50分鐘11833→16167。這比單次斷線後快照更支持持續累積隨語音活動停止，但僅兩端Key快照，不能排除中間短暫開關；既有句柄未釋放，不能稱修好，也未建立Experimental、驅動或Port耗盡因果。Unknown type仍290，分類可見度有限。分析為<workspace>/outputs/port-monitor/discord-control-20261016-012640.json，已通知一次，不因後續平台重複通知。
 - 此輪02:38的Handle取樣雖退出碼0且16354列與總數相符，卻全部Unknown type、Registry名稱呈原始格式；不能把可分類Key數0當成資源釋放。相同參數重試02:43後恢復Key15150/Unknown290，使用重試資料做配對比較，保留首次檔並標記分類不可用；暫無證據確定工具異常原因。解析應同時檢查枚舉數與類型可見度，不能只看退出碼。
+
+## 10/18：Store 工具更新造成音訊子收集器失效
+
+- SysinternalsSuite Store 套件從 2026.9.0.0 更新為 2026.10.0.0 後，原本寫死版本目錄的 `Tools/handle.exe` 已不存在。10/18 01:54 的 Audio 子收集器記錄 `The system cannot find the file specified`，重導向曾將 audiodg latest CSV 留成 0 bytes；主排程仍回報 LastTaskResult=0。監測健康檢查須一起讀 errors.jsonl、音訊取樣時間與 CSV 完整度，不能只看排程退出碼。
+- 已備份並修正 audio-handles.ps1 與 collect.ps1，改用 `Join-Path (Get-AppxPackage -Name Microsoft.SysinternalsSuite -ErrorAction Stop).InstallLocation 'Tools\handle.exe'` 解析目前使用者已安裝套件。incident-collect.ps1 會載入同一 audio-handles.ps1，因此事件 AFD 擷取也使用更新後路徑；未修改排程設定。
+- PowerShell 語法檢查通過，既有 Interactive/Highest 隱藏排程於 14:03 手動驗證成功：一般任務與事件擷取任務均結果 0，音訊可枚舉 269/269 個句柄、Key24、Unknown0；事件擷取成功保存 AFD CSV，RecentExhaustionEvents=0。14:05:58 未再手動啟動即由排程自動補跑，一般快照恢復更新。這些是修復驗證，不能當作新的自然耗盡事件。證據保存在 <workspace>/outputs/port-monitor/handle-path-repair-20261018.json 與 handle-path-scheduled-verification-20261018.json。
+- 同一 audiodg 的一般權限驗證可枚舉 270/270，但有 103 個 Unknown type；隨後高權限樣本將 103 個辨識為 EtwRegistration。需分開檢查列數完整度與類型可見度，不能將權限不同造成的分類差異當成句柄新增或釋放。
 
 ## 官方參考
 
