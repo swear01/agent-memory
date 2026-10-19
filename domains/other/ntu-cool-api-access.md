@@ -52,6 +52,10 @@ NTU 在 `https://cool.ntu.edu.tw/profile/settings` 把「已核准的整合」�
 
 讀課程／檔案／公告／作業優先用 API。交作業、討論區發文、寄信、改設定須使用者明確確認。
 
+不想動權杖時，可在內建瀏覽器已登入的 COOL 分頁用頁面 JS `fetch('/api/v1/...', {headers:{Accept:'application/json'}})`，靠同源 cookie 認證；回應前綴有 `while(1);`，要先去掉才能 `JSON.parse`。
+
+找教材時不要只看 Files：有些老師的 `/folders` 只有空的 `course files`，教材放在模組的 `ExternalUrl` 項目（例如 GitHub）。用 `/api/v1/courses/<id>/modules?include[]=items`，讀每個 item 的 `external_url`（`url`／`html_url` 只是 `module_item_redirect`）。
+
 ## 檔案作業繳交：內建瀏覽器沒有 file_upload 時的作法（2026-10-19 驗證）
 
 Claude 桌面 app 的內建瀏覽器（`mcp__Claude_Browser__*`）沒有 file chooser／`setFiles` 能力：點 `input[type=file]` 後用 `cmd+shift+g`、輸入路徑、Enter 都到不了原生對話框；從 `file://` 分頁 `window.open`、`cmd+c/v` 剪貼簿、`navigator.clipboard.readText`、本機 `127.0.0.1` server（Private Network Access 擋下）也都無法把本機 bytes 帶進 COOL 頁面。Codex 是用 Playwright 的 `waitForEvent('filechooser')` + `setFiles` 成功，那是它瀏覽器工具的能力，內建瀏覽器沒有。

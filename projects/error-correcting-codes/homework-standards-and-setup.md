@@ -8,7 +8,7 @@ evidence: >-
   完成台大碩一錯誤更正碼第二週、第三週週五題（第 1～11 題）與第三週週一題（第 12～16 題）推導與 XeLaTeX 排版；
   確立得分導向、禁止論文式冗長總結與背景的極簡精準風格，使用標準英文術語與精準頁數控制。
 created: 2026-09-18
-updated: 2026-10-16
+updated: 2026-10-19
 tags:
   - error-correcting-codes
   - latex
@@ -23,7 +23,9 @@ tags:
 * **課程名稱**：台大碩一「錯誤更正碼」（Error Correcting Codes）
 * **講義來源**：`https://github.com/Symbol1/Correct2026`（如 `0907.ipynb`、`0914.ipynb`）
 * **作業作者**：<redacted-person>（學號：<redacted-id>）
-* **專案路徑**：`<project-root>/document/學習紀錄/碩一/錯誤更正碼/`
+* **專案路徑**：`<project-root>/document/學習紀錄/碩一/錯誤更正碼/`（作業）；課程講義、考古題與模擬考放 `<project-root>/document/學校講義/碩一/錯誤更正碼/`（已有 `板書/`）
+* **NTU COOL**：課程 id `66838`。COOL「檔案」區是空的；教材以模組項目（`ExternalUrl`）連到 GitHub 的日期資料夾，例如 Week 6 的「mock exam」→ `Symbol1/Correct2026/tree/main/1013`（期中模擬考 `1013midmock.pdf`，只有題目卷與答案卷，沒有解答）。老師用 COOL 收件匣發公告，信件通知會轉寄到 Gmail。
+* **期中範圍**：`1012.ipynb` 裡有「期中考截止線」標記，範圍到 RS codes 那一段。
 
 # 作業檔案命名規則
 
