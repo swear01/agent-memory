@@ -12,8 +12,11 @@ tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias,
 # 架構
 
 Gateway 是分散式部署，不是中央單點：每個 client 都呼叫同機 loopback 上的
-gateway process。現行 fleet 共八台，全部使用 `35001`（含 Zeus 的 swear01；Zeus 的 `35002` 屬於另一帳號 swear02，不是我們的 gateway）。
-Zeus 的 swear01 home 與 mazu 等 NFS 共用，`.secrets` 寫 mazu 一次即涵蓋。
+gateway process。現行 fleet 共八台，Mac、mazu、athena、cthulhu、valkyrie、Oracle、swop 使用 `35001`。
+Zeus 上有兩個 gateway：fleet 正式那台是 **swear02**（ssh `su_zeus`，port `35002`）；
+swear01（ssh `zeus`，port `35001`）也有一個。兩個帳號的 home 都是 NFS：
+swear01 home = mazu/athena/cthulhu/valkyrie/zeus 共用；swear02 home = su_mazu/su_cthulhu/
+su_valkyrie/su_athena/su_zeus 共用（只有 su_zeus 跑 gateway）。換 key 或 binary 必須兩個 home 都做。
 
 `routing.yaml` 只定義 model 到 priority group 的資料；gateway binary 內的
 `PriorityLatchManager` 才負責 fallback、cooldown、half-open probe 與自動
@@ -348,8 +351,17 @@ Windows exe 已建置，SHA-256
 但只有 swear1 有 Go 訂閱；swear2/3 的新 key 回 403「active OpenCode Go subscription is required」。
 
 - 槽位 1 已換新 key 並在 Mac、mazu(NFS)、Oracle 驗證 HTTP 200；`.dsh/.credentials.yaml` 同步更新。
-  槽位 2/3 仍是已失效舊 key。swop SSH 不可達，未更新。
+  swear02 home（su_zeus）一開始漏掉，部署時才補換。槽位 2/3 仍是已失效舊 key。swop、athena SSH 不可達，未更新。
 - Gateway 對 401 不 failover（只處理 429/402/quota 字樣/403 subscription/1010/network），
   所以失效 key 會直接回給 client。
 - 內建 browser pane 的 clipboard 與 Mac 隔離；sandbox 內 `pbpaste` 讀到空值，需在 sandbox 外執行。
 - 驗證要求必須帶 `x-opencode-session` header，否則上游回 400 MissingSessionID。
+
+# 2026-10-19 部署 PR #19（401 failover，main a6b4aa9）
+
+SHA-256：Mac（簽章後）`9e24fc4d82b4…`、linux-x64 `452093eaa9a0…`、linux-arm64 `81e6274b9b80…`。
+Mac、mazu(NFS)、su_zeus(swear02 NFS)、Oracle 經 port 35999 smoke test、備份（`.bak-<ts>`）、同目錄原子替換；
+Mac、mazu、cthulhu、valkyrie、zeus(swear01)、su_zeus、Oracle 重啟後磁碟與執行中程序 SHA 吻合、health 200、
+真實推論 200 via opencode-go-1。athena、swop 不可達未部署。
+`/switch?index=N` 只動 RS-latch index；priority route（deepseek-flash）仍從 opencode-go-1 起跳，不能用來 live 測 failover。
+github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>/<repo>.git` push。
