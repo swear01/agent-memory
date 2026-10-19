@@ -3,7 +3,7 @@ title: SwairM5 Kyocera ECOSYS M6635cidn 列印（IPP / 紙匣）
 scope: machines/swairM5
 status: active
 created: 2026-09-29
-updated: 2026-10-08
+updated: 2026-10-19
 ---
 
 # Kyocera ECOSYS M6635cidn 列印注意事項
@@ -45,3 +45,10 @@ updated: 2026-10-08
 - 片假名六字／七字單字練習紙 16 面已由設備回報 completed / job-completed-successfully / job-impressions-completed=16，且讀回 sides=two-sided-long-edge、print-scaling=none，共 8 張 A4。未現場檢查出紙，紀錄不授權重印。
 - 本次資源路由是本地 en0，型號及 UUID 與原設備吻合；直接可達時不必要求 VPN tunnel。執行 VPN 連線捷徑的返回值不足以證明隧道建立，最後已恢復無 VPN tunnel 的原始狀態。
 - 版型、詞表與原檔位置見 `projects/japanese-study/katakana-word-penmanship.md`。
+
+## CUPS `lp` 雙面黑白與完成狀態（2026-10-19）
+
+- CUPS 佇列的 PPD 選項：`Duplex` = `None` / `*DuplexNoTumble`（長邊）/ `DuplexTumble`；`ColorModel` = `Gray` / `*RGB`；`PageSize` 預設 A4；`InputSlot` 預設 `tray-2`（但見上方：AirPrint PPD 的 InputSlot 不可靠）。
+- 本次用 `lp -d Kyocera_ECOSYS_M6635cidn -n 1 -o sides=two-sided-long-edge -o Duplex=DuplexNoTumble -o ColorModel=Gray -o PageSize=A4 -o print-scaling=none <pdf>` 送出 5 頁，CUPS 接受為 job 37，約一分鐘後離開佇列並列在 completed 清單。
+- 當時 Mac 在 `10.138.x`、路由經 `en0` 閘道，不在 `192.168.1.x`；CUPS 裝置 URI 是 `dnssd://…_ipps._tcp.local.`。Claude Code 的 sandbox 下 `ipptool` 連 `localhost:631` 與印表機都失敗、`dns-sd` 無輸出，因此**沒有取得印表機端的 completed 證據**，CUPS completed 不等於出紙。需要時改用不受限的 shell 依上方 IPP `Get-Job-Attributes` 程序核對，或請使用者看出紙匣。
+- CUPS 佇列裡長期卡著 2026-05 的舊工作 1、2、3；送印前後列 `lpstat -o` 時要分辨，不要把它們當成本次工作。
