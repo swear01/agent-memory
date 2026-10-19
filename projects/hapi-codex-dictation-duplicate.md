@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-10-18 讀取正式 hub v0.30.7.4 的 session messages、對照原始碼追蹤，並在 PR #1436 修正與測試。
 created: 2026-10-18
-updated: 2026-10-18
+updated: 2026-10-19
 tags:
   - hapi
   - codex
@@ -36,7 +36,7 @@ hub 內的資料形狀：
 4. hub `store/messages.ts` `addMessage` 只在 `(session_id, local_id)` 已存在時去重。
    打字訊息的 clientId 就是原本的 localId → 去重成功；語音訊息原 row 的 `local_id` 是 NULL、回傳帶隨機 UUID → 去重失敗 → 第二筆。
 
-上游 main 沒有 #1436，網頁語音不會觸發；但第 2 步的漏洞仍在，任何不帶 localId 的送訊來源（例如 Telegram 回覆）打到 Codex session 都會一樣重複。
+上游 main 沒有 #1436，網頁語音不會觸發；但第 2 步的漏洞仍在，任何不帶 localId 的 REST 送訊來源打到 Codex session 都會一樣重複。
 
 # 修正狀態
 
@@ -45,8 +45,11 @@ hub 內的資料形狀：
   `useDictation`、`useRealtimeDictation`、`HappyComposer` 語音送出、`SessionChat` 跨 session 語音工具送出都改走它。
   PR head `45bf446`（含 merge upstream/main），root typecheck 與 Web 全套 3,439 tests 通過。
 - 維護版要等下一次 rebuild carry 新的 #1436 head 才會生效；已部署的 v0.30.7.4 仍會重複。
-- 未修：CLI `shared/root.ts` 的 `localId ?? randomUUID()` 洞仍在上游，其他不帶 localId 的來源（例如 Telegram 回覆）打到 Codex session 仍會重複；
-  根治候選是 hub `messageService.sendMessage` 對缺 localId 的使用者訊息補一個。
+- 根治：2026-10-19 開 issue #2068（整類問題）與 PR #2069：hub `MessageService.sendMessage` 在請求沒帶 localId 時用 `randomUUID()` 補一個，
+  所有 REST 送訊來源（peer #1974、API script、第三方客戶端）一起修好；副作用是這類訊息改走正常 queue/ack/cancel 路徑。
+  client-contract 文件（`pagination.md`、`native-companion-contract.md`）同步更新；全 repo typecheck + test 通過。
+- 更正：上游 Telegram 目前不會把訊息注入 session（`sentFrom: 'telegram-bot'` 只存在型別），唯一入口是 REST `POST /api/sessions/:id/messages`。
+- 相關：#1974（rapind 回報 ping_peer 重複，native queue mirror 同一條路）、#2024（swear01 的 sender 端修法）。
 
 # 診斷方法
 
