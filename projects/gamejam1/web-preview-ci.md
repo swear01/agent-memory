@@ -292,3 +292,9 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - Public Site v22原audience部署succeeded；source203c95566fa7a5c301bca85c555f9590ed33bcaa，saved version尾碼appgver_6a1801738ed08191a3e14f7bc1ea0bc6，deployment appgdep_6ad502dc774c8191853aa8e7414bd410。8JS/binaries服務SHA exact；index只有單一Cloudflare challenge插入，移除該node後exact，保留allRawMatch=false/productEquivalent=true。Hosted Web39150110994在UNITY_WEB_CI_ENABLED空值的owner gate明確失敗，未遠端Unitybuild/deploy，不與手動公開版混稱。
 - OwnedEditor graceful close、autotick與observer停止；四generatedsettings封存後restore。Focus觀測41035samples中47samples/約5.059s ownedUnity前景，無activate/editor_focus/focus=true，仍不可保證零切焦點，observer也未涵蓋launch前瞬間。保留<user-documents>/Codex/2026-10-19/phase-polish/完整source archive267entries（含CLAUDE symlink）、FinalBuilds/Web、FinalTests、Local/FinalResults、兩輪失敗測試及review/focus記錄；其他dirtygear/wiki工作區保留。
 - 最終匿名public Chromium156實際11JSONroutes/11forwardtransitions/12selectors、完整12keyboard勝利及replay、2→1/9→8/12→11三對往返、custom-map、controls/fullscreen/load-failure及多畫面比例全通過；errors0/warnings0，兩個conditional304 ERR_ABORTED各嚴格匹配成功UnityCache readback，未隱藏原始failedRequests。公開結果與本機分別封存Public/FinalResults及Local/FinalResults，SHA逐檔驗證。Safari/實體mobile/人類平衡仍未測。
+
+## 遊戲內編輯器存檔與 WebGL 建置副作用（2026-10-19）
+
+- Unity 6000.4.7f1 WebGL 上呼叫 `PlayerPrefs.Save()` 會在 console 輸出 `Manual synchronization of Unity Application.persistentDataPath via JS_FileSystem_Sync() is deprecated...` 警告；`DemoWebSmoke.cjs` 要求零 warning，因此會失敗。修法是在 template 的 `createUnityInstance` config 加 `autoSyncPersistentDataPath: true`（framework 以 `IDBFS autoPersist` 掛載）。已驗證：開啟後警告消失，編輯器草稿在 reload 後仍保存。
+- 透過 Pipeline `BuildWeb.py` 建置 WebGL 會改寫 `Assets/Settings/UniversalRP.asset` 的 `m_Prefilter*` / `m_PrefilteringMode*`，以及 `UniversalRenderPipelineGlobalSettings.asset`、`DefaultVolumeProfile.asset`、`ProjectSettings.asset`。這些是建置副作用，提交前要還原，不要用 `git add -A` 一起提交。
+- 遊戲內 `PhaseEditor`（PR #35）是唯一維護的編輯器；使用者決定 HTML 地圖編輯對話框維持舊版、不再擴充。自訂地圖 schema 可選 `lasers` / `crystals`，沒有時輸出仍是原本五欄位。
