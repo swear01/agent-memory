@@ -24,4 +24,6 @@ Fingerprint：對 `scripts/ci` 下排序後的相對路徑與檔案內容做 sha
 
 ## 2026-10-19 紀錄
 
-同學將 orchestrator 改為讀 `flow.toml`（PR #74、#76）。PR #75 讓 CI 在 workspace 寫入唯讀的 `flow.toml`（`clarify-spec = "auto"`、`alignment-check = "full"`、approve/escalation 維持 manual）與 `eda_env.sh`，pin `33a447ee…`。PR #77 疊在 #75 上，因 `skills/refactor-style` 將 `parallel-generation.md`／`parallel-verification.md` 合併為 `parallel-workers.md`，`sdk.py` 改以 `parallel_policy()` 同時接受新舊檔名，pin `7e148b63…`。兩個 release 皆已部署，重跑的 Regression 均通過 controller 選擇與驗證。
+同學將 orchestrator 改為讀 `flow.toml`（PR #74、#76）。PR #75 讓 CI 在 workspace 寫入唯讀的 `flow.toml`（`clarify-spec = "auto"`、`alignment-check = "full"`、approve/escalation 維持 manual）與 `eda_env.sh`，pin `33a447ee…`。PR #77 疊在 #75 上，因 `skills/refactor-style` 將 `parallel-generation.md`／`parallel-verification.md` 合併為 `parallel-workers.md`，`sdk.py` 改以 `parallel_policy()` 同時接受新舊檔名，pin `7e148b63…`。兩個 release 皆已部署。#75、#77 由 wei93111 於 2026-10-19 合併進 develop（merge `f3725fc`），develop pin 為 `7e148b63…`。
+
+#77 重跑的 run 39251538526（含 #75 全部變更）走完整流程，117.38 分鐘 FAIL：bch 通過（獨立 6/6、STA passed、AT −31.96%）；keccak 以 `Required synthesis/STA failed or is stale for the current RTL/contract` 失敗。原因不是 CI 變更：postsynthesis-ppa 試了 timing candidate 後 revert，保留原 RTL，但 `ppa/comparison/` 留著落選 candidate 的結果，保留版本的結果放在 `comparison-1/`；`sdk.py` 的 `validate_timing_handoff()` 只看 `comparison/result.json` 的 `source_hashes` 是否等於最終 RTL，因此判 stale。skill 的 revert 交接沒有要求 `comparison/` 必須對應被保留的 RTL；修正屬 skill 提案，依 [[projects/spec2rtl/ci-original-flow]] 需使用者另行授權。
