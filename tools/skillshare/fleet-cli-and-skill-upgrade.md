@@ -31,7 +31,7 @@ CLI 與內建的 `skillshare` skill 是兩件事，要分開升級、分開驗�
 
 1. `skillshare upgrade --skill --dry-run`，接著執行 `skillshare upgrade --skill --force`。會改到 `skillshare/` 與 `.metadata.json`；後者也可能出現其他項目 key 的重新排序，屬於無害變更。
 2. `skillshare audit skillshare --format json` 確認結果 clean。
-3. submodule 平常處於 detached HEAD。若 HEAD 等於 `origin/main`，先 `git checkout -B main origin/main`，再執行 `skillshare push --dry-run` 與 `skillshare push -m ...`。
+3. Mac 的 submodule 依慣例保持 detached HEAD。若 HEAD 等於 `origin/main`，先 `git checkout -B main origin/main`，再執行 `skillshare push --dry-run` 與 `skillshare push -m ...`。push 完執行 `git checkout --detach <新 SHA>`，回到 detached 狀態。Mac 上不要用 `skillshare pull`，原因見 `projects/transfer_MAC/skillshare.md`。
 4. superproject 只 `git add .skillshare/skills` 並提交指標，不要碰其他還沒提交的 dotfile 修改。
 5. 在 mazu、zeus、oracle 各執行一次 `skillshare pull`（mazu 這次 pull 也涵蓋 cthulhu、valkyrie），再逐台核對 source `rev-parse HEAD` 與 `skillshare/SKILL.md` 的 `version:`。本機改完後也要 `skillshare sync`。
 
