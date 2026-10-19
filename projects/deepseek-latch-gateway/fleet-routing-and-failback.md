@@ -5,15 +5,15 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-09-23
+updated: 2026-10-19
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
 # 架構
 
 Gateway 是分散式部署，不是中央單點：每個 client 都呼叫同機 loopback 上的
-gateway process。現行 fleet 共八台，Mac、mazu、athena、cthulhu、valkyrie、Oracle、swop 使用
-`35001`；Zeus 因為同機另一帳號會占用 `35001`，所以使用 `35002`。
+gateway process。現行 fleet 共八台，全部使用 `35001`（含 Zeus 的 swear01；Zeus 的 `35002` 屬於另一帳號 swear02，不是我們的 gateway）。
+Zeus 的 swear01 home 與 mazu 等 NFS 共用，`.secrets` 寫 mazu 一次即涵蓋。
 
 `routing.yaml` 只定義 model 到 priority group 的資料；gateway binary 內的
 `PriorityLatchManager` 才負責 fallback、cooldown、half-open probe 與自動
@@ -339,3 +339,17 @@ Windows exe 已建置，SHA-256
   - Windows x64：`09132180fb53a08999ef22a0ae282155c0080eda0847faca2c2711f7f3731a37`（已建置未安裝）
 - **真實驗證**：七台主機以 `User-Agent: Python-urllib/3.14` 送出真實 `deepseek-flash` 推論，皆成功穿透 Cloudflare，HTTP 200 回應於 `opencode-go-1`（`X-Gateway-Attempt: 1`）。
 
+
+# 2026-10-19 OpenCode Console breach 後 key 全部失效
+
+2026-10-17 前後 OpenCode Console 遭入侵，舊 `sk-` Go key 全部回 `401 api_key_expired`
+（re-login 不會恢復）。新 key 在 Console → Account → Personal API keys 建立，格式 `oc_sk_`，
+需選 workspace、Restricted + Models: Request。同一登入擁有 swear1/2/3 三個 workspace，
+但只有 swear1 有 Go 訂閱；swear2/3 的新 key 回 403「active OpenCode Go subscription is required」。
+
+- 槽位 1 已換新 key 並在 Mac、mazu(NFS)、Oracle 驗證 HTTP 200；`.dsh/.credentials.yaml` 同步更新。
+  槽位 2/3 仍是已失效舊 key。swop SSH 不可達，未更新。
+- Gateway 對 401 不 failover（只處理 429/402/quota 字樣/403 subscription/1010/network），
+  所以失效 key 會直接回給 client。
+- 內建 browser pane 的 clipboard 與 Mac 隔離；sandbox 內 `pbpaste` 讀到空值，需在 sandbox 外執行。
+- 驗證要求必須帶 `x-opencode-session` header，否則上游回 400 MissingSessionID。
