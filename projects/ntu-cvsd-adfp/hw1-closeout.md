@@ -30,8 +30,9 @@ updated: 2026-10-01
 ## GitHub 與後續接手
 
 - 私人 repo `swear01/CVSD2026` 已先完成 Gemini link；作業以最上層 `hw1/`、`hw2/` 等資料夾組織。不要把學生作業改成公開 repo。
+- 2026-10-19 起，本機唯一 clone 是 `<user-documents>/CVSD2026`（main）。舊的 `<user-documents>/Codex/2026-09-25/new-chat-2/work/CVSD2026` 和 `<worktree-root>/CVSD2026/` 下的四個工作樹，確認無未提交、未推送內容後已移到垃圾桶；分支仍在 origin。
 - HW1 原始碼／測試已推送 `add-hw1` 分支，原提交候選為 `983bfa20ad2e03d53beaafb24e48f91a9c4bccd5`；review 修正後 head `13020cda866de2d83d5a0049d650d27f367b4a40`；PR #1 尚未合併，不要把已 push 當成 main 已有 HW1。main 目前是種子 README。
-- ADFP 啟動腳本在 `adfp-session` 分支，head `22c51bcbf2baac9aeadbcd9c9266b0e0b29f343e`；PR #2 尚未合併。保留兩個未合併工作樹：`<worktree-root>/CVSD2026/publish-hw1` 與 `<worktree-root>/CVSD2026/adfp-session`。
+- ADFP 啟動腳本在 `adfp-session` 分支，head `22c51bcbf2baac9aeadbcd9c9266b0e0b29f343e`；PR #2 尚未合併。原本保留的 `publish-hw1`、`adfp-session` 工作樹已於 2026-10-19 移除。
 - 課程繳交與 GitHub PR 合併是不同狀態。下次先查既有繳交回執，不要因 PR 未合併或 OCR 把 1 看成 l 就重新提交、覆寫遠端包或修改已驗證 RTL。
 
 ## 2026-10-01 PR review 核查完成；無需重新繳交
