@@ -9,8 +9,10 @@ updated: 2026-10-21
 
 ## Current course baseline
 
-- The private course uses authentic ETS and recall materials from Day 4 onwards (`2026-10-21 真題升級版`). Days 1–3 retain original user attempts, recordings, and questions intact. Days 4–14 feature 11 complete authentic speaking sets (77 listen-and-repeat items with official audio, 44 interview items with ETS examiner video/audio), 7 authentic sentence building sets (80 items with official distractors), and 20 authentic writing tasks (Email & Academic Discussion from ETS Teacher Tests 1–5, Full-Length Tests 1–2, TST Prep, and KMF recalls).
-- Verify `.agents/skills/toefl-sprint-teacher/references/manifest.json` and its source hashes before grading. The bank, lessons, and schedule hashes were verified against that manifest on 2026-10-21. Use the day's `dayNN.json` and only its mapped `writing-*-v5.json` references; the warm-up has its own file.
+- Days 1–3 keep the v5 original questions and the user's attempts. Days 4–11 use verbatim authentic sets: ETS Teacher 1–5, Full-Length 2, TST Prep (speaking only), Full-Length 1; writing on Days 10 and 12–13 uses KMF recall emails/discussions/sentences. Days 12–14 speaking redo Days 9/7/4; Day 13 sentences redo Day 7, Day 14 writing redoes Day 4. Warm-up has no timed writing.
+- 2026-10-21 lesson: an earlier agent's "authentic import" (`教師備課/導入真題題庫.py`, now disabled) fabricated repeat sentences, scenarios, and paraphrased emails/discussions, while leaving old synthetic sentence sets behind mismatched keys. Rebuild only from source: `教師備課/解析ETS寫作.py` parses ETS `.txt` and checks every Build-a-Sentence item against the answer key; `教師備課/重建真題寫作.py` writes lessons, schedule, and teacher keys. Speaking text was checked against Whisper transcripts of the actual audio (88/88 match).
+- ETS PDFs contain no Listen-and-Repeat scene pictures and no student names in discussions; Days 4+ show the scenario sentence instead of a picture, and unnamed posts are labelled Claire/Andrew as in Teacher Test 1. KMF sentence keys are teacher-inferred (items 1 and 16 excluded as incomplete).
+- Verify `.agents/skills/toefl-sprint-teacher/references/manifest.json` and its source hashes before grading. The bank, lessons, and schedule hashes were verified against that manifest on 2026-10-21. Use the day's `dayNN.json` and only its mapped `writing-*-v5.json` references; Day 4+ ids are `dayNN-sentences-v5`, `dayNN-email-v5`, `dayNN-discussion-v5`.
 - The project keeps original pre-v5 question snapshots in `參考資料/題庫重製前_20261017/`. Older Day 1/2 attempts belong to those original prompts; they are not v5 attempts. Keep first attempts, retakes, and corrections distinct. A prefilled correction field may simply copy the first attempt.
 - The study target remains stable 4.0 with 45–60 minutes a day, focused on speaking and writing. Follow actual submitted work rather than calendar dates. Do not add a full four-section mock, light-day variant, or extra reading assignment.
 
@@ -42,6 +44,6 @@ All paths below are relative to `<project-root>`.
 
 ## Verification boundary
 
-The project records local checks for the teacher-bank hashes, page mappings, storage, exports, and responsive layout. Both local web servers (ports 8768 & 8769) are running and serve authentic Day 4 questions and media. Day 1–3 data and recordings are strictly preserved.
+The project records local checks for the teacher-bank hashes, page mappings, storage, exports, and responsive layout. Writing checks (`check.cjs`, `check-days.cjs`, `check-ets-layout.cjs`) pass after the rebuild. Speaking recording checks time out at `getUserMedia` in headless Chromium on this Mac for every day including Day 3, so that failure is environmental, not a content regression.
 
 
