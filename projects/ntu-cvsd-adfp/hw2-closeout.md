@@ -15,11 +15,7 @@ updated: 2026-10-20
   lint 0 errors／4 warnings；COOL 回執下載與上傳檔逐 byte 相同。
 - p2–p4 受 96,330 個 index words 限制，合規下界 96,298（前 32 拍與矩陣重疊）；
   Q51 允許「可證明不影響畫面」時略過，但公開資料的 hull／逐三角形條件都不成立。
-- 2026-10-20 起 macOS 改用 `adfp-vpn up|down|status`（見 `adfp-vpn` skill），不再需要
-  FortiClient。NTU-ADFP-Workstation 是 FortiGate SSL VPN（無 OTP／SAML／EMS），openfortivpn
-  可直接連；密碼只在 root-only `/etc/adfp-vpn/config`，sudoers 只開放 up/down/status，
-  agent 不需也不應接觸密碼。工作站 `10.32.2.154` 擋 ICMP，用 TCP 443 判斷是否可達。
-  不要放 login keychain：同使用者的任何 agent 都能用 `security find-generic-password -w` 讀出。
+- ADFP VPN 連線方式見 `machines/swairM5/adfp-vpn.md`。
 - Guacamole 上傳：攔截 `HTMLInputElement.prototype.click` 取得上傳按鈕建立的 file input，
   再用 Playwright `setInputFiles`；合成 drop 事件會得到伺服器內部錯誤。遠端 shell 是 tcsh，
   打字前先點擊目標終端，否則輸入可能落到其他視窗或 workspace。

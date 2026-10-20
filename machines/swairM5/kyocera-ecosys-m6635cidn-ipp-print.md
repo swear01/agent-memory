@@ -3,7 +3,7 @@ title: SwairM5 Kyocera ECOSYS M6635cidn 列印（IPP / 紙匣）
 scope: machines/swairM5
 status: active
 created: 2026-09-29
-updated: 2026-10-19
+updated: 2026-10-20
 ---
 
 # Kyocera ECOSYS M6635cidn 列印注意事項
@@ -31,7 +31,7 @@ updated: 2026-10-19
 
 ## 從實驗室 VPN 列印（2026-10-05 實測）
 
-- 使用者指定的實驗室 VPN 是原生 IPSec `DVLab IKEv2`；不要代換成 `SwearOVPN`（OpenVPN）或 FortiClient 的 ADFP VPN。
+- 使用者指定的實驗室 VPN 是原生 IPSec `DVLab IKEv2`；不要代換成 `SwearOVPN`（OpenVPN）或 ADFP 的 `adfp-vpn`。
 - 本次原生 IKEv2 profile 在系統設定可見，但 `scutil --nc list` 沒有列出，`scutil --nc status 'DVLab IKEv2'` 回報 `No service`。這不代表 profile 不存在。2026-10-05 已設定原生捷徑，可用 `shortcuts run "DVLab 連線"`／`shortcuts run "DVLab 斷線"` 控制；見 [DVLab IKEv2 捷徑](dvlab-ikev2-shortcuts.md)。亦可由「系統設定 → VPN」操作既有設定。
 - 可用 `open 'x-apple.systempreferences:com.apple.NetworkExtensionSettingsUI.NESettingsUIExtension'` 開啟該頁。連線後讀回「已連線」，並用 `route -n get 192.168.1.100` 確認實驗室位址走 `ipsec0`；不要只依 VPN 開關判定印表機可達。
 - VPN 上 mDNS 查詢沒有取得印表機位址；直接查既有 IPP 位址，先以 `Get-Printer-Attributes` 核對型號與 UUID 是否匹配本機 CUPS 印表機，再送印，不必掃描整個網段。
