@@ -21,6 +21,17 @@ updated: 2026-10-20
 - Guacamole 上傳：攔截 `HTMLInputElement.prototype.click` 取得上傳按鈕建立的 file input，
   再用 Playwright `setInputFiles`；合成 drop 事件會得到伺服器內部錯誤。遠端 shell 是 tcsh，
   打字前先點擊目標終端，否則輸入可能落到其他視窗或 workspace。
+- 私人課程 repo 的 PR #13 已於 2026-10-20 合併（merge commit `f946f6a`），main 的 `core.v`
+  與繳交的 v2 相同；task worktree、分支與 DVLab 暫存目錄已清理。Swear Review 對「固定 Mp
+  常數」的 finding 依 Q36 拒絕並經使用者同意合併；之後若有人再提，先查 Q36 答覆。
+- Q25：排名用 p1–p7 cycles 總和。p1 為寫回瓶頸（3,941 個前景 pixel），模型下界約 3,927；
+  再往下需要 on-demand vertex fetch 與合併 pipeline，風險大於收益，使用者選擇停在 3,935。
+  由寬高自行推導 Mp[0][0] 不安全：兩種常見公式都符合公開資料，但在 51% 的寬高組合不同。
+- DVLab 的 VCS license server（lshc:26585）曾短暫拒絕連線，恢復初期仍會回 lmreread／hostid
+  錯誤；VCS 加 `-licwait`／`+vcs+lic+wait`，並逐一執行或包重試，不要把 license 錯誤當 RTL 失敗。
+- 尚未確認：助教收件、隱藏測資 p5–p7 結果、lint 評分與最終成績。
+
+## v1 紀錄（已被 v2 取代）
 
 本紀錄取代 HW2 尚未實作、只有軟體排程估計或尚未繳交的舊狀態。
 這是可公開的驗證摘要與操作經驗；完整作業、實際學號檔名、私人收據、原始
