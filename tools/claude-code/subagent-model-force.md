@@ -35,6 +35,13 @@ updated: 2026-10-21
 - Desktop 用啟動參數傳入 app UI 選的 `--model`、`--effort`（例：`--effort=medium`，環境變數 `CLAUDE_EFFORT=medium`），會覆蓋 settings.json 同名設定。要兩邊都生效的環境變數放 settings.json `env`。
 - transfer_MAC 的 `sync-ai-agent-configs.py` 只合併 settings.json 的 `hooks`，不會清掉 `env`。
 
+## Desktop `start_session` 不受此設定影響
+
+Desktop 的 `start_session`（linked/side session）開的是獨立 session，不是 subagent，不讀 `CLAUDE_CODE_SUBAGENT_MODEL`；沒指定 model 時繼承 parent 的 model 與 effort（2026-10-21 實例：parent Opus/xhigh → 子 session `claude-opus-5-5`/xhigh）。
+
+- 事後補救：`set_session_model` 只從下一個 turn 生效，當前 turn 仍跑 Opus。
+- 現行做法：全域 AGENTS.md 一行規則 `New sessions (start_session) use Sonnet.`，屬指示而非硬鎖。
+
 ## 未確認
 
 - subagent 的 effort 預設值：Desktop binary 有 `subagentEffort` 字串，但未追到預設來源；不要假設一定是 medium。
