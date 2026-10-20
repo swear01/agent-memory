@@ -27,5 +27,7 @@ tags: [ADFP, VPN, openfortivpn, FortiGate, Guacamole, sudoers, macOS]
   課程 repo 的 `tools/adfp-chromium.command` 開瀏覽器後會自動執行；session 過期出現
   登入頁時再跑一次即可，agent 不應自行填登入表單。
 - 不要改放 login keychain：同使用者的任何 agent 都能用 `security find-generic-password -w` 讀出。
-- 舊做法（FortiTray 選單連線、`scutil --nc status` 查 FortiClient 服務）已失效；
-  依賴它們的腳本需改呼叫 `adfp-vpn`。
+- 舊做法（FortiTray 選單連線、`scutil --nc status` 查 FortiClient 服務）已失效。
+  課程 repo PR #14（2026-10-20 合併，`51fa23d`）已把啟動器改為 `adfp-vpn up` 加自動
+  `adfp-vpn login`；Swear Review 在該 repo 兩次回報 `no items were selected`（未實際審查），
+  不能當通過。
