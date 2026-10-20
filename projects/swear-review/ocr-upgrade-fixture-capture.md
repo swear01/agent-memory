@@ -4,7 +4,7 @@ scope: projects/swear-review
 project: swear-review
 status: active
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-21
 tags: [swear-review, ocr, open-code-review, fixtures, upgrade, gateway]
 source_refs:
   - https://github.com/swear01/swear-review/pull/11
@@ -20,7 +20,7 @@ schema 會忽略未知欄位，所以不需改 adapter。status、`manifest.cove
 failure classification 與 `run_failure` 形狀不變。上游
 `internal/config/toolsconfig/tools.json` 在 v1.12.9 與 v1.13.2 的 blob 相同
 （`1b3275f`），`config/ocr-tools-no-search.json` 不需重產。
-合併當下 **Oracle 尚未部署**，仍跑 1.12.9（見下方部署步驟）。
+2026-10-20 已部署到 Oracle 並以真實 review 驗證（見下方）。
 
 # 擷取方法（Mac，本機 gateway）
 
@@ -47,13 +47,24 @@ failure classification 與 `run_failure` 形狀不變。上游
 - 清理：comment 的 `content`／`existing_code`／`suggestion_code`／`thinking`
   換成 sanitized 文字；確認沒有本機路徑或 email 外洩。
 
-# Oracle 部署現況（2026-10-20 唯讀查核）
+# Oracle 部署（2026-10-20 完成）
 
-systemd unit `swear-review`、`/opt/swear-review/app` 在 `1cf91e0`；全域
-`/usr/local/bin/ocr` 為 root 擁有的 npm global（v1.12.9）；
-`/opt/swear-review/data/config.yaml` 的 `ocr.version: "1.12.9"`、
-`concurrency: 4`、`tools_file` 指向 bundled no-search 工具檔。
-升級需：確認 review queue 空 → `npm install -g @alibaba-group/open-code-review@1.13.2`
-（需 root）→ app 切到新 merge commit、`npm ci && npm run build` → config 的
-`ocr.version` 改為 `"1.13.2"` → restart → `/healthz`、`/readyz`，再以一個新的
-PR review 確認 summary 顯示 `OCR: v1.13.2` 且 coverage 無失敗。
+systemd unit `swear-review`、`/opt/swear-review/app`（`ubuntu` 擁有、detached HEAD）；
+全域 `/usr/local/bin/ocr` 是 root 擁有的 npm global，`ubuntu` 有 passwordless sudo；
+`/opt/swear-review/data/config.yaml` 的 `ocr.version` 只是標籤，實際版本取決於全域 binary。
+Oracle 沒有 Docker image，rollback 靠檔案備份。
+
+- 部署前用唯讀 `node:sqlite` 查 `review_jobs`／`review_runs` 沒有 `queued`／`running`，
+  且無 OCR 程序；`/metrics` 只有累計計數，不能判斷是否閒置。
+- 備份在 `/opt/swear-review/data/backup-pre-ocr1132-20261020T173929Z/`
+  （`ocr-1.12.9`、`dist-1cf91e0`、`config.yaml`）。之後 `sudo npm install -g
+  @alibaba-group/open-code-review@1.13.2`、app 切到 `927de3c` 後 `npm ci && npm run build
+  && npm prune --omit=dev`、改 `ocr.version`、restart。啟動 log 顯示 `"ocr":"1.13.2"`，
+  `/healthz`、`/readyz` 正常。
+- 驗證：`/swear-review full` 留在**已合併**的 PR 不會產生任何 job 或 log，
+  必須用 open PR。`swear01/swear-review-e2e` PR #3 的 manual review 完成：
+  `ocrVersion v1.13.2`、selected 1／completed 1／failed 0、4 findings，summary 顯示
+  `OCR: v1.13.2`，check `success`。
+- Rollback：把備份的 `ocr-1.12.9` 複製回 `/usr/local/lib/node_modules/@alibaba-group/open-code-review`、
+  app `git checkout --detach 1cf91e0` 並還原 `dist-1cf91e0` 後 `npm ci && npm prune --omit=dev`、
+  還原 `config.yaml`，再 `sudo systemctl restart swear-review`。
