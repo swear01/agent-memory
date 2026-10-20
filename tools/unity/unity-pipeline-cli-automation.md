@@ -63,3 +63,8 @@ Unity 官方推出 Unity CLI 與 Unity Pipeline 模組（`com.unity.pipeline`）
    - `unity command quit -- --exitCode 0` 在 Edit Mode 失敗：`Command 'quit' failed: The following game object is invoking the DontDestroyOnLoad method: PipelineQuitScheduler`。
    - 隱藏、未聚焦的 Editor 不會執行 `EditorApplication.delayCall`，即使 auto-tick 開著，所以用 `eval` 排程 `delayCall += () => EditorApplication.Exit(0)` 不會關閉。
    - 可行做法：先用 `eval` 確認 `SceneManager.GetSceneAt(i).isDirty` 全為 false，再直接 `unity command eval --project-path <project-root> -- 'UnityEditor.EditorApplication.Exit(0); return "exiting";'`。回覆會中斷成 `Invalid response format from Pipeline server`，以行程結束確認成功。
+5. **`--project-path` 必須放在 `--` 分隔符號之前（CLI 1.0.0-beta.13，2026-10-20 實測）**：
+   - 正確：`unity command eval --project-path <project-root> -- '<code>'`、`unity command run_tests --project-path <project-root> -- --mode editor`。
+   - 放在 `--` 之後會被當成指令參數，回 `Invalid arguments for set_autotick: set_autotick has no parameter --project-path <project-root>`，而且指令完全沒有執行；包成 shell 函式時特別容易犯（`unity command "$@" --project-path …`）。同時開多個 Editor（多個 worktree）時每個指令都要帶，否則可能打到別的專案。
+6. **`run_tests` 是非同步的**：`unity command run_tests -- --mode editor --async_tests true` 立刻回 `0/0 passed (EditMode, 0s)`，那不是結果；要輪詢 `unity command test_status` 直到 `completed: N/N passed`。前一輪還在 `running` 時再送一次 `run_tests` 不會產生新的結果，要等前一輪完成。
+7. **`eval` 主執行緒逾時不代表失敗**：長時間的 Editor 操作（例如建立並存兩個 scene、改 Build Settings）會回 `Pipeline server returned 400 Bad Request: Internal Server Error. Main thread operation timed out after 5000ms`，Console 也會記一筆 `Failed to handle /api/exec request`，但操作本身照樣完成。以實際產物（檔案、`EditorBuildSettings`、`isDirty`）確認，不要直接重跑造成重複。
