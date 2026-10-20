@@ -1,11 +1,26 @@
 ---
 title: CVSD HW2 雙處繳交與驗證收尾
 scope: projects/ntu-cvsd-adfp
-status: submitted-and-verified; grading pending
-updated: 2026-10-13
+status: v2 submitted-and-verified; grading pending
+updated: 2026-10-20
 ---
 
 # HW2 完成狀態
+
+## 2026-10-20 v2
+
+- v2 已在 ADFP home 與 COOL 繳交：p1 3,935、p2–p4 96,302 cycles（v1 為 4,275／96,302）。
+  改動是 Vertex／Index 由最後一個 entry 往前讀（Q41 允許），以及 Q36 確認 v/n/f 固定後，
+  收到 Mv 與 Mp[0][0]（第 17 個 word）即開始轉換。課程環境 `verify_adfp.sh` 四組 PASS、
+  lint 0 errors／4 warnings；COOL 回執下載與上傳檔逐 byte 相同。
+- p2–p4 受 96,330 個 index words 限制，合規下界 96,298（前 32 拍與矩陣重疊）；
+  Q51 允許「可證明不影響畫面」時略過，但公開資料的 hull／逐三角形條件都不成立。
+- FortiClient 主程式的 `Info.plist` 已損壞無法開啟；VPN 可用
+  `osascript` 對 System Events 的 process `FortiTray` 點 `Connect to NTU-ADFP-Workstation`，
+  登入視窗仍須使用者輸入帳密。
+- Guacamole 上傳：攔截 `HTMLInputElement.prototype.click` 取得上傳按鈕建立的 file input，
+  再用 Playwright `setInputFiles`；合成 drop 事件會得到伺服器內部錯誤。遠端 shell 是 tcsh，
+  打字前先點擊目標終端，否則輸入可能落到其他視窗或 workspace。
 
 本紀錄取代 HW2 尚未實作、只有軟體排程估計或尚未繳交的舊狀態。
 這是可公開的驗證摘要與操作經驗；完整作業、實際學號檔名、私人收據、原始
