@@ -16,6 +16,8 @@ tags:
 
 Gmail connector 的 `create_draft` 要把附件 base64 塞進參數（幾百 KB 的 PDF 會吃掉大量 token），Outlook connector 的草稿不支援附件。macOS 上改用 `osascript` 讓 Apple Mail 直接讀本機檔案，零 token 成本，也能指定寄件帳號。2026-10-20 用此方法寄出 7 張實驗室採購發票 PDF。
 
+> 2026-10-20 起 Gmail 與 NTU 學生信箱改用 himalaya 寄信（見 [[himalaya-ortie-setup]]）；這個方法只留給 NTU M365 工作信箱需要附件時。
+
 ## 做法
 
 ```applescript
