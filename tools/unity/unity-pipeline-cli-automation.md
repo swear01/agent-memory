@@ -2,7 +2,7 @@
 title: Unity Pipeline 套件 (com.unity.pipeline) 與 Unity CLI 運作機制與即時控制
 scope: tools/unity
 status: active
-updated: 2026-09-21
+updated: 2026-10-20
 tags:
   - unity
   - unity-cli
@@ -59,3 +59,7 @@ Unity 官方推出 Unity CLI 與 Unity Pipeline 模組（`com.unity.pipeline`）
 3. **CLI 運行時截圖與背景更新 (`Application.runInBackground`)**：
    - 透過 `unity command editor_play` 進入 Play Mode 時，若 Unity Editor 處於背景，編輯器預設會停止刷新幀（`Time.frameCount` 停滯）。
    - 執行 `unity command eval --code "Application.runInBackground = true;"` 可使 Unity 在背景維持主循環更新，確保攝影機追蹤（Lerp）、物理模擬與動畫狀態正常運算，才能截取到真實 Play Mode 畫面。
+4. **關閉 Editor（Pipeline 0.8.0-exp.1，Unity 6000.4.7f1，2026-10-20 實測）**：
+   - `unity command quit -- --exitCode 0` 在 Edit Mode 失敗：`Command 'quit' failed: The following game object is invoking the DontDestroyOnLoad method: PipelineQuitScheduler`。
+   - 隱藏、未聚焦的 Editor 不會執行 `EditorApplication.delayCall`，即使 auto-tick 開著，所以用 `eval` 排程 `delayCall += () => EditorApplication.Exit(0)` 不會關閉。
+   - 可行做法：先用 `eval` 確認 `SceneManager.GetSceneAt(i).isDirty` 全為 false，再直接 `unity command eval --project-path <project-root> -- 'UnityEditor.EditorApplication.Exit(0); return "exiting";'`。回覆會中斷成 `Invalid response format from Pipeline server`，以行程結束確認成功。
