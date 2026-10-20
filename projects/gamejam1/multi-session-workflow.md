@@ -26,6 +26,13 @@ tags: [claude-code, sessions, worktree, stacked-pr, unity-pipeline, BuildWeb]
 - 倉庫 `deleteBranchOnMerge` 為 false：合併底層 PR 後，上層 PR 的 base 不會自動改成 main；直接合併會只併進舊分支而沒進 main。先 `gh pr edit <n> --base main`（在底層合併之前改也可以，合併結果相同），再依序合併。
 - 兩個 PR 疊在同一個 base 上、彼此不知道對方時，用 `git merge-tree --write-tree --name-only origin/<a> origin/<b>` 先預測衝突檔案，再決定合併順序。
 
+## 和 Cursor 同時改同一個 repo
+
+- 2026-10-20 Claude 的額度用完時，使用者改用 Cursor 繼續。Cursor 的 agent 直接在 Claude session 建立的 `.claude/worktrees/*` 裡工作，也自己開新的 worktree 和 PR（#45–#50），PR 內文結尾是 `Made with [Cursor]`。要知道它做了什麼，看 `git worktree list`、各分支 `git log main..<branch>`、`gh pr list` 和 PR 內文，不需要看 Cursor 視窗。
+- 交接筆記可能過時：Cursor 的筆記說 `level-order` 還沒提交、沒有 PR，實際上已經推上去並開成 #50。接手前一律用 `git status`、`git ls-remote` 和 `gh pr view` 確認實際狀態。
+- 兩邊的 agent 可能都在同一個 worktree 工作；恢復自己的 session 前，先確認分支的本機 HEAD 等於 origin、沒有別人未提交的改動，而且不要 force-push。
+- Cursor 停下後留下了 4 個開著的 Unity Editor（加上 Claude 自己的，同時有 8 個）。接手時要用 `ps` 找出每個 `-projectPath` 對應的 Editor，確認沒有未存場景後關掉用不到的。
+
 ## 其他
 
 - Auto mode 下 `gh pr merge` 會被 classifier 以 Merge Without Review 擋下；使用者在設定加入允許規則後才可合併，不要繞過。
