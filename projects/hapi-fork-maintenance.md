@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-18
+updated: 2026-10-20
 tags:
   - hapi
   - fork
@@ -217,3 +217,12 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 使用者明確決定以目前 upstream/main 重做獨立官方 PR，引用原作者 #1831、保留 Co-authored-by，再整合補修；新官方 #2060 以 `317e39a0b` 為 base、單一 commit `3d9ebb3e04f04baffe3702c2479776eb05330e0d`。這個決定取代等待作者接受 foreign-fork supplement 的路徑，並不授權關閉別人的 #1831、合併官方 PR、更新維護版 main 或部署。 #2060 的四項 CI 與該 head 的 HAPI Bot requirement／approach／code review 全數通過；只關閉自己的過時補修 `luodeb/hapi#1`，原作者 #1831 保留 open。
 - `registerGeneratedImageFromAcpBlock` 原本宣告 async，但實際只有有界 base64 decode、MIME sniff 和記憶體 registry；拿掉 async 後 Pi converter 可以保持同步，直接避免圖片功能引入的 publication queue、prompt rejection flush 與 shutdown 排序問題。唯一原有 production caller ACP 仍可 await 普通回傳值；Pi／ACP／registry 的 398 個 focused tests 與完整 8,176 tests、四套 typechecks 通過。不要為純 CPU helper 新增無必要的非同步生命週期。
 - Pi 在 2026-10-01 發布 1.0，10-15 最新 1.3；canonical repo/package 已是 `earendil-works/pi`／`@earendil-works/pi-coding-agent`。查文件時歷史 execute signature 可能混入檢索結果，應回到 pinned tag source；v1.3 execute 仍是 `(toolCallId, params, signal, onUpdate, ctx)`，loader 保留 `@sinclair/typebox` alias。隔離實際 Pi 1.3 RPC、unmodified extension、text-only loopback model 已證明 direct image、builtin Codemode nested image、missing-file isError 全通過；nested child ID 為 parent 加 `/1`，圖片在 RPC 保留完整 bytes，即使非視覺模型收到零 image parts。Converter 要保留 failed status 及 image-bearing results，不需要新增 protocol field 或全域升級 Pi。
+
+## 2026-10-20：v0.30.7.5 發版與部署的已驗證陷阱
+
+- Fork Actions 可能被 GitHub 單獨停用、卻看不出來：`swear01/hapi` 從 10/08 起所有 dispatch 都回 HTTP 422 `Actions has been disabled for this repository`，但 `GET /actions/permissions` 仍是 `enabled: true`、Settings 顯示 Allow all，其他 repo 正常；用 API 重存 permission 無效，最後由使用者恢復。發版前先 `gh workflow run fixtures.yml --ref <branch>` 探測，不要等永遠不會開始的 CI。恢復後 close/reopen PR 沒有觸發 `pull_request` Test；推一個指向同 SHA 的暫時分支（`<sha>:refs/heads/ci/<tag>`）可觸發 push-event Test，用完刪掉。Android/iOS 只在 PR 或 main（path filter）執行，所以 native gate 落在 exact-main push。
+- 上游 main 可能一夜之間合併已 carry 的 PR：#2026 被 squash 進 main，PR 頁面卻仍顯示 OPEN。依政策 rebase 到新 base，manifest 記為 `integrated`（audit decision 仍是 carry），不重放 patch。原本 defer 的 #2041 進了 base 後，與 #1771 刪除 `sessionSummaryInstruction.ts` 衝突：保留刪除，#2041 的 converter 過濾由 base 提供。#2041 新增的 projection 測試要求 history replay 輸出等於 live；#1771 在 replay 已完成回合時會合成 `turn_complete`，所以 live 那半也要送 `turn/completed`，而不是放寬比對。
+- 多個 carry 疊在一起時，常見的壞法是測試 harness 跟不上別人新增的 export／method：手刻的 `SyncEngine.prototype.X.call({...})` harness 缺 #2032 新增的 `releaseSessionEnumerations`；`vi.mock` 工廠缺上游新 export（`getTelegramWebApp`、`isComposerPrimaryFillHeight`）。用 `importOriginal` 展開原模組再覆寫，比逐一補 export 穩。修補 fold 進引入該測試的 carry commit（`fixup!` + `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash`），patch queue 才能重放出同一棵 tree。
+- 從 oracle 部署會遇到的限制：oracle 連 mazu 公開 IP 的 SSH 逾時，Mac 沒開 sshd（Tailscale ping 通但 22 port refused）。`hapi-ctl.sh` 是以 Mac 為中心設計的，在 oracle 上跑 `status mac` 讀到的其實是 oracle 本機的 binary。可行做法：`hapi spawn-peer --machine <mac-machine-id> --dir <mac-home> --agent claude`，讓 Mac 上的 session 依 skill 逐台更新。加 `--permission-mode bypassPermissions` 時 spawn 回 HTTP 502；不帶 permission mode 就成功。mazu hub 重啟期間 `wait-peer` 也會短暫 502，用同一 remit ID 重試即可。
+- v0.30.7.5 部署結果：6 台可達主機（mazu、cthulhu、valkyrie、zeus、oracle、Mac）都升到 `.5`，baseline session 全部存活；valkyrie 與 Mac 走了 handoff-loop 的 exact-PID recovery；Athena 依政策排除，swop 離線待補。Retention 清掉約 1.02 GiB；NFS 上被替換的 binary 會變成 silly-renamed 的 `.nfs*` 檔案，檢查 live process 時要比對 exe/maps/fd/cwd，不能只看路徑字串。
+- 發版 PR 的審查：Cursor Bugbot 會直接拒審超大的 release diff（約 58k 行）；Gemini 在 exact head 的 clean review 就構成 OR gate 的通過。fork 的 `Codex PR Review` workflow 因 runner 上缺 Codex server-info 檔而失敗，與程式碼無關。Codex 的 P2 意見（#1616 sub-path 通知路由、#2032 已封存 session 的 cache entry、#2061 pending 時的 dialog dismiss）都在 carry 的上游程式碼裡，記錄下來、不在維護版自行修補。
