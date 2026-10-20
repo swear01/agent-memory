@@ -3,7 +3,7 @@ title: Spec2RTL CI controller release 部署到 Mazu
 scope: projects/spec2rtl
 machine: mazu
 status: active
-updated: 2026-10-19
+updated: 2026-10-20
 ---
 
 # Controller release 部署
@@ -26,4 +26,8 @@ Fingerprint：對 `scripts/ci` 下排序後的相對路徑與檔案內容做 sha
 
 同學將 orchestrator 改為讀 `flow.toml`（PR #74、#76）。PR #75 讓 CI 在 workspace 寫入唯讀的 `flow.toml`（`clarify-spec = "auto"`、`alignment-check = "full"`、approve/escalation 維持 manual）與 `eda_env.sh`，pin `33a447ee…`。PR #77 疊在 #75 上，因 `skills/refactor-style` 將 `parallel-generation.md`／`parallel-verification.md` 合併為 `parallel-workers.md`，`sdk.py` 改以 `parallel_policy()` 同時接受新舊檔名，pin `7e148b63…`。兩個 release 皆已部署。#75、#77 由 wei93111 於 2026-10-19 合併進 develop（merge `f3725fc`），develop pin 為 `7e148b63…`。
 
-#77 重跑的 run 39251538526（含 #75 全部變更）走完整流程，117.38 分鐘 FAIL：bch 通過（獨立 6/6、STA passed、AT −31.96%）；keccak 以 `Required synthesis/STA failed or is stale for the current RTL/contract` 失敗。原因不是 CI 變更：postsynthesis-ppa 試了 timing candidate 後 revert，保留原 RTL，但 `ppa/comparison/` 留著落選 candidate 的結果，保留版本的結果放在 `comparison-1/`；`sdk.py` 的 `validate_timing_handoff()` 只看 `comparison/result.json` 的 `source_hashes` 是否等於最終 RTL，因此判 stale。skill 的 revert 交接沒有要求 `comparison/` 必須對應被保留的 RTL；修正屬 skill 提案，依 [[projects/spec2rtl/ci-original-flow]] 需使用者另行授權。
+#77 重跑的 run 39251538526（含 #75 全部變更）走完整流程，117.38 分鐘 FAIL：bch 通過（獨立 6/6、STA passed、AT −31.96%）；keccak 以 `Required synthesis/STA failed or is stale for the current RTL/contract` 失敗。原因不是 CI 變更：postsynthesis-ppa 試了 timing candidate 後 revert，保留原 RTL，但 `ppa/comparison/` 留著落選 candidate 的結果，保留版本的結果放在 `comparison-1/`；`sdk.py` 的 `validate_timing_handoff()` 只看 `comparison/result.json` 的 `source_hashes` 是否等於最終 RTL，因此判 stale。skill 的 revert 交接原本沒有要求 `comparison/` 必須對應被保留的 RTL。
+
+修正（使用者授權）：PR #81 與 #82（2026-10-20 合併，develop `ec6f84c`）在 `postsynthesis-ppa/references/contract-and-sta.md` 規定 candidate 一律以同一指令只換 `--rtl` 與 `--output output/<DESIGN>/ppa/candidate-<n>/` 測量；交接時 `comparison/` 必須是 source hashes 等於 `rtl/` 的 driver run。交出的 RTL 與某 candidate 檔名與內容完全相同時，先把現有 `comparison/` 保留為編號 sibling，再把該 `candidate-<n>/` 搬成 `comparison/`；否則用同一指令重跑。搬移有效，因為 `parse_synthesis()` 以目錄相對路徑讀報告，`validate_timing_handoff()` 只比對報告、`source_hashes`、contract/library hash 與 symlink；CI 合成服務以 RTL hash 快取，重跑同一 RTL 也只回傳快取。
+
+注意：wei93111 可能在 PR 後續 commit 推上前就合併；推完修正後要確認 develop 真的包含最新 head（#81 合併於 `6bf8e20`，後兩個 commit 需另開 #82）。每次 CI 每個 design 只跑一次，單次 Regression 不足以驗證只在特定模型行為下才觸發的 skill 規則。
