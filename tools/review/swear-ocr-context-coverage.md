@@ -16,4 +16,6 @@ updated: 2026-10-20
   `tools/README.md`、`tools/adfp-chromium.command`、`tools/test_adfp_chromium.py`，三者全被濾掉。
   修法是在 repo 加 `.opencodereview/rule.json` 的 `include`（可繞過這兩個閘門，但不能繞過 secret
   路徑與 `vendor/`、`node_modules/`）；`include` 不是白名單，未命中的檔案仍照常篩選。
+  CVSD2026 PR #15（`48c3264`）已加入 `{"include": ["**/*.command", "**/test_*.py"]}`，Markdown 刻意不納入；
+  `ocr review --preview --from <base> --to <head> --repo <dir>` 不呼叫 LLM，可在合併前驗證選檔結果。
 - Spec2RTL 整合 PR #11 已按使用者要求關閉，未合併；background/include/output ignore 調整並未因此發布到該 repo。後續使用 Cursor Bugbot 的保存設定見 `tools/cursor/bugbot-pr-review.md`。
