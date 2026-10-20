@@ -2,7 +2,7 @@
 title: ADFP Chromium key exception and FortiClient recovery boundary
 scope: projects/ntu-cvsd-adfp
 status: launcher-verified; ADFP-live-test-blocked-by-VPN
-updated: 2026-10-14
+updated: 2026-10-20
 ---
 
 # Approved dedicated-browser exception
@@ -15,6 +15,8 @@ updated: 2026-10-14
 - To undo the exception, remove the flag and restart the dedicated browser. A new server key requires a new verification and trust decision.
 
 ## FortiClient blocker observed during restart
+
+- Superseded 2026-10-20: FortiClient was uninstalled and the VPN now uses `adfp-vpn` (see `machines/swairM5/adfp-vpn.md`). The notes below are history; the launcher's `scutil --nc` VPN check must be switched to `adfp-vpn`.
 
 - The already-modified FortiClient `Contents/Info.plist` contained only a URL-scheme array, not an application dictionary. Starting the GUI crashed with `Unable to find helper app`; signature verification also failed. The modification predated this certificate task; its author and broader cause were not established.
 - A minimal metadata reconstruction failed signature verification and was rolled back byte-for-byte. Do not retain guessed metadata, re-sign the app, erase browser/VPN settings, or claim the application was restored.

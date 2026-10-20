@@ -2,7 +2,7 @@
 title: ADFP 終端畫面的本機 Vision OCR 與運算裝置邊界
 scope: projects/ntu-cvsd-adfp
 status: synthetic pipeline and bounded live ADFP Vision readback verified
-updated: 2026-09-28
+updated: 2026-10-20
 ---
 
 # ADFP 終端畫面的本機 Vision OCR
@@ -19,7 +19,7 @@ updated: 2026-09-28
 - OCR 會把 `cvsd_hw1_v1.tar.gz` 的數字 `1` 看成小寫 `l`。精確檔名應在伺服器用字串比較驗證，必要時用 `printf "%s" "$name" | od -An -tx1`；ASCII `31` 才是數字 `1`。內容另以包內檔案 SHA-256 核對，勿只依畫面字形判定。
 - 遠端互動 shell 是 tcsh。含 Bash 語法或 `>file 2>&1` 的批次命令，應包在 `bash -c '...'` 或上傳 Bash 腳本執行。
 - 先檢查 VPN，再重用授權的專用 Chromium／loopback CDP 設定檔。Chromium 使用 macOS 真正全螢幕、隱藏上方工具列，遠端終端再以 F11 放大，可減少無關 UI；擷取仍只限任務必要區域。
-- macOS `scutil --nc` 的系統服務名稱與 FortiClient 內的 profile 名稱可能不同。本機以 FortiClient profile 名稱查詢得到 `No service`，而 `scutil --nc list` 的實際 FortiClient 系統服務名為 `VPN`；使用已核對的服務識別碼，勿直接把 profile 名稱當成系統服務。
+- VPN 改用 `adfp-vpn`（見 `machines/swairM5/adfp-vpn.md`）；FortiClient 已移除，舊的 `scutil --nc` 服務檢查不再適用。
 - `CVSD2026` 的 `tools/adfp-session.sh` 會檢查 VPN、核對專用 Chromium 的 process/profile，並等待 loopback 9223 就緒；`curl --noproxy '*'` 避免代理干擾，`ps -ww` 保留完整命令列。腳本不略過憑證警告；遇到安全警告需交給使用者手動確認。
 - 啟動腳本七項檢查通過，也實測在設定錯誤代理時仍能重用目前連線。2026-09-28 已推送 `adfp-session` 分支，head `1631121bbfbb1e8545e097c55a6a6dc4070f971a`；PR #2 尚未合併。Swear Review 為 gate off，execution success 且有 4 findings，不能當作乾淨審查核可。下次使用前重新查驗 PR／分支狀態。
 
