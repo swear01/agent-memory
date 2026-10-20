@@ -52,11 +52,14 @@ jobs:
           secret_patterns = credential_patterns + [
               absolute_users_path,
               absolute_home_path,
-              re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
+              # SSH remotes such as git@ssh.github.com are hosts, not personal addresses.
+              re.compile(r"\b(?!git@)[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
               re.compile(r"\b(?:" + "r14" + "k41044|" + "b119" + "01015|" + "143" + "566" + r")\b"),
               re.compile("黃" + "思維"),
           ]
 
+          assert not any(p.search("ssh://git@ssh.github.com:443/o/r.git") for p in secret_patterns)
+          assert any(p.search("someone" + "@example.com") for p in secret_patterns)
           assert absolute_users_path.search("/" + "Users/example/private.txt")
           assert absolute_home_path.search("/" + "home/example/private.txt")
           assert not absolute_users_path.search("archive/Users/example/private.txt")
