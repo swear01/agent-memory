@@ -11,8 +11,10 @@ updated: 2026-10-21
 讓 `@claude` 在某個 repo 真的運作需要三件事，缺一不可：
 
 1. Claude GitHub App 安裝並涵蓋該 repo（https://github.com/apps/claude，選 All repositories）。這是使用者本人的瀏覽器授權，agent 不代做。
-2. repo 內有 `.github/workflows/claude.yml`，使用 `anthropics/claude-code-action@v1`，job 用 `if: contains(..., '@claude')` 篩選，只在提及時跑；permissions 需含 `id-token: write`（App 的 OIDC）。
+2. repo 內有 `.github/workflows/claude.yml`，使用 `anthropics/claude-code-action@v1`，job 用 `if: contains(..., '@claude')` 篩選，只在提及時跑；permissions 需含 `id-token: write`（App 的 OIDC）。`issues` 只觸發 `opened`（加 `assigned` 會讓含 `@claude` 的 issue 每次指派都重跑、多耗額度），job 設 `timeout-minutes: 30`。`contents`／`pull-requests`／`issues` 要保持 write，action 需要推 branch 與更新留言。
 3. repo secret `CLAUDE_CODE_OAUTH_TOKEN`（由 `claude setup-token` 產生，走訂閱額度）或 `ANTHROPIC_API_KEY`。token 由使用者自己設定，agent 不輸入憑證。
+
+2026-10-21 在 `swear01/swear-review-e2e` PR 留 `@claude review this PR` 實測：workflow 成功，約 21 秒回覆一則 review 留言。Claude 本身無法修改 `.github/workflows/` 下的檔案（GitHub App 權限），workflow 調整要由人或 agent 另推。
 
 觀察到的限制：
 
