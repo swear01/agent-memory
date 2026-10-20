@@ -1,16 +1,14 @@
 ---
-title: HexaPharma 極簡視覺方向與玩法審查交接
+title: HexaPharma 視覺方向與玩法審查交接
 scope: project
 project: hexapharma
 status: active
-updated: 2026-09-06
+updated: 2026-10-20
 ---
 
-## 最新使用者方向
+## 最新使用者方向（2026-10-20，取代先前的極簡 pixel 方向）
 
-HexaPharma 的核心是「探索藥效地圖、發現配方、親手建成實體產線」：Big Pharma 的工廠 + Potion Craft 的地圖。使用者要求極簡、偏 pixel，但不強制 pixel art；避免泛黃光暈、過量亮邊和卡片網站感。這個偏好優先於舊 design 的 Orbital Wet-Lab／bone-white／amber 美術處方；不表示要換引擎或修改 sim 規則。
-
-完整實作 brief 在 swear01/hexapharma issue #4。前端可與 #7 的所有已發現配方查閱一起做；兩者重疊 Game.tsx，注意 module ownership。
+使用者要求整套重設計：參考「現代簡潔線條＋手繪感」，更有遊戲感但守住工廠可讀性；桌機優先、手機可用；程式化手繪＋一個自帶字型。紅線：不要幼齡卡通化、不要讓 flow／ports／數字變難讀、不要讓動畫拖慢操作（羊皮紙感未被列為紅線）。經 impeccable critique（23/40）與方向輪，選定「定向越野地圖」世界：紙底墨印、ISOM 色語、路線紫只屬玩家自己的線（研究路線、candidate、選取、Plan overprint）。已由 PR #13（merge 5acf1fc）實作；產品真相在 repo 的 `PRODUCT.md`，視覺系統在 `DESIGN.md`，方向契約在 `.impeccable/surfaces/src-ui-game-tsx.md`。舊的 Orbital／bone-white／極簡 pixel 處方都已過時。
 
 ## 已驗證的審查教訓
 
@@ -57,3 +55,12 @@ PR #10（merge 7c892b4）將有限需求每次出貨的整數衰減由 9/10 改�
 - 最新成功 Research 與 discoveredFormulas 不僅要有對應 program，還要符合最新順序；重用 discoverFormulas 的冪等結果驗證，避免 UI 指向較舊配方。
 - 既有 factory restore 已在 Int32Array 賦值前驗 unit ID 上限；review 指出 parser 缺同一 guard 不等於存在截斷漏洞。以保持質量守恆的超界 ID 存檔重現拒絕流程後再判定。
 - 最終機械驗收通過 697 unit／90 E2E；最新 Swear 完整 review 為零 findings，CI 通過，合併後 main 建置與直接改資源載入繼續運行亦通過。
+
+## 前端重設計的流程教訓（PR #13）
+
+- 在 worktree 跑 `npm run check` 時，不要同時編輯同一 worktree 的檔案：Vite dev server 的 HMR 會重載頁面，Playwright 出現 `Protocol error (DOM.scrollIntoViewIfNeeded): Cannot find context with specified id` 這類假失敗。單獨重跑同一測試 3 次皆通過即可歸類；正式證據要在不動檔的完整 gate。
+- 多個 worktree 平行跑 e2e：`playwright.config.ts` 以 `E2E_DEV_PORT`／`E2E_PREVIEW_PORT` 覆寫預設 53347／53348（strictPort），否則互撞。完整 e2e 約 9–20 分鐘（依負載）。
+- 平行 subagent 需事先切開檔案擁有權：先由整合者抽出 `ResearchWorkspace.tsx`、`Formulas.tsx`、`FieldGuide.tsx` 與 `research.css`／`factory.css`／`panels.css`，三個分支才能零衝突合併。整合分支有新 commit 時，要先 commit 再請 agent `git merge` 回來。
+- Pixi 冷啟動約 1–2 秒才出第一幀；截圖驗收要等 `lab-map-frame canvas` 可見再加等待，否則拿到空白地圖。載入存檔的 toast 會蓋住內容，要等 `save-msg` 清空。Cure 的 camera fit 只在「當步 resolve 出 Cure」觸發，截圖要從存檔差一步、現場執行最後一步。
+- 共用 `MachineIcon` 時，e2e 以 `[data-icon-shape='path']` 讀 `points`，標記必須留在 `<polyline>` 上。
+- Codex review 抓到 Objective 邏輯缺口：只用「Production 有機器」判斷會在第一份合約後誤導玩家去跑仍產前一種藥的產線；需同時看庫存是否有作用中疾病的 cure。
