@@ -35,7 +35,13 @@ All paths below are relative to `<project-root>`.
 - Transcript and signal tools can support content, duration, word-count, speaking-rate, or pause-candidate checks. They do not replace reliable listening. Do not infer pronunciation from ASR, mechanical pause thresholds, or tool metrics; keep a full speaking task score blank if the voice evidence is not reliable.
 - Missing work is not zero. Read the answer files before making progress claims, and update the progress record only from actual submissions.
 
+## UI and layout constraints
+
+- The student's local web application uses the simplified, distraction-free ETS exam chrome layout (compact navigation, direct Speaking / Writing links, minimal decorative styling).
+- Do NOT unilaterally rewrite or "redesign" `course.js`, `day.html`, `index.html`, or `style.css` with card dashboards, promotional text, or extra banners unless explicitly asked. Keep the UI aligned with the student's established preference.
+
 ## Verification boundary
 
 The project records local checks for the teacher-bank hashes, page mappings, storage, exports, and responsive layout. Both local web servers (ports 8768 & 8769) are running and serve authentic Day 4 questions and media. Day 1–3 data and recordings are strictly preserved.
+
 
