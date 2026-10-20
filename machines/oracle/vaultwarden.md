@@ -13,6 +13,7 @@ updated: 2026-10-21
 - 防火牆：OCI Ubuntu 映像自帶 `netfilter-persistent` 的 iptables（INPUT 最後 REJECT，只開 22/43005/53346）。不要裝 ufw；Tailscale 自己加 ts-input 放行 tailscale0。公網 80/443 實測不通。
 - 用 `pkill -f "tailscale up"` 會連帶殺掉自己那條含相同字串的 ssh 命令；改用 `pkill -f "^tailscale [u]p"`。`tailscale up` 的授權 URL 過期時 tailscaled log 會出現 `http 410: auth path not found`，瀏覽器卻仍顯示 Login successful，要重新產生 URL。
 - Tailnet policy 已改成「我的裝置可連全部，其他成員只連 autogroup:self」，並有 tests 確認其他成員連不到 swever:443/22。Tailscale API OAuth client secret 存在 macOS Keychain service `tailscale-api`。
+- 只有 SwairM5（Mac）裝了 `vault`；使用者刻意不在其他機器裝。全域規則（transfer_MAC `stow/agents/.agents/AGENTS.md`）有一行 `vault` 用法，其他機器的 agent 會看到但沒有指令可用。
 - Agent 取密碼：`vault run VAR=item[#field] -- cmd`（不印出）或 `vault get item [field]`。使用者刻意選擇單一帳號、agent 可讀全部密碼。從瀏覽器匯入的項目常同名（同網站多帳號）且名稱含 `:`，所以 field 分隔用 `#`，同名時錯誤訊息列出 id 與 username，改用 id 查。
 - 備份：restic → B2 bucket `SwearPassword`（S3 endpoint `s3.us-west-004.backblazeb2.com`，路徑 `vaultwarden`），`/etc/cron.d/vaultwarden-backup` 每天 03:17 UTC 跑 `/usr/local/sbin/vaultwarden-backup`。B2 金鑰在 vault 項目 `b2-vaultwarden-backup`（只限該 bucket），restic 密碼在 `restic-vaultwarden-backup`，同時在 oracle `/etc/vaultwarden-backup.pass`。2026-10-20 首次備份並還原驗證：`PRAGMA integrity_check` = ok。
 - 把 secret 寫到遠端檔案而不經過對話：`vault run K=item#username S=item -- sh -c 'printf ... "$K" "$S" | ssh host "sudo sh -c \"umask 077; cat > /etc/x.env\""'`。
