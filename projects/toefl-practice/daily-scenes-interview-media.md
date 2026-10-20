@@ -18,7 +18,7 @@ updated: 2026-10-16
 
 相對 `<project-root>`：
 
-- `練習材料/每日口說閱讀/assets/scenes/day01.png` 至 `day14.png`；`app.js` 的 `repeatScenes` 設定替代文字與定位；`server.py` 用明確允許清單提供圖片。
+- `練習材料/每日口說閱讀/assets/scenes/day01.png` 至 `day03.png` 仍在用（day04–14 圖屬舊自編題，2026-10-21 起不顯示）；`app.js` 的 `repeatScenes` 設定替代文字與定位；`server.py` 用明確允許清單提供圖片。
 - `參考資料/複誦情境圖_20261016.json` 保存生成 prompt、圖片 SHA256、尺寸、座標；`參考資料/複誦情境圖驗證_20261016.json` 保存驗證覆蓋。
 - `練習材料/每日口說閱讀/check-scenes.cjs` 必須使用隔離資料，避免測試污染本人作答；檢查全部日次、同組圖片、定位移動、隱藏原句、播放／錄音時圖片保留、缺圖保護、減少動態、手機與無外部請求。
 - 影片清單 `練習材料/每日口說閱讀/video-manifest.json`、重建腳本 `build_video.py`；一般練習無須載入模型。先查研究及驗證紀錄，再決定是否有必要重建。
