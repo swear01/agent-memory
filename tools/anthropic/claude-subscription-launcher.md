@@ -2,7 +2,7 @@
 title: Claude Code fleet 訂閱啟動入口
 scope: tools/anthropic
 status: active
-updated: 2026-10-17
+updated: 2026-10-21
 ---
 
 # 訂閱入口與更新方式
@@ -12,12 +12,12 @@ Claude Code 會優先採用繼承的 API 認證。保留真正 API 程式使用�
 Canonical source 為 `<transfer_MAC-root>/stow/core/.local/bin/claude`，部署成 `~/.local/bin/claude`。入口執行：
 
 ```sh
-exec /usr/bin/env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL DISABLE_UPDATES=1 "$HOME/.local/lib/claude-code" "$@"
+exec /usr/bin/env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL "$HOME/.local/lib/claude-code" "$@"
 ```
 
 `~/.local/lib/claude-code` 指向原 npm package 的 `bin/claude.exe`；npm prefix 的 `bin/claude` 也連回入口。Oracle 舊 `/usr/local/bin/claude` 同樣連回受管理帳號入口。這涵蓋標準命令與原 npm 命令路徑，不能只設互動 shell alias。
 
-使用者要求直接更新既有安裝；這次不保留另一套版本目錄。`DISABLE_UPDATES=1` 防止自動更新改寫入口；後續從 npm 更新再重接：
+使用者要求直接更新既有安裝；這次不保留另一套版本目錄。2026-10-21 起依使用者要求移除 `DISABLE_UPDATES=1`，讓 Claude 自動更新；代價是自動更新或 native installer 可能改寫 `~/.local/bin/claude`，使 API key 排除失效。發現入口不再連到 Stow 時，從 npm 更新再重接：
 
 ```sh
 npm install -g @anthropic-ai/claude-code@latest
