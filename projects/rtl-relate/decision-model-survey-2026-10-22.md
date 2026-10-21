@@ -18,6 +18,14 @@ updated: 2026-10-22
 - 限制：JEVal 輸入上限 20,480 tokens、選項上限 255；Jev 長 context 準確率由 4–8K 的 93.5% 降到約 20K 的 74.5%；Jev 機率過度自信。
 - LLM-as-Jev（arXiv `2610.02076`）：免訓練地用 next-token 機率讀出編號選項，Qwen3.5-4B 可追平同 backbone 的 Jev 型模型；小模型可用 KL-anchored fine-tune。這是把 code 強的 LLM 變成 RTL 專用 decision model 的可行路線。
 
+## Hosted 廠商比較（使用者放寬到 2 秒、不本地跑）
+
+- 沒有公認單一榜首；各家多用自家 benchmark。較中立的兩個榜結論不同：
+  - JevBench（benchmarkheaven.com，board v1.7.46，2026-10-21）官方 Score 混入 speed／cost。只看 Intelligence，decision model 最高為 Sqwish `kettei-fat` 80（Jev 1.13.0 為 64）；唯一的 code 數據為「Coding & software」kettei-fat 86.5、Jev 64.3。kettei 文件未列 context 上限，新帳號可能需 waitlist。
+  - Artificial Analysis Decision Index v1.0（2026-10-13，無 code 類任務）：Jev 1.13 為 58，是文中最高的 decision model；Claude Haiku 5.5 (Low) 61、GPT-6 Luna (Low) 55 為語言模型。
+- 長 context：Jev 32K、Cloudflare Clef 64K（自報 Decision Index 61.2）、Perplexity pplx-decider v1.1 約 250K（自報 61.56，open weights＋API）。
+- 放寬到 2 秒後，低 effort 生成式 LLM 也可入選；JevBench 上 GPT-6 Luna low 的 Intelligence 97、p50 1.85 s，準確度高於所有 decision model，代價是成本。實驗應把它列為對照組。
+
 ## 對本專案的含意
 
 - 既有 bundle 很大（PicoRV32 majority prompt 84,726 tokens），整份 RTL 直接餵 decision model 會超過 20K 上限且遠超 500 ms；必須先由 Yosys／COI 抽成每個選項的短特徵（訊號寬度、fanin/fanout、與 assertion 距離、CEX 摘要）。
