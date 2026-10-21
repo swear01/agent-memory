@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-10-07
+updated: 2026-10-21
 tags:
   - shared-memory
   - qmd
@@ -71,3 +71,5 @@ embedding 或重建 canonical Markdown。
 備份包含本機 refs、staged／unstaged patch 與 untracked 檔，放在不會被 QMD 索引的私有位置，不推送備份。發布時僅更新受影響分支，以明確的遠端舊 SHA 作 force-with-lease；遠端變動就停止，不能用一般 force 或 mirror push 覆蓋。
 
 同步其他 checkout 時，先保留本地工作，再以新的 remote main 為基底重套；不得 merge 或推回舊歷史。驗證新 tracked files、完整歷史、CI 與 remote SHA 後才刷新 QMD；索引清理不能代替 Git 清理。GitHub 的 unreachable objects／快取是否已清除，不能由 branch history 乾淨就斷言。提交使用與既有紀錄一致的公開 noreply 身分，避免把個人信箱重新帶進 metadata。
+
+2026-10-21 的 metadata 清理證實：`git filter-branch --env-filter` 會移除較早簽章，讓單筆信箱修正擴大成數百筆 commit ID 變更。只改 raw commit 的 author／committer 信箱，再逐筆改後繼提交的 parent ID，可保留受影響區段以前的簽章與 commit ID；推送前須逐筆比對 raw commit、最終 tree、完整歷史驗證及遠端最新 head。此次遠端在準備期間新增一筆提交，先納入該提交後才以指定舊 SHA 的 lease 更新，不能直接推原先準備的版本。
