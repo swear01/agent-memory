@@ -3,10 +3,12 @@ title: AIsimpV RTL certificate checker 的已驗證界線
 scope: project
 project: AIsimpV
 status: active
-updated: 2026-09-23
+updated: 2026-10-21
 ---
 
 # AIsimpV RTL certificate checker
+
+2026-10-21 研究範圍補充：[LLM 驅動的可驗證問題簡化與分解](certified-problem-decomposition.md) 記錄本線的新方向與暫緩的 proof lifting 分支。下文保留各日期的工程與實驗證據；舊的下一步建議不能取代該範圍決定。
 
 獨立專案位於 `<project-root>/rtl-relate`，不 import NeuroAbs。目前人工 P1 counter 與 P5 stalled producer 可跑真實 Yosys → BTOR2 → typed IR → Z3 certificate gate、free-nondeterminism property checking、exact concrete replay。既有 tiny 回歸保留；2026-09-21 已另完成四題公開 RTL／FSM 人工改寫矩陣，但未證成驗證加速。
 
