@@ -73,3 +73,7 @@ embedding 或重建 canonical Markdown。
 同步其他 checkout 時，先保留本地工作，再以新的 remote main 為基底重套；不得 merge 或推回舊歷史。驗證新 tracked files、完整歷史、CI 與 remote SHA 後才刷新 QMD；索引清理不能代替 Git 清理。GitHub 的 unreachable objects／快取是否已清除，不能由 branch history 乾淨就斷言。提交使用與既有紀錄一致的公開 noreply 身分，避免把個人信箱重新帶進 metadata。
 
 2026-10-21 的 metadata 清理證實：`git filter-branch --env-filter` 會移除較早簽章，讓單筆信箱修正擴大成數百筆 commit ID 變更。只改 raw commit 的 author／committer 信箱，再逐筆改後繼提交的 parent ID，可保留受影響區段以前的簽章與 commit ID；推送前須逐筆比對 raw commit、最終 tree、完整歷史驗證及遠端最新 head。此次遠端在準備期間新增一筆提交，先納入該提交後才以指定舊 SHA 的 lease 更新，不能直接推原先準備的版本。
+
+此次修復已推送：只變更命中提交及其後繼共 11 筆 commit ID，最終 tree 與修復前遠端完全相同；新 main 與後續一般記憶提交的 Validate Memory CI 都通過，作者與提交者使用公開 noreply 身分。QMD 已完成 update／embed，並能搜尋到 #287 擴展研究的歸因、實驗邊界及此次修復紀錄。
+
+仍須保留清除範圍的限制：修復後 GitHub API 仍能透過舊 SHA 取得原提交，即使當時所有遠端分支與 PR refs 都不再包含它。這表示分支歷史與 CI 已修好，不能宣稱個人信箱已從 GitHub 儲存與快取完全刪除。依 GitHub Docs 的敏感資料清除流程，伺服端快取清除須向 GitHub Support 提出請求，由 GitHub 決定是否受理；本次未提交該請求。其他舊 checkout 後續同步須沿用上段的重套流程，避免重新推回舊歷史。
