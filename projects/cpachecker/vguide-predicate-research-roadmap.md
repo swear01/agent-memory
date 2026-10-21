@@ -5,7 +5,7 @@ scope: project
 tags: [vguide, predicates, cegar, nested-loops, research]
 status: active
 created: 2026-08-26
-updated: 2026-09-30
+updated: 2026-10-21
 ---
 
 # CPAchecker 研究主線與 LLM 使用授權
@@ -61,6 +61,25 @@ F0／Existing／Step 各解出16／14／15題。Step 對 Existing 單次多解
 依據：`<experiments-root>/reports/issue287-fullset-20260926/native-latest25/ANALYSIS-r5.json`、
 `<experiments-root>/reports/issue296-hard218-cthulhu-recovery-r8-20260929/HARVEST-V3.json`、
 `<experiments-root>/reports/issue296-hard218-confirmation-20260930/CONFIRMATION-ACCEPTANCE.json`。
+
+### #287 擴展研究的歸因與提案邊界（2026-10-21，未執行）
+
+hard218 的三個 F0→LLM 增量不是「只有 LLM 才能解」的證據：歷史無 LLM
+v1 也曾解出同三題，但配置不同，且已有語義與預算修補紀錄，不能拿舊 v1
+直接當現行等條件對照。新實驗應同時比較合格的同流程 F0、簡單範圍分析或
+固定模板，以及 LLM；只把模型相對這些對照新增的正確原題 verdict 歸給模型。
+依據：`<experiments-root>/reports/issue287-fullset-20260926/F0-COMPLETE-COMPARISON.md`。
+
+後續候選研究方向是把已檢查的整數化驗證擴到非 reducer 數值迴圈，先固定
+保守的靜態語義資格、原始 property 對應與必須由精確語義證成的轉換前提。
+先試 INTEGER 後段只可作探索排序訊號，不能把未證前提下的 TRUE 採納為原題結果；
+後段未證也只表示當次配置未看到解題潛力。報告須保留全部靜態合資格題目，
+明列探索篩掉、gate 未證、後段未證、INVALID 與退步，不能只以後段先過的題目
+計成功率。局部混合表示是另一個研究階段，尚無能力或收益結論。
+原 #287 live25 的候選只作用於 overflow gate，INTEGER 與 exact fallback 不消費
+這些 predicates；signed／unsigned 與 wrap 控制已有 INTEGER 錯 TRUE 的實例。
+依據：`<experiments-root>/reports/issue287-fullset-20260926/native-latest25/PHASE-BOUNDARY.md`、
+`<experiments-root>/reports/three-route-fullset-20260926/issue287-signedness-independent-audit.json`。
 
 ### 整體成本、benchmark語義與production接合
 
