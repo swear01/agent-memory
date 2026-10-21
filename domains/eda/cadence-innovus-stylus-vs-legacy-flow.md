@@ -75,3 +75,28 @@ updated: 2026-10-21
      [ -z "$DISPLAY" ] && export DISPLAY=:0
      ```
    - XQuartz 偏好設定中需確認 `enable_iglx=true` 與 `nolisten_tcp=false`。
+
+---
+
+## 數位 IC 教學設計與邊界規範（從 RTL 做到 APR）
+
+1. **數位 IC（Digital APR）與類比 IC（Analog Full-Custom）之教學界線**：
+   - **數位 IC**：Innovus 專門處理標準單元（Standard Cell）的自動佈局與繞線（APR），所有單元與訊號線進到物理層後雖呈現幾何版圖，但本質仍為數位邏輯與二元切換。
+   - **類比 IC**：使用 Cadence Virtuoso 繪製微觀電晶體 Schematic、跑 Spectre SPICE 模擬並手工拉版圖。教學時需先向初學者釐清兩者工具與範疇差異，避免學生看見版圖幾何就誤認為是類比電路。
+
+2. **教學核心脈絡：RTL $\to$ Synthesis $\to$ APR**：
+   - 學生最熟悉的是高階行為描述（Verilog RTL，如 15 行的 `always @(posedge clk) count <= count + 1`）。
+   - 切忌在初學實驗一開始就引入深層實體簽核（CTS 時脈樹延遲、Fanout 負載、金屬層繞線分佈、寄生 RC），這會讓學生覺得太偏後端且脫離電路邏輯本質。
+   - 應將重點放在**「行為 RTL $\to$ 閘級網表 $\to$ 晶片版圖」的直觀對應**：
+     - **RTL**：描述計數器行為。
+     - **邏輯合成**：將加法行為轉譯為 8 顆 D 型正反器（`DFFRBN`）與進位鏈（`AN2` + `XOR2H`）。
+     - **APR**：將這 23 個邏輯單元吸附排入 row、繞上金屬線並通電。
+
+3. **Stylus CLI 互動任務設計準則**：
+   - **連結 RTL 與版圖實體**：
+     - 查詢暫存器：`get_db [get_db insts u_ff*] .name`（確認 RTL 的 `count[7:0]` 變成 8 顆正反器實體）。
+     - 查詢單元型號與座標：`get_db [get_db insts u_ff0] .base_cell.name` 與 `.location`。
+     - 版圖即時高亮：`select_obj [get_db insts u_ff*]`（在 GUI 上把 8 顆正反器亮起黃色框，直觀看見擺放位置）。
+   - **時序驗證**：
+     - 執行 `report_timing`，讓學生檢查最長進位鏈路徑在目標時脈下是否達標（Setup Slack $> 0$），並透過緊縮時脈週期觀察時序違規。
+
