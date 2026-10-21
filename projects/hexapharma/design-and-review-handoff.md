@@ -3,7 +3,7 @@ title: HexaPharma 視覺方向與玩法審查交接
 scope: project
 project: hexapharma
 status: active
-updated: 2026-10-20
+updated: 2026-10-21
 ---
 
 ## 最新使用者方向（2026-10-20，取代先前的極簡 pixel 方向）
@@ -64,3 +64,11 @@ PR #10（merge 7c892b4）將有限需求每次出貨的整數衰減由 9/10 改�
 - Pixi 冷啟動約 1–2 秒才出第一幀；截圖驗收要等 `lab-map-frame canvas` 可見再加等待，否則拿到空白地圖。載入存檔的 toast 會蓋住內容，要等 `save-msg` 清空。Cure 的 camera fit 只在「當步 resolve 出 Cure」觸發，截圖要從存檔差一步、現場執行最後一步。
 - 共用 `MachineIcon` 時，e2e 以 `[data-icon-shape='path']` 讀 `points`，標記必須留在 `<polyline>` 上。
 - Codex review 抓到 Objective 邏輯缺口：只用「Production 有機器」判斷會在第一份合約後誤導玩家去跑仍產前一種藥的產線；需同時看庫存是否有作用中疾病的 cure。
+
+## 公開試玩部署（PR #14，2026-10-21）
+
+- 公開版：`https://hexapharma.5334601.xyz/`（GitHub Pages custom domain；備援 `swear01.github.io/hexapharma/`）。`.github/workflows/pages.yml` 只在 main 的 `check` workflow_run 成功後部署，build 用 `--base=./`，同一份產物在子路徑與網域根都可用。遊戲純前端、存檔在 localStorage，不需要 Oracle 常駐。
+- DNS：`5334601.xyz` 由 Cloudflare 管理，根網域另有網站不要動。用 `cloudflared tunnel login` 取得的 `~/.cloudflared/cert.pem`（base64 JSON：accountID／zoneID／apiToken）可呼叫 Cloudflare API 讀寫該 zone 的 DNS；以它建立 `hexapharma` CNAME → `swear01.github.io`（DNS only）。`cloudflared tunnel route dns` 本身只能指向 tunnel。
+- gh OAuth token 只有 `repo` scope，推含 `.github/workflows/*` 的 commit 會被拒（缺 `workflow` scope）；同機 SSH key 是同一使用者，可用 `git push git@github.com:<owner>/<repo>.git <branch>` 推送。
+- Pages 憑證卡在 `https_certificate: none` 兩小時不簽：DNS／CAA 都正常時，`PUT /pages` 先 `cname=null` 再設回 cname，立即變 `approved`，之後才能 `https_enforced=true`。
+- Swear Review 以為 `actions/upload-pages-artifact@v5`／`deploy-pages@v5` 不存在是過時知識；用 `gh api repos/<action>/git/ref/tags/v5` 驗證存在。
