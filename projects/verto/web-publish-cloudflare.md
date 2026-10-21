@@ -2,7 +2,7 @@
 title: Verto Web 公開試玩：Cloudflare Pages 手動發布與 Unity build 縮小
 scope: projects/verto
 status: verified
-updated: 2026-10-21
+updated: 2026-10-22
 tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, build-size]
 ---
 
@@ -10,7 +10,7 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 
 - hexapharma 是 npm 前端，GitHub-hosted runner 就能 build。Verto 的 Unity Web build 需要有授權的 Unity 6000.4.7f1 GUI Editor + Pipeline（專案規定不得改用 `-batchmode`），GitHub-hosted runner 沒有。
 - 唯一自動方案是 self-hosted Mac runner；但 public repo 掛 self-hosted runner 時，fork PR 可以帶自己的 workflow 在 Mac 上執行（repo 預設 fork 核准政策只到 `first_time_contributors`）。安裝 runner（LaunchAgent）也被 auto mode classifier 以 Unauthorized Persistence 擋下。
-- 使用者選擇本地 build 後手動上傳 Cloudflare Pages，合併到 `main` 不會自動更新網站。舊的 `web.yml`（等 runner、每次 push 都失敗）已移除（Verto PR #4）。
+- 使用者選擇本地 build 後手動上傳 Cloudflare Pages，合併到 `main` 不會自動更新網站；網站會落後 `main`，直到有人發布。舊的 `web.yml`（等 runner、每次 push 都失敗）已移除（Verto PR #4，2026-10-22 合併為 `acab4ef`）。部署時從最新 `origin/main` 的 checkout 執行並帶 `--commit-hash`，避免舊 build 蓋掉新 build；Wrangler 會在 checkout 留下未追蹤的 `.wrangler/` 快取。
 
 ## Cloudflare Pages 設定（2026-10-21）
 
@@ -20,7 +20,7 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 - `cloudflared tunnel route dns` 只能把 hostname CNAME 到 tunnel，不能用來設 Pages 網域。
 - Pages 單檔上限 25 MiB。`.unityweb` 以 `content-type: application/vnd.unity`、無 `Content-Encoding` 送出，靠 Unity decompression fallback 在 JS 解壓；Brotli + fallback 可正常載入。
 
-## Unity 6000.4.7f1 Web build 縮小實測（Verto PR #7）
+## Unity 6000.4.7f1 Web build 縮小實測（Verto PR #7，合併為 `3732a6e`）
 
 | 設定 | wasm 壓縮後 | data 壓縮後 |
 |---|---|---|
@@ -35,3 +35,9 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 - Brotli 讓 `Web.loader.js` 從 48 KB 變 118 KB（內含 fallback decoder），但總量大幅下降。
 - `Hidden/CoreSRP/CoreCopy`、`Hidden/Universal/HDRDebugView` 的 "shader is not supported on this GPU" log 在縮小前的舊 build 就有，不是 stripping 造成。
 - 內建瀏覽器 pane 的 computer `key` 是瞬間按放，Unity 常收不到走路；驗證走路用 Playwright `keyboard.down/up`（`WebLoadSmoke.cjs`）。
+
+## `WebLoadSmoke.cjs` 的檢查陷阱（Swear Review 指出並修正）
+
+- 標題畫面被選中的圖示與斗篷同色；若按鍵被吞，往右鍵會移動選單光標，像素位移檢查會誤判通過。要像 `DemoWebSmoke.cjs` 一樣按 Enter（最多 3 次）並等 `phase-map-result` 事件，確認 level1 真的載入。
+- 用「新出現像素平均 x − 消失像素平均 x」量位移是錯的：位移 d 小於 sprite 寬度 w 時結果恆等於 w，1px 也會過。改比較兩張畫面所有斗篷像素的 centroid（Verto 關卡沒有同色 UI）；實測 250 ms 往右約 88 CSS px（22 native px）。
+- Phase 模板載入失敗時也會隱藏 `#loading`，原因寫在 `#error`；載入後要先斷言 `#error` 隱藏，否則壞掉的部署會晚 9 秒才以誤導訊息失敗。HTTP 404 不會觸發 Playwright `requestfailed`。
