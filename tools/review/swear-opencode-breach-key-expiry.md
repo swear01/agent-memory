@@ -1,7 +1,7 @@
 ---
 title: 2026-10 OpenCode Console 外洩後 Swear Review 全部上游失效
 scope: tools/review Swear Review + deepseek-latch-gateway on Oracle
-status: fastify 5.12.7 + OCR 1.13.3 deployed 2026-10-22 (app a81263c); upstream LLM still down
+status: app 86e5f9f + review.auto false deployed 2026-10-22 (see projects/swear-review/deepseek-quota-usage.md); upstream LLM still down
 updated: 2026-10-22
 ---
 
