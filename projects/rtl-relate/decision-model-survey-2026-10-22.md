@@ -46,6 +46,14 @@ updated: 2026-10-22
 - mazu 的 local gateway `/v1/models` 列出 `gpt-6-luna`（上游 opencode Go，官方頁也列入 Go 的 $10/月方案），但 `/v1/chat/completions` 回 HTTP 400 `model_not_allowed`，allowlist 只有 `deepseek-flash`、`deepseek-pro`、`deepseek-v4-flash`、`deepseek-v4-pro`。要用須修改 gateway 設定，未改動。reasoning effort 是否被 gateway／opencode Go 保留也未驗證。
 - OpenAI 直連 Luna $0.10／$0.50 per M；Batch 或 Flex 半價 $0.05／$0.25（OpenRouter 也有 `:batch`／Flex 同價）。研究生成不可走 opencode／Codex CLI 的內建 system prompt，應直接呼叫 API。
 
+## Datapath UF、memory abstraction 與 NeuroAbs 的決策點
+
+- 使用者決定不改 IC3 底層（generalization、clause 等）；決策只放在 RTL／模型層。
+- UF 與 memory abstraction 不是只能人工：Reveal（Andraus／Liffiton／Sakallah）以 bit width 判定 datapath，自動換成 UF／UP，再以 CEX＋MUS refinement；AVR（TACAS 2020、HWMCC 2020 冠軍，也是 NeuroAbs 的 backend）內建 syntax-guided／equality abstraction。Memory 有 Bjesse／Synopsys 專利 US8001498B2（CEX 模擬找錯誤讀值，再加 abstraction pair）、Manolios ICCAD 2006、Charvát 等的有限次存取模型。這些用固定 heuristic 選初始抽象，再以 CEGAR 修正；LLM／decision model 可提供初始選擇與 refinement 優先序，baseline 須含 AVR 的自動抽象。
+- NeuroAbs 決策點：LLM 決定哪些訊號與 scenario 相關、localization 時固定哪些控制值；AST traversal 決定要改哪些 statement；LLM（gpt-4o-mini，每 statement 約 3.70 s）決定子運算式改 X、化簡或保留；Z3 檢查 overapproximation；R-CEGAR 決定要還原哪些 statement。
+- NeuroAbs 公開 xlsx（Figshare v2，仍無程式碼）：AVR 多數加速，rIC3 幾乎持平；有變慢案例（Piccolo SUB AVR 1096.61→1450.38 s；PicoRV32 SUB 663.77→763.36 s）。PicoRV32 riscv-formal-ADD：AVR 862.77→561.66 s、rIC3 39.32→36.1 s，與本專案 PicoRV32 ADD pilot 是同一題。
+- 本專案先前**沒有真正複現 NeuroAbs**：只在三個 SFIFO 題上跑 NeuroAbs-inspired netlist cutting，12 次全選空集合；沒有實作 AST rewrite／CEX reduction，也沒有跑 AVR。
+
 ## 對本專案的含意
 
 - 既有 bundle 很大（PicoRV32 majority prompt 84,726 tokens），整份 RTL 直接餵 decision model 會超過 20K 上限且遠超 500 ms；必須先由 Yosys／COI 抽成每個選項的短特徵（訊號寬度、fanin/fanout、與 assertion 距離、CEX 摘要）。
