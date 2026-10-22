@@ -17,6 +17,7 @@ tags:
 # 已確認決策
 
 - Zeus 使用老舊 Supermicro `X10DAI`，BIOS `2.0`（2016）；使用者明確決定不更新 BIOS。
+- 2026-10-22：Mazu、Cthulhu、Valkyrie、Zeus 已 full-upgrade 到 `26.04.1`、kernel `7.0.0-38`（NVIDIA/CUDA/container toolkit 以 apt-mark hold 保留不動）；Mazu 已重開驗證，其餘三台待重開，見 [[machines/mazu/home-automount-boot-hang-2026-10-22]]。
 - 五台實驗室主機已完成 Ubuntu `26.04 LTS` 升級；2026-09-15 驗證 kernel 為 `7.0.0-31-generic`、NVIDIA driver 為 `580.178.04`，GPU 正常。
 - Athena 在 BIOS `1836` 後仍有反覆 kernel panic／自動重開機；原因尚未完全確認，且 BIOS、microcode 與 Intel Default Settings 均已處理，不可再把它們列為尚未嘗試的修復。
 - Zeus 的 GTX 1080 Ti 是 Pascal `sm_61`，必須保留 CUDA `12.9`；CUDA 13.x 不可套用到 Zeus。
