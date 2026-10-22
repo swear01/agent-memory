@@ -2,7 +2,7 @@
 title: Unity Pipeline 套件 (com.unity.pipeline) 與 Unity CLI 運作機制與即時控制
 scope: tools/unity
 status: active
-updated: 2026-10-20
+updated: 2026-10-22
 tags:
   - unity
   - unity-cli
@@ -72,3 +72,5 @@ Unity 官方推出 Unity CLI 與 Unity Pipeline 模組（`com.unity.pipeline`）
 9. **Input System：在 `Update` 裡輪詢 `isPressed` 會漏掉快速點按**（Gamejam1 PHASE 的 WebGL 版，2026-10-20 實測）：選單用 `isPressed` 加上與上一幀比較來判斷左右鍵，如果按下和放開都發生在兩次 `Update` 之間，那一下就完全沒反應（瀏覽器自動化連按三次右鍵，選擇都沒動）；同一個畫面用 `wasPressedThisFrame` 判斷的 Enter 則正常。選單導覽要用 `wasPressedThisFrame`，需要按住連續移動時再另外做重複。
 10. **`run_script` 逾時不會停掉 Editor 裡的工作**（Gamejam1 `Verification/RouteTool.cs` 的 `RouteTool.Search`，2026-10-20 實測）：CLI `--timeout` 到期後，搜尋的 Task 仍在 resident Editor 裡跑。CPU 會升到約兩個核心，接著 `eval` 回 `Main thread operation timed out after 5000ms`，連線也會出現 503 settling。這和第 7 條不同：那裡是操作其實做完了；這裡是搜尋還在佔主執行緒。不要在逾時後再送下一次 Search，也不要以為指令結束就安全。要恢復只能關掉那個 Editor 再隱藏重開；重開可能搶走前景。這個專案不要再跑路線搜尋。
 11. **`recompile_status` 成功時可能是 `up_to_date`**：沒有腳本需要重編譯時狀態是 `up_to_date`，不是 `completed`。只等 `completed` 的輪詢會一直轉。Gamejam1 的 `Verification/BuildWeb.py` 已同時接受兩者。
+12. **There is no `unity command status`** (Pipeline 0.8.0-exp.1, 2026-10-22): it returns `400 Bad Request: Command Not Found` with the list of available commands. Each failed call also logs an `ExecuteCommandByName: No command named 'status'` error in the Editor Console. A loop polling `status` while waiting for the Editor fills the Console with errors, which then look like compile errors when counting `console` error entries. Use `editor_status` to wait for the Editor, and filter by message when counting Console errors.
+13. **`HideFlags.HideAndDontSave` objects survive leaving Play Mode in the Editor** (Verto `PhaseAudio`, 2026-10-22): the runtime audio object used `HideAndDontSave`, and on every Play its `Init` added another `AudioListener`. After repeated Play sessions in the same resident Editor, the listener count grew (2, 3, …). Play Mode tests then failed with `There are N audio listeners in the scene`. Builds are unaffected; only a long-running Editor shows it. Fix: use `HideFlags.HideInHierarchy` so the object is destroyed when Play Mode ends, then restart the Editor once to clear the leaked objects.
