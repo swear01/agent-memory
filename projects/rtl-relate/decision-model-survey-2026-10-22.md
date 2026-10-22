@@ -34,6 +34,18 @@ updated: 2026-10-22
 - Jev agent harness 實測（jev-1.13.0，約 22,500 calls）：局部可觀察的判斷有效（injection、rerank、routing、shell risk gate）；預測其他模型會不會失敗（RouterBench 51.3%）與跨步因果歸因（AUROC 0.560）失敗。教訓：把模糊判斷拆成正交的 yes/no，再由程式組合；低分不代表安全。JEVal 的 τ-bench：Jev＋LLM 成功率 77.6%→66.1%，時間 267.1→160.6 s。
 - 2026-10-22 給使用者的建議（未實驗）：Luna low 應定位為 teacher／上限，不是「假裝的 decision model」；RTL 決策的標籤可由 solver 結果自動產生，可用來 fine-tune（kettei 支援 fine-tune）或走 LLM-as-Jev 路線，量化 decision model 與 reasoning LLM 的差距。
 
+## 他人如何主張 decision model 比 LLM 有用
+
+- Edge orchestration（arXiv `2609.22753v2`）：下游 validator／policy 固定，只換 interpreter；LLM 用相同欄位的嚴格 JSON、關 reasoning；另設同權重 JSON 版以隔離 readout 效果；預註冊假設、bootstrap、McNemar、Holm。結論只限 bounded contracts：4 欄 exact match 0.923–0.967 對 DeepSeek 約 0.973–0.983，每次正確決策費用低 59.7–80.9%；8 欄跌到 0.527–0.577（DeepSeek 0.900–0.930）。
+- Rubric judges（arXiv `2609.29769v3`）：人類標註 9 panels；decision model 最多在 6/27 比較中顯著落後 LLM，成本低 16–357×；兩者錯在同一處，以 confidence 轉交 LLM 的 cascade 最多只多 2.7 點。
+- Pentest harness（arXiv `2609.28940`）：decision layer 只能降級或標記，不能推翻 deterministic validator；但每組只跑一次，屬弱證據示範。
+- 不計時間時，速度／成本的主張失效；剩下可主張的是：機率排序能減少昂貴 solver 嘗試、低價可對每個訊號打分、能用 solver 自動標籤 fine-tune。
+
+## 呼叫 GPT-6 Luna 的路徑（2026-10-22 實測）
+
+- mazu 的 local gateway `/v1/models` 列出 `gpt-6-luna`（上游 opencode Go，官方頁也列入 Go 的 $10/月方案），但 `/v1/chat/completions` 回 HTTP 400 `model_not_allowed`，allowlist 只有 `deepseek-flash`、`deepseek-pro`、`deepseek-v4-flash`、`deepseek-v4-pro`。要用須修改 gateway 設定，未改動。reasoning effort 是否被 gateway／opencode Go 保留也未驗證。
+- OpenAI 直連 Luna $0.10／$0.50 per M；Batch 或 Flex 半價 $0.05／$0.25（OpenRouter 也有 `:batch`／Flex 同價）。研究生成不可走 opencode／Codex CLI 的內建 system prompt，應直接呼叫 API。
+
 ## 對本專案的含意
 
 - 既有 bundle 很大（PicoRV32 majority prompt 84,726 tokens），整份 RTL 直接餵 decision model 會超過 20K 上限且遠超 500 ms；必須先由 Yosys／COI 抽成每個選項的短特徵（訊號寬度、fanin/fanout、與 assertion 距離、CEX 摘要）。
