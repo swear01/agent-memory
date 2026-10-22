@@ -48,6 +48,8 @@ updated: 2026-10-22
 - NeuroAbs 公開程式碼（`ZhiyuanYan/NeuroAbs`，使用者 fork 於 `swear01/NeuroAbs`）只有 per-statement rewrite 用 LLM；候選訊號由 `*_constant.v` 加 Yosys constant propagation 的 OPT_CLEAN 差異決定，不是 LLM signal analyzer。先前 Muse I2C 每次 call 的中位數為 4,610 prompt／2,845 completion tokens，用 Luna 牌價估約 $0.002／call。
 - `~/.config/opencode_key` 與 mazu gateway 的 `opencode-go-1`（`OPENCODE_API_KEY_1`）是同一把 key，額度和 fleet 的 DeepSeek 流量共用；2026-10-22 週額度耗盡（429 `GoUsageLimitError`、`limitName: weekly`），同日 `OPENCODE_API_KEY_2`／`_3` 都回 401 `api_key_expired`。大量研究呼叫應改用獨立帳號或按量 API。
 - Go 方案上限以美元計：$12／5 小時、$30／週、$60／月（第三方引用官方頁）。
+- OpenCode Zen（2026-10-22 實測 `/zen/v1/models`）有 `jev-1.13`（牌價 $0.042/M input、output 免費，端點 `/inference/systemone/v1/systemone`，`state`＋typed `questions` 格式）與 `jev-1.13-free`。所有 `*-free` 模型直接打 API 都回 403 `FreeTierError`（只能在 OpenCode 內使用），會混入 CLI system prompt，不適合研究生成。付費 Zen 模型在此 workspace 回 402 `Insufficient account funds`，需另外儲值。
+- 以 NeuroAbs 每次約 4.6K input 估：Jev 約 $0.0002／call，約一萬次呼叫約 $2；Luna low 實測 smoke 只有約 100 reasoning tokens，decision mode 約 $0.0006／call，比先前用 Muse 2,845 output tokens 估的 $0.002 低很多。
 - OpenAI 直連 Luna $0.10／$0.50 per M；Batch 或 Flex 半價 $0.05／$0.25（OpenRouter 也有 `:batch`／Flex 同價）。研究生成不可走 opencode／Codex CLI 的內建 system prompt，應直接呼叫 API。
 
 ## Datapath UF、memory abstraction 與 NeuroAbs 的決策點
