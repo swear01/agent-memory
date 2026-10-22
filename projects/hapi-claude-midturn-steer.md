@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-10-21 用 claude 2.1.302 (--input-format stream-json, haiku) 實測；第一個 tool_use 後注入 user message，turn 在下一個 tool boundary 轉向、跳過後續步驟、只產生一個 result。
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 tags:
   - hapi
   - claude
@@ -18,3 +18,4 @@ tags:
 - 2.1.302：turn 進行中寫進 stdin 的 user message，會在下一個 tool boundary 被吃進「同一個 turn」（不會另開 turn、不會多一個 result，stream 也不會 echo 這則 user message）。
 - HAPI 沒有 Claude Steer 的原因：`shared/src/modes.ts` 的 `STEERING_SUPPORTED_FLAVORS` = codex/cursor/pi；`cli/src/claude/claudeRemote.ts` 只在 `result` 之後才 `scheduleNextMessage()`，所以 web 送的訊息會一直留在 MessageQueue2，等到 turn 結束。
 - 要實作的話：把 claude 加進 gate，並在 claude 的 CLI 處理 `SteerQueuedMessage` RPC，turn 進行中直接 push 到 `messages` iterable（參考 codex/cursor 的 handler）。
+- 已有上游 PR：tiann/hapi #2008（@Shalistera，2026-10-12 開，CI 和 bot review 都過，等 maintainer）。內容涵蓋上面的實作，另外用 prompt `uuid` 配合 `command_lifecycle` 處理「steer 變成 follow-up turn」時 ready 太早送出的問題。不要再另開重複的 PR。
