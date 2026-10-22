@@ -25,6 +25,7 @@ updated: 2026-10-22
   - Artificial Analysis Decision Index v1.0（2026-10-13，無 code 類任務）：Jev 1.13 為 58，是文中最高的 decision model；Claude Haiku 5.5 (Low) 61、GPT-6 Luna (Low) 55 為語言模型。
 - 長 context：Jev 32K、Cloudflare Clef 64K（自報 Decision Index 61.2）、Perplexity pplx-decider v1.1 約 250K（自報 61.56，open weights＋API）。
 - 放寬到 2 秒後，低 effort 生成式 LLM 也可入選；JevBench 上 GPT-6 Luna low 的 Intelligence 97、p50 1.85 s，準確度高於所有 decision model，代價是成本。實驗應把它列為對照組。
+- 同一個 Luna 有官方 decision mode：OpenAI Decisions API（`POST /v1/decisions`，public beta，只支援 `gpt-6-luna`，question 類型 predicate／choice／score，回傳 probabilities，只收 input token $0.10/M）。官方文件未提 `reasoning.effort`。JevBench 上 Decisions 版 Intelligence 57、p50 0.30 s，遠低於 Luna low effort 生成式的 97／1.85 s；高分來自 reasoning，decision mode 沒有保留。同 backbone 的兩種模式是 RTL 決策實驗的乾淨對照。
 
 ## 對本專案的含意
 
