@@ -27,6 +27,13 @@ updated: 2026-10-22
 - 放寬到 2 秒後，低 effort 生成式 LLM 也可入選；JevBench 上 GPT-6 Luna low 的 Intelligence 97、p50 1.85 s，準確度高於所有 decision model，代價是成本。實驗應把它列為對照組。
 - 同一個 Luna 有官方 decision mode：OpenAI Decisions API（`POST /v1/decisions`，public beta，只支援 `gpt-6-luna`，question 類型 predicate／choice／score，回傳 probabilities，只收 input token $0.10/M）。官方文件未提 `reasoning.effort`。JevBench 上 Decisions 版 Intelligence 57、p50 0.30 s，遠低於 Luna low effort 生成式的 97／1.85 s；高分來自 reasoning，decision mode 沒有保留。同 backbone 的兩種模式是 RTL 決策實驗的乾淨對照。
 
+## 他人的研究方法（可沿用）
+
+- JEVal 把每題轉成 state／instruction／criteria；生成式 LLM（含 thinking）必須輸出嚴格 JSON：答案＋每個候選的機率，無效輸出算錯。SII-Decision 用 Reasoning-to-Readout Self-Distillation，把 thinking LLM 蒸餾成第一個 token 的讀出；student 有時不及 teacher（如 TruthfulQA）。
+- LLM-as-Jev：選項編號、prefill `Best answer: [`、以候選 suffix 的 log-prob 做 softmax；以人工標註公開資料做 KL-anchored LoRA。收益隨監督覆蓋而變；只訓練窄任務會產生捷徑偏差；只用短 context 訓練會傷長輸入。
+- Jev agent harness 實測（jev-1.13.0，約 22,500 calls）：局部可觀察的判斷有效（injection、rerank、routing、shell risk gate）；預測其他模型會不會失敗（RouterBench 51.3%）與跨步因果歸因（AUROC 0.560）失敗。教訓：把模糊判斷拆成正交的 yes/no，再由程式組合；低分不代表安全。JEVal 的 τ-bench：Jev＋LLM 成功率 77.6%→66.1%，時間 267.1→160.6 s。
+- 2026-10-22 給使用者的建議（未實驗）：Luna low 應定位為 teacher／上限，不是「假裝的 decision model」；RTL 決策的標籤可由 solver 結果自動產生，可用來 fine-tune（kettei 支援 fine-tune）或走 LLM-as-Jev 路線，量化 decision model 與 reasoning LLM 的差距。
+
 ## 對本專案的含意
 
 - 既有 bundle 很大（PicoRV32 majority prompt 84,726 tokens），整份 RTL 直接餵 decision model 會超過 20K 上限且遠超 500 ms；必須先由 Yosys／COI 抽成每個選項的短特徵（訊號寬度、fanin/fanout、與 assertion 距離、CEX 摘要）。
