@@ -226,3 +226,12 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 從 oracle 部署會遇到的限制：oracle 連 mazu 公開 IP 的 SSH 逾時，Mac 沒開 sshd（Tailscale ping 通但 22 port refused）。`hapi-ctl.sh` 是以 Mac 為中心設計的，在 oracle 上跑 `status mac` 讀到的其實是 oracle 本機的 binary。可行做法：`hapi spawn-peer --machine <mac-machine-id> --dir <mac-home> --agent claude`，讓 Mac 上的 session 依 skill 逐台更新。加 `--permission-mode bypassPermissions` 時 spawn 回 HTTP 502；不帶 permission mode 就成功。mazu hub 重啟期間 `wait-peer` 也會短暫 502，用同一 remit ID 重試即可。
 - v0.30.7.5 部署結果：6 台可達主機（mazu、cthulhu、valkyrie、zeus、oracle、Mac）都升到 `.5`，baseline session 全部存活；valkyrie 與 Mac 走了 handoff-loop 的 exact-PID recovery；Athena 依政策排除，swop 離線待補。Retention 清掉約 1.02 GiB；NFS 上被替換的 binary 會變成 silly-renamed 的 `.nfs*` 檔案，檢查 live process 時要比對 exe/maps/fd/cwd，不能只看路徑字串。
 - 發版 PR 的審查：Cursor Bugbot 會直接拒審超大的 release diff（約 58k 行）；Gemini 在 exact head 的 clean review 就構成 OR gate 的通過。fork 的 `Codex PR Review` workflow 因 runner 上缺 Codex server-info 檔而失敗，與程式碼無關。Codex 的 P2 意見（#1616 sub-path 通知路由、#2032 已封存 session 的 cache entry、#2061 pending 時的 dialog dismiss）都在 carry 的上游程式碼裡，記錄下來、不在維護版自行修補。
+
+## 2026-10-22：v0.30.7.6 候選（#2008 overlay）的已驗證陷阱
+
+- `sync-from-upstream.sh` 對 manifest 的 carry 有兩個硬性檢查。非 owner 的 PR 只要 bot 有 finding，就會報 `PR_QUALITY_GATE_FAILED`。每個 open PR 的 audit head 都必須等於 live head，否則報 `PR_AUDIT_HEAD_STALE`。所以「使用者指定要帶、但 review 有 finding」的 PR，以及「新 head 有衝突、只能留在舊 head」的 PR，都不能記成 carry。做法是 manifest 用 `regenerate overlay`（新 patch 的 source 寫 `-`；沿用舊 fork commit 的話 source 寫那個 commit），pr-audit 的 decision 寫 `overlay`，reason 寫明原因。腳本不限制 decision 的值。
+- 若 upstream base 沒變，最快的重建方式：從上一版 origin/main 的最後一個 carry commit 開分支，用 `git merge --squash refs/pr/N` 逐一加入新 carry，用 `fixup!` + autosquash 刷新舊 carry，再 cherry-pick overlay 和 prepare/audit commit。注意多參數的 cherry-pick 會依日期排序，不是依你給的順序。
+- 衝突別用 `git merge-file --union`：遇到雙方都新增 describe 區塊的情況，它會吃掉共用的收尾 `});`，也會把雙方的 `it(...)` 開頭拼在一起。正確做法是以 ours 為底，把 base→theirs 的 diff 用 `patch` 套上去，失敗的 hunk 手動補。
+- Carry 之間的編譯期衝突要跑 typecheck 才抓得到：#2078 刪了 `webhookTimeoutMs`，但已 carry 的 #2066 還在用。
+- desktop workspace 是 overlay commit 才加進來的。若在加入它之前就跑了 `bun install`，之後要重跑，否則 `typecheck:desktop` 會報 `tsc: command not found`（exit 127），整個 parallel typecheck 會被 SIGINT 中止。
+- 在 oracle（2 CPU）上，`test:cli:integration` 的 `beforeEach` 等 runner 啟動只給 10s，常常逾時。未修改的 v0.30.7.5 在同一台機器上 13 個 case 失敗，所以這是主機問題，不是 regression。composer-copy e2e 的第一個 case 冷載入要約 31s，要加 `--timeout=120000`。
