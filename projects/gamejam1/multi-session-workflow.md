@@ -4,7 +4,7 @@ scope: projects/gamejam1
 project: gamejam1
 status: active
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-22
 tags: [claude-code, sessions, worktree, stacked-pr, unity-pipeline, BuildWeb]
 ---
 
@@ -38,3 +38,7 @@ tags: [claude-code, sessions, worktree, stacked-pr, unity-pipeline, BuildWeb]
 - Auto mode 下 `gh pr merge` 會被 classifier 以 Merge Without Review 擋下；使用者在設定加入允許規則後才可合併，不要繞過。
 - session 因 `API Error: Can't reach the API server (ENOTFOUND)` 中斷時，工作區與背景程序都還在；送一則訊息請它檢查狀態後繼續即可恢復。
 - 同學直接推到 main 的關卡改版（`904298c` 重做 `PhaseDemo12`）會讓錄好的通關路線失效，main 本身的 `SandboxTests` 與 DemoWebSmoke 隨即失敗；這種失敗與並行 PR 無關，應先修 main（重錄路線）再要求各 PR 全綠。
+- 改名為 Verto 後（2026-10-21～22），主 checkout 可能被其他 session 切到別的分支（例如 `verto/claude-review`）。這時 `git pull --ff-only origin main` 會回 `Diverging branches can't be fast-forwarded`，原因不是 main 分歧。動手前先看 `git branch --show-current` 與 `git worktree list`，不要切換或拉取別人在用的 checkout，自己的工作一律在 `~/.agent-worktrees/<repo>/<task>` 進行。
+- 一個 worktree 的分支合併後，可以在同一個 worktree 直接 `git switch -c <next> origin/main` 接著做下一個功能，沿用已經 import 好的 `Library`。平行開新 worktree 時，用 `cp -cR <worktree>/Library <new-worktree>/Library` 以 APFS clone 秒複製。
+- Subagent 碰到 `You've hit your session limit`（HTTP 429）時會停止，但 worktree 內的進度都保留；額度重置後用 SendMessage 請同一個 agent 繼續，不必另開新的。
+- Review 機器人（Swear Review、Codex）每次推新 commit 都會再審一輪，而且越來越偏向小地方。判斷原則：正確性 bug、信任邊界的驗證、玩家看得到的問題要修；微效能、重複意見、不可能發生的情況回一行理由後 resolve。使用者在 Verto 指示：只剩小問題時就不再修，直接合併。
