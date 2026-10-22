@@ -235,3 +235,9 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - Carry 之間的編譯期衝突要跑 typecheck 才抓得到：#2078 刪了 `webhookTimeoutMs`，但已 carry 的 #2066 還在用。
 - desktop workspace 是 overlay commit 才加進來的。若在加入它之前就跑了 `bun install`，之後要重跑，否則 `typecheck:desktop` 會報 `tsc: command not found`（exit 127），整個 parallel typecheck 會被 SIGINT 中止。
 - 在 oracle（2 CPU）上，`test:cli:integration` 的 `beforeEach` 等 runner 啟動只給 10s，常常逾時。未修改的 v0.30.7.5 在同一台機器上 13 個 case 失敗，所以這是主機問題，不是 regression。composer-copy e2e 的第一個 case 冷載入要約 31s，要加 `--timeout=120000`。
+
+### v0.30.7.6 Swear Review 處理（2026-10-22）
+- Release PR（fork #30）的 Swear Review 會審整個 diff 對 `main`（7 萬多行）。分類方式：對 `git diff --shortstat origin/main HEAD -- <file>` 沒變的檔案，發現是 .5 就有的，不擋這版。
+- 對 carry 進來的上游 PR 找到真 bug 時，不改 carry（live head 必須對得上，否則 `PR_AUDIT_HEAD_STALE`）。改成在 carry 後面加一個 `regenerate overlay -` 的 fork fix commit，例如 0056 `fix(codex)` 修 #2092。
+- 重建 patch queue：`git format-patch -q --zero-commit --no-signature -o <dir> <upstream_sha>..HEAD`（不含 record commit）。manifest 後面的列重新編號；`expected_source_tree` 用 HEAD 的 tree 扣掉 release record 目錄後的 write-tree。
+- 要合進 tail commit 時，不要用 interactive rebase：先 `git diff` 出成 patch → `checkout -B` 到該 commit → apply + amend → 再 `git cherry-pick A..B`。cherry-pick 不支援 `-q`。
