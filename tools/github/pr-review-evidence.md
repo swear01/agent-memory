@@ -2,7 +2,7 @@
 title: GitHub PR review 與 CI 診斷的證據邊界
 scope: tools/github
 status: verified
-updated: 2026-09-09
+updated: 2026-10-22
 ---
 
 Swear CheckRun SUCCESS 不一定代表檔案被審查。CPAchecker PR214 的 Markdown-only
@@ -43,3 +43,10 @@ HAPI PR1771 的 iOS `concurrentSyncTailCallsCoalesceIntoASingleRun` 曾在
 這些證據仍不足以把「確定是偶發測試」或「與變更完全無關」寫成根因結論。
 應另核對測試同步方式、Swift 排程契約與可重現結果。此案例的排程根因與
 重跑失敗原因尚未完成調查，不將推測保存成已驗證事實。
+
+Swear Review 可能回報 finding 卻不公開內容（Verto PR #12，2026-10-22）：CheckRun
+`success`、摘要 `Review completed with 1 finding(s); gate mode is off`，PR 摘要留言
+寫 `1 findings total / 0 inline comments`，check-run text 與 annotations 也只有
+`bug: 1`。看不到內容就無法驗證或修正，不能當成乾淨通過；照 OR 流程改請下一個
+provider（該 repo 已裝 Claude Code Action，`@claude review this PR` 約 20 秒回覆並
+明確寫出 verdict）。
