@@ -1,11 +1,12 @@
 ---
 title: Cursor Bugbot PR 自動審查設定與驗證界線
 scope: tools/cursor GitHub PR review
-status: saved settings verified; PR execution pending
-updated: 2026-10-08
+status: superseded 2026-10-22 — Manual Only
+updated: 2026-10-22
 ---
 
-- 使用者要求每個 PR 自動 review。Cursor 個人設定的 Trigger Mode 已由 `Manual Only` 改為 `Every Push`，重新載入仍顯示「Bugbot will automatically review every push to a PR」。此模式也 review 後續推送，適合要求 review 對應最新 PR head 的流程；`Once Per PR` 只在開 PR 時 review，跳過後續 pushes。
+- **2026-10-22 更新（目前有效）：** 使用者改為「agent 自選 reviewer，偏好 Gemini 與 Swear Review」。Cursor 額度常用盡，`Every Push` 讓每個 PR 都出現 `Bugbot couldn't run - usage limit reached`，agents 誤以為是自己呼叫 Cursor。已把 Trigger Mode 改回 `Manual Only`（重新載入確認），PR Summaries 改 `Off`。手動觸發：`bugbot run` 或 `@cursor review`。Codex 同步關閉，見 `tools/codex/code-review-auto-off.md`；選擇規則在 `github-pr-review-loop` skill。
+- （歷史）使用者要求每個 PR 自動 review。Cursor 個人設定的 Trigger Mode 已由 `Manual Only` 改為 `Every Push`，重新載入仍顯示「Bugbot will automatically review every push to a PR」。此模式也 review 後續推送，適合要求 review 對應最新 PR head 的流程；`Once Per PR` 只在開 PR 時 review，跳過後續 pushes。
 - 這是帳號層級設定，套用到所有已啟用 Bugbot 的 repositories，不只本次指定的兩個。沒有另外啟用全部 repositories。
 - `DVLab-NTU/spec2rtl`、`DVLab-NTU/hw-benchmark` 的 Bugbot 開關均已啟用，重新載入組織頁後分別用 repository name 搜尋，兩者仍為 checked。`swear01/swear-review` 原本已啟用。
 - 目前管理入口為 `https://cursor.com/automations/from-cursor/bugbot`，組織頁在其 organization 路徑。GitHub App 的 repository access 不等於 Cursor repository 的 Bugbot 開關，也不等於自動 trigger；三者應分別核對。
