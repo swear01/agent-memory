@@ -26,7 +26,7 @@ tags:
 - 精簡設定在 `~/.pi/web-search.json.template`：`workflow:"none"`、sourceCheck/curator/google-account/image/autoOpenBrowser/allowBrowserCookies 全關；保留 PDF 抽取、GitHub clone。
 - key 機制：`~/.secrets`（`export X_API_KEY=...`，chmod 600）＋ `~/.local/bin/pi-websearch-apply` 渲染 `~/.pi/web-search.json`。只把**非空** key 寫成 credential 引用；改 key 後每台跑一次 apply 即可，呼叫時才 source，不用重啟 pi。
 - 已生效 8 把 key：Exa / Brave / Tavily / Bocha / Serper / SerpBase / Parallel / Firecrawl（Perplexity 暫空：無 free tier、須綁卡）。
-- fleet 同步要點：NFS 四台寫 mazu 一次；zeus/oracle 各一次。`~/.secrets` 合併時若遠端已有空值佔位行，append-only 會跳過——要「刪舊行＋貼新值」。
+- fleet 同步要點：NFS 機器（含 mazu、zeus，home 都在 `192.168.1.200:/volume1/nfs-home`）寫 mazu 一次即可；oracle 另寫一次（2026-10-22 以 df 驗證 zeus 與 mazu 共用 NFS home）。`~/.secrets` 合併時若遠端已有空值佔位行，append-only 會跳過——要「刪舊行＋貼新值」。
 
 ## 已驗證的坑（全部實測過）
 
