@@ -54,7 +54,7 @@ updated: 2026-10-22
 - UF 與 memory abstraction 不是只能人工：Reveal（Andraus／Liffiton／Sakallah）以 bit width 判定 datapath，自動換成 UF／UP，再以 CEX＋MUS refinement；AVR（TACAS 2020、HWMCC 2020 冠軍，也是 NeuroAbs 的 backend）內建 syntax-guided／equality abstraction。Memory 有 Bjesse／Synopsys 專利 US8001498B2（CEX 模擬找錯誤讀值，再加 abstraction pair）、Manolios ICCAD 2006、Charvát 等的有限次存取模型。這些用固定 heuristic 選初始抽象，再以 CEGAR 修正；LLM／decision model 可提供初始選擇與 refinement 優先序，baseline 須含 AVR 的自動抽象。
 - NeuroAbs 決策點：LLM 決定哪些訊號與 scenario 相關、localization 時固定哪些控制值；AST traversal 決定要改哪些 statement；LLM（gpt-4o-mini，每 statement 約 3.70 s）決定子運算式改 X、化簡或保留；Z3 檢查 overapproximation；R-CEGAR 決定要還原哪些 statement。
 - NeuroAbs 公開 xlsx（Figshare v2，仍無程式碼）：AVR 多數加速，rIC3 幾乎持平；有變慢案例（Piccolo SUB AVR 1096.61→1450.38 s；PicoRV32 SUB 663.77→763.36 s）。PicoRV32 riscv-formal-ADD：AVR 862.77→561.66 s、rIC3 39.32→36.1 s，與本專案 PicoRV32 ADD pilot 是同一題。
-- AIsimpV 的 9/21 實驗只跑 NeuroAbs-inspired netlist cutting（三個 SFIFO，12 次全選空集合）。另在 NeuroAbs fork 已用 Muse 1.2 完成 I2C 單題重現：184 次改寫皆 sound，rIC3 UNSAT，但 0.105 s 對具體 0.100 s，無加速；PicoRV32／Piccolo 尚未重現。
+- AIsimpV 的 9/21 實驗只跑 NeuroAbs-inspired netlist cutting（三個 SFIFO，12 次全選空集合）。另在 NeuroAbs fork 已用 Muse 1.2 完成 I2C 單題重現：184 次改寫皆 sound，rIC3 UNSAT，但 0.105 s 對具體 0.100 s，無加速；PicoRV32／Piccolo 尚未重現。2026-10-22 的 keep-or-X decision 實驗與 PicoRV32 baseline 結果見 [NeuroAbs decision 實驗](neuroabs-decision-experiment-2026-10-22.md)。
 
 ## 對本專案的含意
 
