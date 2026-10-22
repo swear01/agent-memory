@@ -23,12 +23,12 @@ tags:
 # 救援方式（root 密碼已鎖、home 在 NFS）
 
 - GRUB `e` 在 linux 行加 `systemd.debug_shell systemd.mask=home.automount`：開機可完成，`Ctrl+Alt+F9` 是免密碼 root shell。此時 NIS 帳號（含 swear02）SSH key 登入會失敗，因為 authorized_keys 在 NFS home。
-- 每台都有本機 sudo 帳號，名稱同 hostname，home 在本機磁碟（例如 `/mnt/md0/home/<host>`），可在 `/home` 不可用時登入。其密碼為弱密碼且 sshd 未關 PasswordAuthentication，屬待處理的資安風險。
+- 每台都有本機 sudo 帳號，名稱同 hostname，home 在本機磁碟（例如 `/mnt/md0/home/<host>`），可在 `/home` 不可用時登入。密碼與 hostname 相同，為實驗室慣例，使用者要求保留。
 
 # 相關
 
 - [[machines/hapi-fleet/ubuntu-gpu-maintenance-plan]]
-- NIS：Mazu、Valkyrie、Cthulhu 的 `yp.conf` 以 `zeus.ee.ntu.edu.tw`（公網 IP）連 Zeus ypserv，至少一週持續大量 `yp_bind_client_create_v3: RPC: Unable to receive`；與本事件無關，尚未修。
+- NIS：Mazu、Valkyrie、Cthulhu 的 `yp.conf` 以 `zeus.ee.ntu.edu.tw`（公網 IP）連 Zeus ypserv，至少一週持續大量 `yp_bind_client_create_v3: RPC: Unable to receive`；與本事件無關，已於同日改用 LAN IP，見下方後續。
 
 # 2026-10-22 後續
 
