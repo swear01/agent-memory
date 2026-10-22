@@ -3,7 +3,7 @@ title: Innovus Stylus physical checks per flow stage (check_drc after place need
 scope: domains/eda
 tool: innovus
 status: active
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # Innovus Stylus 各階段的實體檢查
@@ -14,6 +14,7 @@ Innovus 25.1 實測（U18 gcd，約 165 cells）：
 - 建議檢查點：floorplan 後 `check_floorplan`；powerplan 後 `check_drc -check_only special`（加 `check_power_vias`）；place／CTS 後 `check_place` 與 `check_drc -ignore_trial_route`；route 後 `check_drc`、`check_connectivity`、`check_antenna`，修正用 `route_eco -fix_drc`；filler 後 `check_filler` 再 `check_drc`；最後 `write_stream` 加 foundry deck（Calibre/Pegasus）sign-off。
 - Stylus 文件在 `INNOVUS251/doc/UGcom`（User Guide）與 `TCRcom`（command reference）；`innovusUG`／`innovusTCR` 是 legacy 語法。Flowkit／Foundation Flow 文件沒有規定檢查點。
 - Stylus 流程兩個常漏設定：沒放 IO pin 會讓 CTS 報 `IMPCCOPT-2215`（clk 圖不連通）且 `IMPOPT-665` 大量出現，`place_opt_design` 前加 `set_db place_global_place_io_pins true`；post-route hold 修正前要 `set_db timing_analysis_type ocv` 與 `timing_analysis_cppr both`，否則 `IMPOPT-7027` 擋下。
+- `opt_design -post_cts/-post_route -hold` 印 `**ERROR: Failed to create timing graph backup dir .../innovus_temp_*/opt_timing_graph_* (error: Success)`：Innovus 25.1 預設把 `innovus_temp_*` 建在執行目錄（TMPDIR 指到 `./`）時發生；啟動前 `export TMPDIR=/tmp`（任何不在執行目錄底下的位置）就 0 個 ERROR，hold 結果不變。gups 的 `innovus.sh` 已預設 `TMPDIR=${TMPDIR:-/tmp}`。
 - `set_dont_use [get_lib_cells */PAT] true` 在 Genus 與 Innovus 都可用；`set_db ... .dont_use` 在 Innovus 會報 `IMPDBTCL-248`。
 
 相關：[[eda-environment]]
