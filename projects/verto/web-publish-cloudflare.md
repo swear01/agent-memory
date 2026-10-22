@@ -8,7 +8,7 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 
 ## 為何不像 hexapharma 用 GitHub Pages 自動部署
 
-- hexapharma 是 npm 前端，GitHub-hosted runner 就能 build。Verto 的 Unity Web build 需要有授權的 Unity 6000.4.7f1 GUI Editor + Pipeline（專案規定不得改用 `-batchmode`），GitHub-hosted runner 沒有。
+- hexapharma 是 npm 前端，GitHub-hosted runner 就能 build。Verto 的 Unity Web build 需要有授權的 Unity 6000.6.7f1 GUI Editor + Pipeline（專案規定不得改用 `-batchmode`），GitHub-hosted runner 沒有。
 - 唯一自動方案是 self-hosted Mac runner；但 public repo 掛 self-hosted runner 時，fork PR 可以帶自己的 workflow 在 Mac 上執行（repo 預設 fork 核准政策只到 `first_time_contributors`）。安裝 runner（LaunchAgent）也被 auto mode classifier 以 Unauthorized Persistence 擋下。
 - 使用者選擇本地 build 後手動上傳 Cloudflare Pages；GitHub 不會部署。2026-10-22 起專案規則（`AGENTS.md`，`CLAUDE.md` 是它的 symlink；Verto PR #12）要求：合併會改到遊戲（`Assets/`、`Packages/`、`ProjectSettings/`）的 PR 後，由合併的 session 在最新 `origin/main` 的全新 checkout 跑 `BuildWeb.py`、帶 `--commit-hash` 部署、再對線上跑 `WebLoadSmoke.cjs`；`npx wrangler pages deployment list --project-name verto` 的 Source 欄就是線上 commit，已是同一或更新的 commit 就略過。舊的 `web.yml`（等 runner、每次 push 都失敗）已移除（Verto PR #4，2026-10-22 合併為 `acab4ef`）。部署時從最新 `origin/main` 的 checkout 執行並帶 `--commit-hash`，避免舊 build 蓋掉新 build；Wrangler 會在 checkout 留下未追蹤的 `.wrangler/` 快取。
 
@@ -20,7 +20,7 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 - `cloudflared tunnel route dns` 只能把 hostname CNAME 到 tunnel，不能用來設 Pages 網域。
 - Pages 單檔上限 25 MiB。`.unityweb` 以 `content-type: application/vnd.unity`、無 `Content-Encoding` 送出，靠 Unity decompression fallback 在 JS 解壓；Brotli + fallback 可正常載入。
 
-## Unity 6000.4.7f1 Web build 縮小實測（Verto PR #7，合併為 `3732a6e`）
+## Unity 6000.6.7f1 Web build 縮小實測（Verto PR #7，合併為 `3732a6e`）
 
 | 設定 | wasm 壓縮後 | data 壓縮後 |
 |---|---|---|
