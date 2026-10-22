@@ -3,7 +3,7 @@ title: GUPS workstation EDA environment (Innovus/Genus/Xcelium/Calibre, U18 PDK)
 scope: machines/gups
 machine: gups
 status: active
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 # GUPS 工作站（intl.gups.ntu.edu.tw）EDA 環境
@@ -16,7 +16,8 @@ Rocky Linux 8.10。`/usr/cad` 是 `/cad` 的 symlink，CIC 的 csh 腳本寫 `/u
 - Cadence Xcelium 25.03.005（2026-10-21 從 DVLab fleet `/apps/eda/cadence/XCELIUM/25.03.005` 以 tar 串流複製）：`/cad/cadence/XCELIUM/{25.03.005,cur}`，入口 `source /cad/cadence/CIC/xcelium.sh`（bash，PATH 加 `tools/bin/64bit`、`tools/bin`、`bin`）。`lshc` 有 `Xcelium_Single_Core` 240 套。以 `setpriv --reuid=nobody --regid=<PDK_approved gid>` 非 root 跑 `xrun` 驗證 UART／async FIFO 自檢 testbench 全過。
 - Cadence Verisium 25.03.001（2026-10-22 同樣從 fleet 複製，檔案清單逐項一致）：`/cad/cadence/VERISIUM/{VERISIUM_25.03.001,cur}`；`xcelium.sh` 已設 `VERISIUM_DEBUG_ROOT`。`lshc` 有 `verisium_debug` 240 套。波形流程：`xrun -debug_opts verisium_pp -access +r ... -input probe.tcl -run -exit`（probe.tcl：`ida_probe -log -wave -wave_probe_args="tb -all -depth all"`）產生 `ida.db`，再 `verisium_debug -lwd xcelium.d -db ida.db &`。只有 `-debug_opts verisium_pp` 不會產生波形 DB。教學只用 Verisium，不教舊版 SimVision。
 - 安裝前 gups 沒有任何 Verilog 模擬器（無 Xcelium、VCS、iverilog）；Synopsys 只有 HSPICE，Mentor 只有 Calibre 2025.3（`/cad/mentor/calibre/aok_cal_2025.3_28.17`）。`lshc` 另有 Questa/ModelSim `msim*` 授權但軟體未裝。
-- 權限慣例：`/cad/cadence/DDI`、`/cad/cadence/XCELIUM`、`/cad/cadence/CIC/*.sh`、`<remote-home>/PDK` 為 `root:PDK_approved` 750。2026-10-21 時 `PDK_approved` 只有老師帳號 `ICD001`，學生帳號都不在群組內，學生上課前必須先加入群組。
+- 權限慣例：`/cad/cadence/DDI`、`/cad/cadence/XCELIUM`、`/cad/cadence/CIC/*.sh`、`<remote-home>/PDK` 為 `root:PDK_approved` 750。2026-10-21 時 `PDK_approved` 只有老師帳號 `ICD001`；2026-10-22 依使用者要求加入唯一的 wheel 管理員 `joinet`。前屆成員名單備份在 `/root/pdk_approved_members_backup_20260917.txt`。學生帳號建立後才加入群組。
+- Innovus／Verisium／Calibre GUI 只走 X11（Innovus Qt 平台外掛只有 xcb、vnc、webgl、offscreen 等，無 wayland）；sshd 已開 `X11Forwarding`，伺服器有 `xauth`、`xdpyinfo`，沒有 `xclock`。
 
 ## U18（UMC 0.18um Faraday）重點
 
