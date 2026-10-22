@@ -13,5 +13,7 @@ updated: 2026-10-22
 - 內建 idle compaction 只在 interactive terminal 生效；Desktop Code tab（SDK 模式）不會觸發。anthropics/claude-code#103040 尚未回應，#103189 已以 not planned 關閉。
 - 本地 plugin `idle-compact@local`：原始碼在 transfer_MAC 的 `stow/agents/.agents/claude-plugins`（同時記在 `plugins.json`），Mac 直接從 repo 載入；Linux 主機用 `~/.claude/local-plugins` 的複本，改了要重新複製。邏輯在 `mods/idle-compact/hooks/register.ts`：閒置 50 分鐘且 ≥100K 就 compact；Desktop 拒絕直接呼叫時改送 `/compact`；超過 56 分鐘跳過。未裝第三方 plugin（intenex 會自動更新、1 星；xyjk0511 是 0 星）。
 - Archive 會停掉 process，所以已 archive 的 session 不會被 compact；Desktop 已開「PR 合併／關閉時自動 archive」。
+- AGENTS.md 規則改成 `start_session` 必帶 `model: "claude-sonnet-5-5"`、`context: "fresh"`；主 session 由使用者自選 Opus。Desktop 的 Prompt suggestions 已關閉（每個建議都是一次帶完整 context 的 request）。
+- 驗證狀態：plugin 的 validate、tsc、2 個 mock-clock 測試都通過；10/14 之後的 transcript 只有 manual 和 auto 兩種 compact，沒有 idle。plugin 還沒在真實 session 看到觸發過，若閒置回來沒出現 `/compact` 就要查。
 - Windows swop：2026-10-22 SSH 兩次 timeout，尚未部署。
 - 「快到 5 小時上限就收工」用 handoff，不要 compact。Desktop 用 `get_usage` 讀 5h%，CLI statusline 讀 `rate_limits`；hook 讀不到用量（#38380）。
