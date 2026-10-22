@@ -13,4 +13,6 @@ updated: 2026-10-22
 - 2026-10-21 時 gups 上沒有任何一位學生的帳號（現有帳號都是前屆使用者），`PDK_approved` 只有老師帳號；建帳號後才能讀 `<remote-home>/PDK`、`/cad/cadence/{DDI,XCELIUM,VERISIUM}` 與 `/cad/tutorial`。
 - 師大學生帳號開頭是數字，Rocky 8 `useradd` 可能拒絕，屆時改加前綴。
 
+- 2026-10-22 使用者偏好：gups 上的教材（`/cad/tutorial/innovus_u18_tutorial*`）直接修改即可，不要另外做備份。
+
 相關：[[eda-environment]]
