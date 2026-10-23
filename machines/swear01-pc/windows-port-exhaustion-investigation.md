@@ -3,7 +3,7 @@ title: Swear01_PC Windows TCP UDP 臨時連接埠耗盡調查
 scope: machine
 machine: swear01-pc
 status: active
-updated: 2026-10-18
+updated: 2026-10-24
 ---
 
 # 已驗證線索；根因尚未確認
@@ -30,6 +30,12 @@ updated: 2026-10-18
 - 09-04 23:15:17 完整啟動（Kernel-Boot 27=0x0）後，23:29:33 即出現 UDP 耗盡；當晚另一次完整啟動後約 17 分鐘出現 TCP 耗盡。不能將問題歸結成「只有連續開機十天才發生」。
 - 啟用 Fast Startup；09-17 至 09-24 有八次 Kernel-Boot 27=0x1。關機後開機並不代表完整重建核心；排查驅動累積資源時應分辨完整啟動和快速啟動。
 - 09-28 重啟後三次短時取樣，TCP 動態本機埠 62–65、UDP 40–41。完整 AFD 句柄快照約 279；WARP 1、ZeroTier 16、Radmin 7、RustDesk 4。這是正常時的基準，不能排除故障期間的洩漏。
+
+## 10/24：同一 Discord 行程先低增長，數小時後再現大量 Key 累積
+
+- Discord 1.0.9265 同一 renderer 在 10/23 18:44:38 啟動，18:44:40 日誌明確記錄 `Creating audio engine: experimental`。20:45 接通語音後，20:52–21:54 的 62.65 分鐘，句柄 1316→1329、Key72→78；這個已通知的低增長觀察只適用於該視窗，不能外推為永久改善。
+- 同一行程於 10/24 00:59–02:04 的 14 筆五分鐘樣本，句柄 1536→8678，13 個相鄰區間全增加；PrivateMB738.8→777.8 有波動，TCP1/UDP1 固定。00:56 與 02:03 的明細 Key113→7356，三組既有 Render/Properties 各增2422。02:03:28 與 02:05:53 再取樣，相隔145.43秒，Key7356→7554，新增198個 trim 後的 Type/Handle/Name 配對、舊 Key 配對移除0，三組各增66；裝置名稱重新讀取登錄確認仍為 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 USB Microphone。可見同一行程在先前穩定後仍會恢復累積，判讀應分時窗並持續追蹤。
+- 保留的 WebRTC 日誌於01:01–02:04有超過62分鐘的 PLAY/REC，每約10秒一筆，未見停止或切換；較早日誌已輪替，不補推未覆蓋時段。兩次明細列數分別8646及8840，均與擷取前後總句柄相符，但各有283個 Unknown type，完整枚舉不等於完整分類。audiodg 同一行程 Key34、FxProperties4 穩定；本次檢查沒有新 Tcpip4231/4266。這支持 Discord 音訊裝置處理路徑的累積復發，仍不能證明特定驅動、Experimental 因果或 Port 耗盡來源。建議使用者方便時自然結束通話但保持 Discord 存活，記錄時間並比較至少30分鐘增長率；未自動中斷、重啟、改設定或延長 AFD。證據：<workspace>/outputs/port-monitor/discord-observation-20261024-0200.json、discord-recurrence-20261024-0200.json 及兩份帶時間 CSV；原始私人日誌不入記憶庫。
 
 ## WARP 的具體異常
 
