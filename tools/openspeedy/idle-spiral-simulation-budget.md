@@ -130,3 +130,11 @@ TheoryContainer.UpdateTheories 內原版逐項更新 EXP，但同次更新的兩
 同次觀察後期出現約 5～7 秒一幀；GameSystem.Update 平均數毫秒、其外部耗時數秒。撤下 Render／Theory 後仍約七秒一幀。暫時解除引擎 FPS cap 無效且已還原；短暫停用 OpenSpeedy 約二十秒未恢復更新，已還原啟用狀態與原倍率，不能由此排除已累積的加速時鐘問題。兩份本機小型 dump 的主執行緒分別位於 steamclient64 與含 Steam 程式庫指標的原生等待；NVIDIA worker 堆疊指標也經過 speedpatch64。僅指標掃描不等同完整 unwind，不足以確定根因，不能宣稱遊戲 freeze 修好或穩定 200–500×。
 
 ProcDump PSS clone 完整傾印曾因驅動錯誤失敗，錯誤含 target no longer running，但原 PID 其實仍活著；不可只憑診斷訊息宣稱遊戲已退出。之後直接 `procdump -mm` 成功取得約 47 MB 小型 dump，約暫停 0.8 秒。dump 可能含登入資料，只留本機，不分享／上傳；套件僅保留不含秘密的效能與 hook 清理證據。最後以 Harmony.GetAllPatchedMethods 唯讀稽核，確認 observer 與 formula owner 為零。
+
+## 後續真正 Steam 重開已驗證，改採 20×
+
+使用者後來明確要求調整穩定設定並重開，因此原本保留倍率／暫不重開的選擇已更新。先備份存檔及 OpenSpeedy 設定，經官方 bridge64 的 `SETSPEED 20` 調整 shared factor，再同步 settings.json 的 settings.speed=20，保留其他設定。現有 bridge 支援命令列一次性呼叫，不必搶占 UI 長期佔用的單一 named pipe。GETSPEED 核對回傳 20。
+
+即使 Process.Responding=False，CloseMainWindow 後仍可能正常結束；這次在十秒內正常退出，沒有強制終止，再備份退出後存檔。經 Steam `-applaunch 1827980` 成功開出新程序，父程序為 Steam，Theory→Render→Adaptive→Auth→Calendar→v2/OpenSpeedy 全鏈自動載入成功，已取代前述「新鏈完整 Steam 重開待驗證」的限制。新程序使用安裝版 hardened Render，沒有舊 assembly identity 熱換問題。
+
+保留存檔原有 targetFrameRate=60。直接獨立時鐘觀察約十五秒，約 20.012×／60.58 FPS，沒有數秒幀停頓；自動存檔持續更新、offline memory 增量零。新局成功收到 Steam stats／achievements 資料，所有臨時 hook 已移除，六個原組件與安裝 owned hashes 仍吻合。這只驗證重開恢復與當下 20×，不能宣稱原生等待根因已修復、長期穩定、200–500× 達成，或全倍率最佳設定已證明。
