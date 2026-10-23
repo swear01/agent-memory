@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-20
+updated: 2026-10-23
 tags:
   - hapi
   - fork
@@ -243,3 +243,15 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 要合進 tail commit 時，不要用 interactive rebase：先 `git diff` 出成 patch → `checkout -B` 到該 commit → apply + amend → 再 `git cherry-pick A..B`。cherry-pick 不支援 `-q`。
 - v0.30.7.6 第二輪：rehearsal 因 `PR_AUDIT_HEAD_STALE`（上游 defer PR 推了新 head）失敗。重跑前先比對所有 open PR 的 live head 與 pr-audit，同時抓「新開的個人 PR」（自動 carry）。這次多 carry 了 7 個 swear01 PR（#2095–#2102）。
 - Fork 和上游的已知分歧：peer 指令只吃 exact UUID（沒有 prefix resolver）；Codex permission catalog 多一個 `autoReview`（#2090）；Codex projection 的 history 會送 `turn/completed`（#2025）。合併上游 PR 時，它們的測試期望常要依這些差異調整。
+
+### v0.30.7.6 第三輪：重新盤點（2026-10-23）
+- 使用者重新挑了 26 個 PR。非 owner 的 PR 一律走 `regenerate overlay -`，pr-audit decision 寫 `overlay`，reason 開頭用 `OPERATOR_REQUESTED_OVERLAY`，並列出沒過的 gate。swear01 的 PR 照常記 `carry`，rehearsal 會印 `PERSONAL_PR_POLICY_EXCEPTION`，這是允許的。點名要帶、但 fork 早已涵蓋的 PR（#1875、#1869），pr-audit 記 `drop`，寫明涵蓋它的 fork 程式碼，不放進 manifest。
+- Rehearsal 也要求 open PR 集合完全一致，不一致時報 `OPEN_PR_AUDIT_SET_MISMATCH`，而且一天內上游就可能新開 20 多個 PR。重跑前用 REST `pulls?state=open&per_page=100 --paginate` 一次拉 live 清單，和 pr-audit 比對 new／closed／stale 三類。新 PR 記 `defer`，也要把它們加進 audit.md 的 open PR 清單。
+- Stacked PR（#2056 疊在 #2052 上、#1597 疊在 #1542 上）：用 `git diff upstream/pr/BASE upstream/pr/N | git apply -3`。若碰到 fork 已刪除的檔案，加 `--exclude='*systemPrompt*'` 之類的 pattern，否則整包會被拒。
+- Fork 的結構性分歧（合上游 PR 時常要改寫）：
+  - 沒有 peer system prompt，也沒有 `sessionSummaryContract` hub setting（#1771 移除）。
+  - 沒有 `list_peers`；peer MCP 工具是 `inspect_peer`／`ping_peer`／`spawn_peer`。
+  - Hub schema 的 V27 是 `steered`（#1771），V28 是 ACP cost（#1468，會清空 `usage_events`／`usage_scan_state` 再 rescan），V29 是 `session_read_states`（#2080）。從 .5（27）升上去是單向的，回滾要靠升級前的 `hapi.db` 備份。
+- 同時 carry 多個改 composer 的個人 PR 時，要跑它們新增的 e2e。#1662 讓寬版 composer 直接顯示 model 按鈕，結果 #1836 的 luna-reserve e2e 在 1280px 找不到 `Settings`，unit test 完全沒抓到。
+- `GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash <commit>^` 在這個環境可以非互動執行，用來把 `fixup!` 併進中段的 carry commit。完成後用 `git diff <舊 tree> HEAD --stat` 確認只動了預期的檔案。
+- 結果：`release/v0.30.7.6` 以 force-with-lease 推到 `af29626a`，共 95 patches，`REPLAY_TREE_MATCHES=47dee910`、`REHEARSAL_OK`。完整測試結果：CLI 3,656、hub 1,642、web 3,846、shared 346、relay 118、desktop 5，全部通過。PR #30 的 body 用 `gh api -X PATCH` 更新。`main` 的 force-push 會被 Claude Code auto-mode classifier 擋下（Git Destructive），要使用者自己執行或加 permission rule。
