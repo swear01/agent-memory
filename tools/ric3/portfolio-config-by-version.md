@@ -4,7 +4,7 @@ scope: tools/ric3
 tool: rIC3
 status: active
 created: 2026-10-23
-updated: 2026-10-23
+updated: 2026-10-24
 tags: [ric3, portfolio, btor2, aiger, k-induction, hwmcc24, benchmarking]
 ---
 
@@ -29,6 +29,19 @@ riscv-formal 只在 cycle 20 檢查一次，bit-level k-induction 在 depth 21 �
 | 1.5.2 | `-e kind --step 1` | 8.1 s | 5.7 s | 6.4 s |
 | 1.5.2 | `-e wl-kind --step 1` | 停在 depth 20 之後，1800 s TIMEOUT | — | — |
 | master | `check portfolio` | 69.8 s | 163 s | 64 s |
+
+## master 為什麼比 HWMCC24 慢（2026-10-24 對照）
+
+三個版本最後都是 kind 勝出，差別在 portfolio 裡的 kind 用什麼參數。master `bl_default` 的 kind 從 commit `92f17e4`（2026-01-28，CIll 相關）起多了 `--simple-path`；同一份 `portfolio.toml` 的 `[bl_hwmcc]` 仍是 `kind --step 1`，可用 `ric3 check <model> portfolio --config bl_hwmcc` 選。ADD B0、master：
+
+| 參數 | 各次時間 |
+| --- | --- |
+| `kind --step 1` 單跑 | 7.39, 7.52, 7.49 s |
+| `kind --step 1 --simple-path` 單跑 | 35.21, 34.93, 34.68 s |
+| `portfolio`（預設 `bl_default`） | 69.77, 68.62, 100.10 s |
+| `portfolio --config bl_hwmcc` | 30.45, 30.31, 17.52 s（HWMCC24 是 26.3 s） |
+
+`--simple-path` 讓這題的 kind 慢約 4.7 倍；在 16 個 worker 的 portfolio 裡，kind 還會再慢 2～4 倍（7.5 s 對 26～30 s，35 s 對 70～100 s），推測是與其他 worker 搶核心和記憶體頻寬，沒有另外量測。
 
 1.5.2 改吃 AIGER 時，`bl_default` 中的 kind 會勝出，ADD 約 40 s。所以要比較時間時，應改用 AIGER 或 master，或直接指定 `-e kind`。
 
