@@ -4,7 +4,7 @@ scope: project
 project: rtl-relate
 status: active
 created: 2026-10-22
-updated: 2026-10-23
+updated: 2026-10-24
 tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna]
 ---
 
@@ -21,8 +21,9 @@ tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna]
 - B1 九題全部建好：sound 100%，每題 2 個 no-op（上游 `count_cycle/count_instr <= 'bx`），CEGAR 1–5 次 refinement 後保留 0–17 個 X；SH 被全部還原。
 - ADD pilot：B0 與 B1 在 rIC3 1.5.2 portfolio 上 69 分鐘都沒有 verdict（作者報 concrete 39.32 s，未重現）；kissat BMC 到 depth 25 兩者約 9 秒、無反例。riscv-formal 只在 cycle 20 檢查一次，bounded 探索無法區分 arm，難點在 unbounded proof。rIC3 時限問題見 [rIC3 portfolio 時限](../../tools/ric3/portfolio-time-limit-not-enforced.md)。
 - 2026-10-23 診斷：TIMEOUT 的原因是 rIC3 版本，不是模型。論文用的是 HWMCC'24 版 rIC3，跑同一個 B0 BTOR2，中位數 26.3 s（kind 在 depth 21 完成證明）。1.5.2 吃 BTOR2 時，portfolio 沒有 bit-level kind（詳見 [rIC3 portfolio 組態](../../tools/ric3/portfolio-config-by-version.md)）；加上 `-e kind --step 1` 只要 8 s，master `8c6df1b` 的 portfolio 也要 70 s。作者的 `problem.aig` 帶 `-formal`，多 23 個 PicoRV32 內部 assert 和 2 個 `restrict`（56 bad）；`problem_new.aig` 不帶 `-formal`（33 bad），與 B0 對應。兩者都用 `-zinit`，沒有遺失 init。`design.aig` 是空檔。HWMCC24 版只檢查 bad[0]，所以作者的 AIGER 在該版 0.2 s 即完成，這不是論文的時間。完整紀錄在 `<remote-home>/research-archives/ric3-repro-20261022/`。
+- 2026-10-24 B0／B1 計時（master `8c6df1b`、`taskset -c 16-31`、一次一個、各 3 次，54 次全部 UNSAT；PR commit `4aa4ad9` 的 README 有完整表格）。B1/B0 中位數比：SLTI 0.64、AND 0.82、BGE 0.93、SH 1.01（B1 沒有剩下 X，可當雜訊對照）、ORI 1.02、ADD 1.04、SUB 1.06、XOR 1.06、ADDI 1.07。B0 中位數在 103–202 s 之間。全 X 並沒有讓 rIC3 普遍變快。不綁核的那一輪雜訊太大（B1/B0 0.55–1.38），只留作對照，見 [[machines/mazu/cpu-timing-ecore-pinning]]。
 
 ## 卡點與待決
 
 - Luna 第一個正式請求就收到 opencode Go 週額度 429，`Retry-After` 到 2026-10-26 08:00 台北時間；A1–A3 未跑，沒有改用其他模型。見 [opencode Go 直連](../../tools/opencode/go-responses-api-direct.md)。
-- ~~在 rIC3 1.5.2 下 PicoRV32 B0 不收斂~~：已查明是 1.5.2 BTOR2 portfolio 的組態問題（見上）。之後計時應使用 HWMCC24 binary（與論文一致），或 master `check portfolio`，或 1.5.2 改吃 AIGER；尚待使用者選定，並重跑 B1。
+- ~~在 rIC3 1.5.2 下 PicoRV32 B0 不收斂~~：已查明是 1.5.2 BTOR2 portfolio 的組態問題（見上）。使用者 2026-10-24 決定：用最新的 master `8c6df1b` 和預設 `bl_default`，不為單一題改用 `bl_hwmcc`，所有數據自己重測。
