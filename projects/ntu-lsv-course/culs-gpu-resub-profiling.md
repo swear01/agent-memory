@@ -30,3 +30,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 三個逐層 kernel 在兩版中都跑了 4,405 次，等於電路深度。差別在開源版每層多了 thrust `copy_if`／`remove_if`，kernel 總數 30,916 次、共 68.19 ms；作者版為 13,302 次、41.21 ms。作者版看起來已把壓縮併入 `markReadyNodes`。
 - conflict resolution 和 cut 計算的 kernel 在兩版中不同。
 - 結論：開源版可以當改進研究的 baseline，但只能跟未修改的開源版比較，不能拿作者 binary 的數字當基準。
+
+# strash 預先分層（2026-10-24）
+
+- 修改只在 `src/aig/strash.cu`：host 端以 DFS 算出每個節點的 level，依（level, id）做 counting sort 後一次上傳；逐層迴圈只剩 `insertLevelNodes`／`updateLevelNodesNewIds`，拿掉 `markReadyNodes` 與 thrust `copy_if`／`remove_if`。每層的節點集合與順序和原版相同，所以 id 分配和輸出都不變。
+- 坑：resub 之後 AIG 的節點 id **不是**拓撲順序，fanin id 可能大於節點 id。用單次 id 掃描算 level，會產生 ABC 讀取時觸發 `Vec_PtrEntry` assertion 的壞 AIG。
+- 結果：div、adder、multiplier 各 6 次輸出都和原版逐位元組相同，也都通過 `cec -n`。div 的 full time 從 0.17 s 降到 0.07 s，`cudaStreamSynchronize` 從 17,658 次降到 37 次，kernel 總和從 68.3 ms 降到 36.5 ms；multiplier（272 層）幾乎沒有差別。報告在 `outputs/strash-levelsort.md`。
+- cthulhu 上 nsys 2026.1.3 連續跑兩個 `nsys stats` 報表時，第二個會因為「Existing SQLite export ... older than input file」輸出空白並讓 `set -e` 腳本中止；加 `--force-export=true` 即可。
