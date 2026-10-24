@@ -56,3 +56,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 在 `getReconvCutResub` 原本的 reconvergence 展開前加第一階段：以和 `visited` 對齊的 `visitedRefs`（初值 `numFanouts - 1`，MFFC 節點展開時遞減 fanin）找出所有 fanout 都在 root MFFC 內的 cut 葉，只展開這類葉；level ≤ root-10、PI、超過 `nMaxCutSize` 不展開。環境變數 `CULS_MFFC_CUT` 切換。是依概念自行設計，沒有從作者 binary 還原。報告在 `outputs/mffc-cut.md`。
 - `rs -n 2` 結果（open-source／MFFC／作者）：div 45,226／45,280／45,280；mem_ctrl 46,523／46,511／46,501；adder、multiplier、hyp 與 open-source 相同。15 個輸出全部通過 `cec -n`，hyp 的 CEC 每次約 650 s。候選 root 變多不保證最終較小：greedy conflict resolution 會選出不同集合。
 - 坑：開源版在 mem_ctrl 上本來就偶爾 non-deterministic（10 次中 1 次輸出不同、節點數相同），和 conflict 在 CPU／GPU 無關；比較 determinism 時要先跑多次 baseline，不能把差異歸給新 patch。
+
+## ABC `resub` 對照（2026-10-25）
+
+- 等價設定：CULS `rs -n 2` ↔ ABC `resub -K 8 -N 2`；CULS 不保持 level，對應 ABC 加 `-l`。ABC `-F`（ODC）預設 0。
+- cthulhu 4070 Ti 5 個電路：CULS resub 本身比 ABC 快約 1.8–3 倍（div 0.07 vs 0.13 s、hyp 0.17 vs 0.30 s），但 CULS process 只讀寫就要 0.19–0.21 s（CUDA context + 2 GB heap），小電路整體 wall 反而輸 ABC；只有 hyp 打平（0.36 vs 0.40 s）。
+- QoR：multiplier CULS 26,000 vs ABC 26,249；hyp ABC 207,940 vs CULS 212,475（ABC 好 2.1 %）；mem_ctrl ABC 46,369 vs 46,523；div/adder 幾乎相同。hyp 差距推測來自平行候選的 conflict 丟棄，未驗證。
+- 證據在專案 `outputs/abc-baseline.md`、`work/abc-baseline/`。
