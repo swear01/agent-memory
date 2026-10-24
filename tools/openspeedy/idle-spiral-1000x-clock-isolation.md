@@ -36,6 +36,8 @@ ClockIsolation 把原生 `SP_IsEnabled` 讀的資料槽改指向一個恆為 fal
 - **公式 HUD／Omega 顯示**：每 0.1 真實秒才刷新，是正常行為，不是 bug。
 - **Daily Spiral**：在真實本地午夜由 `DailySpiral.EnsureCurrentDay` 重置；CalendarGuard 刻意讓日期維持真實時間。若存檔 `dailyLastResetDate` 在未來（舊的時鐘超前留下的），會一直鎖到真實日期追上。每累積 86400 個「多出來的遊戲秒」（`(倍率-1)×真實秒`），就把 `dailyLastResetDate` 清成 0，再呼叫 `EnsureCurrentDay`，讓遊戲寫回真實今天的日期：存檔永遠不會有未來日期。Season 跑局排除。面板倒數 `DailyBonusScreenController.SecondsUntilLocalMidnight` 回傳真實秒，和遊戲秒比較前要先**乘以倍率**；第一版直接比較，結果一重置就又顯示約 10 小時的真實午夜。
 
+- **Theory 自動研究**：每 1 真實秒升 100×TickMultiplier 級。`FirstTheoryTransaction.LevelUpByLevel` 逐級迴圈，每級約 7 µs，所以單純調高上限會卡幀。迴圈中等級最後才寫回，每級都付起始價格，可改成一次扣 `單價×min(級數, floor(資源/單價))`，再乘上倍率：1000× 每秒 10 萬級，每次約 45 µs，扣款與原迴圈一致。
+
 ## 戰鬥自動開始：目標低於 Nuke 起始難度
 
 `reward.difficulty = net_difficulty + Nuke 週期`。自動開始目標難度（`inputDifficulties`，多半是 1）低於起始難度時，每贏一批就重開，1000× 約每秒 1130 次。玩家看到的是難度數字一直跳。每次重開在同一步內 battle→quitting→battle，`BattleCtrl.StateChanged` 的兩個 UI 訂閱者（`BattleUIManager.OnBattleStateChanged`、`Battle_Mono.ApplyBattleState`）每次都切換 Doozy 結果／戰鬥 view 與按鈕，`StartBattle` 每次約 189 µs。把這兩個 handler 延到 `GameSystem.Update` postfix、用最後狀態每幀呼叫一次後，451×→998×，`UpdateBattle` 每步 283→98 µs。剩下的成本是重開本身（每批新建敵人 `EnemyContainer.GetEnemy` 約 19 µs），這種模式下 1000× 約 21 FPS，屬遊戲規則成本。
