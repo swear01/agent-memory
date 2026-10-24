@@ -2,7 +2,7 @@
 title: CULS GPU resub profiling 與開源版基準
 scope: projects/ntu-lsv-course
 status: verified
-updated: 2026-10-24
+updated: 2026-10-25
 tags: [CULS, gpuls, resub, nsight, cuda]
 ---
 
@@ -50,3 +50,9 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 開源版 `resolveMffcConflictGreedyGPU` 以 `<<<1,1>>>` 啟動：greedy 依 gain 逐一 commit，後面的 root 依賴前面改寫的 `vMaskValid`／`solidDiv`，無法平行，單一 GPU thread 跑得比 CPU 慢。開源版本來就有 CPU 實作 `resolveMffcConflictGreedy`，只在候選 ≥300,000 時使用，所以重現作者的做法不必反編譯。
 - 在預先分層版上加 `CULS_CONFLICT_CPU` 環境變數切換：div 的 conflict kernel 15.5 ms 消失，phase 3 結束時間從 0.035 降到 0.022 s，full time 0.07 → 0.06 s；div／adder／multiplier 輸出與預先分層版逐位元組相同並通過 `cec -n`。報告在 `outputs/conflict-cpu.md`。
 - 未驗證：大電路時 CPU 版每次 `cudaMallocHost` 並來回複製 `nObjs × DECGRAPH_SIZE` 的 `decGraph`，可能反而變慢。
+
+# MFFC-driven cut（自行設計，2026-10-25）
+
+- 在 `getReconvCutResub` 原本的 reconvergence 展開前加第一階段：以和 `visited` 對齊的 `visitedRefs`（初值 `numFanouts - 1`，MFFC 節點展開時遞減 fanin）找出所有 fanout 都在 root MFFC 內的 cut 葉，只展開這類葉；level ≤ root-10、PI、超過 `nMaxCutSize` 不展開。環境變數 `CULS_MFFC_CUT` 切換。是依概念自行設計，沒有從作者 binary 還原。報告在 `outputs/mffc-cut.md`。
+- `rs -n 2` 結果（open-source／MFFC／作者）：div 45,226／45,280／45,280；mem_ctrl 46,523／46,511／46,501；adder、multiplier、hyp 與 open-source 相同。15 個輸出全部通過 `cec -n`，hyp 的 CEC 每次約 650 s。候選 root 變多不保證最終較小：greedy conflict resolution 會選出不同集合。
+- 坑：開源版在 mem_ctrl 上本來就偶爾 non-deterministic（10 次中 1 次輸出不同、節點數相同），和 conflict 在 CPU／GPU 無關；比較 determinism 時要先跑多次 baseline，不能把差異歸給新 patch。
