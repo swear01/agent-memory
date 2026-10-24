@@ -138,3 +138,7 @@ ProcDump PSS clone 完整傾印曾因驅動錯誤失敗，錯誤含 target no lo
 即使 Process.Responding=False，CloseMainWindow 後仍可能正常結束；這次在十秒內正常退出，沒有強制終止，再備份退出後存檔。經 Steam `-applaunch 1827980` 成功開出新程序，父程序為 Steam，Theory→Render→Adaptive→Auth→Calendar→v2/OpenSpeedy 全鏈自動載入成功，已取代前述「新鏈完整 Steam 重開待驗證」的限制。新程序使用安裝版 hardened Render，沒有舊 assembly identity 熱換問題。
 
 保留存檔原有 targetFrameRate=60。直接獨立時鐘觀察約十五秒，約 20.012×／60.58 FPS，沒有數秒幀停頓；自動存檔持續更新、offline memory 增量零。新局成功收到 Steam stats／achievements 資料，所有臨時 hook 已移除，六個原組件與安裝 owned hashes 仍吻合。這只驗證重開恢復與當下 20×，不能宣稱原生等待根因已修復、長期穩定、200–500× 達成，或全倍率最佳設定已證明。
+
+## 後續：100–1000×
+
+之後改用原生時鐘隔離、宏步與跟著倍率的真實時間系統，詳見 [idle-spiral-1000x-clock-isolation](idle-spiral-1000x-clock-isolation.md)。上面 8 ms／128 步／20× 的限制與結論已被取代，保留作歷史。
