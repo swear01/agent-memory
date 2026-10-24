@@ -37,6 +37,7 @@ ClockIsolation 把原生 `SP_IsEnabled` 讀的資料槽改指向一個恆為 fal
 - **Daily Spiral**：在真實本地午夜由 `DailySpiral.EnsureCurrentDay` 重置；CalendarGuard 刻意讓日期維持真實時間。若存檔 `dailyLastResetDate` 在未來（舊的時鐘超前留下的），會一直鎖到真實日期追上。每累積 86400 個「多出來的遊戲秒」（`(倍率-1)×真實秒`），就把 `dailyLastResetDate` 清成 0，再呼叫 `EnsureCurrentDay`，讓遊戲寫回真實今天的日期：存檔永遠不會有未來日期。Season 跑局排除。面板倒數 `DailyBonusScreenController.SecondsUntilLocalMidnight` 回傳真實秒，和遊戲秒比較前要先**乘以倍率**；第一版直接比較，結果一重置就又顯示約 10 小時的真實午夜。
 
 - **Theory 自動研究**：每 1 真實秒升 100×TickMultiplier 級。`FirstTheoryTransaction.LevelUpByLevel` 逐級迴圈，每級約 7 µs，所以單純調高上限會卡幀。迴圈中等級最後才寫回，每級都付起始價格，可改成一次扣 `單價×min(級數, floor(資源/單價))`，扣款與原迴圈一致，每次約 45 µs。使用者要「幾乎無上限」：高於 1× 時每批只受資源限制（安全上限 1e15），一批就 +6600 萬級，之後由 Inspiration 收入決定速度。
+- **其他 Theory 的 Auto Study**：原遊戲只有 Pythagorean 有開關。同一個開關元件（`TheoryUIManager.AutoTheoryUpgradeToggle`／`ToggleParent`）在所有 Theory 都會顯示，狀態存在 `theory-auto.txt`，不寫進存檔，預設開啟；Pythagorean 的協程要改讀存檔旗標，否則切到其他 Theory、關掉開關時，它也會停。EXP 滿了就呼叫 `TryLevelUp`。每個模擬步檢查一次，實測每真實秒約 8 ms；改成每幀一次只要約 0.1 ms。面板沒開時，可以從 `GameSystem.Update` postfix 用 reflection 呼叫 `RefreshPresentation`／`StoreAutoTheoryUpgradeToggle` 來驗證 UI，不必操作畫面。
 
 ## 戰鬥自動開始：目標低於 Nuke 起始難度
 
