@@ -27,7 +27,7 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 
 - 兩者輸出都通過 `cec -n`，彼此也等價。QoR 不同：開源版 and 為 45,226，作者版為 45,280，level 都是 4,405。
 - 作者版的輸出結構每次不同，但節點數相同；開源版的輸出逐位元組 deterministic。
-- 三個逐層 kernel 在兩版中都跑了 4,405 次，等於電路深度。差別在開源版每層多了 thrust `copy_if`／`remove_if`，kernel 總數 30,916 次、共 68.19 ms；作者版為 13,302 次、41.21 ms。作者版看起來已把壓縮併入 `markReadyNodes`。
+- 三個逐層 kernel 在兩版中都跑了 4,405 次，等於電路深度。差別在開源版每層多了 thrust `copy_if`／`remove_if`，kernel 總數 30,916 次、共 68.19 ms；作者版為 13,302 次、41.21 ms。作者版已把壓縮併入 `markReadyNodes`（見下節）。
 - conflict resolution 和 cut 計算的 kernel 在兩版中不同。
 - 結論：開源版可以當改進研究的 baseline，但只能跟未修改的開源版比較，不能拿作者 binary 的數字當基準。
 
@@ -37,3 +37,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 坑：resub 之後 AIG 的節點 id **不是**拓撲順序，fanin id 可能大於節點 id。用單次 id 掃描算 level，會產生 ABC 讀取時觸發 `Vec_PtrEntry` assertion 的壞 AIG。
 - 結果：div、adder、multiplier 各 6 次輸出都和原版逐位元組相同，也都通過 `cec -n`。div 的 full time 從 0.17 s 降到 0.07 s，`cudaStreamSynchronize` 從 17,658 次降到 37 次，kernel 總和從 68.3 ms 降到 36.5 ms；multiplier（272 層）幾乎沒有差別。報告在 `outputs/strash-levelsort.md`。
 - cthulhu 上 nsys 2026.1.3 連續跑兩個 `nsys stats` 報表時，第二個會因為「Existing SQLite export ... older than input file」輸出空白並讓 `set -e` 腳本中止；加 `--force-export=true` 即可。
+
+# 作者 binary 的 PTX 對照（2026-10-24）
+
+- 方法：`cuobjdump -ptx` 抽內嵌 PTX，`nm -C`／`objdump -d -C` 看 host 端（binary 沒 strip）。只做分析，不還原原始碼，不讀 SDC／ODC。報告在 `outputs/author-binary-diff.md`。
+- 作者版 `markReadyNodes`（12 參數）沿 fanout CSR（`Aig::getFanoutGPU`）展開上一層 frontier，fanin 都已有新 id 的 fanout 以 `atomicCAS` 佔位、`atomicAdd` 加入下一層。同層順序由 atomic 決定，這就是作者版輸出結構每次不同的原因。
+- 作者版每層仍有 3 次 `cudaDeviceSynchronize`、1 次 D2H 讀回大小與 1 次 D2D 搬 frontier，div 上共 13,252 次同步；預先分層版只有 71 次。
+- 作者版的 conflict resolution 在 CPU（`calcRemainMFFCGreedy`），開源版有 GPU 的 `resolveMffcConflictGreedyGPU`；作者版另有 `getMFFCDrivenReconvCutResub`，以及以 `srand(time(0))` 產生的隨機向量（`rs -n 2` 是否用到未確認）。
