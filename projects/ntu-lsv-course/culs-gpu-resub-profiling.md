@@ -43,4 +43,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 方法：`cuobjdump -ptx` 抽內嵌 PTX，`nm -C`／`objdump -d -C` 看 host 端（binary 沒 strip）。只做分析，不還原原始碼，不讀 SDC／ODC。報告在 `outputs/author-binary-diff.md`。
 - 作者版 `markReadyNodes`（12 參數）沿 fanout CSR（`Aig::getFanoutGPU`）展開上一層 frontier，fanin 都已有新 id 的 fanout 以 `atomicCAS` 佔位、`atomicAdd` 加入下一層。同層順序由 atomic 決定，這就是作者版輸出結構每次不同的原因。
 - 作者版每層仍有 3 次 `cudaDeviceSynchronize`、1 次 D2H 讀回大小與 1 次 D2D 搬 frontier，div 上共 13,252 次同步；預先分層版只有 71 次。
-- 作者版的 conflict resolution 在 CPU（`calcRemainMFFCGreedy`），開源版有 GPU 的 `resolveMffcConflictGreedyGPU`；作者版另有 `getMFFCDrivenReconvCutResub`，以及以 `srand(time(0))` 產生的隨機向量（`rs -n 2` 是否用到未確認）。
+- 作者版的 conflict resolution 在 CPU（`calcRemainMFFCGreedy`），開源版預設走 GPU 的 `resolveMffcConflictGreedyGPU`；作者版另有 `getMFFCDrivenReconvCutResub`，以及以 `srand(time(0))` 產生的隨機向量（`rs -n 2` 是否用到未確認）。
+
+# conflict resolution 改在 CPU（2026-10-24）
+
+- 開源版 `resolveMffcConflictGreedyGPU` 以 `<<<1,1>>>` 啟動：greedy 依 gain 逐一 commit，後面的 root 依賴前面改寫的 `vMaskValid`／`solidDiv`，無法平行，單一 GPU thread 跑得比 CPU 慢。開源版本來就有 CPU 實作 `resolveMffcConflictGreedy`，只在候選 ≥300,000 時使用，所以重現作者的做法不必反編譯。
+- 在預先分層版上加 `CULS_CONFLICT_CPU` 環境變數切換：div 的 conflict kernel 15.5 ms 消失，phase 3 結束時間從 0.035 降到 0.022 s，full time 0.07 → 0.06 s；div／adder／multiplier 輸出與預先分層版逐位元組相同並通過 `cec -n`。報告在 `outputs/conflict-cpu.md`。
+- 未驗證：大電路時 CPU 版每次 `cudaMallocHost` 並來回複製 `nObjs × DECGRAPH_SIZE` 的 `decGraph`，可能反而變慢。
