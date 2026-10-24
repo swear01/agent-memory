@@ -147,4 +147,11 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 - `hapi spawn-peer --agent codex --permission-mode auto` 會回 `bad_args: permission mode auto is not supported by codex`。Codex 可用 `default`/`read-only`/`safe-yolo`/`autoReview`/`yolo`；「auto」對應 `autoReview`。
 - 部署後 mazu 第一次 Codex spawn 回 HTTP 502；runner log 是 `spawnSync <remote-home>/.local/bin/codex ETIMEDOUT`。之後 `codex --version` 冷啟動 1.1 s、熱啟動 0.12 s，重試一次就成功。失敗的 child session 已自動 archive。
 - Windows swop：`hapi.exe` 執行中可以 rename，所以先把舊檔改名，再複製已驗 SHA-256 的新 exe。舊 Runner 偵測到 mtime 變化後會自行 handoff，但新 Runner 的父程序是已退出的舊 PID，等於脫離 Scheduled Task 鏈（task 每分鐘回報 `Runner already running with matching version`）。確認 state PID 是主 `runner start-sync`、且沒有 `--started-by runner` 程序後，只 `Stop-Process` 該 PID 並 `Start-ScheduledTask`，就恢復 wscript→powershell→hapi 鏈。`LastTaskResult 0x800710E0` 是 `IgnoreNew` 的正常結果。
-- Retention：swear01 NFS 共用的 `~/.hapi/runtime/<old>` 和 `.nfs*` 舊 binary，在 Athena 無法檢查時一律保留；在 mazu/cthulhu/valkyrie 上找不到持有者，不代表 Athena 沒在用。host-local `/var/tmp/hapi-*/runtime` 可以逐台檢查後清理。
+- Retention：舊規則是 Athena 無法檢查時保留 NFS 共用的舊 runtime／`.nfs*`。2026-10-24 使用者指示「Athena 不要管了」後改為只查 mazu／cthulhu／valkyrie 的 exe／cwd／fd／maps；兩輪檢查加上以已知持有者（mazu 9586 的 `.nfs…e1524ea`）做正向對照後，刪除 0.30.7.4 runtime 與 6 個舊 `.nfs*`，約 1.37 GB。盤點時不要執行舊 `.nfs*` binary 的 `--version` 來判斷版本，那會違反只讀；版本只能靠 mtime 推斷。
+
+# 升級後的舊 session 遷移（2026-10-24 起為常設規則）
+
+- 使用者要求每次升版都把仍跑舊 binary 的 session 移到新版，並直接刪掉舊版。做法：從 `--started-by runner` 程序的 cmdline 取得完整 `--hapi-session-id`。等 `hapi inspect-peer` 間隔一分鐘的兩次檢查都是 `active=true`、`thinking=false`，再執行 `hapi stop-peer`，這是 process-only stop，不 archive。下次從 Web 送訊息時，Hub 會以新版 binary 和 `claude --resume` 接回同一段對話。最後才重做 holder 檢查並刪除舊 runtime。
+- Binary 用 `mv` 原子替換後，舊 session 的 `/proc/<pid>/exe` 會顯示 `(deleted)`（NFS 上則是 `.nfs*`），可以用這點找出所有舊版 session。這些 session 仍可能隨時使用舊版的 `runtime/<old>/tools`，所以遷移前不能刪那個 runtime。
+- Agent 在未經使用者授權時對使用者 session 執行 `stop-peer`，會被 Claude Code auto-mode classifier 以 Interfere With Workloads 拒絕。使用者明確授權後，等 session 閒置才停的背景腳本就被允許。
+- 2026-10-24 在 oracle 發現 11 個 2026-08-15 漏掉的 vitest 子程序（`bun …/cli/src/index.ts claude --started-by runner`），PPID 都是 1。它們的 `HAPI_HOME=/tmp/hapi-test-*` 已不存在，連的是已經沒有 listener 的 `127.0.0.1:<port>`，env 帶 `VITEST=true`，合計約 850 MB RSS。逐一核對 env、PPID 並確認沒有 TCP 連線後，以 exact PID 送 TERM 清除。
