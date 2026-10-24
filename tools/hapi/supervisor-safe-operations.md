@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-09-15
+updated: 2026-10-24
 tags:
   - hapi
   - supervisors
@@ -140,3 +140,11 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 保留既有 session，針對再次觸發的操作核對實際程序、權限對象與相關 log；用症狀是否重現驗證修補，不以新 PID 或 runner running 代替。這個案例不支持把「先重啟」當成通用處方，也不支持未查原因就重設 TCC。
 
 來源：Issue25 backlog consolidation v1，controller-publication-v1 的 permission-recurrence 對照紀錄；正文與兩則相鄰訊息已核對。此處只記錄歷史失敗與驗證邊界，沒有宣稱當前仍有問題或已修復。
+
+# v0.30.7.6 rollout lessons (2026-10-24)
+
+- mazu 沒有 `sqlite3` CLI；Hub DB 備份用 Python `sqlite3.Connection.backup`（同一個 online backup API），再對備份跑 `quick_check` 與 `user_version`。`.6` 把 Hub schema 27 升到 29，舊版 Hub 讀不了。
+- `hapi spawn-peer --agent codex --permission-mode auto` 會回 `bad_args: permission mode auto is not supported by codex`。Codex 可用 `default`/`read-only`/`safe-yolo`/`autoReview`/`yolo`；「auto」對應 `autoReview`。
+- 部署後 mazu 第一次 Codex spawn 回 HTTP 502；runner log 是 `spawnSync <remote-home>/.local/bin/codex ETIMEDOUT`。之後 `codex --version` 冷啟動 1.1 s、熱啟動 0.12 s，重試一次就成功。失敗的 child session 已自動 archive。
+- Windows swop：`hapi.exe` 執行中可以 rename，所以先把舊檔改名，再複製已驗 SHA-256 的新 exe。舊 Runner 偵測到 mtime 變化後會自行 handoff，但新 Runner 的父程序是已退出的舊 PID，等於脫離 Scheduled Task 鏈（task 每分鐘回報 `Runner already running with matching version`）。確認 state PID 是主 `runner start-sync`、且沒有 `--started-by runner` 程序後，只 `Stop-Process` 該 PID 並 `Start-ScheduledTask`，就恢復 wscript→powershell→hapi 鏈。`LastTaskResult 0x800710E0` 是 `IgnoreNew` 的正常結果。
+- Retention：swear01 NFS 共用的 `~/.hapi/runtime/<old>` 和 `.nfs*` 舊 binary，在 Athena 無法檢查時一律保留；在 mazu/cthulhu/valkyrie 上找不到持有者，不代表 Athena 沒在用。host-local `/var/tmp/hapi-*/runtime` 可以逐台檢查後清理。
