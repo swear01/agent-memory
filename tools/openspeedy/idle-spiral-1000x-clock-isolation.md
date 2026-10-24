@@ -53,6 +53,8 @@ ClockIsolation 把原生 `SP_IsEnabled` 讀的資料槽改指向一個恆為 fal
 - SimulationProbe 每 127 次取樣一次 Advance，可列出各階段成本；搭配 adaptive／macrostep 狀態檔的計數差，才知道實際每秒呼叫次數。兩者不一致時，以計數差加 frame probe 為準。
 - 狀態檔每 128～1024 幀才寫一次，卡住時可能是舊資料。
 
-## 尚未解決
+## 時鐘偏移與最終封存
 
-開啟加速後，遊戲內 `DateTime.Now` 比真實時間快約 15 分鐘，可能是隔離生效前原生時鐘被加速了極短時間。2026-10-26 的未來日期也是同類現象。原因未查。
+2026-10-24 量測（啟動後約 30 分鐘）：`GetSystemTime`、`GetSystemTimePreciseAsFileTime` 與 CalendarGuard 的 `UtcNow` 都是真實時間；只有被 OpenSpeedy hook 的 `GetSystemTimeAsFileTime`（也就是 Mono 的 `DateTime.UtcNow/Now`）固定快 17 分 41 秒（1061 秒），而且不再增加。遊戲自己的 53 個日曆呼叫點經 CalendarGuard 走真實時間，所以這個偏差只影響未替換的 `DateTime.Now` 使用者（Mono、Unity、其他 DLL、探針）。1061 秒 ÷ 999 ≈ 1.06 秒，推測是隔離生效前，hook 以 1000× 跑了約一秒，之後一直保留連續偏移。哪一段造成這一秒（`LoadLibrary`→`SP_Disable`，或 GUI 先注入）未查清；使用者刪除遊戲後，此項停止。
+
+使用者已刪除遊戲。最終程式碼（9 個 branch，預設 `hundred-performance`）公開封存在 <https://github.com/swear01/idle-spiral-openspeedy-patch>，Release `archive-2026-10-24` 附安裝包 zip，SHA-256 `eecbaaed24efc6a3afe8530f9efae98f2387714896eed537d0c619eb91c696e0`，已以匿名下載核對雜湊。安裝包刻意不含 `verification/` 本機日誌（內有本機路徑與自測 token 字串）、遊戲檔案與 speedpatch64.dll。
