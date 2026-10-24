@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-10-19
+updated: 2026-10-25
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -365,3 +365,15 @@ Mac、mazu、cthulhu、valkyrie、zeus(swear01)、su_zeus、Oracle 重啟後磁�
 真實推論 200 via opencode-go-1。athena、swop 不可達未部署。
 `/switch?index=N` 只動 RS-latch index；priority route（deepseek-flash）仍從 opencode-go-1 起跳，不能用來 live 測 failover。
 github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>/<repo>.git` push。
+
+# 2026-10-25 mazu：長時間批次被 Command Code 429 切到 0731
+
+- NeuroAbs DeepSeek 實驗用 `deepseek-v4-flash` 打 mazu `35001`：約 8800 次 Command Code 成功後，
+  2026-10-24T18:14:55Z 收到 429，之後 1102 次 HTTP 200 都由 OpenRouter `deepseek/deepseek-v4-flash-0731`
+  回答（provider Cohere／DigitalOcean／Parasail），實付 $2.04。四小時後仍在 OpenRouter；`/status` 顯示
+  command-code circuit `open`、`blockedUntil` 早已過期、期間只多 1 次 request。gateway log 沒有 429 原因。
+- client 只拿到 200，看不出 fallback；要判斷實際模型，必須檢查回應的 `model` 欄位
+  （Command Code 回 `deepseek/deepseek-v4-flash`，OpenRouter 回 `gen-…` id 加 `provider` 與 `usage.cost`）。
+- 要固定 V4.1 Flash 1017，應改用 `deepseek-flash`：它的 OpenRouter fallback 是 `deepseek/deepseek-v4.1-flash`；
+  舊 id `deepseek-v4-flash` 的 fallback 是 0731，是另一個模型。
+- `reasoning_effort` 接受 off／low／medium／high／xhigh／max；off 會忽略輸出格式指示；`thinking: disabled` 無效。

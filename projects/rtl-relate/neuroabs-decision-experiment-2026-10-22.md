@@ -4,8 +4,8 @@ scope: project
 project: rtl-relate
 status: active
 created: 2026-10-22
-updated: 2026-10-24
-tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna]
+updated: 2026-10-25
+tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna, deepseek]
 ---
 
 # NeuroAbs keep-or-X decision 實驗
@@ -22,6 +22,7 @@ tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna]
 - ADD pilot：B0 與 B1 在 rIC3 1.5.2 portfolio 上 69 分鐘都沒有 verdict（作者報 concrete 39.32 s，未重現）；kissat BMC 到 depth 25 兩者約 9 秒、無反例。riscv-formal 只在 cycle 20 檢查一次，bounded 探索無法區分 arm，難點在 unbounded proof。rIC3 時限問題見 [rIC3 portfolio 時限](../../tools/ric3/portfolio-time-limit-not-enforced.md)。
 - 2026-10-23 診斷：TIMEOUT 的原因是 rIC3 版本，不是模型。論文用的是 HWMCC'24 版 rIC3，跑同一個 B0 BTOR2，中位數 26.3 s（kind 在 depth 21 完成證明）。1.5.2 吃 BTOR2 時，portfolio 沒有 bit-level kind（詳見 [rIC3 portfolio 組態](../../tools/ric3/portfolio-config-by-version.md)）；加上 `-e kind --step 1` 只要 8 s，master `8c6df1b` 的 portfolio 也要 70 s。作者的 `problem.aig` 帶 `-formal`，多 23 個 PicoRV32 內部 assert 和 2 個 `restrict`（56 bad）；`problem_new.aig` 不帶 `-formal`（33 bad），與 B0 對應。兩者都用 `-zinit`，沒有遺失 init。`design.aig` 是空檔。HWMCC24 版只檢查 bad[0]，所以作者的 AIGER 在該版 0.2 s 即完成，這不是論文的時間。完整紀錄在 `<remote-home>/research-archives/ric3-repro-20261022/`。
 - 2026-10-24 B0／B1 計時（master `8c6df1b`、`taskset -c 16-31`、一次一個、各 3 次，54 次全部 UNSAT；PR commit `4aa4ad9` 的 README 有完整表格）。B1/B0 中位數比：SLTI 0.64、AND 0.82、BGE 0.93、SH 1.01（B1 沒有剩下 X，可當雜訊對照）、ORI 1.02、ADD 1.04、SUB 1.06、XOR 1.06、ADDI 1.07。B0 中位數在 103–202 s 之間。全 X 並沒有讓 rIC3 普遍變快。不綁核的那一輪雜訊太大（B1/B0 0.55–1.38），只留作對照，見 [[machines/mazu/cpu-timing-ecore-pinning]]。
+- 2026-10-25 DeepSeek V4 Flash（gateway、effort low）D1 生成／D2 keep-or-X／D3 keep-or-X＋COI 九題全部建好並計時（81 次 UNSAT；PR commit `436ed20` 有完整表格）。相對 B0 的幾何平均：B1 0.95、D1 0.98、D2 1.05、D3 0.97；每個 decision arm 都是 4 題贏 B1、5 題輸，沒有比全 X 好。只有 D2 全部由 1017 回答，D2 最慢（SH 是 B1 的 1.44 倍）。D1 每題有 7–20 條 unsound（被 checker 擋掉），keep-or-X 不會有。CEGAR 後只剩 12–15（D1/D2）、2–10（D3）個位置。List price 約 $28（D2 約 $0.45／題，D1、D3 約 $1.3／題）。D1、D3 有部分答案被 gateway fallback 到 0731（見 [[projects/deepseek-latch-gateway/fleet-routing-and-failback]]）。
 
 ## 卡點與待決
 
