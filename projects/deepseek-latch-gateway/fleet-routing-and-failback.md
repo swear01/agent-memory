@@ -374,8 +374,9 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
   command-code circuit `open`、`blockedUntil` 早已過期、期間只多 1 次 request。gateway log 沒有 429 原因。
 - client 只拿到 200，看不出 fallback；要判斷實際模型，必須檢查回應的 `model` 欄位
   （Command Code 回 `deepseek/deepseek-v4-flash`，OpenRouter 回 `gen-…` id 加 `provider` 與 `usage.cost`）。
-- 要固定 V4.1 Flash 1017，應改用 `deepseek-flash`：它的 OpenRouter fallback 是 `deepseek/deepseek-v4.1-flash`；
-  舊 id `deepseek-v4-flash` 的 fallback 是 0731，是另一個模型。
+- （2026-10-25 已更正）要固定 V4.1 Flash 1017，用 `deepseek-v4.1-flash-1017`（只走 OpenRouter 1017）。
+  `deepseek-flash` 的 OpenRouter fallback 已改 1017，但 CC member 是無日期的 `deepseek/deepseek-v4.1-flash`，
+  不保證 1017；`deepseek-v4-flash` 已移除。OpenRouter 無日期 `deepseek/deepseek-v4.1-flash` 是 0910。
 - `reasoning_effort` 接受 off／low／medium／high／xhigh／max；off 會忽略輸出格式指示；`thinking: disabled` 無效。
 
 # 2026-10-25 mazu：實驗專用 `deepseek-v4.1-flash-1017`，移除 `deepseek-v4-flash`
