@@ -13,6 +13,7 @@ tags:
   - bypassPermissions
 source_refs:
   - tiann/hapi#2158
+  - tiann/hapi#2159
 created: 2026-10-25
 updated: 2026-10-25
 ---
@@ -55,8 +56,12 @@ pending `Bash` permission request。
 - Remote 模式 `filterCatalogAffectingClaudeArgs` 會丟掉 `--dangerously-skip-permissions`，
   所以 web Yolo 與 CLI `--yolo` 在 remote 啟動參數完全相同；差異只在 local TUI。
 
-## 尚未修的相鄰問題
+## 相鄰問題：local TUI 不帶 mode（PR tiann/hapi#2159）
 
-Local（TUI）模式 `claudeLocal.ts` 不把 permission mode 轉成 CLI flag：
-`hapi claude --permission-mode X` 與 terminal `hapi resume` 會以 default 開 TUI，
-hook 再把 HAPI 狀態覆寫成 default（#460 引入）。`--yolo` 不受影響。
+`claudeLocal.ts` 原本不把 permission mode 轉成 CLI flag（#460 起）：
+`hapi claude --permission-mode X` 與 terminal `hapi resume` 會用 Claude 自己的預設
+mode 開 TUI，hook 再把 HAPI 狀態覆寫掉。另外 Claude 2.1.302 的
+`--dangerously-skip-permissions` 會蓋過 `--permission-mode`（兩種順序都一樣），所以
+`--yolo` 轉發這個 flag 會讓切回 Default 後的 local relaunch 仍在 bypass。修法：
+local 傳 `--permission-mode <session mode>`（default 不傳，保留 settings.json
+defaultMode），`--yolo` 只設 session mode 不再轉發 raw flag。
