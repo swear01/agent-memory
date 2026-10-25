@@ -1,7 +1,7 @@
 ---
 title: Claude Code 模型清單：main/overflow 分區與 initialize 回應
 scope: tools/claude-code
-tags: [model, model-picker, initialize, stream-json, hapi, 1m]
+tags: [model, model-picker, initialize, stream-json, hapi, 1m, context-window, get_context_usage]
 status: active
 updated: 2026-10-25
 ---
@@ -14,6 +14,14 @@ updated: 2026-10-25
 - 當時實測：main 4 列剛好是 alias（`opus`→Opus 5.5、`fable`→Fable 5.1、`sonnet`→Sonnet 5.5、`haiku`→Haiku 5.5），overflow 8 列都是完整 id（Haiku 4.5、Sonnet 5、Opus 5、Fable 5、Opus 4.8/4.7/4.6、Sonnet 4.6）。但曾出現 main 列是完整 id 的情況（alias 尚未切換時的 `claude-fable-5-1`），所以不能只用 `claude-` 前綴判斷。
 - 可靠的推導：依 CLI 順序，某列的 family（`claude-opus-4-7`→`opus`）在前面已出現過，就是 overflow。
 - `[1m]` 預設：opus/sonnet/fable/haiku alias 現在都解析到原生 1M 模型，官方文件說 `opus[1m]`/`sonnet[1m]` 對它們「no effect」，`/model` 也沒有 1M 列；只有 Opus 4.6 / Sonnet 4.6 還需要 `[1m]`。
+
+## 取得實際 context window（2.1.302 驗證）
+
+- `system/init`、`initialize`、assistant `usage` 都沒有 context window 欄位。local mode 的 transcript 也沒有。
+- `result.modelUsage[model].contextWindow` 是原始視窗，每回合結束才有。它會反映 `CLAUDE_CODE_DISABLE_1M_CONTEXT`（1,000,000 → 200,000），但不會套用 `autoCompactWindow`。
+- stream-json control request `{"subtype":"get_context_usage"}` 回 `response.response.{model,maxTokens,rawMaxTokens,autocompactSource,autoCompactThreshold}`。`maxTokens` 是有效視窗，也就是 `/context` 顯示的值，會套用 DISABLE_1M 和 settings `modelSettings.<model>.autoCompactWindow`（`rawMaxTokens` 也一樣被 cap）。它在回合進行中也能呼叫，回應比第一則 assistant 早。
+- 注意：probe 時 prompt iterable 不能結束，否則 stdin 被關，request 永遠等不到回應。
+- HAPI #2153（e5c6f0f5a）：remote mode 每次 init 都呼叫一次 `Query.getContextUsage()`，結果優先於 result 的原始值。local mode 沒有 control channel，只能用 env／settings 推斷，可以併進 #2088。
 
 ## HAPI 對應
 
