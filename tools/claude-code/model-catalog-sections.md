@@ -18,5 +18,5 @@ updated: 2026-10-25
 ## HAPI 對應
 
 - upstream PR #1948（junmo-kim）用 initialize 探測取得模型清單；fork 在 v0.30.7.6 carry。
-- 2026-10-25 開 PR #2153（從 shared／Android／iOS 拿掉 Sonnet/Opus/Fable 1M；context 預算 fallback 把 alias 與任何 `[1m]` 視為 1M，因為 local mode 永遠走 fallback）與 PR #2154（疊在 #1948 上：用 family 規則標 `older`，composer 用「Older models」toggle 收合、New Session 用 optgroup）。兩者後合併的一方要調整 #1948 在 `modelOptions.test.ts` 的 `opus[1m]` legacy preset 測試。
-- 已知殘留：CLI `sdkToLogConverter` 第一回合 context window 對裸 alias 仍 seed 200k，要等 result 才修正。
+- 2026-10-25 開上游 PR #2153：從 shared／Android／iOS 拿掉 Sonnet/Opus/Fable 1M。context 預算 fallback 和 CLI 第一回合 seed 都把 alias 與任何 `[1m]` 視為 1M，因為 local mode 永遠走 fallback。
+- 「收合舊模型」只有 carry 了 #1948 才會出現，上游 main 沒有這個問題，所以不另開上游 PR（#2154 已關閉）。修正分兩處：fork overlay commit `72604bcae` 等下次 release 時以 `regenerate overlay -` 接在 #1948 carry 後面；另外在 #1948 留言建議作者採用（swear01/hapi@33e3003eb）。

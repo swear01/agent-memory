@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-24
+updated: 2026-10-25
 tags:
   - hapi
   - fork
@@ -239,6 +239,7 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 ### v0.30.7.6 Swear Review 處理（2026-10-22）
 - Release PR（fork #30）的 Swear Review 會審整個 diff 對 `main`（7 萬多行）。分類方式：對 `git diff --shortstat origin/main HEAD -- <file>` 沒變的檔案，發現是 .5 就有的，不擋這版。
 - 對 carry 進來的上游 PR 找到真 bug 時，不改 carry（live head 必須對得上，否則 `PR_AUDIT_HEAD_STALE`）。改成在 carry 後面加一個 `regenerate overlay -` 的 fork fix commit，例如 0056 `fix(codex)` 修 #2092。
+- 只有 carry 某個上游 PR 才會出現的 bug（上游 main 沒有），不要另開上游 issue 或 PR。要修的是造成 bug 的那個 PR：如果是自己的 PR 就直接更新；如果是別人的，就做成 fork overlay fix，並在原 PR 留建議。2026-10-25 使用者因此要求關閉 #2154（#1948 的舊模型收合）。
 - 重建 patch queue：`git format-patch -q --zero-commit --no-signature -o <dir> <upstream_sha>..HEAD`（不含 record commit）。manifest 後面的列重新編號；`expected_source_tree` 用 HEAD 的 tree 扣掉 release record 目錄後的 write-tree。
 - 要合進 tail commit 時，不要用 interactive rebase：先 `git diff` 出成 patch → `checkout -B` 到該 commit → apply + amend → 再 `git cherry-pick A..B`。cherry-pick 不支援 `-q`。
 - v0.30.7.6 第二輪：rehearsal 因 `PR_AUDIT_HEAD_STALE`（上游 defer PR 推了新 head）失敗。重跑前先比對所有 open PR 的 live head 與 pr-audit，同時抓「新開的個人 PR」（自動 carry）。這次多 carry 了 7 個 swear01 PR（#2095–#2102）。
