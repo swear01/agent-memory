@@ -49,4 +49,4 @@ skills repo 的 `core.sshCommand` 已改回 `ssh -i C:/Users/<user>/.ssh/id_ed25
 - PowerShell 經 ssh 的輸出可能變成 CLIXML 而遺失。比較可靠的做法是 scp `.ps1` 上去，讓腳本把輸出寫到 `%TEMP%` 的 log，再用 `type` 讀回。
 - git 網路卡住時可以離線更新：在 Mac 做 `git bundle`，scp 到 swop，fetch 到 `refs/remotes/origin/main` 後 `merge --ff-only`，再 `skillshare sync`。
 
-相關：[[fleet-cli-and-skill-upgrade]]、[[ssh-443-bounded-fallback]]
+相關：[[openssh-msi-upgrade]]、[[fleet-cli-and-skill-upgrade]]、[[ssh-443-bounded-fallback]]
