@@ -377,3 +377,52 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
 - 要固定 V4.1 Flash 1017，應改用 `deepseek-flash`：它的 OpenRouter fallback 是 `deepseek/deepseek-v4.1-flash`；
   舊 id `deepseek-v4-flash` 的 fallback 是 0731，是另一個模型。
 - `reasoning_effort` 接受 off／low／medium／high／xhigh／max；off 會忽略輸出格式指示；`thinking: disabled` 無效。
+
+# 2026-10-25 mazu：把 flash 兩條 route 的 upstream 統一釘在 V4.1-Flash-1017
+
+承上條。問題不是「OpenRouter 沒接上」：live `/status` 顯示 openrouter endpoint
+1123 requests／1118 success、circuit closed，key 本身有效（`GET /api/v1/key` 200，
+credits 50、已用 32.45）。真正的缺陷是同一個 client model id 在不同 priority group
+拿到**不同模型**，長批次 failover 後靜默換模型：
+
+- `deepseek-v4-flash`：Command Code member 寫 `deepseek/deepseek-v4-flash`（上游被 DeepSeek
+  別名成 V4.1 Flash），OpenRouter member 卻寫 `deepseek/deepseek-v4-flash-0731`（真正的舊 V4 Flash）。
+- `deepseek-flash`：OpenRouter member 寫浮動別名 `deepseek/deepseek-v4.1-flash`，沒有釘住 snapshot。
+
+`routing.yaml` 改為（只改 upstream_model，group／priority／endpoint 不動）：
+
+- `deepseek-flash` → openrouter：`deepseek/deepseek-v4.1-flash-1017`
+- `deepseek-v4-flash` → openrouter：`deepseek/deepseek-v4.1-flash-1017`
+- `deepseek-v4-flash` → command-code：`deepseek/deepseek-v4.1-flash`（不再依賴 DeepSeek 宣告為
+  暫時性的 retirement alias；V4.1-Pro 發佈後別名可能改向）
+
+OpenRouter 上 DeepSeek flash 家族的實際 id（`GET /api/v1/models`，2026-10-25）：
+`deepseek/deepseek-v4.1-flash-1017` 標價 prompt $0.15／completion $0.60 per M，
+`deepseek/deepseek-v4.1-flash` 是 $0.02／$1.00，`deepseek/deepseek-v4-flash` 為 V4 Flash 0423，
+`deepseek/deepseek-v4-flash-0731` 是另一個 snapshot。config 的
+`max_price` prompt `0.15`／completion `0.60` **不會**擋掉這些 model：max_price 比的是
+provider 實際報價，不是 model 標價；四個 id 直打 OpenRouter 都 200（1017 由 Morph 服務）。
+不要再用「標價等於 cap 會被擋」推論 route 壞掉。
+
+Command Code 的 `/v1/models` 只有 `deepseek/deepseek-v4-pro`、`deepseek-v4-flash`、
+`deepseek-v4-flash-vision-exp`、`deepseek-v4-flash-fast`、`deepseek-v4.1-flash`、
+`deepseek-v4.1-flash-fast`：**沒有 `-1017` id**，所以 CC 側最具體只能寫 `deepseek/deepseek-v4.1-flash`。
+
+驗證方法（不動 live service）：用同一份 binary、另一份只留 `openrouter-fallback`
+且 priority 改 1 的 config／routing，跑在 port `35999`，兩個 client id 都得 HTTP 200
+且回應 `model` 為 `deepseek/deepseek-v4.1-flash-1017`（`X-Gateway-Active-Endpoint: openrouter`）。
+啟動要等它真的 bind：連續 `curl -sf` 重試若全部 connection refused 會在 1 秒內用完，
+看起來像「服務沒起來」，其實是 probe 太早。之後 `systemctl --user restart deepseek-gateway.service`
+（mazu 由 systemd user unit + `deepseek-gateway-launcher` 啟動，launcher 負責 source `.secrets`），
+restart 後 live 兩個 id 都 200 且 CC 回 `deepseek/deepseek-v4.1-flash`。
+
+- `config.yaml`／`routing.yaml` 在 NFS 共用 home，athena／cthulhu／valkyrie／zeus(swear01)
+  的磁碟檔已同步改到，但各自 process 仍跑舊 routing，要逐台 restart 才生效。
+- 當下 priority 1 整組不可用：slot 1 週額度用盡（429 GoUsageLimitError），slot 2／3 仍是
+  2026-10-17 breach 後失效的舊 key（401 api_key_expired）。所以實際流量全在 Command Code，
+  OpenRouter 只是 backstop。
+- `.secrets` 的 `OPENCODE_API_KEY` 與 `OPENCODE_API_KEY_1` 是**同一把** key，也與 opencode CLI
+  `auth.json` 的 `opencode-go` 相同（SHA-256 前 8 碼相符）。因此 opencode CLI 打 Luna 吃掉的
+  週額度與 gateway slot 1 是同一個帳號；slot 2／3 是不同 key。
+- NeuroAbs client（`src/deepseek.py`、`src/deepseek_api.py`）固定打 `127.0.0.1:35001` 的
+  `deepseek-v4-flash`，不需改 client 就會拿到 V4.1 Flash／1017。
