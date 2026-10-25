@@ -32,3 +32,4 @@ tags:
 - 桌面版**有** parent/child：由 session 啟動的 session（例如 suggested task 的 **Start**）會在側欄列在「目前 session 底下」；session 管理工具裡看得到 `parentSessionId`、`startedBy`、`detached`（見 [child-session-auto-archive](child-session-auto-archive.md)）。
 - Claude Code 的 subagent（Agent/Task 工具）不是獨立 session，只顯示在對話裡的 Agent 卡片。
 - HAPI（fork main 與 upstream，2026-10-25）沒有 session 樹：`spawn_peer` 開出的 session 和 parent 平行列在「目錄 · 機器」群組下，metadata 不記 parent。最接近的是 tiann/hapi#1922（heavygee，open），只在 remit 訊息裡蓋一個 Parent 連結。
+- 決定（2026-10-25，使用者）：HAPI 不做 parent/child session 樹。HAPI 對應的是 Claude Code CLI，CLI 本身沒有 child session，只有桌面版有；做了太激進。除非 Claude Code CLI 加上這個功能，否則不要再提。
