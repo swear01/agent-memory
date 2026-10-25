@@ -41,3 +41,15 @@ tags: [ADFP, VPN, openfortivpn, FortiGate, Guacamole, sudoers, macOS]
 - 使用者同意後已在共用家目錄關閉鎖屏：`xfce4-screensaver` 的 `/saver/enabled`、`/lock/enabled`、
   `/lock/saver-activation/enabled` 與 `xfce4-power-manager` 的 `dpms-enabled`、`lock-screen-suspend-hibernate`
   皆為 false。auto mode 分類器會把這類設定判為削弱安全，需使用者明確同意。
+
+## 不用 Playwright 的 ADFP 操作（2026-10-25 驗證）
+
+- 用 loopback CDP 9223 直接操作 ADFP 分頁：`Input.dispatchMouseEvent`（CSS 座標 = 截圖像素 ÷ 2）、
+  `Input.dispatchKeyEvent` 逐字打字；Guacamole 選單用 Ctrl+Alt+Shift 開關。
+- 上傳：先在頁面攔截 `HTMLInputElement.prototype.click`（file input 存到 `window.__fi`），選單→設備
+  `/share1/home/<user>`→「上传文件」，再 `Runtime.evaluate('window.__fi')` 取 objectId，
+  `DOM.setFileInputFiles({files, objectId})` 即上傳到家目錄（自動觸發 change）。macOS tar 先設
+  `COPYFILE_DISABLE=1` 免 xattr 警告。
+- 新開 terminal 是 tcsh，`dc_shell`、`vcs` 不在 PATH；先打 `cb`（Cell-Based）載入環境，再開 bash。
+- CVSD HW3 SRAM（`sram_512x8` 等）：DC 2026.03 的 `write_sdf` 會寫出 SRAM 的 `PERIOD`（512×8 為 2.213 ns），
+  gate-level 模擬不會用模型預設的 3.0 ns。
