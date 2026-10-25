@@ -89,3 +89,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - CPU conflict resolution 只搬有 gain 的 `decGraph` 列（GPU gather／scatter），hyp_4xd 0.11 → 0.07 s。
 - resubDivs2 每條指令只有 2.6／32 lane 活躍；先壓縮要做的 root 再 launch 反而更慢（div_5xd 21.8 → 56.5 ms），因為配對迴圈長度有平方長尾，壓縮後每個 warp 要等 32 個裡最慢的、warp 數也少十倍。要改善需 warp 合作搜尋配對並以 ballot 取字典序第一個。
 - 改完後 hyp_4xd 有 54 % 取樣沒有 kernel，瓶頸轉到 host 端（CPU greedy、`cudaFree` 約 28 ms、host 算 level 順序）。
+
+## memory pool 與 host 空檔（2026-10-25）
+
+- `cudaFree` 會等 device 同步再把記憶體還給驅動，hyp_4xd 閒置 149 ms 中 `cudaFree`＋`cudaMalloc` 占 66 ms。`-include mempool.h` 把兩者換成預設 stream 上的 `cudaMallocAsync`／`cudaFreeAsync`（release threshold 設最大），並讓 `cudaMemGetInfo` 把 pool 閒置部分算成可用，因為 resub 依剩餘記憶體分批，否則分批會變。開關 `CULS_MEMPOOL`，binary `bin/gpuls-pool`；8 個電路輸出不變。
+- 陷阱：CULS 的開關只檢查 `getenv` 是否非空指標，`CULS_MEMPOOL=` 空字串也算開啟，曾因此把開啟結果誤當成關閉的基準。
+- 只搬候選列之後，原版 resub 也是 `CULS_CONFLICT_CPU` 比 GPU 單 thread greedy 快。hyp_4xd 整體 0.37 → 0.29 s（開始前 0.53 s），剩約 0.18 s 是 resub kernel；啟動程序另有約 0.11 s 固定成本。
+- cthulhu 上多個 session 共用 GPU 時計時會互相干擾（hyp_4xd 曾量到 0.81 s）；計時腳本在每次執行前後檢查其他 gpuls 程序，有重疊就重跑。`perf_event_paranoid=4`，perf 也要經 su_cthulhu `sudo -n` 單次執行。
