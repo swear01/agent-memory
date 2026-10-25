@@ -39,7 +39,7 @@ swop 的 Git for Windows 2.49.0 安裝時選了 `SSH Option: ExternalOpenSSH`，
 
 用 `winget upgrade --id Git.Git --custom "/o:SSHOption=OpenSSH"` 把 Git for Windows 從 2.49.0 升到 2.56.0.3，同時把 SSH Option 從 `ExternalOpenSSH` 改成內附 OpenSSH，git 現在用 `C:\Program Files\Git\usr\bin\ssh.exe`（MSYS `OpenSSH_10.6p1`）。系統的 Win32 OpenSSH 9.5p2 沒有動，swop 的 sshd 仍然靠它。
 
-skills repo 的 `core.sshCommand` 已改回 `ssh -i C:/Users/<user>/.ssh/id_ed25519_skillshare -o IdentitiesOnly=yes`。`git fetch` 和 `skillshare pull` 都能正常結束，HEAD 和 GitHub 一致。PortableGit 資料夾還留著，沒用到了，可以刪。
+skills repo 的 `core.sshCommand` 已改回 `ssh -i C:/Users/<user>/.ssh/id_ed25519_skillshare -o IdentitiesOnly=yes`。`git fetch` 和 `skillshare pull` 都能正常結束，HEAD 和 GitHub 一致。2026-10-26 確認沒有任何設定、PATH 或程序引用後，已刪除 `%LOCALAPPDATA%\PortableGit-skillshare`（約 402 MB）。若要再用這個 workaround，需重新下載上面同一個官方安裝檔並核對 SHA-256。
 
 注意：Git installer 升級時會沿用上一次選的選項，要改 SSH Option 必須明確傳 `/o:SSHOption=OpenSSH`。
 
