@@ -81,3 +81,11 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - mem_ctrl 輸出不固定來自 strash `insertLevelNodes` 同層重複 key 搶雜湊槽（`insert_single_no_update`）；改 `insert_single_update_min_value` 一行修正，原版 CULS 也有此問題。binary `bin/gpuls-hyb3`。
 - hyp_4xd GPU Metrics（模式 3）：整段 SM Active 27 %；strash 每層 kernel 期間 SM Active 2.8 %（平均約 237 threads，占 hyp_4xd kernel 時間約一半）；resub kernel 期間 SM Active 94 % 但 SM Issue 25 %；約 44 % 樣本沒有 kernel。
 - 放大電路的 `&cec`：hyp_4xd 339 s、mem_ctrl_5xd 6 s 等價；div_5xd 超過 1 小時沒有結果（改跑 `cec -n`）。
+
+## 固定點 strash 與 lane 利用率（2026-10-25）
+
+- strash 改成固定點迭代（所有節點同時以目前 fanin 代表元雜湊、保留最小暫定 id，重複到不變）：8 個電路只要 1–2 輪，輸出與逐層版逐位元組相同；hyp_4xd strash kernel 162 ms／49,608 launch → 9 ms／4 launch，整體 0.53 → 0.37 s。超過 32 輪退回逐層。開關 `CULS_STRASH_FIX=32`，binary `bin/gpuls-strash`。
+- 單一 block 跑連續小層（`__syncthreads()` 分層）只把 strash 從 187 ms 降到 123 ms：每層仍是幾次串行的隨機 DRAM 存取，launch 不是主要成本。
+- CPU conflict resolution 只搬有 gain 的 `decGraph` 列（GPU gather／scatter），hyp_4xd 0.11 → 0.07 s。
+- resubDivs2 每條指令只有 2.6／32 lane 活躍；先壓縮要做的 root 再 launch 反而更慢（div_5xd 21.8 → 56.5 ms），因為配對迴圈長度有平方長尾，壓縮後每個 warp 要等 32 個裡最慢的、warp 數也少十倍。要改善需 warp 合作搜尋配對並以 ballot 取字典序第一個。
+- 改完後 hyp_4xd 有 54 % 取樣沒有 kernel，瓶頸轉到 host 端（CPU greedy、`cudaFree` 約 28 ms、host 算 level 順序）。
