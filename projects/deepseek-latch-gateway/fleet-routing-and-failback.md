@@ -389,11 +389,20 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
 - Command Code 無法釘 snapshot：`deepseek/deepseek-v4.1-flash-1017` 與 `-20261017` 都回 400
   `unsupported_model`；它的 `deepseek/deepseek-v4.1-flash` 沒有日期，無法證明是 1017。
   因此唯一可保證 1017 的路徑是 OpenRouter。
-- 現行 mazu（NFS 共用檔）`routing.yaml`：`deepseek-v4-flash` route 刪除；新增
-  `deepseek-v4.1-flash-1017` → 單一 group `openrouter-1017` → `deepseek/deepseek-v4.1-flash-1017`。
-  `config.yaml` `models.allow` 以新 id 取代舊 id；舊 id 現在回 400 `model_not_allowed`。
-  fleet 共用的 `deepseek-flash` 不變（opencode-go → CC `deepseek/deepseek-v4.1-flash` →
-  OpenRouter `deepseek/deepseek-v4.1-flash-1017`），它不保證 1017。
+- 上游 repo PR #21（merge `8a9e06f`）把 `routing.example.yaml`／`config.example.yaml` 改成：
+  `deepseek-v4-flash` route 與 allow 刪除；新增 `deepseek-v4.1-flash-1017` → 單一 group
+  `openrouter-1017` → `deepseek/deepseek-v4.1-flash-1017`；`deepseek-flash` 的 OpenRouter fallback
+  改 1017（CC member 仍 `deepseek/deepseek-v4.1-flash`，所以 `deepseek-flash` 不保證 1017）。
+  舊 id 回 400 `model_not_allowed`。部署紀錄在 repo `docs/deployment.md`（PR #22）。
+- 2026-10-25 已部署並驗證 7 個 Gateway：mazu、cthulhu、valkyrie、zeus(swear01, 35001)、
+  Zeus(swear02, 35002)、Oracle、Mac。Athena 送修排除；swop 不在 HAPI 列表、外部 SSH timeout，未部署。
+- mazu／zeus(swear01) 掛 `192.168.1.200`、cthulhu／valkyrie 掛 `192.168.1.199`，但四台看到的
+  `~/.config/deepseek-gateway` 是**同一份檔案**（cthulhu／valkyrie 開工時已是 mazu 改過的狀態）。
+  只改一次、逐台重啟；`~/.local/log/deepseek-gateway.log` 也共用，要用新 PID 的 stdout offset
+  判斷 `[Routing]` 行是哪台寫的。
+- mazu 沒有 fleet SSH alias（`~/.ssh/config` 不存在），只能直連 `zeus`(swear01)；其餘機器從 mazu
+  用 `hapi spawn-peer --machine <id>` 派 peer 做語意編輯＋重啟，成功。Swear Review 本身已用
+  `deepseek-flash`（README 舊範例寫 `deepseek-v4-flash` 是過時資訊，已修）。
 - `max_price` prompt `0.15`／completion `0.60` 不會擋 1017：比的是 provider 實際報價，實測由 Morph 服務。
   費用全部記在 OpenRouter credits。
 - Command Code 不是額度用完：2026-10-24T18:14:55Z 的 12 次 429 與數次 `The connection was closed`／
@@ -407,4 +416,3 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
 - 驗證陷阱：在隔離的 port `35999` 實例做 smoke test 時，`curl -sf` 立刻 connection refused 的重試迴圈
   會在 1 秒內用完，看起來像沒起來；要 sleep 等 bind。restart 用
   `systemctl --user restart deepseek-gateway.service`（launcher 會 source `.secrets`）。
-  athena／cthulhu／valkyrie／zeus(swear01) 共用磁碟檔，但要各自 restart 才會載入。
