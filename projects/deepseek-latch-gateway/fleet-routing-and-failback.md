@@ -416,3 +416,10 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
 - 驗證陷阱：在隔離的 port `35999` 實例做 smoke test 時，`curl -sf` 立刻 connection refused 的重試迴圈
   會在 1 秒內用完，看起來像沒起來；要 sleep 等 bind。restart 用
   `systemctl --user restart deepseek-gateway.service`（launcher 會 source `.secrets`）。
+- 強制驗 fallback 的方法（2026-10-25 驗過 `deepseek-flash` → OpenRouter 1017）：複製 live config 到暫存目錄，
+  改 port（如 `35998`），把 OpenCode／Command Code 的 `base_url` 改成 `http://127.0.0.1:9/v1`，routing.yaml
+  放同目錄；用 `( set -a; source ~/.secrets; set +a; exec ~/.local/bin/deepseek-gateway <tmp>/config.yaml )`
+  起實例。config 的 key 是 `${VAR}`，沒 source `.secrets` 時 OpenRouter 會回 401 `Missing Authentication header`。
+  3/3 回 `deepseek/deepseek-v4.1-flash-1017`（Morph）。repo PR #23（merge `f6ba9ea`）加了 proxy 層 regression
+  test，直接載入 `routing.example.yaml`。收尾別用 `pkill -f <含暫存路徑的 pattern>` 寫在同一行指令裡，
+  會連自己的 shell 一起殺掉（exit 144）。
