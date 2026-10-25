@@ -27,6 +27,16 @@ half-open probe、指數 cooldown、aliases／model_map／allow／`/switch` 全�
 與 `deepseek-pro`（command-code → openrouter `~deepseek/deepseek-pro-latest`）；其餘 id 400
 `model_not_allowed`。以下「Recovery 行為」與 2026-10-25 以前的 routing 段落是歷史。
 
+**Release `1c5f811`（PR #26，2026-10-25）**：帶前綴／版本／日期／`-latest` 的 DeepSeek id
+（`deepseek-v4-flash`、`deepseek-v4.1-flash-1017`、`deepseek/deepseek-v4-pro`、`~deepseek/deepseek-flash-latest`）
+alias 到 `deepseek-flash`／`deepseek-pro`；`-fast`、`-vision-exp`、無關名稱仍 400。已部署並驗證 7 台
+（mazu、zeus swear01、cthulhu、valkyrie、Zeus swear02、Oracle、Mac；Mac 同時做格式遷移）；
+swop 未部署（不在 HAPI，Mac 經 `Host swop` SSH timeout），Athena 送修排除。回復點
+`deepseek-gateway.bak-20261025-gw3`（Mac 為 `*.bak-20261025-gw2`）。部署腳本在 mazu
+`~/.cache/gw-deploy/`（`convert.ts`、`verify.sh`、`remit-*.md`）。Gotchas：HAPI peer 要
+`--permission-mode bypassPermissions`、`wait-peer --timeout 3300`，否則卡在第一個權限提示；
+`verify.sh` 須相容 macOS bash 3.2（不可在 `"$(…)"` 內用 `'$$'` 拼引號）。
+
 # 部署不變量
 
 - Mac 使用獨立 arm64 binary 與 LaunchAgent。
