@@ -70,3 +70,7 @@ Claude 桌面 app 的內建瀏覽器（`mcp__Claude_Browser__*`）沒有 file ch
 5. 繳交（須使用者明確要求）：`POST /api/v1/courses/<course>/assignments/<assignment>/submissions`，body `{submission:{submission_type:"online_upload", file_ids:[<id>]}}`，回 201、`workflow_state: submitted`、`late` 欄位；頁面按鈕變成「重新繳交作業」。
 
 auto mode 的安全分類器會把「頁面 JS 把本機檔 bytes 搬進另一站」判成 Browser JS Exfil 而擋下；改用上面 curl 路線，或先取得使用者同意。Claude in Chrome 的 `file_upload` 也可用，但需使用者同意切換瀏覽器。
+
+## 下載課程檔到本機（2026-10-25 驗證）
+
+`/api/v1/files/<id>` 的 `url` 與 `/files/<id>/download` 都要 cookie，shell `curl` 拿不到。在已登入分頁用頁面 JS 取 `/api/v1/files/<id>/public_url`，回傳帶 `verifier=` 的連結，shell `curl -L` 可直接下載，不需權杖。日文二上課程 id 64097，練習題 L13–L18 PDF 中第 15 課是第 9–12 頁（頁序不是依課排列，需渲染縮圖確認）。
