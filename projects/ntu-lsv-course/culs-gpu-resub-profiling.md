@@ -10,6 +10,8 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 
 本機專案在 `<documents>/CULS-profiling`。入口為 `outputs/PROJECT.md`；`outputs/OSS-baseline.md` 為開源版對照。
 
+2026-10-25 起是 git repo，private GitHub `swear01/CULS-profiling`（已 `gemini-link`）。`.gitignore` 排除所有 Nsight 原始 capture（`*.nsys-rep`、`*.ncu-rep`、`*.sqlite`、`outputs/*-evidence.tar.gz`）與作者 binary／zip；CULS 原始碼修改留在 cthulhu `/var/tmp/culs-oss-20261024/CULS-abl/`，完整 diff 在 repo 的 `work/qor-gap/relax-div.patch`。
+
 量測都在 cthulhu（RTX 4070 Ti 12 GB）上進行，只測過小型 EPFL 電路，尚未重現 TCAD 2026 論文的大電路 speedup，因為需要 ≥24 GB VRAM。
 
 # 原始碼範圍
@@ -71,3 +73,11 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 做法：`CULS_RELAX_DIV` 跳過 `checkMffcConflict`，全部候選走 CPU greedy，每次提交前把「除數 → root」邊加入動態拓撲順序；只往 fanin 方向搜（碰到 root 即回路），把搜到的集合用小數 order 移到 root 前，間隔 < 1e-6 才 fallback 到完整 Pearce–Kelly。完整雙向版在 hyp 要 0.33 s（往前走 600 萬節點），只往回搜降到 0.01 s。
 - 結果（單次 `rs -n 2`，原版／放寬／ABC）：div 45,226／45,140／45,264；hyp 212,475／207,225／207,940；mem_ctrl 46,523／46,503／46,369（4 個候選因回路被拒）；adder、multiplier 不變。hyp alg 0.07 → 0.09 s。連跑 3 次時 multiplier、div、hyp 都贏 ABC。5 個輸出通過 `cec -n`、3 次輸出逐位元組相同。報告 `outputs/qor-gap.md`，patch `work/qor-gap/relax-div.patch`。
 - 建置：cthulhu 已換成 CUDA 13.3，見 [[cthulhu-cuda-13-toolchain]]。
+
+## 防回路、輸出固定與 GPU 利用率（2026-10-25）
+
+- `CULS_RELAX_DIV=1/2/3`：全部 CPU 逐一／混合／樂觀平行。QoR 相同；回路只出現在逐一提交部分（mem_ctrl 4、mem_ctrl_5xd 128），平行提交從未需要撤銷。混合沒用（hyp 只有 15 % 候選沒有向上除數）。
+- `DynTopo` 原本為每個節點配兩個 `std::vector` 並建全圖 fanout CSR，hyp_4xd 建置 0.066 s；改成稀疏 slot 索引、CSR 延後到 fallback 才建，greedy 從 0.09 s 降到 0.04–0.05 s，輸出不變。GPU 回路偵測最多只能省 0.018 s，且 24,802 層要逐層 launch，不值得做。
+- mem_ctrl 輸出不固定來自 strash `insertLevelNodes` 同層重複 key 搶雜湊槽（`insert_single_no_update`）；改 `insert_single_update_min_value` 一行修正，原版 CULS 也有此問題。binary `bin/gpuls-hyb3`。
+- hyp_4xd GPU Metrics（模式 3）：整段 SM Active 27 %；strash 每層 kernel 期間 SM Active 2.8 %（平均約 237 threads，占 hyp_4xd kernel 時間約一半）；resub kernel 期間 SM Active 94 % 但 SM Issue 25 %；約 44 % 樣本沒有 kernel。
+- 放大電路的 `&cec`：hyp_4xd 339 s、mem_ctrl_5xd 6 s 等價；div_5xd 超過 1 小時沒有結果（改跑 `cec -n`）。

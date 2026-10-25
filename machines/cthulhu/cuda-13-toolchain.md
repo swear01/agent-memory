@@ -17,3 +17,8 @@ tags: [cuda, nvcc, thrust, cccl, gcc]
 - CCCL 3（Thrust）不再間接提供 `thrust::tuple`、`thrust::get`：補 `#include <thrust/tuple.h>`。
 - `thrust::identity` 已移除：改用 `cuda::std::identity()`（`#include <cuda/std/functional>`）。
 - 從別的目錄 `cp -a` 過來的 build 目錄，`CMakeCache.txt` 仍指向舊來源路徑，要刪掉重建。
+
+## Nsight 權限與原始 capture
+
+- 2026-10-25 起 `swear01` 跑 `nsys --gpu-metrics-devices` 會出現 `ERR_NVGPUCTRPERM`（Insufficient privilege）。不改驅動的 `NVreg_RestrictProfilingToAdminUsers`（全機安全設定），改用 `ssh su_cthulhu`（`swear02`，NOPASSWD sudo）以 `sudo -n nsys profile ...` 單次執行，輸出寫到 `/var/tmp/` 再 `chmod a+rX`。
+- nsys／ncu 原始檔（`.nsys-rep`、匯出的 `.sqlite`）會記錄整台機器的進程命令列與環境變數；cthulhu 上曾錄到其他使用者的 `CURSOR_API_KEY`／`--api-key`。這些檔案不能進 git 或對外分享，只放整理後的 CSV。
