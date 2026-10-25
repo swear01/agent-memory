@@ -123,7 +123,7 @@ agy-login --print    # 60s 硬限
 ## 復發時的排查順序
 
 1. `pkill -f '^agy$'`，關閉所有舊的 antigravity/OAuth 分頁（避免舊 code 污染）。
-2. `python3 <remote-home>/agy-login`（TUI，等待無上限）。
+2. `agy-login`（TUI，等待無上限）。
 3. 從 `/tmp/agy-login-url.txt` 複製 URL 到全新分頁，60 秒內貼回 code。
 4. 驗證：token 檔存在且 `agy -p "reply only with OK"` 回 `OK`。
 5. 若仍為 `Invalid code verifier.`，代表有其他工具／分頁共用同一 OAuth client 搶發 code；改用另一種登入路徑（TUI 第二選項 `Use a Google Cloud project`，或 Gemini API key／ADC）。
