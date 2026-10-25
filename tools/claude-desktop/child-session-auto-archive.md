@@ -4,10 +4,10 @@ scope: tools/claude-desktop
 tool: Claude desktop app
 machine: SwairM5
 status: active
-confidence: medium
+confidence: high
 evidence: 2026-10-25 用 ccd_settings / ccd_pr / ccd_session_mgmt 工具查證設定與欄位；mod 通過 `claude plugin validate`、`tsc` 與 4 個 `claude plugin test`。尚未在真的 child PR 合併上端到端驗證。
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-26
 tags:
   - claude-desktop
   - auto-archive
@@ -26,10 +26,13 @@ tags:
 ## 做法（已部署在 Mac）
 
 - 全域 `auto_archive_on_pr_close=false`，`auto_archive_inactive_days=4`。
-- 本地 plugin `child-auto-archive@local`：原始碼在 transfer_MAC 的 `stow/agents/.agents/claude-plugins/mods/child-auto-archive`，同時記在 `plugins.json`。在 `session.start` 和含 `gh pr create` / `git push` 的 Bash 呼叫之後，用 `$.mcp.call('ccd_session_mgmt'|'ccd_pr', ...)` 檢查；是 child 且已綁 PR 就呼叫 `set_monitor` 打開開關，真正的歸檔交給 app。main session 一律不動。
+- 本地 plugin `child-auto-archive@local`：原始碼在 transfer_MAC 的 `stow/agents/.agents/claude-plugins/mods/child-auto-archive`，同時記在 `plugins.json`。在 `session.start` 和每個 `turn.complete` 之後（0.1.1 起），用 `$.mcp.call('ccd_session_mgmt'|'ccd_pr', ...)` 檢查；是 child 且已綁 PR 就呼叫 `set_monitor` 打開開關，真正的歸檔交給 app。main session 一律不動。
 - 只對之後新開或重新開啟的 session 生效；開關一旦打開就記在 app 裡，session 沒在跑時 PR 合併也會歸檔。
 
 ## 走過的彎路
+
+- 0.1.0 在 `gh pr create` / `git push` 的 `tool.call` hook 裡檢查：app 是在讀到工具輸出之後才綁 PR（log：`[GitHubPrManager] Bound github #N ... ahead of its first read`），而這時 hook 已經跑完了，所以第一次檢查幾乎一定看到 `bound:false`。只有之後又 push 過一次的 session 才會成功。Verto PR #31 的 child 只 push 一次就合併了，所以沒被歸檔；而 PR 合併後 `set_monitor` 會拒絕，之後補救不了。2026-10-26 改成每個 turn 結束時檢查（transfer_MAC PR #68）。
+- 不要快取「是不是 child」：session 隨時可能被 detach。PR 合併後也不要停止檢查：同一個 session 之後可能再綁新的 PR。
 
 - 每小時用 scheduled task 掃 `list_sessions` 再 `archive_session`：被 auto mode classifier 擋下，而且是輪詢，不如上面的事件式做法。
 - 在 mod 裡聽 `session.receive` 的 GitHub merged 事件、再 `archive_session("self")`：需要 session 活著、會跳批准卡片；改用 per-PR 開關比較簡單。
