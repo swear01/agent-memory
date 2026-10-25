@@ -13,8 +13,9 @@ tags:
 source_refs:
   - user-confirmed:2026-08-26
   - user-confirmed:2026-10-22
+  - user-confirmed:2026-10-25
 created: 2026-08-26
-updated: 2026-10-22
+updated: 2026-10-25
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -48,3 +49,17 @@ Agents」擋掉 `spawn-peer --permission-mode bypassPermissions`。這種情況�
 上游 main 的 `hapi` CLI 不能改執行中 session 的模式，也不能代按 pending
 approval。開錯模式的唯一修法是 archive 後用同樣的 remit 重開。PR
 `tiann/hapi#2095`（`hapi set-mode`）尚未合併。
+
+## MCP `spawn_peer` 與「Default = Manual」（2026-10-25）
+
+MCP 的 `spawn_peer` 工具同樣要明確帶 `permissionMode`（例如 `"auto"`）。省略時
+runner 不加旗標，`hapi claude` 自己補 `'default'`，SDK wrapper 再明確傳
+`--permission-mode default` 給 Claude。HAPI 走的是 SDK/stream-json 路徑，所以
+Claude Code 互動模式的預設（v2.1.283 起是 Auto）不會生效，自己的
+`~/.claude/settings.json` `defaultMode` 也會被這個明確參數蓋掉。2026-10-25 一個
+orchestrator 用 MCP 開的 B session 因此開在 Manual。
+
+Claude Code 現在把 `default` 叫 **Manual**；`dontAsk` 是「會詢問的一律拒絕」，
+不是 YOLO，HAPI 的 Yolo 對應 `bypassPermissions` 是對的。使用者決定**不改** HAPI
+省略時的預設，由 agent 自己選模式；`tiann/hapi#2166` 只把 Claude 的標籤改成
+Manual。
