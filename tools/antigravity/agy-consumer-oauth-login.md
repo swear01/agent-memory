@@ -104,7 +104,7 @@ agy -p "reply only with OK"
 
 ## 可重用的登入輔助腳本
 
-本機 `<remote-home>/agy-login`（Python，stdlib）封裝了上述所有修正：
+oracle 的 `~/.local/bin/agy-login`（Python，stdlib，已在 PATH）封裝了上述所有修正：
 
 - 以 pty 驅動 `agy`，SSH／headless（`TERM=dumb`）也能走手動貼 code 路徑；
 - 配置**極寬 pty（2000 欄）**使 URL 不換行，並用 schema 驗證（`access_type/client_id/code_challenge/S256/state` 等）確保寫出的 URL 完整；截斷者拒收並警告；
@@ -114,8 +114,8 @@ agy -p "reply only with OK"
 - 預設用 TUI（等待無上限），`--print` 走 60 秒模式，`--keep` 登入後留在 TUI。
 
 ```bash
-python3 <remote-home>/agy-login            # 建議：TUI
-python3 <remote-home>/agy-login --print    # 60s 硬限
+agy-login            # 建議：TUI
+agy-login --print    # 60s 硬限
 ```
 
 操作要點：URL 會寫到 `/tmp/agy-login-url.txt`（完整單行），用**全新分頁**開啟，完成後複製最新 code 貼回；若 stdin 不可互動，另一 shell 執行 `echo '<code>' > /tmp/agy-login-code.txt`。
