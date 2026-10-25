@@ -1,5 +1,5 @@
 ---
-title: New HAPI sessions default to YOLO permission mode
+title: New HAPI sessions default to Auto permission mode
 scope: tools/hapi
 project: hapi
 tool: session creation
@@ -21,10 +21,15 @@ generated_by: openai-codex/gpt-5.6-sol
 
 # Session permission preference
 
-When creating a new HAPI coding-agent session for this operator, use YOLO mode
-unless the operator explicitly selects another permission mode. YOLO changes
-approval handling only; it does not expand the requested task scope or
-authorize destructive actions.
+When creating a new HAPI coding-agent session for this operator, use Auto mode
+unless the operator explicitly selects another permission mode: Claude
+`auto`, Codex `autoReview` (Codex rejects `auto`). Always pass the mode
+explicitly; an omitted mode starts Claude in `default` (Manual). Use YOLO only
+when the operator asks for it. The permission mode changes approval handling
+only; it does not expand the requested task scope or authorize destructive
+actions.
+
+2026-10-25：使用者把預設從 YOLO 改成 Auto（「Auto 是蠻好的」）。
 
 After creation, verify the recorded session permission mode together with the
 agent, model, machine, workspace, and ready state.
