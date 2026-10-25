@@ -61,5 +61,13 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 
 - 等價設定：CULS `rs -n 2` ↔ ABC `resub -K 8 -N 2`；CULS 不保持 level，對應 ABC 加 `-l`。ABC `-F`（ODC）預設 0。
 - cthulhu 4070 Ti 5 個電路：CULS resub 本身比 ABC 快約 1.8–3 倍（div 0.07 vs 0.13 s、hyp 0.17 vs 0.30 s），但 CULS process 只讀寫就要 0.19–0.21 s（CUDA context + 2 GB heap），小電路整體 wall 反而輸 ABC；只有 hyp 打平（0.36 vs 0.40 s）。
-- QoR：multiplier CULS 26,000 vs ABC 26,249；hyp ABC 207,940 vs CULS 212,475（ABC 好 2.1 %）；mem_ctrl ABC 46,369 vs 46,523；div/adder 幾乎相同。hyp 差距推測來自平行候選的 conflict 丟棄，未驗證。
+- QoR：multiplier CULS 26,000 vs ABC 26,249；hyp ABC 207,940 vs CULS 212,475（ABC 好 2.1 %）；mem_ctrl ABC 46,369 vs 46,523；div/adder 幾乎相同。hyp 差距原本推測來自 conflict 丟棄，後來證實不是（見下節）。
 - 證據在專案 `outputs/abc-baseline.md`、`work/abc-baseline/`。
+
+## hyp QoR 差距：除數層級限制與 `CULS_RELAX_DIV`（2026-10-25）
+
+- 不是 conflict：連跑 8 次 `rs`，hyp 只到 212,447；CULS 只找到 2,256 個候選，ABC 做了 6,325 次替換。真正原因是 `collectDivisor` 在 `fUseConstr` 下要求 fanout 擴展的除數 `level ≤ level(root)`（同層 id 較小），用意是讓整批平行提交不形成回路；ABC 沒有這條限制。拿掉後 hyp 候選變 7,490、結果 207,225（ABC 207,940）。MFFC 只展開 10 層幾乎無影響，深度設 1000 會觸發 `MAX_MFFC_SIZE = 64` 的 assert。
+- 坑：直接拿掉限制會產生回路，mem_ctrl 在 `traceBackResub` 的 device assert 當掉（兩節點互相 0-resub）。
+- 做法：`CULS_RELAX_DIV` 跳過 `checkMffcConflict`，全部候選走 CPU greedy，每次提交前把「除數 → root」邊加入動態拓撲順序；只往 fanin 方向搜（碰到 root 即回路），把搜到的集合用小數 order 移到 root 前，間隔 < 1e-6 才 fallback 到完整 Pearce–Kelly。完整雙向版在 hyp 要 0.33 s（往前走 600 萬節點），只往回搜降到 0.01 s。
+- 結果（單次 `rs -n 2`，原版／放寬／ABC）：div 45,226／45,140／45,264；hyp 212,475／207,225／207,940；mem_ctrl 46,523／46,503／46,369（4 個候選因回路被拒）；adder、multiplier 不變。hyp alg 0.07 → 0.09 s。連跑 3 次時 multiplier、div、hyp 都贏 ABC。5 個輸出通過 `cec -n`、3 次輸出逐位元組相同。報告 `outputs/qor-gap.md`，patch `work/qor-gap/relax-div.patch`。
+- 建置：cthulhu 已換成 CUDA 13.3，見 [[cthulhu-cuda-13-toolchain]]。
