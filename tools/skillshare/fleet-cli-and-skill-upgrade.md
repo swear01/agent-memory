@@ -4,9 +4,9 @@ scope: tools/skillshare
 tool: skillshare
 status: active
 confidence: high
-evidence: 2026-10-19 從 v0.20.25 升到 v0.25.13，逐台以 `skillshare version`、`status --json` 與 source HEAD 驗證。
+evidence: 2026-10-19 從 v0.20.25 升到 v0.25.13；2026-10-25 全部升到 v0.26.4（swop 從 0.20.27），逐台以 `skillshare version`、`skillshare pull` 與 source HEAD 驗證。
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-10-25
 tags:
   - skillshare
   - fleet
@@ -23,7 +23,8 @@ CLI 與內建的 `skillshare` skill 是兩件事，要分開升級、分開驗�
 - Linux 主機是放在 `<remote-home>/.local/bin/skillshare` 的獨立 binary。非互動 SSH 要先 `export PATH=$HOME/.local/bin:$PATH`，再執行 `skillshare upgrade --cli --force`（只升 CLI；不加 `--cli` 會連 skill 一起升）。
 - mazu、cthulhu、valkyrie 看到的是同一個 `swear01` home 裡的 binary：在 mazu 升一次後，三台都回報新版。zeus（`su_zeus`，`swear02`）與 oracle（`ubuntu`，aarch64）要各自升級。
 - `skillshare version` 會印 ASCII banner，取版本號用 `skillshare version 2>&1 | grep -o "v[0-9.]*" | tail -1`。
-- Windows swop 的公網 SSH（`swop` alias）在 2026-10-19 回 `Connection refused`，當天沒升到。Athena 送修中，依 hapi skill 政策排除。
+- Windows swop 用 `skillshare upgrade --cli --force` 升級。2026-10-25 從 0.20.27 升到 v0.26.4；它的 git pull 卡住問題見 [[git-ssh-portablegit]]。Athena 依 hapi skill 政策排除。
+- 2026-10-25 GitHub 最新 release 是 v0.26.4，沒有 0.30 系列，不要和 HAPI 的版本號（0.30.x）混淆。
 
 ## 內建 skill
 
