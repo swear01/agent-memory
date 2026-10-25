@@ -2,9 +2,9 @@
 title: swop：git 經 Windows OpenSSH 9.5p2 會卡住，skills repo 改用 PortableGit 的 ssh
 scope: machines/swop
 machine: swop
-status: active
+status: resolved
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-26
 tags:
   - git
   - ssh
@@ -35,9 +35,13 @@ swop 的 Git for Windows 2.49.0 安裝時選了 `SSH Option: ExternalOpenSSH`，
 - 已安裝的 Git、全域 git 設定與 remote 都沒動。
 - 還原方式：把 `core.sshCommand` 改回 `ssh -i ... -o IdentitiesOnly=yes`，再刪除該資料夾。
 
-## 待辦
+## 2026-10-26 已解決
 
-如果要改回內建 ssh，可以用 winget 把 Windows OpenSSH 升到新版（需要管理員權限），再讓 git 實際 fetch 一次驗證，成功後才還原。2026-10-25 因 swop 關機尚未執行。
+用 `winget upgrade --id Git.Git --custom "/o:SSHOption=OpenSSH"` 把 Git for Windows 從 2.49.0 升到 2.56.0.3，同時把 SSH Option 從 `ExternalOpenSSH` 改成內附 OpenSSH，git 現在用 `C:\Program Files\Git\usr\bin\ssh.exe`（MSYS `OpenSSH_10.6p1`）。系統的 Win32 OpenSSH 9.5p2 沒有動，swop 的 sshd 仍然靠它。
+
+skills repo 的 `core.sshCommand` 已改回 `ssh -i C:/Users/<user>/.ssh/id_ed25519_skillshare -o IdentitiesOnly=yes`。`git fetch` 和 `skillshare pull` 都能正常結束，HEAD 和 GitHub 一致。PortableGit 資料夾還留著，沒用到了，可以刪。
+
+注意：Git installer 升級時會沿用上一次選的選項，要改 SSH Option 必須明確傳 `/o:SSHOption=OpenSSH`。
 
 ## 遠端操作 swop 的注意事項
 
