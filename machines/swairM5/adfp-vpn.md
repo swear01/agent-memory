@@ -31,3 +31,13 @@ tags: [ADFP, VPN, openfortivpn, FortiGate, Guacamole, sudoers, macOS]
   課程 repo PR #14（2026-10-20 合併，`51fa23d`）已把啟動器改為 `adfp-vpn up` 加自動
   `adfp-vpn login`；Swear Review 在該 repo 兩次回報 `no items were selected`（未實際審查），
   不能當通過。
+
+## ADFP 鎖屏（2026-10-25）
+
+- 閒置後 xrdp 桌面會跳出 xfce 鎖屏；此時送出的按鍵會進密碼欄（曾誤送一行指令，顯示 Incorrect password）。
+  打字前先截圖確認畫面。
+- 解法：重新載入 ADFP 分頁（CDP `location.reload()`），Guacamole 會開新的 xrdp session，可能換到另一台
+  `cvsd-vm-N`；家目錄共用，已開視窗會消失。不必、也不要輸入密碼。
+- 使用者同意後已在共用家目錄關閉鎖屏：`xfce4-screensaver` 的 `/saver/enabled`、`/lock/enabled`、
+  `/lock/saver-activation/enabled` 與 `xfce4-power-manager` 的 `dpms-enabled`、`lock-screen-suspend-hibernate`
+  皆為 false。auto mode 分類器會把這類設定判為削弱安全，需使用者明確同意。
