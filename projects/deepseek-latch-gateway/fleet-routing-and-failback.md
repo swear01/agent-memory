@@ -18,9 +18,14 @@ swear01（ssh `zeus`，port `35001`）也有一個。兩個帳號的 home 都是
 swear01 home = mazu/athena/cthulhu/valkyrie/zeus 共用；swear02 home = su_mazu/su_cthulhu/
 su_valkyrie/su_athena/su_zeus 共用（只有 su_zeus 跑 gateway）。換 key 或 binary 必須兩個 home 都做。
 
-`routing.yaml` 只定義 model 到 priority group 的資料；gateway binary 內的
-`PriorityLatchManager` 才負責 fallback、cooldown、half-open probe 與自動
-failback。因此 routing code 修正必須部署 binary，只改 route file 不足以生效。
+**2026-10-25 起（release `3042db6`，PR #24）架構已簡化**：單一 `config.yaml` =
+`providers`（base_url／`${VAR}` key／compat／extra_body）+ `models`（public id → 依序的
+`{provider, model}` deployments，LiteLLM 形狀）。`routing.yaml`、priority group、latch、
+half-open probe、指數 cooldown、aliases／model_map／allow／`/switch` 全部移除；新 binary
+看到舊 `endpoints` 格式直接拒絕啟動，舊 binary 也讀不了新格式，**binary 與 config 必須一起換**。
+只服務 `deepseek-flash`（opencode-go-1/2/3 → command-code → openrouter `~deepseek/deepseek-flash-latest`）
+與 `deepseek-pro`（command-code → openrouter `~deepseek/deepseek-pro-latest`）；其餘 id 400
+`model_not_allowed`。以下「Recovery 行為」與 2026-10-25 以前的 routing 段落是歷史。
 
 # 部署不變量
 
@@ -38,7 +43,14 @@ failback。因此 routing code 修正必須部署 binary，只改 route file 不
 
 # Recovery 行為
 
-Quota failure 會先依序耗盡三個 OpenCode Go account，再進入低優先級 route。
+現行（2026-10-25 起）：任何 provider failure（429/402/quota 訊息、任何 401、OpenCode 訂閱 403、
+Cloudflare 1010、408、5xx、網路錯誤連兩次）讓該 deployment（provider+model）**30 分鐘**不被呼叫，
+到期後下一個 request 直接再試；一般 4xx 原樣回 client、不 cooldown；client 斷線不 cooldown；
+全部在 cooldown 時回 503 `no_available_provider` + `Retry-After`（不會在 cooldown 內戳 provider）。
+沒有 session id 也沒有 opening 的請求會跳過 OpenCode deployments（不 cooldown）改走後面的 provider。
+`/status` 依 model 列每個 deployment 的 requests/failures/cooldown_until/last_error。
+
+以下為 2026-10-25 前的舊行為（歷史）：Quota failure 會先依序耗盡三個 OpenCode Go account，再進入低優先級 route。
 Cooldown 從 1.5 小時開始，failed recovery probe 後倍增，最高 24 小時。
 到期後由一個真實 request 擁有 half-open probe；其他 concurrent request
 繼續使用 fallback。Probe 成功便恢復到可用的最高 priority。
@@ -424,3 +436,30 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
   3/3 回 `deepseek/deepseek-v4.1-flash-1017`（Morph）。repo PR #23（merge `f6ba9ea`）加了 proxy 層 regression
   test，直接載入 `routing.example.yaml`。收尾別用 `pkill -f <含暫存路徑的 pattern>` 寫在同一行指令裡，
   會連自己的 shell 一起殺掉（exit 144）。
+
+# 2026-10-25 簡化 router（PR #24，main `3042db6`）與「永遠最新版」
+
+- 使用者要求：router 太複雜，改成參考 LiteLLM 的簡單設計；永遠回 DeepSeek 最新版；刪掉
+  `deepseek-v4.1-flash-1017`；保留「上游失效 30 分鐘內不要戳」。這取代了同日稍早的 1017 pin
+  與「pin 1017 的 regression test」（PR #23，那個方向被使用者否定）。
+- 「最新版」驗證：`bun run check-latest <config>`（需 `.secrets`）。undated deployment 必須是該 provider
+  `/models` 中最高版本；OpenRouter `~…-latest` alias 實打一次，served 必須等於目錄中最高版本＋最新
+  `created` 的 snapshot。2026-10-25：flash-latest → `deepseek/deepseek-v4.1-flash-1017`（OpenInference/Morph），
+  pro-latest → `deepseek/deepseek-v4-pro-0813`（在 max_price 0.15/0.60 下由 Baidu 服務）。
+  Command Code／OpenCode Go 只有 undated 名稱，snapshot 無法驗證或 pin。
+- 遷移工具（不在 repo）：bun `convert.ts OLD EXAMPLE`，保留各機 server 與 endpoint 欄位、models 取自
+  example 並過濾成該機有的 provider。各機 `.bak-20261025-gw2` 是回復點，`routing.yaml.retired-20261025`。
+- AIsimpV rtl-relate pilot 會記錄 `X-Gateway-Active-Endpoint`／`X-Gateway-Attempt`，所以這兩個 header 保留；
+  新增 `X-Gateway-Upstream-Model`。
+- NeuroAbs PR #12（commit `4426cf9`）改用 `deepseek-flash`，不再要求 served==1017，served model 留在
+  `deepseek_calls.jsonl` 的 `response_raw`。
+- Swear Review 在大 PR 的 incremental 會重貼已修好的舊 finding，不會收斂成 0；本 PR 以 Claude Code Action
+  的「no blocking bugs」作為通過的 provider。Swear Review 對只改 tests/docs 的 PR 會回
+  「Review skipped: no items were selected」，那不算通過。
+- 2026-10-25 部署結果（docs PR #25 `23c82d9`）：mazu、zeus(swear01)、cthulhu、valkyrie、Zeus(swear02, 35002)、
+  Oracle 六台完成並驗證（Linux x64 `9e44627e1ef8…`，Zeus 自建 hash 相同；ARM64 `9a0af84eb842…`）。
+  **Mac（HAPI 離線）、swop、Athena 未部署**，仍是舊 binary＋舊設定（相容，但仍接受已移除 id）。
+  補做時把 binary 與 config 一起換：mazu `~/.cache/gw-deploy/convert.ts`（在 repo checkout 內用 bun 跑）與
+  `verify.sh PORT` 保留著。
+- HAPI 派 Claude peer 做部署必須帶 `--permission-mode bypassPermissions`，否則 peer 停在第一個權限提示、
+  `wait-peer` 只會 timeout（預設 timeout 很短，要加 `--timeout 3300`）。`inspect-peer` 只顯示完成的訊息。
