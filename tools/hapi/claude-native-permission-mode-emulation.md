@@ -65,3 +65,21 @@ mode 開 TUI，hook 再把 HAPI 狀態覆寫掉。另外 Claude 2.1.302 的
 `--yolo` 轉發這個 flag 會讓切回 Default 後的 local relaunch 仍在 bypass。修法：
 local 傳 `--permission-mode <session mode>`（default 不傳，保留 settings.json
 defaultMode），`--yolo` 只設 session mode 不再轉發 raw flag。
+
+驗證範圍：#2159 端到端只驗證了 TUI 收到的 flag（acceptEdits 狀態列、`--yolo` 的
+bypass 確認畫面）。「hook 不再把 HAPI mode 蓋回去」沒有實測：測試 prompt 沒有真的送出，
+目前只有讀 code 與 unit test 支持。
+
+## 用 PTY 實測 Claude TUI 的坑（沒有 tmux 時用 `script -qfc`）
+
+- `cd` 要寫進 `script -qfc "cd <ws> && ..."` 裡；外層先 `cd` 會被 shell 重設，TUI
+  會跑在錯的 workspace。
+- 新目錄會先跳 trust 畫面（子目錄不繼承上層 trust）；預設選項是「No, exit」，
+  要送 Down 再 Enter。選 Yes 會在 `~/.claude.json` 留下該路徑的 trust 紀錄。
+- bypass 模式會跳「Bypass Permissions mode」確認；只觀察、不要選 accept，
+  否則會寫入全域的 `bypassPermissionsModeAccepted`。
+- 從 Claude Code session 裡啟動會繼承 `CLAUDECODE`、`CLAUDE_CODE_CHILD_SESSION`
+  等環境變數（TUI 顯示 transcript saving off）。
+- 用 stdin pipe 打字不一定會送出 prompt；要驗證 hook 行為需確認有真的出現回覆。
+- 清 process 不要 `pkill -f <測試目錄名>`：會連自己的 shell 一起殺掉；改用
+  `/proc/<pid>/environ` 比對 `HAPI_HOME` 再 kill。
