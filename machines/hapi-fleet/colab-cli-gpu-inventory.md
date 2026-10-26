@@ -39,3 +39,4 @@ tags: [colab, gcloud, uv, gpu, hapi]
 - ADC 會提示沒有 quota project（`gcloud auth application-default set-quota-project`），對 colab run 不影響。
 - swever：用 ubuntu 的 `sudo -n` 系統層安裝：uv 0.13.5 在 `/usr/local/bin`、SDK 590.0.1 在 `/opt/google-cloud-sdk`（symlink 到 `/usr/local/bin`）、colab 用 `UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin`。swever 沒有 tmux，pending login 改用 `screen -dmS colab-adc`。
 - 手法：HAPI Codex `safe-yolo` spawn 一律 HTTP 502，Claude `acceptEdits` 會卡在 Bash 授權；安裝只能用使用者核准的 `yolo`。`colab` 沒有 `--version`，用 `--help` 驗證。`inspect-peer` 會截斷長訊息，URL 要用 `fold -w 150` 拿。pending login 放在 detached tmux/screen，之後用 `tmux send-keys` 貼 code，不需保持 HAPI session。
+- 透過 HAPI ping 把使用者給的 OAuth code 交給 Codex session 輸入：valkyrie／zeus 的 session 有照做；swever 的 session 兩次都拒絕輸入（即使說明使用者已核准），ADC 仍未完成。Google 授權 code 很快過期，被拒後需要新的 URL／code。
