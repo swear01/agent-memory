@@ -28,5 +28,7 @@ Rocky Linux 8.10。`/usr/cad` 是 `/cad` 的 symlink，CIC 的 csh 腳本寫 `/u
 - Innovus 25.1 `route_design` 預設會在 route 後把 via 換成 multi-cut（log：`auto set of droutePostRouteSwapVia to multiCut`），UART 上 91.7% 為 2-cut；`set_db route_design_detail_use_multi_cut_via_effort high` 幾乎無差，`set_db route_design_detail_post_route_swap_via none` 則 0% multi-cut、DRC 仍 0。`report_route -multi_cut` 列 single/multi-cut 統計。同一 session 第二次 `read_db` 會被 `IMPIMEX-7031` 拒絕（需 `read_db_stop_at_design_in_memory false`），教學上改用重開 Innovus 由 checkpoint 續跑。
 - Phantom GDS（`CIC/Phantom/fsa0m_a_generic_core_cic.gds`）只含 M1 與文字層，工作站上找不到真實 cell GDS；Calibre DRC 因此只驗得到 M1–M6/VIA，ANTENNA deck（需 PO1 AND DIFF）報 0 不代表通過。
 - UMC 官方 Calibre DRC deck 不在 CBDK，而在老師下載的 FDK `UM180FDKMFC00000OA_B02.tar.gz` 的 `Calibre/DRC/`（BASE 2.16_P1 預設已開 `20KA_TOP_METAL`）。小區塊教學跑法要 `DRC UNSELECT CHECK METAL_DENSITY / DIFFUSION_DENSITY / RF_RULES`，否則只剩整晶片密度類違規。
+- 新登入的 shell（`env -i bash -l`，2026-10-26 以 nobody 實測）PATH 裡沒有 `xrun`、`verisium_debug`、`genus`、`innovus`；每個新終端都要先 `source /cad/cadence/CIC/innovus.sh`（Genus/Innovus）或 `source /cad/cadence/CIC/xcelium.sh`（Xcelium/Verisium）。腳本內部 source 的環境不會留在互動 shell，所以 `run_sim.sh` 跑完後直接下 `verisium_debug` 會 command not found。
+- 教材常見 Innovus 錯誤（同日實測）：`resume_from` 讀不存在的 checkpoint → `IMPIMEX-7331 Cannot identify the top cell name`；同一 session 再 source 一次 init step → `read_mmmc` 在 `init_design` 後重跑，報 `IMPSE-110`（`TCLCMD-1306`）；不在 `run/` 下 `source ../scripts/...` → `IMPSE-122 ... could not be located`。
 
 相關：[[cadence-innovus-stylus-vs-legacy-flow]]、[[innovus-physical-check-points]]
