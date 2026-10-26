@@ -31,3 +31,11 @@ tags: [colab, gcloud, uv, gpu, hapi]
 - swever 的 Codex read-only 失敗（bwrap RTM_NEWADDR），改用 `--agent claude --model haiku --permission-mode plan` 可唯讀完成。
 - spawn-peer 偶發 HTTP 502；序列化、上一個 session archive 後重試即可成功。
 - Grok box 的 `/var/tmp/hapi-runner/runner.env` 可能被清掉，此時 `hapi-runner-ensure` 靜默退出（flock 目錄不存在），runner 不會上線；仍可用 `~/.secrets/env` 的 token + 公開 hub URL 呼叫 hapi CLI。
+
+## 安裝結果（2026-10-26 晚）
+
+- NFS 共用 home（從 valkyrie 安裝）：`~/google-cloud-sdk` SDK 590.0.1（官方 tarball，不跑 install.sh）＋ `uv tool install google-colab-cli`；PATH 行加在 `~/.bashrc`／`~/.profile`。runner.env 的 PATH 不含 gcloud（未修改）。ADC 已登入，`colab --auth=adc run --gpu A100 check.py` 拿到 A100-SXM4-40GB，跑完自動釋放（`colab --auth=adc sessions` 為空）。
+- zeus：沿用既有 SDK 580.0.0、colab 0.7.5，ADC＋A100 測試同樣通過。
+- ADC 會提示沒有 quota project（`gcloud auth application-default set-quota-project`），對 colab run 不影響。
+- swever：用 ubuntu 的 `sudo -n` 系統層安裝：uv 0.13.5 在 `/usr/local/bin`、SDK 590.0.1 在 `/opt/google-cloud-sdk`（symlink 到 `/usr/local/bin`）、colab 用 `UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin`。swever 沒有 tmux，pending login 改用 `screen -dmS colab-adc`。
+- 手法：HAPI Codex `safe-yolo` spawn 一律 HTTP 502，Claude `acceptEdits` 會卡在 Bash 授權；安裝只能用使用者核准的 `yolo`。`colab` 沒有 `--version`，用 `--help` 驗證。`inspect-peer` 會截斷長訊息，URL 要用 `fold -w 150` 拿。pending login 放在 detached tmux/screen，之後用 `tmux send-keys` 貼 code，不需保持 HAPI session。
