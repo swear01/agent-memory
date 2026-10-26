@@ -10,19 +10,20 @@ updated: 2026-10-26
 tags: [colab, gcloud, uv, gpu, hapi]
 ---
 
-## 盤點結果（2026-10-26）
+## 最終狀態（2026-10-26 23:30 驗證）
 
-| 機器 | OS | uv | gcloud | colab | GPU |
-|---|---|---|---|---|---|
-| mazu | Ubuntu 26.04.1 x86_64 | 0.11.19（NFS home） | 無 | 無 | RTX 4060 |
-| valkyrie | Ubuntu 26.04.1 x86_64 | 0.11.19（NFS home） | 無 | 無 | RTX 4090 |
-| cthulhu | Ubuntu 26.04.1 x86_64 | 0.11.19（NFS home） | 無 | 無 | RTX 4070 Ti |
-| athena | Ubuntu 26.04 x86_64 | 0.11.19（NFS home） | 未驗（離線） | 未驗 | RTX 4090（舊紀錄） |
-| zeus | Ubuntu 26.04.1 x86_64 | 0.11.19 | `~/google-cloud-sdk` 存在但不在 PATH，無 ADC | 無 | GTX 1080 Ti |
-| swever（OCI） | Ubuntu 24.04.4 aarch64 | 無 | 無 | 無 | 無 |
-| swairM5 | macOS 27.0.1 arm64 | 0.11.32 | Homebrew SDK 567.0.0，ADC 存在 | `~/.local/bin/colab`（uv tool google-colab-cli） | Apple Silicon |
+| 機器 | OS | uv | gcloud | colab | ADC＋A100 測試 | 本機 GPU |
+|---|---|---|---|---|---|---|
+| NFS 共用 home（mazu/valkyrie/cthulhu/athena） | Ubuntu 26.04 x86_64 | 0.11.19（`~/.local/bin`） | 590.0.1（`~/google-cloud-sdk`） | uv tool `google-colab-cli` | 通過（從 valkyrie 驗證） | 4060 / 4090 / 4070 Ti / 4090 |
+| zeus（swear02 home） | Ubuntu 26.04 x86_64 | 0.11.19 | 580.0.0（`~/google-cloud-sdk`） | 0.7.5 | 通過 | GTX 1080 Ti |
+| swever（OCI，即 oracle） | Ubuntu 24.04 aarch64 | 0.13.5（`/usr/local/bin`） | 590.0.1（`/opt/google-cloud-sdk`，連結到 `/usr/local/bin`） | 0.7.5（`/opt/uv-tools`） | 通過 | 無 |
+| swairM5 | macOS arm64 | 0.11.32 | Homebrew 567.0.0 | 0.7.5 | 原本就可用 | Apple Silicon |
 
-- 四台 NFS 共用 home 的 `~/.config/gcloud` 不存在、uv tools 目錄為空；一次在共用 home 裝 uv tool + gcloud（user-level SDK）即可涵蓋四台，但系統路徑仍是各機獨立。
+- A100 測試：`colab --auth=adc run --gpu A100 check.py`（nvidia-smi）拿到 A100-SXM4-40GB，跑完自動 terminate，`colab --auth=adc sessions` 為空。
+- ADC 帳號為使用者的個人 Google 帳號；每個 home 一份 `~/.config/gcloud/application_default_credentials.json`（NFS 四台共用一份）。
+- 每次登入都提示沒有 quota project（可用 `gcloud auth application-default set-quota-project`），對 colab run 無影響。
+- Runner PATH 注意：共用 home 與 zeus 的 gcloud 只加在 `~/.bashrc`／`~/.profile`，HAPI runner.env 的 PATH 不含 `~/google-cloud-sdk/bin`；HAPI 起的 agent 要自己加 PATH 或用絕對路徑。swever 在 `/usr/local/bin` 不受影響。
+- athena 安裝當下離線，未單獨驗證（共用 home 理論上同樣可用）。
 
 ## 唯讀稽核手法
 
@@ -32,7 +33,7 @@ tags: [colab, gcloud, uv, gpu, hapi]
 - spawn-peer 偶發 HTTP 502；序列化、上一個 session archive 後重試即可成功。
 - Grok box 的 `/var/tmp/hapi-runner/runner.env` 可能被清掉，此時 `hapi-runner-ensure` 靜默退出（flock 目錄不存在），runner 不會上線；仍可用 `~/.secrets/env` 的 token + 公開 hub URL 呼叫 hapi CLI。
 
-## 安裝結果（2026-10-26 晚）
+## 安裝過程與教訓
 
 - NFS 共用 home（從 valkyrie 安裝）：`~/google-cloud-sdk` SDK 590.0.1（官方 tarball，不跑 install.sh）＋ `uv tool install google-colab-cli`；PATH 行加在 `~/.bashrc`／`~/.profile`。runner.env 的 PATH 不含 gcloud（未修改）。ADC 已登入，`colab --auth=adc run --gpu A100 check.py` 拿到 A100-SXM4-40GB，跑完自動釋放（`colab --auth=adc sessions` 為空）。
 - zeus：沿用既有 SDK 580.0.0、colab 0.7.5，ADC＋A100 測試同樣通過。
