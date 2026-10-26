@@ -17,8 +17,11 @@ updated: 2026-10-26
 
 ## 看起來像暫存，但不能刪
 
-- `/var/tmp/qmd-memory-swever/`：這是 shared-memory 現役的 QMD config 和 index（`QMD_CONFIG_DIR`、`XDG_CACHE_HOME` 都指向這裡），其中 embedding 模型佔 2.4G。只有 `cache/qmd/index.sqlite.*.bak` 之類的舊備份可以考慮刪。
-- `/var/tmp/shared-memory-issue25-20260821-oracle/`（2.9G，redacted corpus 和 episodes）與 `/var/tmp/candidate-v3/`（0.9G shards）：agent-memory issue #25（sliced corpus triage）還是 open 時就保留。
+- `/var/tmp/qmd-memory-swever/`：這是 shared-memory 現役的 QMD config 和 index（`QMD_CONFIG_DIR`、`XDG_CACHE_HOME` 都指向這裡）。`cache/qmd/models` 裡的三個 gguf（embedding、reranker、query expansion，共 2.4G）都在用，`cache/qmd/index.sqlite` 和 `config/qmd` 也是現役的。其他像 `cache-*`、`config/<test-name>`、`index.sqlite.*.bak`、`*.snapshot.sqlite-*` 都是測試留下的副本，2026-10-26 已清掉，整個目錄剩 2.5G。
+
+## 已刪除的 issue #25 資料
+
+- 使用者確認後，2026-10-26 刪掉了 `/var/tmp/shared-memory-issue25-20260821-oracle/`（2.9G，redacted corpus 和 episodes）和 `/var/tmp/candidate-v3/`（0.9G shards）。當時 agent-memory issue #25 雖然還是 open，但從 2026-08-21 之後就沒有進度。要恢復的話，從原始 session log 用 `redact_jsonl.py` 重新產生。
 
 ## 殘留程序
 
