@@ -160,6 +160,11 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 
 - 症狀：Web 顯示 `Process exited unexpectedly: Claude Code process exited with code 126`，連續三次後出現 `Dropping the queued message`，訊息沒有送到 agent。hapi CLI 的 log 只有 `[remote]: launch error {}`；child stderr 只有在設了 `DEBUG` 時才會印出來，所以 log 抓不到 errno。
 - 情境：swairM5 上執行 v0.30.7.7 部署的那個 session，在 03:45 用新版覆蓋了 `~/.local/bin/hapi`，但它自己還是跑舊 binary。它的 Claude child 從 03:40 一直活著，所以中間正常。14:37 切換 model 後必須重啟 child（log 出現 `mode has changed`），之後每次 spawn 都在約 40 ms 內 exit 126。同一個 process 稍早也回報過 macOS TCC 拒絕它讀取 `~/Documents` 裡的檔案。
-- 最可能的原因：`~/.local/bin/claude` 是 symlink，指到 `~/Documents/transfer_MAC/stow/...` 底下的 shell wrapper。舊 process 的 binary 被換掉以後失去 Documents 的 TCC 存取權，執行不了 wrapper，所以 exit 126。佐證：新開的 hapi process 都能正常 spawn；用舊 process 啟動時的 env 加上相同參數手動跑 wrapper，也正常。因為沒有 errno，TCC 只能算強烈推論，還沒有直接證實。
-- 結論：舊 binary 的 session 只要不重啟 Claude child 就能繼續用。切換 model 或 mode、遇到 crash 需要 respawn 時，就可能一直卡在 126，這時換回原 model 也沒用。
+- 原因調查（以 tccd log 為準）：
+  - hapi 讀 Documents 靠的是 Full Disk Access（`kTCCServiceSystemPolicyAllFiles`，`authValue=2 authReason=4`）。TCC 用路徑認 client（`AUTHREQ_SUBJECT: subject=~/.local/bin/hapi`，`staticCode … type: 1`），designated requirement 是 `identifier "xyz.hapi.cli" and certificate root = H"4abaabe4…"`，不綁 cdhash。每版都用同一張 `HAPI Local Release Signing` 簽，所以**授權會延續到新版，新 process 都被允許**。換版本身不需要重新授權。
+  - 舊 process 的不同之處：它的執行檔 inode 已經被 `mv` 換掉。tccd 處理它的請求時會記 `Failed to fetch responsible file descriptor: [2: No such file or directory]`，接著改成驗證「目前在那個路徑上的新檔」，而不是實際在跑的程式碼。新 process 不會出現這行，所以可以當作舊 inode process 的辨識記號。
+  - 時間線：03:45 換掉 binary 以後，舊 process 到 04:02 都還讀得到 Documents（推測是 kernel 快取了舊的允許結果）。閒置 10.5 小時後，14:34 讀 Documents 得到 `Operation not permitted`，而且當下 sandboxd 和 tccd 都**沒有收到任何請求**。14:37:54 spawn 時 tccd 對舊 process 回的是允許，但 spawn 仍然 exit 126。所以拒絕發生在 kernel 這一層，不是 tccd 判 deny。推論是 kernel 無法把 tccd 的結果對應回舊程式碼的身分；這點沒有直接證實，因為重現需要替換正在使用的 binary，會連帶影響所有 live session。
+  - 排除項目：不是 iCloud dataless（`ls -lO` 沒有 dataless 旗標，`FXICloudDriveDesktop=0`）；不是 Claude Code 的 sandbox（沒有 `sandbox` 設定）；不是 fd 耗盡；不是 env 或參數造成（用舊 process 啟動時的 env 和相同參數手動跑都正常）。
+  - 調查陷阱：zsh 的 `log` 是內建指令，要用 `/usr/bin/log show`。`kTCCServiceDeveloperTool` 和 `ListenEvent` 的 deny 是 syspolicyd 等的 preflight 雜訊，跟這次無關。
+- 結論：在 Mac 上，舊 binary 的 session 在換版後一段時間內還能用，但遲早會失去對 `~/Documents` 的存取，包括 stow 進去的 `~/.local/bin/claude`、`~/.ssh/config` 和 skills。之後只要需要重啟 Claude child，或讀到這些檔案就會失敗。Linux 沒有這個問題。切換 model 或 mode、遇到 crash 需要 respawn 時，就可能一直卡在 126，這時換回原 model 也沒用。
 - 修法（已驗證）：等舊 process 停掉（或在授權下 `hapi stop-peer <id>`），然後執行 `hapi ping-peer <id> --message-file -`。inactive session 會先自動 resume（JSON 回 `"resumed":true`），由 runner 用新 binary 加 `claude --resume` 接回原對話，再把訊息送進去；被丟掉的訊息要手動重送。驗證方式：新 log 沒有 `launch error`、有 `stream message #`，`inspect-peer` 看得到 agent 回覆。
