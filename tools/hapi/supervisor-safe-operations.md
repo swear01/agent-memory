@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-10-24
+updated: 2026-10-26
 tags:
   - hapi
   - supervisors
@@ -155,3 +155,11 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 - Binary 用 `mv` 原子替換後，舊 session 的 `/proc/<pid>/exe` 會顯示 `(deleted)`（NFS 上則是 `.nfs*`），可以用這點找出所有舊版 session。這些 session 仍可能隨時使用舊版的 `runtime/<old>/tools`，所以遷移前不能刪那個 runtime。
 - Agent 在未經使用者授權時對使用者 session 執行 `stop-peer`，會被 Claude Code auto-mode classifier 以 Interfere With Workloads 拒絕。使用者明確授權後，等 session 閒置才停的背景腳本就被允許。
 - 2026-10-24 在 oracle 發現 11 個 2026-08-15 漏掉的 vitest 子程序（`bun …/cli/src/index.ts claude --started-by runner`），PPID 都是 1。它們的 `HAPI_HOME=/tmp/hapi-test-*` 已不存在，連的是已經沒有 listener 的 `127.0.0.1:<port>`，env 帶 `VITEST=true`，合計約 850 MB RSS。逐一核對 env、PPID 並確認沒有 TCP 連線後，以 exact PID 送 TERM 清除。
+
+# 舊 binary 的 Mac session 一重啟 Claude 就 exit 126（2026-10-26）
+
+- 症狀：Web 顯示 `Process exited unexpectedly: Claude Code process exited with code 126`，連續三次後出現 `Dropping the queued message`，訊息沒有送到 agent。hapi CLI 的 log 只有 `[remote]: launch error {}`；child stderr 只有在設了 `DEBUG` 時才會印出來，所以 log 抓不到 errno。
+- 情境：swairM5 上執行 v0.30.7.7 部署的那個 session，在 03:45 用新版覆蓋了 `~/.local/bin/hapi`，但它自己還是跑舊 binary。它的 Claude child 從 03:40 一直活著，所以中間正常。14:37 切換 model 後必須重啟 child（log 出現 `mode has changed`），之後每次 spawn 都在約 40 ms 內 exit 126。同一個 process 稍早也回報過 macOS TCC 拒絕它讀取 `~/Documents` 裡的檔案。
+- 最可能的原因：`~/.local/bin/claude` 是 symlink，指到 `~/Documents/transfer_MAC/stow/...` 底下的 shell wrapper。舊 process 的 binary 被換掉以後失去 Documents 的 TCC 存取權，執行不了 wrapper，所以 exit 126。佐證：新開的 hapi process 都能正常 spawn；用舊 process 啟動時的 env 加上相同參數手動跑 wrapper，也正常。因為沒有 errno，TCC 只能算強烈推論，還沒有直接證實。
+- 結論：舊 binary 的 session 只要不重啟 Claude child 就能繼續用。切換 model 或 mode、遇到 crash 需要 respawn 時，就可能一直卡在 126，這時換回原 model 也沒用。
+- 修法（已驗證）：等舊 process 停掉（或在授權下 `hapi stop-peer <id>`），然後執行 `hapi ping-peer <id> --message-file -`。inactive session 會先自動 resume（JSON 回 `"resumed":true`），由 runner 用新 binary 加 `claude --resume` 接回原對話，再把訊息送進去；被丟掉的訊息要手動重送。驗證方式：新 log 沒有 `launch error`、有 `stream message #`，`inspect-peer` 看得到 agent 回覆。
