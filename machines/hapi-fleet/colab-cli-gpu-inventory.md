@@ -40,3 +40,6 @@ tags: [colab, gcloud, uv, gpu, hapi]
 - swever：用 ubuntu 的 `sudo -n` 系統層安裝：uv 0.13.5 在 `/usr/local/bin`、SDK 590.0.1 在 `/opt/google-cloud-sdk`（symlink 到 `/usr/local/bin`）、colab 用 `UV_TOOL_DIR=/opt/uv-tools UV_TOOL_BIN_DIR=/usr/local/bin`。swever 沒有 tmux，pending login 改用 `screen -dmS colab-adc`。
 - 手法：HAPI Codex `safe-yolo` spawn 一律 HTTP 502，Claude `acceptEdits` 會卡在 Bash 授權；安裝只能用使用者核准的 `yolo`。`colab` 沒有 `--version`，用 `--help` 驗證。`inspect-peer` 會截斷長訊息，URL 要用 `fold -w 150` 拿。pending login 放在 detached tmux/screen，之後用 `tmux send-keys` 貼 code，不需保持 HAPI session。
 - 透過 HAPI ping 把使用者給的 OAuth code 交給 Codex session 輸入：valkyrie／zeus 的 session 有照做；swever 的 session 兩次都拒絕輸入（即使說明使用者已核准），ADC 仍未完成。Google 授權 code 很快過期，被拒後需要新的 URL／code。
+- swever 最後改由使用者核准走 SSH（從 Mac 的 `oracle` alias；box 沒有 ssh）完成：`screen -S colab-adc -X stuff '<code>\n'` 貼 code，ADC 存好，A100-SXM4-40GB 測試通過並自動釋放。至此 shared home、zeus、swever 三處 Colab CLI＋ADC 都驗證可用。
+- 坑：遠端 `pkill -f "application-default login"` 會殺到自己的 shell（同一行命令字串含該 pattern）。kill 與重新啟動要拆成兩個 ssh 命令，或用 `[a]` 技巧且命令內不再出現原字串。
+- OpenCode 在 swever 上 `opencode-go/deepseek-flash` 回 Model not found，會悄悄改用其他模型；指定模型時要確認實際使用的模型。
