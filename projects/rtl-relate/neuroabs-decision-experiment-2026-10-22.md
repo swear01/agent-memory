@@ -4,7 +4,7 @@ scope: project
 project: rtl-relate
 status: active
 created: 2026-10-22
-updated: 2026-10-25
+updated: 2026-10-26
 tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna, deepseek]
 ---
 
@@ -30,6 +30,10 @@ tags: [neuroabs, picorv32, ric3, cegar, decision-model, gpt-6-luna, deepseek]
   - Piccolo sanity 12 題：全部 cut 直接 UNSAT，含 build 是 B0 的 0.44 倍；DeepSeek 的選擇是 0.67 倍，因為它每題都保留 GPR。選擇本身很 trivial。
   - Piccolo ADDI ILA：B0 和所有抽象在 1 h 內都沒有 verdict。DeepSeek 選對 4 個單元中的 3 個，退一次 icache 後落在 csr cut + dcache cut（COI 4136 bit），1 h 內 BMC 深度 142，B0 是 115。從全部 cut 開始的 refine-one 會退錯 csr 和 dcache，最後回到 B0：dynamic COI 會把不相干的單元也算進去。
   - Flute ADD：B0 在 ILA 和 sanity 上都 TIMEOUT。在 cache 與 BTB memory 全部 havoc 的 over-approximation 上，BMC 證明 282 拍內 `__IEND__` 不可達，IC3 在 524 拍找到 trace，所以論文 Flute ILA 的 bound（112–150，LLMAbs 除了 324 以外都 ≤ 249）大多還沒走到第一次檢查。只要保留任一個 cache，600 s 內就不會出現反例，所以 single-unit screen 在 Flute 上分不出好壞。
+
+- 2026-10-26 LLM 選 refinement 單元（PR #15 `e8c3bd1`，base #14，`results/llm_refinement/README.md`，run 目錄 `/var/tmp/neuroabs-runtime/runs/llm-refine-20261026/`）：`--refine {one,all,bmc,llm}`；`bmc` 是自動對照組，逐一退每個候選單元，再用 BMC 跑到反例深度。12 題 Piccolo ILA 從全部 cut 出發，ground truth 是要 GPR 和 icache。結果：LLM 36/36 停在最佳的 csr cut + dcache cut（4136 bit），108/108 步都選到需要的單元，到最終模型 111 s（扣掉 LLM 時間 80 s）。`bmc` 被深度 8 的反例誤導，退了 dcache，停在 4542 bit（175 s）。`one`、`all` 回到 B0。最終模型 1800 s 都沒有 verdict，只是 BMC 比較快走深。題目對 LLM 很容易：assertion 直接寫出 GPR／imem。
+- 2026-10-26 細粒度選單（PR #16 `ae802b4`，base #14，`results/fine_gpr_choices/README.md`，run 目錄 `/var/tmp/neuroabs-runtime/runs/fine-gpr-20261026/`）：property 依鎖存的 `__split_inst__` 拆成 `mem`／`xk.frame`（rd≠k）／`xk.rs1=r`或`xk.write`。GPR 以每個 word 為單位，有 keep／word（丟掉 assumption）／havoc 三級。ILA/RTL 加法器加上 Ackermann UF（`uf0`）。第一次讓 ILA 證出來：Piccolo ADDI 1024/1024 個子 property UNSAT（11 CPU-pair 小時），LUI、AUIPC、JAL 各 63/63；B0 在 1800 s 內 TIMEOUT。拆分、UF、rs1 split 缺一不可。在 ADDI 抽樣：auto CEGAR 34/64（會把 UF refine 掉），DeepSeek 60/64，3 行的結構規則 64/64 而且最快。DeepSeek 有 55/64 跟規則一樣，所以 LLM 只贏 auto，贏不了簡單 heuristic。
+- 子 session 用 HAPI 開時要加 `--permission-mode auto`，Claude 的 5 小時額度會讓子 session 停住，要 ping 才會繼續。
 
 ## 卡點與待決
 
