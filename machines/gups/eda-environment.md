@@ -3,7 +3,7 @@ title: GUPS workstation EDA environment (Innovus/Genus/Xcelium/Calibre, U18 PDK)
 scope: machines/gups
 machine: gups
 status: active
-updated: 2026-10-26
+updated: 2026-10-27
 ---
 
 # GUPS 工作站（intl.gups.ntu.edu.tw）EDA 環境
@@ -29,6 +29,8 @@ Rocky Linux 8.10。`/usr/cad` 是 `/cad` 的 symlink，CIC 的 csh 腳本寫 `/u
 - Phantom GDS（`CIC/Phantom/fsa0m_a_generic_core_cic.gds`）只含 M1 與文字層，工作站上找不到真實 cell GDS；Calibre DRC 因此只驗得到 M1–M6/VIA，ANTENNA deck（需 PO1 AND DIFF）報 0 不代表通過。
 - UMC 官方 Calibre DRC deck 不在 CBDK，而在老師下載的 FDK `UM180FDKMFC00000OA_B02.tar.gz` 的 `Calibre/DRC/`（BASE 2.16_P1 預設已開 `20KA_TOP_METAL`）。小區塊教學跑法要 `DRC UNSELECT CHECK METAL_DENSITY / DIFFUSION_DENSITY / RF_RULES`，否則只剩整晶片密度類違規。
 - 教學 UART RTL 模擬（2026-10-26 實測）：`tb/tb_rx.v` 的 `BIT_RATE` 在 50 MHz 時脈下 115200／921600／3000000（`CYCLES/BIT` 434／54／16）全過，5000000（10）`FAILS 10`。原因是 `uart_rx.v` 的 `cycle_counter` 數 0 到 `CYCLES_PER_BIT` 才由 `next_bit` 歸零，每 bit 實際 N+1 cycle，誤差隨 bit 累積超過半 bit。改 tb 送端速度 ±x% 的結果嚴重不對稱，主因是 tb 在 stop bit 後只等 1 µs 就檢查，不是 UART 真實容忍度，不適合出題。
+- 教材每個 step 用 `resume_from <上一步>` 讀 `ckpt/<step>.enc`，所以練習若重跑某 step（例如關掉 multi-cut swap 再跑 08_route）會覆寫該 checkpoint，後面 step 09 的 timing 就改從實驗版算（setup WNS 14.109 vs 預設 14.059）。2026-10-26 改成練習結尾要求重開 Innovus 用預設再跑一次該 step。
+- 2026-10-27 起 `/cad/tutorial` 只放學生包 `innovus_u18_tutorial/` 與其 tarball；answer key 只在本機、不部署。10/22 的舊 `innovus_u18_tutorial_teacher/TEACHER.md`（Lab A/B/C、`DONT_USE=`/`FIX_HOLD=1` 環境變數，已不適用）移到 `/root/innovus_u18_tutorial_teacher_old`，等使用者自行刪除。
 - 新登入的 shell（`env -i bash -l`，2026-10-26 以 nobody 實測）PATH 裡沒有 `xrun`、`verisium_debug`、`genus`、`innovus`；每個新終端都要先 `source /cad/cadence/CIC/innovus.sh`（Genus/Innovus）或 `source /cad/cadence/CIC/xcelium.sh`（Xcelium/Verisium）。腳本內部 source 的環境不會留在互動 shell，所以 `run_sim.sh` 跑完後直接下 `verisium_debug` 會 command not found。
 - 教材常見 Innovus 錯誤（同日實測）：`resume_from` 讀不存在的 checkpoint → `IMPIMEX-7331 Cannot identify the top cell name`；同一 session 再 source 一次 init step → `read_mmmc` 在 `init_design` 後重跑，報 `IMPSE-110`（`TCLCMD-1306`）；不在 `run/` 下 `source ../scripts/...` → `IMPSE-122 ... could not be located`。
 
