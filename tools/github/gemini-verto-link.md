@@ -1,3 +1,10 @@
+---
+title: Gemini Code Assist 沒有審查 repo，直到執行 gemini-link
+scope: tools/github; Gemini Code Assist; swear01/Verto
+status: active
+updated: 2026-10-25
+---
+
 # Gemini Code Assist never reviewed a repo until `gemini-link` ran
 
 Evidence (2026-10-25): swear01/Verto PRs #1–#31 had zero `gemini-code-assist[bot]` comments.
