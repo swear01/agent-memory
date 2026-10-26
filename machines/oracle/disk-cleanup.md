@@ -11,7 +11,7 @@ updated: 2026-10-26
 
 ## 可以直接清
 
-- `<remote-home>/.opencodereview/sessions/tmp-swear-review-job-*-repo`：swear-review 每次 bot review 留下的 repo clone，用完不會自動刪。這次累積了 1147 個、8.8G，是最大的一筆浪費。root cause 是 `runOcr` 先設 `HOME`、後展開 `ocrEnv`，結果真正的 HOME 蓋掉了 isolated HOME。已在 swear01/swear-review PR #15（`7a6d7ff`）修正，`/opt/swear-review/app` 要重新部署才會生效。刪之前先確認沒有正在跑的 review（`pgrep -af swear-review`，並且最近一小時沒有新目錄），然後用 `find ... -mmin +60 -exec rm -rf {} +` 清掉。
+- `<remote-home>/.opencodereview/sessions/tmp-swear-review-job-*-repo`：swear-review 每次 bot review 留下的 repo clone，用完不會自動刪。這次累積了 1147 個、8.8G，是最大的一筆浪費。root cause 是 `runOcr` 先設 `HOME`、後展開 `ocrEnv`，結果真正的 HOME 蓋掉了 isolated HOME。已在 swear01/swear-review PR #15（`7a6d7ff`）修正，2026-10-26 用 `scripts/deploy-oracle.sh main` 部署。之後的 job 1535 跑完後 sessions 目錄是空的，驗證有效。這個部署腳本不會先 drain 進行中的 job：在測試 gate 期間開始的 job 1534 被 restart 中斷，新 process 啟動時重跑它，但舊的 `/tmp/swear-review/job-1534/repo` 還在，`git clone` 因此失敗。這只影響一次 review，之後重新觸發就成功了。要判斷 OCR 是否閒置，用 `ps -eo args | grep -c '[b]in/opencodereview review'`；`pgrep -f` 會匹配到包著這個 pattern 的 bash 指令本身，永遠不會判定為閒置。刪之前先確認沒有正在跑的 review（`pgrep -af swear-review`，並且最近一小時沒有新目錄），然後用 `find ... -mmin +60 -exec rm -rf {} +` 清掉。
 - journald：直接 `journalctl --vacuum-size=200M` 會釋放 0B，因為空間都在 active journal 檔。要先 `sudo journalctl --rotate` 再 vacuum，1.3G 才會降到 178M。
 - `<worktree-root>/hapi/*`：每個 worktree 的 `du` 約 1.7–2.2G，但 bun 的 hardlink 讓單獨刪一個 worktree 實際釋放得比較少（8 個約 5G）。只刪同時符合「`git status --porcelain` 為空」以及「`git branch -r --contains HEAD` 有結果」的 worktree，並從 `<home>/hapi` 執行 `git worktree remove`。注意 repo 是 `swear01/hapi`，查 PR 時不要用上游 repo 名。
 
