@@ -5,7 +5,7 @@ project: hapi
 status: active
 confidence: high
 created: 2026-08-22
-updated: 2026-09-15
+updated: 2026-10-26
 tags:
   - ubuntu
   - nvidia
@@ -22,7 +22,7 @@ tags:
 - Athena 在 BIOS `1836` 後仍有反覆 kernel panic／自動重開機；原因尚未完全確認，且 BIOS、microcode 與 Intel Default Settings 均已處理，不可再把它們列為尚未嘗試的修復。
 - Zeus 的 GTX 1080 Ti 是 Pascal `sm_61`，必須保留 CUDA `12.9`；CUDA 13.x 不可套用到 Zeus。
 - Mazu、Cthulhu、Athena、Valkyrie 統一使用 CUDA Toolkit `13.3 Update 1`；Zeus 單獨維持 CUDA `12.9` 相容線。
-- Zeus 的 CUDA `12.9` Toolkit 尚未安裝；目前只有 R580 driver。不可把 `nvidia-smi` 顯示的 CUDA capability 當成已安裝 Toolkit。
+- Zeus 的 CUDA `12.9` Toolkit 尚未安裝。2026-10-26 先用 apt 裝了 Ubuntu 的 `nvidia-cuda-toolkit` 12.4（`/usr/bin/nvcc`），sm_61 編譯與執行驗證通過，但這不是計畫訂的 12.9，見 [[machines/zeus/cuda-toolkit-system-install]]。不可把 `nvidia-smi` 顯示的 CUDA capability 當成已安裝 Toolkit。
 
 # 最新維護狀態（2026-09-15）
 
@@ -57,7 +57,7 @@ tags:
 
 - CUDA `12.9 Update 1` 的 Linux 完整 Toolkit driver 最低為 `R575.57.08`；五台目前均為 Ubuntu 套件的 `R580.173.02`，不把 driver 版本誤稱為 CUDA 版本。
 - `mazu`、`cthulhu`、`athena`、`valkyrie`：CUDA Toolkit `13.3.1-1`，`/usr/local/cuda` 指向 `cuda-13.3`，沒有其他 Toolkit 分支。
-- `zeus`：GTX 1080 Ti + R580.173.02；沒有 `/usr/local/cuda`、`nvcc` 或 CUDA Toolkit 套件，CUDA `12.9` 安裝仍待執行。
+- `zeus`：GTX 1080 Ti + R580.173.02；沒有 `/usr/local/cuda`、`nvcc` 或 CUDA Toolkit 套件，CUDA `12.9` 安裝仍待執行。（2026-10-26 更新：已用 apt 裝 12.4 暫代，12.9 仍待執行。）
 
 # 2026-08-24 統一結果
 
