@@ -3,7 +3,7 @@ title: GUPS workstation EDA environment (Innovus/Genus/Xcelium/Calibre, U18 PDK)
 scope: machines/gups
 machine: gups
 status: active
-updated: 2026-10-22
+updated: 2026-10-26
 ---
 
 # GUPS 工作站（intl.gups.ntu.edu.tw）EDA 環境
@@ -23,6 +23,7 @@ Rocky Linux 8.10。`/usr/cad` 是 `/cad` 的 symlink，CIC 的 csh 腳本寫 `/u
 
 - CBDK：`<remote-home>/PDK/CBDK018_UMC_Faraday_v1.2`，只有一套 core library `FSA0M_A GENERIC_CORE`（382 cells）與 T33 IO；corner 為 `ss1p62v125c`／`tt1p8v25c`／`ff1p98vm40c`，無多 Vt、無多 track。`.lib` 預設 wireload `G5K`。
 - `QDFZN` 等 `*DFZ*`／`DBZ*`／`JKZ*` 是 scan flop（`.lib` 有 `test_cell`）；沒做 DFT 時 Genus 會把 enable mux 吃進 scan flop，教學用 dont_use 清單要禁掉。`GCKET*` 是 ICG。
+- 教學 UART（`/cad/tutorial/innovus_u18_tutorial`，2026-10-26 以非 root 帳號實測）：空 dont_use 時 Genus 用 2 個 `QDFZN`；20 ns 時脈下 post-route setup WNS 約 +13.9 ns（時脈很鬆）；ff corner hold 不修為 −0.205 ns、80 條違規；在 `clock_opt_design`、`route_design` 後各加 `opt_design -post_cts/-post_route -hold` 後 hold +0.001 ns、插入 38 個 `DEL*`；Calibre DRC 兩者皆 0。Cell family 說明以 `CIC/doc/FSA0M_A_GENERIC_CORE_DataBook_v1.0.pdf` 目錄為準，gups 有 `evince` 可經 X11 開。
 - Phantom GDS（`CIC/Phantom/fsa0m_a_generic_core_cic.gds`）只含 M1 與文字層，工作站上找不到真實 cell GDS；Calibre DRC 因此只驗得到 M1–M6/VIA，ANTENNA deck（需 PO1 AND DIFF）報 0 不代表通過。
 - UMC 官方 Calibre DRC deck 不在 CBDK，而在老師下載的 FDK `UM180FDKMFC00000OA_B02.tar.gz` 的 `Calibre/DRC/`（BASE 2.16_P1 預設已開 `20KA_TOP_METAL`）。小區塊教學跑法要 `DRC UNSELECT CHECK METAL_DENSITY / DIFFUSION_DENSITY / RF_RULES`，否則只剩整晶片密度類違規。
 
