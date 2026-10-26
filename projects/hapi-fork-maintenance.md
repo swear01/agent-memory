@@ -262,7 +262,7 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - exact-main Test／iOS／android／fixtures／relay 與 tag Test 通過；Release Actions `40104169097` 成功，9 assets、8 payload checksums 相符。
 - release branch 同 SHA 的 `windows-codex-mcp` 曾因 CLI test globalSetup `Hub did not become ready within 15000ms` 失敗（vitest 同時印 `No test files found`，那是 globalSetup 失敗的副作用，不是檔案遺失），exact-main 重跑通過，屬 Windows runner 偶發。
 - 部署：oracle 本機裝 binary 後 `pm2 restart hapi --no-treekill --update-env` + `pm2 save`，13/13 session 存活；其餘交給 Mac `spawn-peer` session 依 skill 部署 mazu（hub/tunnel）、cthulhu、valkyrie、zeus、Mac、swop，全部 `0.30.7.6`，Athena 依政策排除。Hub 升級前備份 `hapi.db.pre-0.30.7.6-<ts>`（user_version 27），升級後 29、`quick_check=ok`。cthulhu／valkyrie 依例需 exact-PID handoff recovery；swop 自 handoff 後的 runner 脫離 Scheduled Task，需停掉該 exact PID 再 `Start-ScheduledTask`。
-- Codex disposable smoke 不接受 `--permission-mode auto`（`bad_args`），codex 合法值為 `default/read-only/safe-yolo/autoReview/yolo`；mazu 第一次 spawn 因 NFS 冷快取 `spawnSync codex ETIMEDOUT` 回 502，重試成功。
+- Codex disposable smoke 不接受 `--permission-mode auto`（`bad_args`），codex 實際可用值為 `default/read-only/autoReview/yolo`（`safe-yolo` 能過 CLI 參數檢查，但 shared runtime 會拒絕，spawn 只回 502）；mazu 第一次 spawn 因 NFS 冷快取 `spawnSync codex ETIMEDOUT` 回 502，重試成功。
 - Retention 清約 1.51 GiB；mazu／Mac 的 `0.30.7.5` 因 live session 保留，NFS 共用 `0.30.7.4` 與 `.nfs*` 因 Athena 無法檢查而保留。gist／skill Current Policy 與 `hapi-ctl.sh` 預設版本尚未更新到 `.6`。
 
 ## 2026-10-25：舊 PR 整理、#1771 拆解與下一版 carry 變動

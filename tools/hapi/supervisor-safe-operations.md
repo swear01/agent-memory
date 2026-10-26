@@ -144,7 +144,7 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 # v0.30.7.6 rollout lessons (2026-10-24)
 
 - mazu 沒有 `sqlite3` CLI；Hub DB 備份用 Python `sqlite3.Connection.backup`（同一個 online backup API），再對備份跑 `quick_check` 與 `user_version`。`.6` 把 Hub schema 27 升到 29，舊版 Hub 讀不了。
-- `hapi spawn-peer --agent codex --permission-mode auto` 會回 `bad_args: permission mode auto is not supported by codex`。Codex 可用 `default`/`read-only`/`safe-yolo`/`autoReview`/`yolo`；「auto」對應 `autoReview`。
+- `hapi spawn-peer --agent codex --permission-mode auto` 會回 `bad_args: permission mode auto is not supported by codex`。Codex 可用 `default`/`read-only`/`autoReview`/`yolo`；「auto」對應 `autoReview`。**不要對 Codex 用 `safe-yolo`**：所有 Codex session 都跑 shared runtime，它會拒絕 safe-yolo；但 CLI 參數檢查會放行，fork 的 `spawn-with-remit` 失敗時只回 `HTTP 502`（經 Cloudflare 後錯誤訊息被吃掉，2026-10-26 在 zeus 重現）。
 - 部署後 mazu 第一次 Codex spawn 回 HTTP 502；runner log 是 `spawnSync <remote-home>/.local/bin/codex ETIMEDOUT`。之後 `codex --version` 冷啟動 1.1 s、熱啟動 0.12 s，重試一次就成功。失敗的 child session 已自動 archive。
 - Windows swop：`hapi.exe` 執行中可以 rename，所以先把舊檔改名，再複製已驗 SHA-256 的新 exe。舊 Runner 偵測到 mtime 變化後會自行 handoff，但新 Runner 的父程序是已退出的舊 PID，等於脫離 Scheduled Task 鏈（task 每分鐘回報 `Runner already running with matching version`）。確認 state PID 是主 `runner start-sync`、且沒有 `--started-by runner` 程序後，只 `Stop-Process` 該 PID 並 `Start-ScheduledTask`，就恢復 wscript→powershell→hapi 鏈。`LastTaskResult 0x800710E0` 是 `IgnoreNew` 的正常結果。
 - Retention：舊規則是 Athena 無法檢查時保留 NFS 共用的舊 runtime／`.nfs*`。2026-10-24 使用者指示「Athena 不要管了」後改為只查 mazu／cthulhu／valkyrie 的 exe／cwd／fd／maps；兩輪檢查加上以已知持有者（mazu 9586 的 `.nfs…e1524ea`）做正向對照後，刪除 0.30.7.4 runtime 與 6 個舊 `.nfs*`，約 1.37 GB。盤點時不要執行舊 `.nfs*` binary 的 `--version` 來判斷版本，那會違反只讀；版本只能靠 mtime 推斷。
