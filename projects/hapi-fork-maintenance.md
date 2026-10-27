@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-25
+updated: 2026-10-27
 tags:
   - hapi
   - fork
@@ -271,7 +271,8 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - #1771 改成兩個小 PR：#2054（#2053 修正，從 +98/−8 縮到 +25/−5：保存最新 keep-alive，connect 時一併送出；不需要「第一次 keep-alive 走非 volatile」的分支）與 #2167（`spawn_peer` + `ping_peer` `waitForReply`：caller 的 CLI 輪詢 peer，回合結束且連續兩次 idle 後，把回覆 POST 進 caller session 喚醒它；不改 hub）。理由：只靠 ping_peer／inspect_peer，caller 結束回合後就沒有東西會喚醒它，在 tool call 裡阻塞等待又會碰到 MCP timeout（Codex 預設 60 秒），所以就算 agent 夠聰明也很難互動。
 - 上游已有的等價能力：`POST /api/machines/:id/spawn`、`/sessions/:id/{messages,abort,archive}`、`DELETE /sessions/:id`、`GET /machines`，CLI 的 `pingPeer.ts` 已有 JWT 交換與 REST client；session summary prompt 在上游預設就是關閉（設定要 `=== true` 才開）；shared Codex 已把 `thread/name/updated` 同步回 HAPI metadata。#1771 的 Codex 標題產生只是為了補 prompt 移除後少掉的 `change_title`，不是獨立 bug。
 - 上游已有很多他人的 peer PR（#1922 spawn-peer remit +6.6k、#1618、#2021、#2047、#1825、#2152、#2071），維護者都沒有回應；新的 peer 功能盡量做小，避免和這些重疊。
-- 下一版 fork：不再 carry #1771／#2024／#1542；carry #2054、#2167；疊上 fork 分支 `fork/session-control-skill`（stacked 在 #2167 上），它保留 #1771 的 skill 安裝器，並附上重寫後的 `hapi-session-control` skill（改用 spawn_peer／waitForReply）。#1836 上游已關閉，是否改用 overlay 保留，到發版時再請使用者決定。已 carry 的 #2052 `HAPI_DISABLE_PEER_TOOLS` 需要一併隱藏 `spawn_peer`。現行 skill 用到的 `stop-peer`、`--remit-id` 等參數會一起消失。
+- 下一版 fork：不再 carry #1771／#2024／#1542；carry #2054、#2167；疊上 fork 分支 `fork/session-control-skill`（stacked 在 #2167 上），它保留 #1771 的 skill 安裝器，並附上重寫後的 `hapi-session-control` skill（改用 spawn_peer／waitForReply）。#1836 上游已關閉，是否改用 overlay 保留，到發版時再請使用者決定。已 carry 的 #2052 `HAPI_DISABLE_PEER_TOOLS` 需要一併隱藏 `spawn_peer`。（2026-10-27 已在 #2167 分支完成：`PEER_TOOL_NAMES` 納入 `spawn_peer`，`spawnPeer()` 也會拒絕。）現行 skill 用到的 `stop-peer`、`--remit-id` 等參數會一起消失。
+- 2026-10-27 #2167 merge upstream/main 後，經過 6 輪 HAPI Bot 審查，在 d3ab115a 拿到乾淨的 pass，CI 全綠，等上游 merge。教訓：只靠 `thinking`／連續 idle 次數來判斷 peer 回合是否結束，bot 會一直找到新漏洞（佇列中的任務、Claude 啟動慢、中途被打斷、後續回合）。可靠的訊號是任務的 `localId`：上游 #2069 讓 REST 送出的訊息在被消費前維持 uninvoked。任務不在最新一頁時，改查 `POST /sessions/:id/messages/queued-state`，查不到代表已被取消（hub 會刪除取消的訊息）。另外發現 `claudeRemote` 只在第一回合（system/init）設 thinking，後續 prompt 沒設；已在 #2167 一起修正（推入 prompt 時呼叫 `updateThinking(true)`）。
 - 陷阱：#1771 的 skill 安裝器掛在 `bootstrapSession`，CLI 單元測試會呼叫它，而測試 setup 只隔離了 `HAPI_HOME`、沒有隔離 `HOME`，所以會寫進真實的 `~/.claude/skills`、`~/.codex/skills`。以前寫入的內容和正式版相同，所以沒人發現；改寫 skill 後第一次跑測試就覆蓋了正在使用的 skill，已從 `~/.hapi/runtime/<version>/skills/` 還原。overlay 在 `cli/src/test/setup.ts` 把 `HOME` 指到測試用的暫存 home；`agentCliGuard.test.ts` 原本用字串 `toContain(join(tmpdir(),'hapi'))` 判斷，會誤中 `hapi-test-*` 前綴，要加上 `sep`。
 - 平行跑 CLI 測試一定要各自使用不同的 `TMPDIR`：另一個 vitest 用同一個 TMPDIR 時，會刪掉 `hapi-test-config.json`，導致 257 個檔案 collection 失敗（`Missing isolated hub config`），那不是程式碼的問題。
 
