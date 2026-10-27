@@ -19,15 +19,9 @@ tags: [PrimeTime, STA, ADFP, Guacamole, COOL, Canvas, lock]
 - 唯一的 Error 來自 script 第一行的 `remove_design -all`（尚未載入 design，SEL-005），不影響結果。
 - 4 頁 PDF（答案表與 6 張終端截圖）在 17:20 Asia/Taipei 送到 COOL，attempt 1，`late=false`。回下載的檔案 SHA-256 為 `35042e141b411ed82745ccaa9fc18ff0c8f91f43609f3cb2d80b162f309d56ca`，與上傳檔相同。TA 驗收與成績未確認。
 
-## COOL（Canvas）不經檔案選擇器的提交法
+## COOL 提交
 
-內建瀏覽器已登入 COOL，但讀不到本機檔案。改用 Canvas 的三段上傳：
-
-1. 在 COOL 分頁 POST `/api/v1/courses/<c>/assignments/<a>/submissions/self/files`，body 帶 `{name,size,content_type}`。header `X-CSRF-Token` 取自 URL-decode 後的 `_csrf_token` cookie。回應會給 `/files_api` 的 upload_url 與已簽名的 `Policy`、`Signature`。
-2. 本機 shell 用 `curl -F` 依序送出全部 upload_params，最後才送 `file=@...`，不需要 cookie。COOL 會回 302 到 `/api/v1/files/<id>/create_success?...&uuid=...`。
-3. 在 COOL 分頁 GET 那個 create_success URL，再 POST `/submissions`，body 為 `{submission:{submission_type:'online_upload',file_ids:[id]}}`。
-
-驗證：GET `submissions/self`，在分頁內 fetch attachment URL，用 `crypto.subtle.digest('SHA-256')` 計算後與本機 `shasum -a 256` 比對。
+用 `domains/other/ntu-cool-api-access.md` 的 Canvas 三步上傳（頁面 JS 取 slot → shell `curl` 送 `files_api` → GET `create_success` → POST `/submissions`）。Lab4 照做一次成功，回下載雜湊相同。
 
 ## 多個 session 共用同一個 Guacamole 桌面
 
