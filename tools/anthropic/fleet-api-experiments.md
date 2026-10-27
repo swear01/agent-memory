@@ -2,7 +2,7 @@
 title: Claude API 實驗用 fleet 環境
 scope: tools/anthropic
 status: active
-updated: 2026-10-17
+updated: 2026-10-27
 tags:
   - anthropic
   - fleet
@@ -10,6 +10,14 @@ tags:
 ---
 
 # Claude API 實驗用 fleet 環境
+
+## 2026-10-27 起：預設改用個人 org 的 key
+
+- `~/.secrets` 現在有兩把：`ANTHROPIC_API_KEY_SWEAR`（Swear's Individual Org 的 key `swear-mac`，用的是 $100 credits，2026-11-20 到期；不需要 workspace header）與 `ANTHROPIC_API_KEY_LAB` + `ANTHROPIC_WORKSPACE_ID_LAB`（下方原本那把 identity-linked key 改名）。`ANTHROPIC_API_KEY` 預設等於 SWEAR，沒有 SWEAR 時才退回 LAB。
+- 切換：shell 函式 `anthropic-use-lab`（同時設定 workspace ID）、`anthropic-use-swear`（unset workspace ID）。SDK 與 Claude Code 都不會在額度用完時自動換 key。
+- 已驗證：Mac（使用者測過兩把）與 mazu 的共用 home（2026-10-27 用 SWEAR 打 `count_tokens` 與 Opus 5.5 生成成功，沒帶 workspace header）。其他主機沒逐台驗證。
+- **改檔前就啟動的 shell 和程序，env 裡仍是舊值**（`ANTHROPIC_API_KEY` = lab key）。要指定扣哪把的程式，不要依賴繼承的 env：agentic-ic3-repro 的 `scripts/run_matrix.py` 改從 mazu `~/.config/agentic-ic3/anthropic.env`（0600）讀 key。
+- vault（Vaultwarden）裡沒有 Console API key，只有 `Claude Code OAuth token`（`claude setup-token` 訂閱 token，不是 API key）。
 
 ## 已驗證狀態（2026-09-30）
 
