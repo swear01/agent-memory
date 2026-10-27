@@ -96,3 +96,12 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 陷阱：CULS 的開關只檢查 `getenv` 是否非空指標，`CULS_MEMPOOL=` 空字串也算開啟，曾因此把開啟結果誤當成關閉的基準。
 - 只搬候選列之後，原版 resub 也是 `CULS_CONFLICT_CPU` 比 GPU 單 thread greedy 快。hyp_4xd 整體 0.37 → 0.29 s（開始前 0.53 s），剩約 0.18 s 是 resub kernel；啟動程序另有約 0.11 s 固定成本。
 - cthulhu 上多個 session 共用 GPU 時計時會互相干擾（hyp_4xd 曾量到 0.81 s）；計時腳本在每次執行前後檢查其他 gpuls 程序，有重疊就重跑。`perf_event_paranoid=4`，perf 也要經 su_cthulhu `sudo -n` 單次執行。
+
+## rs 小 kernel 的 warp 化（2026-10-28）
+
+- getReconvCutResub／resubDivs0／resubDivs1 改一個 warp 一個 root、輸出逐位元組不變的關鍵：把原本「掃到第一個符合」的順序用 ballot 取最低 lane 重現；「最後一個勝出」（d0 的 equal 除數）則取最高 lane；列表壓縮用有序 ballot＋popc。cost 999 的槽永遠不選。
+- 純 lane 串列掃描整列（128 word）會被少數需要很多 word 才能判定的列拖慢（ncu 約 14/32 lane 活躍、55% 多餘 sector）；解法是 lane 先各掃前 8 word，未決定的列由整個 warp 接手（lane = word，`__reduce_or_sync`）。同一個 pass 併入 d0 後 d01 hyp 56→21 ms；沒有混合掃描時併入反而讓 mem／div 變慢。
+- 消融（拿掉 pair 搜尋、拿掉補數）是找瓶頸最快的方法：兩者都可忽略，才確定是分類掃描。
+- 計時輸出 `{time} prev cmd: ... full X s; total: ... full Y s` 同一行有兩個 `full`，用 `full ([\d.]+) s` 會重複計；要錨定 `prev cmd: alg [\d.]+ s, full`。
+- 以 `ssh host 'pkill -f pattern'` 會殺到自己的 ssh（pattern 出現在 bash -c 的指令列），改用 ps+grep 並排除 `bash -c`，或乾脆不殺。
+- 報告 `outputs/rs-kernels2.md`，CULS-fast `5b1e1ab`。
