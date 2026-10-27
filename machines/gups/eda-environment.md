@@ -34,4 +34,12 @@ Rocky Linux 8.10。`/usr/cad` 是 `/cad` 的 symlink，CIC 的 csh 腳本寫 `/u
 - 新登入的 shell（`env -i bash -l`，2026-10-26 以 nobody 實測）PATH 裡沒有 `xrun`、`verisium_debug`、`genus`、`innovus`；每個新終端都要先 `source /cad/cadence/CIC/innovus.sh`（Genus/Innovus）或 `source /cad/cadence/CIC/xcelium.sh`（Xcelium/Verisium）。腳本內部 source 的環境不會留在互動 shell，所以 `run_sim.sh` 跑完後直接下 `verisium_debug` 會 command not found。
 - 教材常見 Innovus 錯誤（同日實測）：`resume_from` 讀不存在的 checkpoint → `IMPIMEX-7331 Cannot identify the top cell name`；同一 session 再 source 一次 init step → `read_mmmc` 在 `init_design` 後重跑，報 `IMPSE-110`（`TCLCMD-1306`）；不在 `run/` 下 `source ../scripts/...` → `IMPSE-122 ... could not be located`。
 
+## 系統維護（2026-10-27）
+
+- 作業系統為 2026-02-24 新裝的 Rocky 8.10（AMD Threadripper 7960X、NVIDIA T400，驅動來自 `cuda-rhel8-x86_64` repo、`kmod-nvidia-open-dkms`）。各版本自帶的支援清單（`share/patchData/Linux/x86_64/<os>/`）：IC 6.1.8 只列 RHEL 6/7；IC 25.10 與 DDI 25.10 列 RHEL/Rocky 8/9；都沒有列 10。
+- `IC/cur -> IC_25.10.010`，預設的 Virtuoso 是 IC 25.1，可正常啟動。`IC_06.18.350` 啟動時報 `libcrypto.so.10: cannot open shared object file`：`compat-openssl10` 從未安裝（`dnf history` 沒有紀錄），所以裝好以來就沒跑起來過；工作站上也沒有需要 IC6 的 PDK 或教材。真的要用時再 `dnf install compat-openssl10`。
+- 2026-10-27 跑 `dnf -y update --disablerepo=cuda-rhel8-x86_64`（共 377 套，log 在 `/root/dnf-update-20261027.log`），刻意不升級 NVIDIA 590.48.01，以免重開前出現 driver/library 版本不一致。DKMS 自動為新 kernel `4.18.0-553.178.1.el8_10` 編好 nvidia 模組，重開後 `sshd`、`xrdp`、`nvidia-smi`、Innovus 25.1 都正常。
+- `mcelog.service` 每次開機都失敗（`CPU is unsupported`，不支援 AMD），已用 `systemctl disable --now mcelog` 停用。
+- sshd 是 OpenSSH 8.0p1，KEX 最強只到 `curve25519-sha256`，所以 OpenSSH 10.1 以上的 client 連線會出現 post-quantum 警告，這不是故障，Rocky 8 也無法修正。
+
 相關：[[cadence-innovus-stylus-vs-legacy-flow]]、[[innovus-physical-check-points]]
