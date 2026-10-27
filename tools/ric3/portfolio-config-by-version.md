@@ -4,7 +4,7 @@ scope: tools/ric3
 tool: rIC3
 status: active
 created: 2026-10-23
-updated: 2026-10-24
+updated: 2026-10-27
 tags: [ric3, portfolio, btor2, aiger, k-induction, hwmcc24, benchmarking]
 ---
 
@@ -44,6 +44,17 @@ riscv-formal 只在 cycle 20 檢查一次，bit-level k-induction 在 depth 21 �
 `--simple-path` 讓這題的 kind 慢約 4.7 倍；在 16 個 worker 的 portfolio 裡，kind 還會再慢 2～4 倍（7.5 s 對 26～30 s，35 s 對 70～100 s），推測是與其他 worker 搶核心和記憶體頻寬，沒有另外量測。
 
 1.5.2 改吃 AIGER 時，`bl_default` 中的 kind 會勝出，ADD 約 40 s。所以要比較時間時，應改用 AIGER 或 master，或直接指定 `-e kind`。
+
+## 只給 1 顆核心時 portfolio 比單跑 ic3 慢很多（2026-10-27）
+
+agentic-ic3-repro 的 baseline 每個 run 用 `taskset` 綁 1 顆 E-core、3600 s，rIC3 master 4d63899，BTOR2：
+
+| 題目 | `portfolio` | `ic3` 單跑 |
+| --- | --- | --- |
+| SecIC3 cache_miter | TO | SAFE 2095 s |
+| LLM-Miners fifo_vis | SAFE 2246 s | SAFE 284 s |
+
+portfolio 的十幾個 worker 共用那 1 顆核心，等於每個引擎只拿到幾分之一的 CPU。論文若是在多核機器上跑 portfolio，單核 portfolio 的數字不能直接拿來比；要嘛也報單引擎（`ic3`），要嘛註明核心數。
 
 ## 其他陷阱
 
