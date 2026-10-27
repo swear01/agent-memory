@@ -34,3 +34,11 @@ tags:
 ## Claude Code 訂閱入口（2026-10-17）
 
 上述 API 金鑰仍供真正 API 程式使用。Claude Code 已另外部署[訂閱啟動入口](claude-subscription-launcher.md)，只移除 Claude 子程序認證變數；不要因這份 API 環境筆記把 Claude 改回 API key 登入。新版 fleet 範圍與 Athena 送修排除以該筆記為準。
+
+## 個人 key 優先、lab key 備援（2026-10-27）
+
+- 個人 org：Claude Console「Swear's Individual Org」（使用者個人 Google 帳號；預設進的是 DVlab Team org，建 key 前要先切換）。$100 promo credit，2026-11-20 到期。key 名稱 `swear-mac`，Default workspace，前綴 `sk-ant-usr`（user-linked key，可正常呼叫 API）。
+- `~/.secrets` 結構：原 lab 值改名為 `ANTHROPIC_API_KEY_LAB`、`ANTHROPIC_WORKSPACE_ID_LAB`；新增 `ANTHROPIC_API_KEY_SWEAR`；`ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY_SWEAR:-$ANTHROPIC_API_KEY_LAB}"`；預設不設 `ANTHROPIC_WORKSPACE_ID`（lab workspace ID 不適用個人 org）。切換函式 `anthropic-use-lab` / `anthropic-use-swear`。
+- SDK 與 Claude Code 沒有額度用完自動換 key 的機制；要全自動需 LiteLLM proxy fallback。
+- 已部署並以 `GET /v1/models` 兩把皆 HTTP 200：M5、M1（新建 `~/.secrets` 並由 `.zshrc` source）、swear01 共用 home（mazu/zeus/cthulhu/valkyrie）、oracle。備份 `~/.secrets.bak-20261027`。athena、swop SSH 逾時未部署。
+- 教訓：用 box 終端機存 key 時，`xclip`/`xsel` 不存在，誤把 key 貼到命令列而出現在截圖；下次先 `stty -echo; cat > file` 再貼。
