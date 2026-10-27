@@ -1,3 +1,11 @@
+---
+title: Google Colab CLI GPU jobs
+scope: tools/colab
+tool: colab
+status: active
+updated: 2026-10-26
+---
+
 # Google Colab CLI (GPU jobs)
 
 - Official: https://github.com/googlecolab/google-colab-cli
