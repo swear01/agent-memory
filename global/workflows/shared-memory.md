@@ -3,7 +3,7 @@ title: Shared persistent agent memory workflow
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-10-21
+updated: 2026-10-28
 tags:
   - shared-memory
   - qmd
@@ -77,3 +77,10 @@ embedding 或重建 canonical Markdown。
 此次修復已推送：只變更命中提交及其後繼共 11 筆 commit ID，最終 tree 與修復前遠端完全相同；新 main 與後續一般記憶提交的 Validate Memory CI 都通過，作者與提交者使用公開 noreply 身分。QMD 已完成 update／embed，並能搜尋到 #287 擴展研究的歸因、實驗邊界及此次修復紀錄。
 
 仍須保留清除範圍的限制：修復後 GitHub API 仍能透過舊 SHA 取得原提交，即使當時所有遠端分支與 PR refs 都不再包含它。這表示分支歷史與 CI 已修好，不能宣稱個人信箱已從 GitHub 儲存與快取完全刪除。依 GitHub Docs 的敏感資料清除流程，伺服端快取清除須向 GitHub Support 提出請求，由 GitHub 決定是否受理；本次未提交該請求。其他舊 checkout 後續同步須沿用上段的重套流程，避免重新推回舊歷史。
+
+## 2026-10-28 個人信箱再次外洩（repo 為 PUBLIC）
+
+- 提交 `anthropic: personal org key preferred with lab fallback across fleet`（2026-10-27 23:32 +0800）在 `tools/anthropic/fleet-api-experiments.md` 寫入使用者個人 Google 信箱，且未跑本機驗證就 push；CI 失敗也沒人處理。出自 10-27 晚間 Anthropic personal/lab key 全 fleet 部署，該批工作由 mazu `agentic-ic3-repro` coordinator（Claude Opus 5.5）經 hapi 派工；swairM5 與 mazu 的本機 transcript 都找不到包含此提交的那一段，無法再精確指認單一 session。
+- 已依上節流程修復：隔離 clone 以 `git filter-branch --tree-filter` 只重寫該提交起共 10 筆，最終 tree 只差該行，完整驗證通過後以舊 SHA 作 `--force-with-lease` 推送。舊 SHA 在 GitHub 快取仍可能可取得，未向 GitHub Support 申請清除。
+- 機制化防呆：repo 新增 `.githooks/pre-push`，直接執行 `validate-memory.yml` 內同一段檢查。每台機器 clone 後要執行 `git config core.hooksPath .githooks`，否則 hook 不生效。
+- 規則：帳號只寫「使用者個人 Google 帳號」之類描述，不寫信箱；push 被 hook 擋下時修內容，不要 `--no-verify`。

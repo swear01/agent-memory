@@ -1,0 +1,7 @@
+#!/bin/sh
+# Run the same check as .github/workflows/validate-memory.yml before anything leaves this machine.
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+git diff --check
+awk "/python3 - <<'PY'/{f=1;next} /^ *PY\$/{f=0} f" .github/workflows/validate-memory.yml \
+  | sed 's/^          //' | python3 -
