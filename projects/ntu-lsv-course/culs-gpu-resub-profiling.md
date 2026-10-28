@@ -118,3 +118,11 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - hyp_4xd 約 73% 的 rs root MFFC=1，只能被常數或 D0 換掉（divs1/12/2/3 的 MFFC 門檻 >1/>2/>2/>3），實際被換的僅約 1%；`simulateResubLane` 先只模擬前 G 個 word（word 彼此獨立，部分不符必推全不符，無 false negative），無候選就設 `simSize=0` 丟掉。hyp_4xd／div_5xd resyn2rs、compress2rs 約 −4.5%，mem_ctrl_5xd 與 resyn3 持平；64 格 md5 對 `dd970d4` 逐位元組相同（`cdd7877`，報告 `outputs/rs-mffc1-screen.md`）。
 - 想跳過 MFFC=1 root 的 cut／collectDivisor 不行：D0 取第一個相符的 divisor，依賴完整 divisor 集合與排序。
 - 重基後要重跑 64 格（base 與 new 都要在新 main 上重建）；cthulhu 不能直接 ssh 到 mazu，檔案要經本機中轉；`ssh host 'nohup ... &'` 沒重導 stdout 會讓 ssh 卡住。
+
+## 12 GB 容量失敗與 bug 修正（2026-10-28，CULS-fast `fc5d7ee`）
+
+- rw 分塊 cut pool 卡住（存活 cut set 多於裝置池）時，不要只靠縮小每塊大小：卡住只取決於邊界上的存活數。可用 `last[]` 差分＋前綴和算出峰值存活數，再用 `cudaMallocManaged`（溢位段 advise 成 host-preferred＋accessedBy device）的連續緩衝整趟重做；配置前要 `cudaMemPoolTrimTo(pool,0)`，因為 managed 頁不能用 stream-ordered pool 留著的記憶體。溢位的 rw 比平常慢 2–3 倍。
+- rf 一開頭就設 45 KB 的 stack limit，等於立刻保留約 4.1 GB；應該延到 ISOP 之前，而且要在依剩餘記憶體決定 `vSubgTable` 大小之前設（這樣大小不變，輸出逐位元組相同）。driver 會在 launch 時自動加大其他 kernel 需要的 stack。
+- rs 裡一個 root 只把 `simSize` 設成 0 不夠，`resubDivs12`／`resubDivs2` 不看 `simSize`，只看 MFFC 門檻，會讀到上一批的 queue；要丟掉一個 root，得把 `vMFFCNumSaved[root]` 也設成 0。
+- `pkill -f` 又一次殺掉自己的 ssh：要停背景腳本請記下 PID 再 `kill`。
+- 報告 `outputs/capacity-fix.md`。
