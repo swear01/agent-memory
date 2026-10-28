@@ -112,3 +112,9 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 每執行緒 call stack（45056 B × SM × 1536 ≈ 4.1 GB）在 mempool 之外；ISOP 後把 stack limit 降到 `evalFactoredForm` localSize＋2 KB 可釋放 2.5–3.5 GB。pool 碎裂用 `cudaMemPoolTrimTo(pool,0)`＋`culsMalloc` 遇 OOM 重試處理。平行 `b`（`fPar`）曾配置約 6 GB 用不到的 hash table，是 rf 之後 `b` OOM 的原因（`da6fc64`）。
 - 驗證方式：64 格＋bench-big md5 逐位元組、5 次中位數、10xd 前綴流程逐條記累計時間；`ls` 錯機器（`/var/tmp/culs-chunk` 在 mazu）、外層 `flock` 包 pf.sh（它內部已 flock）會死鎖。
 - 報告 `outputs/heap-b.md`、`outputs/rf-mem.md`。
+
+## rs MFFC=1 root 預篩（2026-10-28）
+
+- hyp_4xd 約 73% 的 rs root MFFC=1，只能被常數或 D0 換掉（divs1/12/2/3 的 MFFC 門檻 >1/>2/>2/>3），實際被換的僅約 1%；`simulateResubLane` 先只模擬前 G 個 word（word 彼此獨立，部分不符必推全不符，無 false negative），無候選就設 `simSize=0` 丟掉。hyp_4xd／div_5xd resyn2rs、compress2rs 約 −4.5%，mem_ctrl_5xd 與 resyn3 持平；64 格 md5 對 `dd970d4` 逐位元組相同（`cdd7877`，報告 `outputs/rs-mffc1-screen.md`）。
+- 想跳過 MFFC=1 root 的 cut／collectDivisor 不行：D0 取第一個相符的 divisor，依賴完整 divisor 集合與排序。
+- 重基後要重跑 64 格（base 與 new 都要在新 main 上重建）；cthulhu 不能直接 ssh 到 mazu，檔案要經本機中轉；`ssh host 'nohup ... &'` 沒重導 stdout 會讓 ssh 卡住。
