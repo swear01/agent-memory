@@ -2,7 +2,7 @@
 title: Claude API 實驗用 fleet 環境
 scope: tools/anthropic
 status: active
-updated: 2026-10-27
+updated: 2026-10-28
 tags:
   - anthropic
   - fleet
@@ -42,3 +42,8 @@ tags:
 - SDK 與 Claude Code 沒有額度用完自動換 key 的機制；要全自動需 LiteLLM proxy fallback。
 - 已部署並以 `GET /v1/models` 兩把皆 HTTP 200：M5、M1（新建 `~/.secrets` 並由 `.zshrc` source）、swear01 共用 home（mazu/zeus/cthulhu/valkyrie）、oracle。備份 `~/.secrets.bak-20261027`。athena、swop SSH 逾時未部署。
 - 教訓：用 box 終端機存 key 時，`xclip`/`xsel` 不存在，誤把 key 貼到命令列而出現在截圖；下次先 `stty -echo; cat > file` 再貼。
+
+## 實驗批次不要走訂閱 `claude -p`（2026-10-28）
+
+- 使用者指示：大量實驗呼叫（例如逐題問 Claude 60 次）不要用 claude.ai 訂閱帳號的 `claude -p`，有被封鎖的風險；改用 `ANTHROPIC_API_KEY_SWEAR`（明確引用 `_SWEAR`，不要依賴 `ANTHROPIC_API_KEY` 的預設值）。`_LAB` 不可用於使用者的個人實驗。
+- 互動式 Claude Code session 本身照常用訂閱，這條只限制實驗程式的批次呼叫。
