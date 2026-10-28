@@ -3,12 +3,20 @@ title: Fleet Codex 與 Pi 的安裝位置與更新方式
 scope: tools/hapi
 tool: hapi
 status: active
-updated: 2026-09-30
+updated: 2026-10-28
 ---
 
 # 結論
 
 Fleet 的 Codex / Pi 是各 runner 使用者的 npm global，不是 system-wide。更新時只寫獨立 home，NFS 四台只寫一次。不要重啟 Runner；既有 session 進程會繼續用舊 binary。
+
+# 2026-10-28 Codex 0.165.0 更新
+
+Mac、Mazu、Cthulhu、Valkyrie、Oracle 皆已升級至 Codex `0.165.0`；Zeus 依指示排除（不含 swear02），Athena 送修中排除。Pi 維持 0.87.1。
+- Mazu、Cthulhu、Valkyrie 採 NFS 共用 `~/.local/codex-0.165.0` prefix 安裝，並將 `~/.local/bin/codex` 及 nvm bin 切換指向新版。
+- Oracle 採獨立 `~/.local/codex-0.165.0` prefix 安裝並切換 `~/.local/bin/codex`。
+- Mac 透過 `~/.npm-global` 安裝至 `0.165.0`。
+- 各機驗證 `codex login status` 均維持 `Logged in using ChatGPT`。
 
 # 2026-09-11 已驗證版本
 
