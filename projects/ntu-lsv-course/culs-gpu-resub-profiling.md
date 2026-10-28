@@ -132,4 +132,4 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 慢的不是 PCIe 讀取，而是 `rwAssign`：一個 thread 負責清掉一整個 224 B 的 cut set，寫入無法合併。這在一般 rw 每次就要 0.43 s；在 managed 溢位記憶體上更會變成每塊最多約 1 s 的 first-touch fault，每次溢位 rw 共 2.6–3.9 s。改成一個 thread 寫一個 `int4`（每個 set 14 個 thread）之後，降到 0.03 s（一般）／0.09–0.10 s（溢位）。hyp_8xd resyn2 從 39.9 s 降到約 26 s，輸出逐位元組相同。
 - 對 managed 緩衝做 `cudaMemPrefetchAsync` 沒有好處，而且有副作用：預取裝置段之後，下一個指令可用的顯存少了 40–100 MB，結果讓後面原本放得下的 rw 也變成溢位（hyp_8xd abcs resyn2rs 的溢位次數從 1 次變 3 次）。只預取 host 段無害，但也沒有加速；最後完全不做 prefetch。教訓：先把存取改成合併寫入，再判斷是否需要 prefetch；改用 managed 記憶體的 API 之後，要看下一個指令的 free memory 有沒有變。
 - 剩下的溢位成本（每次比一般 rw 多約 0.7 s）分成三塊：flow kernel 經 PCIe 讀 host 端 cut set 約 +0.3 s；evaluate 約 +0.1 s；其餘是分塊數變成 50–135 塊所增加的同步與 thrust 呼叫。這些屬於溢位本身的成本。
-- 報告 `outputs/rw-overflow-opt.md`。
+- 報告 `outputs/rw-overflow-opt.md`（CULS-profiling `9b17ccf`）。
