@@ -4,9 +4,9 @@ scope: tools/skillshare
 tool: skillshare
 status: active
 confidence: high
-evidence: 2026-10-19 從 v0.20.25 升到 v0.25.13；2026-10-25 全部升到 v0.26.4（swop 從 0.20.27），逐台以 `skillshare version`、`skillshare pull` 與 source HEAD 驗證。
+evidence: 2026-10-19 從 v0.20.25 升到 v0.25.13；2026-10-25 全部升到 v0.26.4；2026-10-28 升到 v0.27.0（Mac, Mazu, Cthulhu, Valkyrie, Oracle；Zeus 依指示排除 swear02，Athena 送修中排除），逐台以 `skillshare version`、`skillshare pull` 與 source HEAD 驗證。
 created: 2026-10-19
-updated: 2026-10-25
+updated: 2026-10-28
 tags:
   - skillshare
   - fleet
