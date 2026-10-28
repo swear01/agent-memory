@@ -105,3 +105,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 計時輸出 `{time} prev cmd: ... full X s; total: ... full Y s` 同一行有兩個 `full`，用 `full ([\d.]+) s` 會重複計；要錨定 `prev cmd: alg [\d.]+ s, full`。
 - 以 `ssh host 'pkill -f pattern'` 會殺到自己的 ssh（pattern 出現在 bash -c 的指令列），改用 ps+grep 並排除 `bash -c`，或乾脆不殺。
 - 報告 `outputs/rs-kernels2.md`，CULS-fast `5b1e1ab`。
+
+## 10xd 在 12 GB 卡上跑完整 resyn2rs（2026-10-28）
+
+- device malloc heap（`cudaLimitMallocHeapSize`）在第一個用 device `malloc` 的 kernel 才提交，之後 `cudaDeviceSetLimit` 失敗，所以不能在進程啟動時定大小：`b` 在 div_10xd／hyp_8xd 最多容忍 256／512 MB、mem_ctrl_10xd 要 ≥1024 MB，rf 要 2048 MB（1024 時 arbiter／log2／sin 10xd 失敗）。`thrust::sort(thrust::seq)` 在 kernel 內會用 device heap，改成就地 introsort（`f3d7abf`）。
+- 每執行緒 call stack（45056 B × SM × 1536 ≈ 4.1 GB）在 mempool 之外；ISOP 後把 stack limit 降到 `evalFactoredForm` localSize＋2 KB 可釋放 2.5–3.5 GB。pool 碎裂用 `cudaMemPoolTrimTo(pool,0)`＋`culsMalloc` 遇 OOM 重試處理。平行 `b`（`fPar`）曾配置約 6 GB 用不到的 hash table，是 rf 之後 `b` OOM 的原因（`da6fc64`）。
+- 驗證方式：64 格＋bench-big md5 逐位元組、5 次中位數、10xd 前綴流程逐條記累計時間；`ls` 錯機器（`/var/tmp/culs-chunk` 在 mazu）、外層 `flock` 包 pf.sh（它內部已 flock）會死鎖。
+- 報告 `outputs/heap-b.md`、`outputs/rf-mem.md`。
