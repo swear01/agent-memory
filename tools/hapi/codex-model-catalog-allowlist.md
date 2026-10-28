@@ -6,7 +6,7 @@ tool: Codex app-server
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-09-30
+updated: 2026-10-28
 tags:
   - hapi
   - codex
@@ -31,15 +31,19 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 
 每個獨立 home 都要保留 canonical allowlist，並讓 `model_catalog_json` 指向該 host 的絕對路徑。更新 catalog 後先比較各 host 檔案內容，再實際呼叫 app-server `model/list` 或 HAPI machine Codex-models API，比對可見 ID。
 
-2026-09-30 八台 app-server `model/list` 與 HAPI machine Codex-models API 驗證的可見集合為：
+2026-10-27 Mac、mazu、cthulhu、valkyrie、zeus、oracle 的新 app-server `model/list` 驗證的可見集合為：
 
 - `gpt-6-astra`
 - `gpt-6.1-sol`
 - `gpt-6-luna`
-- `gpt-5.6-terra`
+- `gpt-6.1-terra`（顯示名稱 `GPT-6.1 Terra`）
 - `gpt-daybreak-blue-latest`
 
-固定例外 `codex-auto-review` 保持 hidden。Mac、mazu、athena、cthulhu、valkyrie、zeus、oracle（Hub 名稱 swever）、Windows swop 的 Codex CLI 均為 `0.159.2`，原本的 Sol 預設改為 `gpt-6.1-sol`；八台 HAPI machine records 均在線，模型清單皆包含且預設選擇 6.1 Sol，沒有舊 `gpt-6-sol`。本次只更新 Codex catalog 與預設，沒有更新 Pi 模型或既有聊天的選擇。
+固定例外 `codex-auto-review` 保持 hidden。使用者明確要求只更新模型選單；六台預設均維持 `gpt-6.1-sol`，Terra 的 `isDefault` 為 false。Mac 使用 canonical `scripts/sync-ai-agent-configs.py render-codex-models`；Linux 各獨立 home 執行既有 `~/.codex/scripts/update-model-catalog.py`，共用 NFS home 只寫一次，再逐台驗證。既有 tier retention 自動以 6.1 Terra 取代 5.6 Terra，無需更動程式或政策。
+
+這次證據是六台新 app-server 的有效模型清單，沒有逐台 Terra 推論或 HAPI Web 選單目視驗證，也沒有變更既有聊天或預設模型。swop SSH 重試仍逾時，當時 HAPI 線上 machines 也沒有它，未更新；Athena 送修，未連線、未驗證。共用 NFS 檔案可能隨 mazu 更新，不代表 Athena 已驗證。舊 app-server 需重開才能載入新 catalog。
+
+歷史：2026-09-30 曾完成八台 6.1 Sol catalog／HAPI 預設驗證，並把預設改為 Sol；該次在線與版本狀態只屬當日快照，不代表本次八台均已完成。
 
 # Client-version gate
 
