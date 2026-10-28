@@ -2,7 +2,7 @@
 title: CULS GPU resub profiling 與開源版基準
 scope: projects/ntu-lsv-course
 status: verified
-updated: 2026-10-25
+updated: 2026-10-29
 tags: [CULS, gpuls, resub, nsight, cuda]
 ---
 
@@ -121,8 +121,15 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 
 ## 12 GB 容量失敗與 bug 修正（2026-10-28，CULS-fast `fc5d7ee`）
 
-- rw 分塊 cut pool 卡住（存活 cut set 多於裝置池）時，不要只靠縮小每塊大小：卡住只取決於邊界上的存活數。可用 `last[]` 差分＋前綴和算出峰值存活數，再用 `cudaMallocManaged`（溢位段 advise 成 host-preferred＋accessedBy device）的連續緩衝整趟重做；配置前要 `cudaMemPoolTrimTo(pool,0)`，因為 managed 頁不能用 stream-ordered pool 留著的記憶體。溢位的 rw 比平常慢 2–3 倍。
+- rw 分塊 cut pool 卡住（存活 cut set 多於裝置池）時，不要只靠縮小每塊大小：卡住只取決於邊界上的存活數。可用 `last[]` 差分＋前綴和算出峰值存活數，再用 `cudaMallocManaged`（溢位段 advise 成 host-preferred＋accessedBy device）的連續緩衝整趟重做；配置前要 `cudaMemPoolTrimTo(pool,0)`，因為 managed 頁不能用 stream-ordered pool 留著的記憶體。溢位的 rw 原本比平常慢 2–3 倍（後來大多是 `rwAssign` 的未合併清零造成，見下一節）。
 - rf 一開頭就設 45 KB 的 stack limit，等於立刻保留約 4.1 GB；應該延到 ISOP 之前，而且要在依剩餘記憶體決定 `vSubgTable` 大小之前設（這樣大小不變，輸出逐位元組相同）。driver 會在 launch 時自動加大其他 kernel 需要的 stack。
 - rs 裡一個 root 只把 `simSize` 設成 0 不夠，`resubDivs12`／`resubDivs2` 不看 `simSize`，只看 MFFC 門檻，會讀到上一批的 queue；要丟掉一個 root，得把 `vMFFCNumSaved[root]` 也設成 0。
 - `pkill -f` 又一次殺掉自己的 ssh：要停背景腳本請記下 PID 再 `kill`。
 - 報告 `outputs/capacity-fix.md`。
+
+## rw 溢位路徑加速（2026-10-29，CULS-fast `2cc9e0e`）
+
+- 慢的不是 PCIe 讀取，而是 `rwAssign`：一個 thread 負責清掉一整個 224 B 的 cut set，寫入無法合併。這在一般 rw 每次就要 0.43 s；在 managed 溢位記憶體上更會變成每塊最多約 1 s 的 first-touch fault，每次溢位 rw 共 2.6–3.9 s。改成一個 thread 寫一個 `int4`（每個 set 14 個 thread）之後，降到 0.03 s（一般）／0.09–0.10 s（溢位）。hyp_8xd resyn2 從 39.9 s 降到約 26 s，輸出逐位元組相同。
+- 對 managed 緩衝做 `cudaMemPrefetchAsync` 沒有好處，而且有副作用：預取裝置段之後，下一個指令可用的顯存少了 40–100 MB，結果讓後面原本放得下的 rw 也變成溢位（hyp_8xd abcs resyn2rs 的溢位次數從 1 次變 3 次）。只預取 host 段無害，但也沒有加速；最後完全不做 prefetch。教訓：先把存取改成合併寫入，再判斷是否需要 prefetch；改用 managed 記憶體的 API 之後，要看下一個指令的 free memory 有沒有變。
+- 剩下的溢位成本（每次比一般 rw 多約 0.7 s）分成三塊：flow kernel 經 PCIe 讀 host 端 cut set 約 +0.3 s；evaluate 約 +0.1 s；其餘是分塊數變成 50–135 塊所增加的同步與 thrust 呼叫。這些屬於溢位本身的成本。
+- 報告 `outputs/rw-overflow-opt.md`。
