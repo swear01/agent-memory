@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-10-21 用 claude 2.1.302 (--input-format stream-json, haiku) 實測；第一個 tool_use 後注入 user message，turn 在下一個 tool boundary 轉向、跳過後續步驟、只產生一個 result。
 created: 2026-10-21
-updated: 2026-10-23
+updated: 2026-10-28
 tags:
   - hapi
   - claude
@@ -22,3 +22,8 @@ tags:
 - 脈絡：swear01 自己開的 #888（codex+claude）在 2026-08-19 被 #1606（Codex）合併時自動關閉，Claude 的部分沒做，也沒有另開 Claude 專用 issue。另一個競爭 PR #1351（@yin1245，預設自動 steer、取代排隊）已經 CONFLICTING，從 2026-10-03 起沒更新；#2008 沿用逐則 Steer 按鈕，符合 #888 和 #1466「預設排隊」的取向，但 PR 說明沒有連到 #888。
 - 結論（2026-10-22）：不另開上游 PR。使用者要求維護版要有，所以 v0.30.7.6 候選以 overlay 方式帶 #2008 + 修三個 finding 的 patch（swear01/hapi#30）。claude 2.1.302 實測：帶 uuid 的 prompt 會在 `result` 之前送出 `command_lifecycle` queued/started。本地 worktree `<worktree-root>/hapi/claude-midturn-steer-20261022` 是未 commit 的試作，可以刪。
 - 2026-10-23 狀態：fork release PR swear01/hapi#30（v0.30.7.6，含 #2008 overlay）仍 OPEN 未發佈；上游 #2008 仍 OPEN，head `4c22ab47`，從 2026-10-13 起沒有更新。
+- 2026-10-28 Steer UX 缺口（v0.30.7.7）：Claude steer RPC 寫進 stdin 就回 `steered:true`，但要等 `command_lifecycle started`（下一個 tool boundary，或 `result` 之後）才 consumed；這段期間 web 仍是普通 Queued 列，可再按 Steer（"Message not in queue"）、Cancel/Edit（hub busy → "Delivery outcome unknown"）。原因：Claude handler 沒像 Codex/Cursor 呼叫 `setSteerDeliveryState('dispatching')`。
+  - 共用 UI 不用另修：上游 #1981（OpenCode，junmo-kim）2026-10-28 head `3b70fdd` 加了不分 flavor 的 `deliveryPending`（"Waiting for delivery confirmation"、按鈕 disabled、reload 保留）。下一版 fork 要 carry #1981 最新 head，舊 carry 沒有這段。
+  - Claude 修正：本地 branch `fork/claude-steer-dispatching` commit `6e756a952`（base release/v0.30.7.7），下一版當 regenerate overlay patch 放在 0055（#2008 fix）之後。pre-push hook 擋非 upstream/main 為基底的 push，所以沒推；fork 修正本來就走 manifest patch，不靠遠端 branch。重點：restore 要先同步放回本地 queue、再 fire-and-forget 寫 `queued`（hub 有 `invoked_at IS NULL` guard），否則 turn 結束時可能讓後面的訊息先跑。已在 #2008 留言附 diff。
+  - Cursor ACP（#1609 swear01）：abort 後 soft steer 回 `stopReason: cancelled` 卻被當成已送達。修正 PR tiann/hapi#2229：cancelled → indeterminate（不自動重送，避免重複/Stop 後自己跑）。「row 永遠卡 dispatching」經查在 upstream/main 不成立。
+  - #1981 留言：`nativeSteerReceiptCorrelationLost` 永不重設，一次 Stop 之後該 launcher 的 steer 都退回整個 turn 完成才確認。
