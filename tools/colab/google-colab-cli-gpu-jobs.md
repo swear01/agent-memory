@@ -18,6 +18,10 @@ updated: 2026-10-29
 - Persistent: `colab new -s NAME --gpu A100`, `colab exec -s NAME -f file`, `colab stop`.
 - **Always stop sessions** (they burn compute units).
 
+## 平行跑（使用者偏好，2026-10-29）
+- 可以拆開的工作（重複測試、多電路計時）要一次開多個 A100 session（`new -s NAME1`、`NAME2`…）分段跑；compute units 按 VM 小時算，總量不變但更快完成。使用者明確要求「之後要記得」。
+- 每台各自跑完就 `colab stop`；同時開的上限待確認（看 `new` 是否回 400/429）。
+
 ## Plan / quota
 - Google AI Pro: 200 Colab compute units/month (A100 ≈ 5.3 CU/hr ≈ 37 h).
 - H100 locked (needs AI Ultra). Trial memberships excluded.
