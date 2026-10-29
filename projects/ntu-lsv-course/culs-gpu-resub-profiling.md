@@ -169,7 +169,8 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 ## A100 偶發卡住：truth table 不再用 device malloc（2026-10-29，CULS-fast `0fa312b`）
 
 - 用 stderr 的 rw 行（`0 in EvaluateNode`）對照 flow 步驟，就能定位卡住點：先在別台卡用 line-buffered 跑一次完整 log，看第 N 個 rw 之後是哪一步。log2_10xd resyn2 的 `Max Level: 353` 是第 3 個 `b`。
-- A100 的 mem_ctrl_10xd resyn2 卡在 rf 的 cone 數和 truth table 計時之間，GPU 100%，host 停在 libcuda。那段唯一不一般的是每個 warp 的 device `malloc`，而 128 MB heap 在 108 SM 上會用完。模仿它的 malloc 壓力測試在 4070 Ti／4060 上跑 100 次都沒卡，沒能在本地重現。
+- A100 的 mem_ctrl_10xd resyn2 卡在 rf 的 cone 數和 truth table 計時之間，GPU 100%，host 停在 libcuda。那段唯一不一般的是每個 warp 的 device `malloc`，而 heap 在 108 SM 上會用完。注意 `CULS_MEMOPT` 下 heap 預設 128 MB，但 `main()` 會在 `-c` 腳本含 rf（resyn2、resyn2rs…）時改成 2048 MB；先看 `main.cpp` 再引用 heap 大小。模仿它的 malloc 壓力測試在 4070 Ti／4060 上跑 100 次都沒卡，沒能在本地重現。
 - 修法：不追究 malloc，直接換成預先配置的 arena（`CULS_RF_ARENA_MB`，預設 min(free/4, 1 GB)），用 `atomicAdd` 切給 warp，分段 launch、每段歸零，下一段大小依上一段實際用量推算，放不下的 warp 下一輪重做。輸出相同，truth 時間 0.22→0.18 s。
 - `pgrep -f "bench3.py gpu"` 寫在 `ssh host '...'` 的命令列裡會比對到自己的 `bash -c`，永遠回報「有在跑」；和 pkill 一樣，要放進腳本檔再執行。
 - 報告 `outputs/a100-hang-round3.md`（CULS-profiling `6ef9850`）；關閉 #6、#8，#9 等 A100 重跑確認。
+- build 的 `-arch` 改由 CMake cache 變數 `GPULS_CUDA_ARCH` 決定（預設 `native`，CULS-fast `8b55c0b`）；在 A100 上 build 不必再改 CMakeLists。
