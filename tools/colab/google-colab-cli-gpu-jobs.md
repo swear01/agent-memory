@@ -3,7 +3,7 @@ title: Google Colab CLI GPU jobs
 scope: tools/colab
 tool: colab
 status: active
-updated: 2026-10-26
+updated: 2026-10-29
 ---
 
 # Google Colab CLI (GPU jobs)
@@ -26,6 +26,8 @@ updated: 2026-10-26
 - Default auth is oauth2 → pass `--auth=adc`.
 - Invalid `--gpu` value silently becomes A100.
 - HTTP 400 on `new` = no access to that accelerator.
+- `colab new` 加上第一個 `exec` 可能超過 Claude Code Bash 的 120 s timeout，被移到背景；之後別 `sleep; cat`，用 `run_in_background` 或 Monitor 等。
+- 2026-10-29：A100 子 session 在 `colab new` 之後 context 被 compact，回來就 idle，VM `culs-a100b` 空轉約 2 小時（/content 只有預設檔）。交給子 session 的 Colab 工作要附「卡住 15 分鐘就先 `colab stop` 再回報」，主 session 隔一段時間用 `colab --auth=adc ls` 看 VM 是否真的在跑東西。
 
 ## Alternative
 - Colab MCP: https://github.com/googlecolab/colab-mcp (needs an open browser notebook).

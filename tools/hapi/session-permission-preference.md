@@ -15,7 +15,7 @@ source_refs:
   - user-confirmed:2026-10-22
   - user-confirmed:2026-10-25
 created: 2026-08-26
-updated: 2026-10-25
+updated: 2026-10-29
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -68,3 +68,7 @@ Claude Code 現在把 `default` 叫 **Manual**；`dontAsk` 是「會詢問的一
 不是 YOLO，HAPI 的 Yolo 對應 `bypassPermissions` 是對的。使用者決定**不改** HAPI
 省略時的預設，由 agent 自己選模式；`tiann/hapi#2166` 只把 Claude 的標籤改成
 Manual。
+
+## 無人看管的審查 session（2026-10-29）
+
+使用者要求派去做無人看管審查的 session 開高權限（Claude `bypassPermissions`、Codex `yolo` 等），各 agent 的模式名稱與「要求改了要回頭檢查執行中的 session」見 [[multi-model-review]]。
