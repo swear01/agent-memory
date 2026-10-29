@@ -181,7 +181,7 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 修法一（`structLevelSpin`）：整個 warp 同步輪詢，每輪 `__syncwarp()` + `__all_sync()`，不提早 return。代價小（hyp_8xd 一次 resyn2 的 strash level 169→193 ms）。
 - 修法二（balance `parPhase2`）：讓 warp 一次領同一層的 32 張票（每層補到 32 的倍數），依賴必在更深層、更早的批次，所以不會等自己 warp 的 lane。改成每 warp 只留一條 lane 雖然也安全，但 phase 2 慢 1.6–1.7 倍。
 - balance 的 `CULS_BAL_PAR` 預設是開的（`culsOpt(..., 1)`），baseline commit 訊息寫「PAR default 0」已過時。
-- A100 結果（#9 已關）：0fa312b 和 10fc919 各跑 80 次都沒卡住。0fa312b 沒有這兩個 warp 修正也乾淨，所以 rf 的 device `malloc`/`free`（不是 heap 用完）是最可能的原因。
+- A100 結果：0fa312b 和 10fc919 各跑 80 次都沒卡住。0fa312b 沒有這兩個 warp 修正也乾淨，所以 rf 的 device `malloc`/`free`（不是 heap 用完）是最可能的原因。但修正後的程式碼只有 0/80，樣本太少，#9 已重開，等 10fc919 上約 300 次的結果再決定。
 
 ## 空 AIG 與 grid 0（2026-10-29，CULS-fast `0fc6924`、`71b9e9b`）
 
