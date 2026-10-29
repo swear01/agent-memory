@@ -35,8 +35,18 @@ tags:
   原生唯讀 `/model` 驗證四組：Argon medium + high → argon-high；base + high →
   argon-high；固定 gpt-oss-medium + stale high → 保留 medium 且不傳 effort；
   base + null → 原生 medium/default。四組 exit 0、SUCCESS、num_turns 0，不需推論。
-- catalog-aware startup 會多一次模型查詢，冷 cache 有 probe 延遲；沒有 catalog 時
-  已 canonical 的 base + effort 可保留，無法確認的 variant 不猜 configurable base。
+- **不能在 bootstrap 回報之前 await 模型查詢**：catalog probe 的 timeout 和
+  非 Codex runner startup webhook deadline 都是 15 秒；冷 cache 查詢卡住會讓
+  runner 在 fallback 前先殺 wrapper。PR review 抓到此回歸，後續修正先 bootstrap
+  回報、裝 lifecycle/kill，再 await catalog；default model 不查 catalog。
+- 初始化期間沿用 ApiSessionClient.pendingMessages 保存早送訊息，正規化後才掛
+  onUserMessage；RPC 等初始化完成，避免設定被初始化結果覆寫。cancel/retry 必須
+  先由擁有 pending buffer 的 ApiSessionClient 移除舊項，再 fallback flavor queue
+  callback；否則取消會失效、重試會重複執行。deferred lookup 和 real update-handler
+  回歸測試共 59 個通過，CLI typecheck 通過。
+- 冷 cache 的 explicit model 首輪仍有查詢延遲，但不再阻擋 startup webhook。
+  沒有 catalog 時已 canonical 的 base + effort 可保留，無法確認的 variant 不猜
+  configurable base。此次未改 per-turn transport 或 runner deadline。
 
 ## 2026-10-29 再查：model / effort 衝突與新版 stdin transport
 
