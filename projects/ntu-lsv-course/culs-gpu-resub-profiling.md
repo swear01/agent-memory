@@ -174,3 +174,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - `pgrep -f "bench3.py gpu"` 寫在 `ssh host '...'` 的命令列裡會比對到自己的 `bash -c`，永遠回報「有在跑」；和 pkill 一樣，要放進腳本檔再執行。
 - 報告 `outputs/a100-hang-round3.md`（CULS-profiling `6ef9850`）；關閉 #6、#8，#9 等 A100 重跑確認。
 - build 的 `-arch` 改由 CMake cache 變數 `GPULS_CUDA_ARCH` 決定（預設 `native`，CULS-fast `8b55c0b`）；在 A100 上 build 不必再改 CMakeLists。
+
+## 同一 warp 內的 spin-wait 與 BSYNC（2026-10-29，CULS-fast `239c496`、`10fc919`）
+
+- 一條 lane 等同 warp 另一條 lane 發布的值，在 SASS 裡常是：等待迴圈包在 `BSSY B1`／`B0` 裡，被等的 lane 要先過 `BSYNC` 才能發布；能不能過全看排程器。4070 Ti 上從沒卡過，但這不是保證，可能就是 A100 偶發卡住（#9）的原因。用 `cuobjdump -sass` 看等待迴圈和發布的 `STS`／`STG` 之間有沒有 `BSYNC`。
+- 修法一（`structLevelSpin`）：整個 warp 同步輪詢，每輪 `__syncwarp()` + `__all_sync()`，不提早 return。代價小（hyp_8xd 一次 resyn2 的 strash level 169→193 ms）。
+- 修法二（balance `parPhase2`）：讓 warp 一次領同一層的 32 張票（每層補到 32 的倍數），依賴必在更深層、更早的批次，所以不會等自己 warp 的 lane。改成每 warp 只留一條 lane 雖然也安全，但 phase 2 慢 1.6–1.7 倍。
+- balance 的 `CULS_BAL_PAR` 預設是開的（`culsOpt(..., 1)`），baseline commit 訊息寫「PAR default 0」已過時。
