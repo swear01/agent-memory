@@ -64,3 +64,17 @@ Mac Grok Bot 0.78.1 再次驗證上述原生設定方法。新增的「讀書鯨
 `grok-bot-cli` 0.12.4 的 `doctor` 找不到 App 的 `gateway-descriptor.json`，因此該 CLI 沒有可用的 gateway session；不能把已安裝 CLI 或 App 已登入視為 API 已連通。此次直接使用原生介面完成，無須處理 Keychain 或修改 App。
 
 背景 AX 掃描可讀到介面，但單靠 `AXPress` 回報成功並未讓頁面改變；明確啟用 Grok Bot 後，按新取得的 AX 邊界輸入及點擊才完成建立與傳送。每次動作後要重讀目標角色標題和實際頁面，不能以按鈕呼叫成功推定建立或送達，也不要在未確認前重複建立 Bot。
+
+
+## 2026-10-30：七款 GIF 的首尾循環修正
+
+使用者語音中的「CSS」是「十六張」的辨識錯誤，已明確確認要 16 張循環 GIF，不是 CSS 動畫。保留既有大頭、極小身體的造型。
+
+- 讀書鯨保留原 16 張畫稿，改為 `0..15,14..1` 的 30 時間格往返播放；每格 120 ms、總長 3.6 秒、不重複端點，移除原首尾各 300 ms 停頓。逐格解碼像素與舊 GIF 對應畫格完全一致；動作會反向返回，並非重畫完整接書／丟書閉合序列。
+- Grok Bot、Mail Bot（舊稱 Gmail Bot）、NTU COOL、HAPI、電腦操作、鸚鵡 Bot 各重新生成 16 張畫稿；512×512、每格 120 ms、1.92 秒、無限循環。生成 sheet 實際為 1254×1254，分格後上採樣至 512，不能稱原生 512 畫格。
+- 生成提示應指定完整週期與固定鏡頭、比例、背景，讓第 16 格是接回第 1 格前的姿勢。驗證要包含最後到第一格的變化、一般相鄰格比較和端點時長；畫格數、不同 hash、loop=0 或 prompt 寫了「首尾相接」都不能單獨證明循環順暢。生成畫稿仍有逐格位置漂移，RMSE 比較不等於補間或完全平滑保證。
+- 七隻都透過各 Bot 內建頭像功能更新；獨立核對 live avatarVersion、Mac cache 完整 SHA-256 與 GIF 解碼規格，7/7 匹配。快取可能晚於 Bot 回覆落地，不要在 cache 尚未出現時立刻當作設定失敗。
+- Mac Grok Bot 0.78.1 實際視窗連拍 28 次、跨 10.723 秒，六款新圖各捕捉到 16 種姿勢，讀書鯨捕捉到 10 種；證明七隻在 Mac 實際播放，未測其他裝置，也未接工作狀態動畫。
+- 本次 AX 僅有選單、沒有視窗內容；以原生視窗截圖確認目標角色後輸入。Swift 中呼叫 `NSRunningApplication.activate` 後立即結束程序，啟用可能未完成；同程序保留 `RunLoop.current.run(until:)` 後才確認前景並操作。啟用回傳成功、按鍵送出都不能代替畫面或送達驗證。
+
+成品與證據位於 `<task-root>/outputs/seamless-avatars-2026-10-30/`；保留原檔。`delivery/cache-verification.json` 記錄保存位元組核對，`delivery/native-playback-verification.json` 與 `delivery/native-motion-proof.png` 是實際 App 播放證據，`delivery/summary.json` 記錄限制。生成與首尾差異資料在各角色子目錄；不要把來源 GIF 預覽當作 App 播放證據。
