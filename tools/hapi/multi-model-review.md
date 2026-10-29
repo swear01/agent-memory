@@ -3,7 +3,7 @@ title: 用 HAPI 派多個模型做程式審查
 scope: tools/hapi
 tool: hapi spawn-peer
 status: active
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-mode]
 ---
 
@@ -34,7 +34,7 @@ tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-m
 - agy 只在 Mac（swairM5）登入；mazu、cthulhu、zeus 沒有。
 - cursor-agent 各機都沒登入，spawn 回 HTTP 502；要使用者 `agent login`。
 - grok 只裝在 Mac 且未登入（`grok login`）。
-- dsh 在 mazu 沒有 `DEEPSEEK_API_KEY`（`dsh --profile headless` 回 MISSING_CREDENTIAL）。
+- dsh 在 mazu 沒有 `DEEPSEEK_API_KEY`（`dsh --profile headless` 回 MISSING_CREDENTIAL）。使用者 2026-10-30 決定不用 dsh；DeepSeek 改用 OpenCode：`--agent opencode --model deepseek/deepseek-v4-pro --permission-mode yolo`（Mac 與 mazu 的 opencode 都已綁好 DeepSeek）。
 - CLI 沒登入時 HAPI session 會無聲結束（`session_ended`）；先用 headless 一行指令測試。
 
 ## 操作細節
