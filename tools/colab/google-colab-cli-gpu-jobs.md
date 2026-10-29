@@ -20,7 +20,8 @@ updated: 2026-10-29
 
 ## 平行跑（使用者偏好，2026-10-29）
 - 可以拆開的工作（重複測試、多電路計時）要一次開多個 A100 session（`new -s NAME1`、`NAME2`…）分段跑；compute units 按 VM 小時算，總量不變但更快完成。使用者明確要求「之後要記得」。
-- 每台各自跑完就 `colab stop`；同時開的上限待確認（看 `new` 是否回 400/429）。
+- 每台各自跑完就 `colab stop`。
+- 實測上限（Google AI Pro，2026-10-29）：**A100 同時最多 2 台**。第 3 台起 `colab new` 回「Allocation refused (precondition failed). This can mean too many active sessions, or a temporary usage or capacity limit…」，沒有 HTTP 碼。不必再試更多台；要更多平行度只能換別的加速器。
 
 ## Plan / quota
 - Google AI Pro: 200 Colab compute units/month (A100 ≈ 5.3 CU/hr ≈ 37 h).
