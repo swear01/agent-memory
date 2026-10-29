@@ -9,13 +9,46 @@ evidence: >-
   上游 PR/issue、release audit TSV、hub DB sessions metadata、runner log，
   以及 `agy --output-format=json models` 與 `agy -p` 的實際輸出。
 created: 2026-09-20
-updated: 2026-09-20
+updated: 2026-10-29
 tags:
   - antigravity
   - agy
   - hapi
   - integration
 ---
+
+## 2026-10-29 再查：model / effort 衝突與新版 stdin transport
+
+以下以 HAPI `5d8deb201`、本機 agy `1.4.10` 原始碼和唯讀命令驗證；後面的
+2026-09-20 記錄是歷史背景，尤其「只能 per-turn spawn」已不成立。ACP server
+目前狀態本輪未重查，不可把舊 RC 限制當成最新結論。
+
+- `agy -p /model --model gemini-4-argon-medium --effort high --output-format stream-json`
+  在推論前直接 exit 1：`--model gemini-4-argon-medium conflicts with --effort=high`；
+  result 的 `response` 為空，真正原因在 `error`，usage 全零。
+- 移除 `--effort` 後同一個 `/model` 查詢成功，解析 effort 為 `medium`。
+  base 名稱 `--model gemini-4-argon --effort high` 亦成功解析為
+  `gemini-4-argon-high`。不要對所有名稱直接刪字尾：需由 live catalog 和 CLI
+  resolution 驗證 family、variant 與可用 effort。
+- `agy -p /effort --output-format json` 可取得
+  `command.data={adjustable:true,current:"medium",available:["low","medium","high"]}`。
+  help 已列 low/medium/high/xhigh/max，但各模型可用值應用原生查詢確認。
+- HAPI `runAgy.ts` 從 launch opts 固定保存 `sessionEffort`；config RPC 只更新
+  model/permission，沒有 effort handler；`agyHeadlessDriver.ts` 每輪同時傳
+  model slug 和舊 effort，且只接受 low/medium/high。切 model 不會清掉舊 effort，
+  resume 也會還原 stored effort，故可產生上述衝突。當前 web 新建表單的 agy
+  descriptor 沒有 effort，resolvedEffort 亦排除 agy；不可直接歸因當前 web
+  新建表單。CLI/runner API/resume 均是可能來源，個案來源仍須 session 證據。
+- `agyNdjsonParser.ts` 丟棄 result.error 和 usage；driver 失敗時誤讀 response
+  當原因。stdout 已用 setEncoding('utf8')，不能直接將字串問題歸咎 byte split。
+- 官方 headless 文件與本機 help 均確認 `--input-format stream-json
+  --output-format stream-json` 可用單一常駐程序處理多輪 stdin user 訊息；
+  result 是回合邊界，不能再等 process close 才 finish turn。官方文件也明確說
+  `/model`、control_request/control_response 會 ERROR 並結束串流，故仍需在設定
+  改變時規劃重啟與 conversation resume，不能假設已有雙向控制協定。result
+  usage/duration/num_turns 是 session 累計，導入時避免每輪重複計數。
+- 改善順序：先統一 model/effort 的有效設定，避免矛盾參數；再整理 family 與
+  effort UI、支援範圍；最後改常駐 stdin transport。此次僅調查，未修改 HAPI。
 
 ## 整合架構（HAPI 端）
 
