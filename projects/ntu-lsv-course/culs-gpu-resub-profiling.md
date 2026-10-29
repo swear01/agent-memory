@@ -195,3 +195,10 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 
 - `culsMemGetInfo` 裡的 `cudaDeviceSynchronize`：hyp_8xd `abcs resyn2rs` 全程 73 次，335 ms 的 sync 期間 GPU 有 335.1 ms 在跑 kernel，只是在等已排入的工作，不是 host 空檔。判斷 sync 是否值得拿掉，要先用 nsys 比對 sync 區間內的 kernel 佔用，而不是看次數。
 - resub `MFFC_BOUND_MAX = MAX_CUT_SIZE * 10` 不是過大：呼叫端傳的 `nMaxCutSize` 是 `cutSize * 10`，限深 MFFC 的邊界不是 cut leaf，縮小會改變輸出。
+
+## 2026-10-30：rw kernel 參數與 host 小項（round 4）
+
+- `EvaluateNodeLaneM` 受 shared memory 限制（occupancy 41.7%），但調小 `EM_CAP` 會讓更多候選退回 `EvaluateCutOld`，反而變慢（EM_CAP=10：1.25 → 1.71 s）；`CutEnumerateFlow` 的 `CE_MINB` 從 4 放寬到 3，spill 變少但 occupancy 下降，時間不變。這兩個參數已是最佳點，要再快得重排工作分配（壓縮 slot、依 class 排序、64-bit key atomicMax 合併）。
+- ncu 先量前幾次 launch 會誤導：rw 的時間集中在第一個 rw 的 chunk launch（80–135 ms），前面的小 launch 只有 0.3 ms。先用 nsys 找出大的 launch，再用 `--launch-skip` 指到它。
+- host 端用新 `std::vector` 當暫存、之後又整段覆寫的地方，清零加 page fault 可能佔一半時間（rwLevels 14／36 ms）；改用 pinned pool（`CulsHostBuf`）。
+- `CULS_PHASE` 的每個 mark 都會 `cudaDeviceSynchronize`，量不出 async 重疊的效果，要用 wall time A/B。
