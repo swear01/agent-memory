@@ -133,3 +133,20 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 對 managed 緩衝做 `cudaMemPrefetchAsync` 沒有好處，而且有副作用：預取裝置段之後，下一個指令可用的顯存少了 40–100 MB，結果讓後面原本放得下的 rw 也變成溢位（hyp_8xd abcs resyn2rs 的溢位次數從 1 次變 3 次）。只預取 host 段無害，但也沒有加速；最後完全不做 prefetch。教訓：先把存取改成合併寫入，再判斷是否需要 prefetch；改用 managed 記憶體的 API 之後，要看下一個指令的 free memory 有沒有變。
 - 剩下的溢位成本（每次比一般 rw 多約 0.7 s）分成三塊：flow kernel 經 PCIe 讀 host 端 cut set 約 +0.3 s；evaluate 約 +0.1 s；其餘是分塊數變成 50–135 塊所增加的同步與 thrust 呼叫。這些屬於溢位本身的成本。
 - 報告 `outputs/rw-overflow-opt.md`（CULS-profiling `9b17ccf`）。
+
+## host 空檔第一輪、容量判斷、裝置相依輸出（2026-10-29，CULS-fast `28b7d63`）
+
+- host 空檔要先量再改。nsys 的 CPU 取樣能把空檔歸到函式，`CULS_PHASE=1` 則印每段 ms。這輪的大頭都是「每次呼叫新配置 graph 大小的 host vector」：
+  - first-touch page fault 加上 zero fill；
+  - static vector 變大那次 0.4 s 的尖峰。
+- 改用 pinned 池（`CulsHostBuf`）、把排序搬到 GPU（cub radix，key 為 (level, id)），三個 10xd 電路快了 6–16%，輸出逐位元組相同。
+- 「整個陣列放得下」的判斷必須算進之後還會配置的暫存。multiplier_10xd 的 cut 陣列 5.4 GB 放得下，只剩 0.44 GB，接著 sort 暫存就配置失敗了。修法是保留量與 n 成正比（40 B／節點＋64 MB）。
+- 不要用固定的 1 GB 保留量：模擬小卡時（`CULS_FAKE_TOTMB=3072`），連 adder 也被推進 chunk 路徑，然後結束。
+- rw 輸出會因 GPU 不同而變：`tdBlocks = 2 × SM 數` 決定 top-down／bottom-up 的分界。只要演算法分界取決於 SM 數、occupancy 或 L2，換卡就會換輸出（同一張卡仍然是決定性的，所以 5 次重跑抓不到）。
+  - 修法：分界改成常數。另加 `CULS_FAKE_NSM`／`CULS_FAKE_TOTMB` 測試 hook，在單卡上用 `md5cfg.py` 跑 64 格掃描。
+  - mazu 的 RTX 4060 只有 24 SM，修正前它的輸出本來就和 4070 Ti 不同。跨機比 md5 前，要先確認 SM 數是否相同。
+- 小坑：
+  - `git cherry-pick` 沒有 `-q`。
+  - 從 Mac `scp` 過去的腳本沒有 +x，`nohup ./x.sh` 會 Permission denied，用 `bash x.sh` 執行。
+  - `ssh host 'nohup … &'` 仍會卡住 ssh；改用 `(setsid nohup … < /dev/null &)`。
+- 報告 `outputs/host-gap-round1.md`（CULS-profiling `d7b3d3e`）；issue #3 已關，#6、#7 開著。
