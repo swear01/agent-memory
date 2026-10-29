@@ -68,6 +68,8 @@ Mac Grok Bot 0.78.1 再次驗證上述原生設定方法。新增的「讀書鯨
 
 ## 2026-10-30：七款 GIF 的首尾循環修正
 
+後續更正：本節只證明格式、保存與實際播放。使用者隨後指出 Mail Bot、HAPI、鸚鵡 Bot、NTU COOL 的頭部及手部仍會不自然抖動，拒絕這四款的動作品質；最新修正見下節。
+
 使用者語音中的「CSS」是「十六張」的辨識錯誤，已明確確認要 16 張循環 GIF，不是 CSS 動畫。保留既有大頭、極小身體的造型。
 
 - 讀書鯨保留原 16 張畫稿，改為 `0..15,14..1` 的 30 時間格往返播放；每格 120 ms、總長 3.6 秒、不重複端點，移除原首尾各 300 ms 停頓。逐格解碼像素與舊 GIF 對應畫格完全一致；動作會反向返回，並非重畫完整接書／丟書閉合序列。
@@ -78,3 +80,14 @@ Mac Grok Bot 0.78.1 再次驗證上述原生設定方法。新增的「讀書鯨
 - 本次 AX 僅有選單、沒有視窗內容；以原生視窗截圖確認目標角色後輸入。Swift 中呼叫 `NSRunningApplication.activate` 後立即結束程序，啟用可能未完成；同程序保留 `RunLoop.current.run(until:)` 後才確認前景並操作。啟用回傳成功、按鍵送出都不能代替畫面或送達驗證。
 
 成品與證據位於 `<task-root>/outputs/seamless-avatars-2026-10-30/`；保留原檔。`delivery/cache-verification.json` 記錄保存位元組核對，`delivery/native-playback-verification.json` 與 `delivery/native-motion-proof.png` 是實際 App 播放證據，`delivery/summary.json` 記錄限制。生成與首尾差異資料在各角色子目錄；不要把來源 GIF 預覽當作 App 播放證據。
+
+
+## 2026-10-30：原畫局部動作取代逐格重畫
+
+使用者明確更正：重點是頭部不要莫名亂擺，不是把手與道具固定、再讓頭擺動。Mail Bot 應把信封往前推再收回；NTU COOL 應揮同一隻手；鸚鵡的麥克風與持握手要一起動。逐格生成會改變頭部比例、手掌及道具形狀；把這些畫稿往返播放，或只比較首尾與內部最大 RMSE，都無法消除中途抖動。
+
+- 回用先前接受的單張原畫，以固定的局部材質變換連續取樣：Mail 信封與雙手 `1→1.12→1` 前推／收回；NTU 固定原本張掌繞手腕小幅揮動；鸚鵡固定握法、麥克風微抬返回。三者頭臉固定。HAPI 只做單次 `0→0.8°→0` 歪頭，領口與披肩固定。每款 40 時間格、60 ms／格、2.4 秒，往返路徑重複姿勢是預期行為。
+- 原始 PNG 未改動；raw 第 0 格與來源像素相同，第 40 相位精確回到第 0 格。獨立確認所有解碼 GIF 格的指定頭臉區域不變，NTU 須特別保護與手掌相鄰的臉頰／眼鏡，不能讓局部遮罩溢入臉。HAPI 的固定檢查區域是披肩。
+- 共用色盤後再做 GIF 差異矩形壓縮，須完整解碼比對 RGBA 與時長；本次 ImageMagick 優化改變解碼色彩，未採用，改用保留原索引色的無損差異矩形編碼。
+- 四款已更新，live avatarVersion、完整 cache SHA-256 及 GIF 規格 4/4 匹配；讀書鯨、Grok Bot、電腦操作的版本與 cache hash 不變。Mac 0.78.1 實際連拍 28 次、10.461 秒，四款均有動作；Mail、NTU、鸚鵡的頭部取樣區域各只出現一種像素 hash，未觀察到頭部跳動。
+- 成品、renderer、原畫來源與驗證保留於 `<task-root>/outputs/stable-avatars-2026-10-30/`。`delivery/rig-verification-independent.json` 是局部固定與閉合檢查；`delivery/cache-verification.json` 與 `delivery/native-playback-verification.json` 是保存與實際播放證據。尚未取得使用者對本次修正版的主觀驗收；未測其他裝置。這是局部影像變形，不是 3D 骨架；鸚鵡沒有嘴型同步，HAPI 未新增眨眼。
