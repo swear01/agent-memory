@@ -17,6 +17,27 @@ tags:
   - integration
 ---
 
+## 2026-10-29 模型／effort 修正實作（HAPI PR #2244）
+
+- 實作分支以 upstream `d9acc0c31` 為基底；PR #2244 的合併／release 狀態需另查。
+  Web 新建表單和 chat composer 分開選 model family 與 effort，CLI launch、resume、
+  config RPC 統一正規化為 base model + effort；這個 PR 不改 per-turn transport。
+- Raw machine catalog 保持原格式；shared `getAgyModelChoices` 只有同 family
+  至少兩個不同 effort variants 時才合併，effort 選項取自 catalog。單 variant
+  保留原 wire ID、隱藏 effort。`splitAgyModelSelection` 僅拆已知原生前綴，
+  `custom-high` 等自訂名稱不拆。
+- RPC 回傳實際 normalized `applied` model/effort，hub 一次保存兩個欄位；
+  保留 enqueue-time snapshot。明確 effort 優先於舊 slug 的尾綴；固定模型清掉
+  stale effort。catalog 不足以確認的未知 variant 衝突會明確拒絕，不默默換模型。
+- 新 base IDs 不能再經 NewSession 的靜態模型白名單驗證，否則保存後下一次開表單
+  就重設為 Default；agy 必須和其他 dynamic catalog agent 一樣等 live catalog 驗證。
+- 真實 agy 1.4.10、live catalog 13 models，經 source normalize → build args →
+  原生唯讀 `/model` 驗證四組：Argon medium + high → argon-high；base + high →
+  argon-high；固定 gpt-oss-medium + stale high → 保留 medium 且不傳 effort；
+  base + null → 原生 medium/default。四組 exit 0、SUCCESS、num_turns 0，不需推論。
+- catalog-aware startup 會多一次模型查詢，冷 cache 有 probe 延遲；沒有 catalog 時
+  已 canonical 的 base + effort 可保留，無法確認的 variant 不猜 configurable base。
+
 ## 2026-10-29 再查：model / effort 衝突與新版 stdin transport
 
 以下以 HAPI `5d8deb201`、本機 agy `1.4.10` 原始碼和唯讀命令驗證；後面的
