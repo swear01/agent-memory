@@ -18,6 +18,7 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 - 放置與升級走 `pickupItem(type)`、設定 `hoveredCell` / `hoveredEntity`，再 `processClick()`。不要直接呼叫 `addEntity`，否則會跳過成本與副作用。
 - `processClick()` 本身不檢查商店解鎖和唯一性。Adapter 必須另驗證 `canPurchase`、`unlockedEntities[type]` / `shouldUnlock(game)`、`onlyones`、目前 plane、`canAfford`、佔位與升級目標，並確認放置後的實體。
 - 互動沿用 entity 的 `onmousedown` / `onmouseup` 或 dark callback；先檢查 `canHit()` / `canDarkHit()`。重複點擊每次重新檢查，cube 破裂後停止，並維持正常 `stats.totalCubeClicks`。Pump 長按期間需要 `game.hoveredEntity === target`，否則其 `update()` 立即釋放；結束時必須 `onmouseup()`。
+- 長按不能只每 25 ms 重設 hover：`updateTranslation` / `processMousemove2` 的原生游標刷新會在兩次重設之間改寫 `hoveredEntity`，讓 Pump 提前取消。已驗證的修正是在長按期間暫時包裝目標的 `update`，每次呼叫原生方法前先設定 `game.hoveredEntity = target`；在 `finally` 恢復原本 own / prototype 方法關係並釋放按鍵。VM 測試重現游標覆寫後通過，實機長按 5 秒的 pump 深度由 0 增至約 0.795 並生成 cube；後續正常點擊破壞 cube、回收及區域清理均驗證完成。
 - 回收依 `eraserType` 選 `eraser` / `eraser2` / `eraser3`，先跑 `canEraseNow()` 再走 `processClick()`；不可直接 `clearCell()`。這樣才能保留 cube / indestructible / 最後一台 excavator 的保護、回收費用、退款和統計。
 - 退款沿用原生 `getRealPrice(name, true)`。函式在倍率 `mult === 1` 時直接回傳基礎價格，未套回收折扣；勿自行重算成固定百分比。退款通常經 VFX 非同步入帳，回收回應後應稍後再讀資源。
 - 操作後還原暫時使用的選取、手持物與 hover 狀態，避免把已刪除 entity 的參照還原。Menu 開啟時明確拒絕世界操作，另提供 `resume` 關閉 splash。
