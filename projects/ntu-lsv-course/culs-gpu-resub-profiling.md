@@ -162,6 +162,14 @@ tags: [CULS, gpuls, resub, nsight, cuda]
   - 修法：失敗的 warp 記下工作，host 分批重做。
   - 重現：把 `CULS_HEAP_MB` 調小。
   - 別先假設是 SM 數，先用 fake NSM 排除。
-- stdout 寫到檔案時是整塊緩衝，卡住的 process 的 log 只會停在最後一次 stderr（這裡只有 rw 寫 stderr）。查卡住要用 `stdbuf -oL -eL`，再用 `cuda-gdb -p` 的 `info cuda kernels`。
+- stdout 寫到檔案時是整塊緩衝，卡住的 process 的 log 只會停在最後一次 stderr（這裡只有 rw 寫 stderr）。查卡住要用 `stdbuf -oL -eL`。`cuda-gdb -p` attach 到不是在 cuda-gdb 底下啟動的 process 只會回報「No CUDA kernels」，看不到 device 狀態；要 warp 的 backtrace 得從一開始就在 cuda-gdb 下執行。
 - `&cec -y` 對 sqrt_10xd resyn2 回報 UNDECIDED（428 s），`&cec -x` 459 s 證明等價。CEC 要讓多種引擎競賽，見 `cec-fast.sh`。
 - 報告 `outputs/host-gap-round2.md`（CULS-profiling `751340b`）；issue #8（rf heap）、#9（A100 偶發卡住）。
+
+## A100 偶發卡住：truth table 不再用 device malloc（2026-10-29，CULS-fast `0fa312b`）
+
+- 用 stderr 的 rw 行（`0 in EvaluateNode`）對照 flow 步驟，就能定位卡住點：先在別台卡用 line-buffered 跑一次完整 log，看第 N 個 rw 之後是哪一步。log2_10xd resyn2 的 `Max Level: 353` 是第 3 個 `b`。
+- A100 的 mem_ctrl_10xd resyn2 卡在 rf 的 cone 數和 truth table 計時之間，GPU 100%，host 停在 libcuda。那段唯一不一般的是每個 warp 的 device `malloc`，而 128 MB heap 在 108 SM 上會用完。模仿它的 malloc 壓力測試在 4070 Ti／4060 上跑 100 次都沒卡，沒能在本地重現。
+- 修法：不追究 malloc，直接換成預先配置的 arena（`CULS_RF_ARENA_MB`，預設 min(free/4, 1 GB)），用 `atomicAdd` 切給 warp，分段 launch、每段歸零，下一段大小依上一段實際用量推算，放不下的 warp 下一輪重做。輸出相同，truth 時間 0.22→0.18 s。
+- `pgrep -f "bench3.py gpu"` 寫在 `ssh host '...'` 的命令列裡會比對到自己的 `bash -c`，永遠回報「有在跑」；和 pkill 一樣，要放進腳本檔再執行。
+- 報告 `outputs/a100-hang-round3.md`（CULS-profiling `6ef9850`）；關閉 #6、#8，#9 等 A100 重跑確認。
