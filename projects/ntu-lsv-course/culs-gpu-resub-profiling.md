@@ -150,3 +150,18 @@ tags: [CULS, gpuls, resub, nsight, cuda]
   - 從 Mac `scp` 過去的腳本沒有 +x，`nohup ./x.sh` 會 Permission denied，用 `bash x.sh` 執行。
   - `ssh host 'nohup … &'` 仍會卡住 ssh；改用 `(setsid nohup … < /dev/null &)`。
 - 報告 `outputs/host-gap-round1.md`（CULS-profiling `d7b3d3e`）；issue #3 已關，#6、#7 開著。
+
+## strash GPU 分層、device heap 耗盡（2026-10-29，CULS-fast `5ae3f0b`）
+
+- 比較「搬到 GPU 划不划算」時，要把搬回和上傳也算進去：
+  - strash 的 host 分層單看只有 0.077 s，比 GPU spin（0.1 s）快；但加上拷回和上傳後就輸了。
+  - 改成 `structLevelSpin` 後，每次 strash 從 70–260 ms 降到 17–20 ms；連 24,801 層的 hyp_8xd 也是 GPU 勝，因為上一次 strash 已依 level 排好 id。
+  - 只有剛讀入的 AIG（id 未依 level 排）第一次較慢。
+- kernel 內的 device `malloc` 在 Release（`-DNDEBUG`）下失敗會回傳 NULL，`assert` 被拿掉，結果是寫到 NULL 加位移的位址。同時駐留的 warp 越多（A100 108 SM），heap 越早用完：
+  - 會表現成「只在某張卡上必定 illegal access」，在小卡上則是偶發。
+  - 修法：失敗的 warp 記下工作，host 分批重做。
+  - 重現：把 `CULS_HEAP_MB` 調小。
+  - 別先假設是 SM 數，先用 fake NSM 排除。
+- stdout 寫到檔案時是整塊緩衝，卡住的 process 的 log 只會停在最後一次 stderr（這裡只有 rw 寫 stderr）。查卡住要用 `stdbuf -oL -eL`，再用 `cuda-gdb -p` 的 `info cuda kernels`。
+- `&cec -y` 對 sqrt_10xd resyn2 回報 UNDECIDED（428 s），`&cec -x` 459 s 證明等價。CEC 要讓多種引擎競賽，見 `cec-fast.sh`。
+- 報告 `outputs/host-gap-round2.md`（CULS-profiling `751340b`）；issue #8（rf heap）、#9（A100 偶發卡住）。
