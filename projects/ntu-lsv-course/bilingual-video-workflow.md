@@ -2,7 +2,7 @@
 title: LSV 圖文影片教材、知識延伸與來源查核流程
 scope: projects/ntu-lsv-course
 status: verified
-updated: 2026-10-15
+updated: 2026-10-30
 ---
 
 # 教材位置與閱讀
@@ -69,3 +69,14 @@ PDF 文字擷取已證實會漏掉底線：PA1 第 2、4 頁實際命令是 `lsv
 - 延伸必須接得上當章主題。自製算例、額外條件與外部參考明確標示，不能說成講義原例或教師原話；例如 CNF 講義第 70 頁查輸出 0，末項為 ¬9，自製查輸出 1 的例子才加正相 unit clause。
 - 已實作 10 項補充放入 11 個相關章節，原有 18 支／173 章不變。`資料說明/延伸補充.json` 使用 `placement=inline-with-chapter`、`handout_explanation_md`、`placements` 與對應 anchor；HTML 用直接顯示的 aside，Markdown 同步保留章節旁的說明。
 - 最新 checker 通過 11 個 inline 位置、10 項補充、2,207 個本機連結與原有字幕／講義完整性；桌面核對講義圖與補充同時可讀，390px 窄螢幕無橫向撐寬，章節 anchor 不被搜尋列遮住。Drive 本機與 outputs 已核對，遠端 Drive 同步仍未獨立確認。
+
+# 第 7–8 週（期中考前）擴充與離線影片保存（2026-10-30）
+
+- 補充第 07 週（10/20，3支）與第 08 週（10/27，2支）共 5 支影片、28 個圖文章節、5,452 段字幕 cue（約 5.14 小時）。全課期中考前合計 23 支影片、390 章、20,860 段原始英文字幕。
+- 講義同步納入 `lecture06.pdf`（110 頁，Multi-Level 邏輯最小化導論），全課正式講義增至 15 份 PDF、672 頁。`原始講義索引.json` 與 `原始講義索引.md` 同步登錄 SHA-256 與 COOL 模組編號。
+- 影片來源：NTU COOL 播放器解析得 unlisted YouTube ID（`Wijcoz3tTCY`、`NN2mwCra9Bg`、`l7XFHy9-LGU`、`aZGjmAoTL-o`、`CRsJjAIti24`）。使用 `yt-dlp` 下載 720p MP4 本地備份至 `<remote-home>/Movies/LSV/`（共約 1.12 GB），避免佔用 Google Drive 雲端同步頻寬，同時確保本機可永久離線觀看。
+- 建置與驗證腳本：
+  - `build-reader.py`：產生 23 單元、390 個章節、315 個講義核對頁面、15 個講義檢視頁面。
+  - `build-english-reading.py`：產生 23 單元英文閱讀版。
+  - `check-bilingual.py`、`test-reading.py`、`check-reading-pages.py`：全部 100% 通過（7,639 個本機連結無死鏈，94 個 UTF-8 HTML 頁面）。
+- 課堂重要更正：原定 10/27 之期中考，老師在第 07 週課堂宣布並於第 08 週再次確認順延一週至 11/03（Week 09）舉行。
