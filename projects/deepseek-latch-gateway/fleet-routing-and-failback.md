@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-10-25
+updated: 2026-10-30
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -473,3 +473,24 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
   `verify.sh PORT` 保留著。
 - HAPI 派 Claude peer 做部署必須帶 `--permission-mode bypassPermissions`，否則 peer 停在第一個權限提示、
   `wait-peer` 只會 timeout（預設 timeout 很短，要加 `--timeout 3300`）。`inspect-peer` 只顯示完成的訊息。
+
+# 2026-10-29 Command Code 事故後 key 全面撤銷與 fleet 輪替
+
+- 2026-10-29 Command Code 因事故撤銷**所有** API key。新建 fleet key（名稱 `hapi-fleet-2026-10-29`），
+  輪替到所有 deepseek-latch-gateway 實例：mazu、zeus（swear01 與 swear02 兩個帳號 / 兩個 NFS home）、
+  cthulhu、valkyrie、Oracle、Mac、swop。
+- 傳遞方式：對各 HAPI peer session 送 RSA-OAEP 加密後的 ciphertext，由 peer 在本機解密寫入，
+  plaintext 從未出現在 chat 或 log。key 值不得寫入任何筆記。
+- 陷阱：Oracle 的 `hapi` 由 PM2 管理，process env 仍保留舊 key；必須以更新後的 env 重啟 PM2
+  （例如 `pm2 restart <name> --update-env`）才會生效。只改檔案不夠。
+- env var 名稱過去拼錯成 `COMMAMD_CODE_API_KEY`，本次全面改為 `COMMAND_CODE_API_KEY`
+  （config 的 `${VAR}`、腳本、Windows 上 DPAPI secret 名稱）。碰舊 config / 舊腳本時先
+  `rg COMMAMD` 找殘留拼字。
+
+## 換 key 後的驗證程序
+
+1. `GET /status` 確認 gateway 活著。
+2. `POST /v1/chat/completions`，`model: deepseek-pro`，並帶 `x-opencode-session` header。
+3. 必須同時確認 HTTP 200 **且** response header `X-Gateway-Active-Endpoint` 為 `command-code`
+   （deepseek-pro 首選 command-code；只看 200 可能其實已 fallback 到 openrouter）。
+- swop 的 gateway listen 在 loopback port `35001`。
