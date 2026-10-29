@@ -30,3 +30,15 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 正常遊戲選單退出先 `game.saveGame()` 再 `game.spaceport.send('quit', '')`；main process 的退出 handler 本身沒有額外保存。要重啟安裝 hook，先用正常退出流程並備份存檔，避免直接強制終止。
 
 已驗證 state、catalog、resume、place、interact、remove、save 的完整實機流程，以及 adapter 的解鎖、成本、佔位、最後 excavator 保護、hold 釋放與存檔限制測試。實機回收也確認原生倍率為 1 時退回基礎價格。Steam Cloud 遠端持久化完成仍無法由現有遊戲 IPC 證實。
+
+# OpenSpeedy 降速後 freeze 的計時修正
+
+只加速 renderer 時，OpenSpeedy 從 100 倍降至 10 倍的實機測試曾觀察到 `performance.now()` 倒退，`game.time.lt` 留在未來，而 `renderTime.lt` 仍隨畫面前進。這時模擬 worker 的 tick 停住，統計不再增加，但 renderer 與 rAF 還活著。不能只在 `updateLoop()` 裡加 delta 下限：停住的 worker 根本不會再呼叫它。
+
+已驗證的最小修正是在 `renderloop()` 檢查有限的當前時間是否早於 simulation 或 render 的上一個時間戳；發現倒退時先重設兩個基準，`terminate()` 舊 clock，再照原生方式建立 `new Worker('scripts/clock.js')`，為 `message` 綁回 `this.updateLoop()`。正常畫面不重建 worker。simulation delta 同時檢查有限值並限制在 0～1000 ms；render delta 檢查有限值與非負值，但保留正常正值，不任意加上上限而改變加速行為。
+
+另一個已用原生程式重現的失敗路徑是負 simulation delta：`Pump.update()` 可將 `spoolup` 減到負值，`Sprite.renderState()` 再以負 frame index 取到 undefined mask，反覆拋錯。simulation 與 render 使用不同時間戳，兩邊都必須防守。原生更新例外仍須保留可見，不能靠吞掉所有錯誤假裝恢復。
+
+驗證要區分層次：載入原始 `Game` 程式的 VM 測試，已確定受控倒退會只重建一次 worker、下一個 tick 恢復正值更新並送出 acknowledgement；正常／加速正 delta、非有限值與原生例外路徑均有覆蓋。安裝修正後的真實 100→10 切換未再 freeze，後續 10 倍的連續兩次讀取也確認 simulation 與遊玩時間持續前進；但該次實機切換時時鐘保持單調、recovery counter 為 0，因此不能宣稱實機觀察到 worker 重建，該分支的證據來自受控原生程式測試。
+
+修正針對已確認的遊戲 1.2.1 `game.js` SHA-256；版本或 hash 不符時拒絕套用。clock fix 與 API bridge 各自記錄原檔、修改後 hash 和還原路徑。安裝時須處理「遊戲檔已改、安裝紀錄寫入失敗」的狀態：已用唯讀紀錄檔與套用後才鎖住紀錄檔的 fixture 重現，修正後會保留舊紀錄、恢復經 hash 驗證的原檔並留下備份。還原也接受已恢復成原始 hash 的檔案，讓中斷後重試能繼續完成。
