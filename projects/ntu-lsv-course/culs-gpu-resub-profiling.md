@@ -2,7 +2,7 @@
 title: CULS GPU resub profiling 與開源版基準
 scope: projects/ntu-lsv-course
 status: verified
-updated: 2026-10-29
+updated: 2026-10-30
 tags: [CULS, gpuls, resub, nsight, cuda]
 ---
 
@@ -189,3 +189,8 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - strash 會先把 dangling AND 清掉；PO 只接 PI 或常數時清完就是 0 個 AND，之後每個指令都會中止。修法是讓 `NUM_BLOCKS` 至少給 1 個 block（126 個啟動點都有邊界檢查），並讓 `AIGMan::strash` 遇到 `nNodes == 0` 時直接 return。
 - 測邊界情況可以用 `printf` 手寫幾個 byte 的二進位 AIGER，例如 `printf 'aig 3 2 0 1 1\n2\n\x02\x02'`（PO 接 PI，旁邊掛一個 AND）；再拿每個指令跑一遍 `compute-sanitizer`。
 - 經由 ssh 傳 heredoc 寫的腳本時，heredoc 內容也會出現在遠端 bash 的命令列上；如果腳本裡有 `pkill -f <pattern>`，會連自己的 ssh shell 一起殺掉。腳本要先在本機寫好、用 scp 傳過去，再執行。
+
+## 2026-10-30：bot review 的兩個常見誤判
+
+- `culsMemGetInfo` 裡的 `cudaDeviceSynchronize`：hyp_8xd `abcs resyn2rs` 全程 73 次，335 ms 的 sync 期間 GPU 有 335.1 ms 在跑 kernel，只是在等已排入的工作，不是 host 空檔。判斷 sync 是否值得拿掉，要先用 nsys 比對 sync 區間內的 kernel 佔用，而不是看次數。
+- resub `MFFC_BOUND_MAX = MAX_CUT_SIZE * 10` 不是過大：呼叫端傳的 `nMaxCutSize` 是 `cutSize * 10`，限深 MFFC 的邊界不是 cut leaf，縮小會改變輸出。
