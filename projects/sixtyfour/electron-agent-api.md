@@ -42,3 +42,9 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 驗證要區分層次：載入原始 `Game` 程式的 VM 測試，已確定受控倒退會只重建一次 worker、下一個 tick 恢復正值更新並送出 acknowledgement；正常／加速正 delta、非有限值與原生例外路徑均有覆蓋。安裝修正後的真實 100→10 切換未再 freeze，後續 10 倍的連續兩次讀取也確認 simulation 與遊玩時間持續前進；但該次實機切換時時鐘保持單調、recovery counter 為 0，因此不能宣稱實機觀察到 worker 重建，該分支的證據來自受控原生程式測試。
 
 修正針對已確認的遊戲 1.2.1 `game.js` SHA-256；版本或 hash 不符時拒絕套用。clock fix 與 API bridge 各自記錄原檔、修改後 hash 和還原路徑。安裝時須處理「遊戲檔已改、安裝紀錄寫入失敗」的狀態：已用唯讀紀錄檔與套用後才鎖住紀錄檔的 fixture 重現，修正後會保留舊紀錄、恢復經 hash 驗證的原檔並留下備份。還原也接受已恢復成原始 hash 的檔案，讓中斷後重試能繼續完成。
+
+# 正常 Steam Play 會載入磁碟上的修正
+
+已核對 AppID `2659900` 的安裝資訊與 Steam 快取啟動設定：Windows 執行檔為 `win-unpacked/sixtyfour.exe`，沒有 per-app LaunchOptions 覆寫。遊戲載入鏈是 `main.js` → `game/index.html` → `scripts/game.js`，所以修改的就是正常 Steam Play 使用的原檔，不需要另外的 launcher。實機另經保存、正常關閉、按 Steam 綠色 Play 重新啟動，確認新遊戲由 Steam 建立、API 自動啟動，並且 simulation 連續前進。
+
+`state.data.timing.clockFixActive` 是唯讀診斷，檢查目前遊戲實際使用的 `game.renderloop` 函式是否含 clock-fix marker；正常 Steam Play 重啟後已讀到 true。它補足磁碟 hash 檢查，能確認執行中的函式已載入補丁。這不代表 Steam 更新或驗證檔案後仍保留修改；兩者可能覆蓋原檔，屆時需重新檢查與安裝。
