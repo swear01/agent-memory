@@ -208,3 +208,9 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - `structLevelSpin` 和 `reverseLevelSpin` 每一層大約要 0.2 µs，跟圖有多寬無關；host 端掃一遍連同複製，每個節點只要幾 ns。所以小而深的電路（hyp：214k 節點、24.8k 層，每層約 9 個節點）用 GPU 反而慢，每次 5 ms 對 1 ms，整個 resyn2rs 慢了 0.15 s。大電路的 geomean 變快，會把這種退步蓋掉；要對照舊的 bench，逐格比較才看得出來。
 - 該用 GPU 還是 host，要看每層有幾個節點，不是看節點數：shallow 的小電路（multiplier、mem_ctrl）用 GPU 比較快。現在的做法是用上一次 strash 的深度當提示，`nObjs ≥ 32 × 深度` 才跑 spin。16 到 64 的結果都一樣，128 會讓 multiplier 變慢。
 - 找退步：cthulhu 的 `bin/gpuls-fast.<sha>` 留著每一版，拿來交錯計時就能分段。再用既有的 env 開關（`CULS_GLEV=0`、`CULS_RS_GREV=0`、`CULS_STRASH_GLEV=0`）一個一個關掉，可以確認是哪個 pass。
+
+## 2026-10-30：rw 評估重排會失去 locality（round 4 結束）
+
+- `EvaluateNodeLaneM` 改成只跑有 cut 的 slot，並照 NPN class 排序：hyp_8xd resyn2 的評估從 3.91 s 變成 7.02 s。照 class 排序會把同一個節點的 slot 和相鄰的節點拆到不同 warp，fanin、`nRef`、hash table 的快取命中跟著沒了；只壓縮、保持節點順序則是 3.81 + 0.36 s，打平。結論：這類 kernel 的成本在 memory locality 和評估本身，不在空 lane 或 class 分歧。ncu 上看到「每 warp 只有 7.7 個活躍 thread」，不代表重排 work 就會變快。
+- rs 的 `collectDivisorWarp` 已經是 issue 72.7%、每 warp 29.5 個活躍 thread，接近 compute bound；`resubDivs2Warp` 的 occupancy 被 96 個暫存器加上 shared memory 限在 42%，就算拉高，整體也只有約 1%。
+- `su_cthulhu` 上跑 ncu 一定要加 `sudo -n`，不加會只印出「No kernels were profiled」，沒有其他錯誤。`--launch-skip` 要比該 kernel 的總啟動次數小，mem_ctrl_5xd resyn2rs 的 `resubDivs2Warp` 不到 40 次。
