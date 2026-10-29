@@ -202,3 +202,9 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - ncu 先量前幾次 launch 會誤導：rw 的時間集中在第一個 rw 的 chunk launch（80–135 ms），前面的小 launch 只有 0.3 ms。先用 nsys 找出大的 launch，再用 `--launch-skip` 指到它。
 - host 端用新 `std::vector` 當暫存、之後又整段覆寫的地方，清零加 page fault 可能佔一半時間（rwLevels 14／36 ms）；改用 pinned pool（`CulsHostBuf`）。
 - `CULS_PHASE` 的每個 mark 都會 `cudaDeviceSynchronize`，量不出 async 重疊的效果，要用 wall time A/B。
+
+## 2026-10-30：spin-wait level pass 的成本由深度決定（CULS-fast `5e3e070`）
+
+- `structLevelSpin` 和 `reverseLevelSpin` 每一層大約要 0.2 µs，跟圖有多寬無關；host 端掃一遍連同複製，每個節點只要幾 ns。所以小而深的電路（hyp：214k 節點、24.8k 層，每層約 9 個節點）用 GPU 反而慢，每次 5 ms 對 1 ms，整個 resyn2rs 慢了 0.15 s。大電路的 geomean 變快，會把這種退步蓋掉；要對照舊的 bench，逐格比較才看得出來。
+- 該用 GPU 還是 host，要看每層有幾個節點，不是看節點數：shallow 的小電路（multiplier、mem_ctrl）用 GPU 比較快。現在的做法是用上一次 strash 的深度當提示，`nObjs ≥ 32 × 深度` 才跑 spin。16 到 64 的結果都一樣，128 會讓 multiplier 變慢。
+- 找退步：cthulhu 的 `bin/gpuls-fast.<sha>` 留著每一版，拿來交錯計時就能分段。再用既有的 env 開關（`CULS_GLEV=0`、`CULS_RS_GREV=0`、`CULS_STRASH_GLEV=0`）一個一個關掉，可以確認是哪個 pass。
