@@ -10,7 +10,7 @@ updated: 2026-10-30
 
 Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-install>/win-unpacked/resources/app/main.js` 載入 `game/index.html`，renderer 使用 `contextIsolation: false`、`nodeIntegration: true`。頁面頂層宣告 lexical `let game`，可以透過 `webContents.executeJavaScript` 存取；它不是 `window.game`。
 
-已實作並實機驗證的方式是在 main process 載入 bridge，提供只綁定 loopback、有認證且限定命令的 HTTP API，再由 main process 呼叫 renderer adapter。保留命令白名單，禁止任意 JavaScript evaluation 輸入；不必向 agent 暴露 CDP。CLI 與 HTTP 共用相同 adapter，並序列化所有遊戲操作。安裝前備份原檔和 profile，Steam 更新後需要檢查 hook 是否仍存在。
+已實作並實機驗證的方式是在 main process 載入 bridge，呼叫 renderer adapter；HTTP API 最初也在 main process，後續已移至未加速的獨立 Node 程序（見下文）。HTTP 只綁定 loopback、有認證且限定命令，禁止任意 JavaScript evaluation 輸入；不必向 agent 暴露 CDP。CLI 與 HTTP 共用相同 adapter，並序列化所有遊戲操作。安裝前備份原檔和 profile，Steam 更新後需要檢查 hook 是否仍存在。
 
 # 必須保留的遊戲規則
 
@@ -39,7 +39,7 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 
 另一個已用原生程式重現的失敗路徑是負 simulation delta：`Pump.update()` 可將 `spoolup` 減到負值，`Sprite.renderState()` 再以負 frame index 取到 undefined mask，反覆拋錯。simulation 與 render 使用不同時間戳，兩邊都必須防守。原生更新例外仍須保留可見，不能靠吞掉所有錯誤假裝恢復。
 
-驗證要區分層次：載入原始 `Game` 程式的 VM 測試，已確定受控倒退會只重建一次 worker、下一個 tick 恢復正值更新並送出 acknowledgement；正常／加速正 delta、非有限值與原生例外路徑均有覆蓋。安裝修正後的真實 100→10 切換未再 freeze，後續 10 倍的連續兩次讀取也確認 simulation 與遊玩時間持續前進；但該次實機切換時時鐘保持單調、recovery counter 為 0，因此不能宣稱實機觀察到 worker 重建，該分支的證據來自受控原生程式測試。
+驗證要區分層次：載入原始 `Game` 程式的 VM 測試，已確定受控倒退會只重建一次 worker、下一個 tick 恢復正值更新並送出 acknowledgement；正常／加速正 delta、非有限值與原生例外路徑均有覆蓋。安裝修正後初次真實 100→10 切換未再 freeze，後續 10 倍的 simulation 與遊玩時間持續前進；該次時鐘保持單調、recovery counter 為 0，不能說該次觀察到 worker 重建。後續實機倍速矩陣讀到 `rollbackRecoveries: 1`、`clockFixActive: true`，模擬繼續更新，才補足實際時鐘倒退恢復的證據。
 
 修正針對已確認的遊戲 1.2.1 `game.js` SHA-256；版本或 hash 不符時拒絕套用。clock fix 與 API bridge 各自記錄原檔、修改後 hash 和還原路徑。安裝時須處理「遊戲檔已改、安裝紀錄寫入失敗」的狀態：已用唯讀紀錄檔與套用後才鎖住紀錄檔的 fixture 重現，修正後會保留舊紀錄、恢復經 hash 驗證的原檔並留下備份。還原也接受已恢復成原始 hash 的檔案，讓中斷後重試能繼續完成。
 
@@ -49,7 +49,24 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 
 `state.data.timing.clockFixActive` 是唯讀診斷，檢查目前遊戲實際使用的 `game.renderloop` 函式是否含 clock-fix marker；正常 Steam Play 重啟後已讀到 true。它補足磁碟 hash 檢查，能確認執行中的函式已載入補丁。這不代表 Steam 更新或驗證檔案後仍保留修改；兩者可能覆蓋原檔，屆時需重新檢查與安裝。
 
-# 背景／遮蔽視窗下的批次自動化注意事項
+# API 的真實時間隔離與背景批次操作
 
-- **避免在視窗背景／遮蔽時傳入 `count >= 5` 或 `holdMs > 0`**：`renderer-adapter.cjs` 的 `interact` 在 `count > 1` 或 `holdMs > 0` 時會於 renderer 主執行緒內循環呼叫 `window.setTimeout`。當遊戲視窗處於背景、最小化或被其他全螢幕視窗遮蔽時，Chromium 的 **Intensive Wake Up Throttling** 可能會將巢狀 `setTimeout` 節流為約每分鐘喚醒一次。2026-10-30 實機觀察：OpenSpeedy 10 倍、視窗無 MainWindowHandle 時，`interact count:16` 讓 `bridge-main.cjs` 佇列 `pending: 1` 卡住約 15 分鐘後自行恢復，期間存檔與模擬照常前進。節流是推測的原因，尚未用 Chromium trace 證實。
-- **建議呼叫方式**：批次腳本控制時，`interact` 一律使用預設單擊（`count: 1, holdMs: 0`），此時 renderer adapter 完全同步執行、不觸發任何 `window.setTimeout`；若需連點或等待 VFX 入帳，將迴圈與 `sleep` 放在外部 Node.js 呼叫端處理。此外，長時間連續發送 HTTP 請求的腳本建議加上 `Connection: close` header，避免 Node `fetch` 重用 keep-alive 連線時撞上 `server.requestTimeout = 10000` 而發生 `ECONNRESET`。
+舊版 `interact` 在 renderer 內用 `performance.now()`／`setTimeout` 控制長按與連點，因此受到 OpenSpeedy 倍率、時鐘倒退及 Chromium 背景排程影響。實機曾在 10 倍、視窗無 MainWindowHandle 時，`count:16` 讓操作佇列卡住約 15 分鐘後自行恢復，期間存檔與模擬仍前進；背景 timer throttling 是可能原因，未經 Chromium trace 證實。舊版可用外部呼叫端逐次單擊避開 renderer timer。當時亦曾建議 `Connection: close` 排查連線重用，但沒有單獨證實 `ECONNRESET` 根因。
+
+API v2 把 HTTP、認證、容量 16 的操作佇列、8 秒 deadline、連點的 30 ms 間隔與長按等待移到 **standalone Node.js 24+**。Electron main 透過 `child_process.fork`、明確 `execPath: config.nodePath`、空 `execArgv`、隱藏視窗與 IPC 啟動 `bridge-gateway.cjs`，自己只驗證命令並執行 renderer adapter；不是 `utilityProcess`。獨立 Node 以 `process.hrtime.bigint()` 計算 elapsed，API 回應中的遊戲 `performance.now()` 僅供診斷。必須讓該 Node 程序不被 OpenSpeedy 注入；實機已核對加速的遊戲 main／renderer／utility 載入 speedpatch，而 gateway 未載入。只換成另一個仍被注入的程序，不構成時鐘隔離。
+
+長按透過私有 `beginInteraction`／`endInteraction` 跨 IPC 配對，外部 gateway 計等待時間，renderer 只維持與釋放目標；私有命令不對 HTTP 開放。deadline 回覆 504 不等於原生操作已取消：已送進 renderer 的工作仍可能稍後完成，佇列須等該工作及清理 acknowledgement 才能執行下一個，過期的排隊工作則不能再開始。遊戲忙碌時 health 仍可直接回覆。退出、gateway 斷線或 child 結束時要 best-effort 釋放互動並關閉外部服務，不使用無限重啟迴圈。
+
+隔離保證的是等待時鐘與 HTTP 排程不隨遊戲倍速縮放，**不保證硬即時的按鍵釋放或回應**。實機 `holdMs:1000` 在 1／10 倍的總回應約 1055 ms，1000 倍時約 4014 ms，差異包含 renderer IPC 排隊。回應的 hold timing 要分開列 requested hold、外部 hold wait、begin／end round trip；受控測試以 begin 250 ms＋wait 1000 ms＋end 600 ms，證明總耗時 1850 ms，不能把 requested hold 當成總回應或實際世界持續時間。
+
+安裝器記錄絕對 `nodePath` 並驗證 standalone Node 24+；正常 Steam Play 自動啟動 gateway。升級既有 API 時先保存並正常關遊戲，備份整個舊 bridge、CLI config 與 installation record，只更新 bridge 與兩份 config 的 runtime 路徑，保留 port、認證及原生 hook 的 hash／還原資訊。已用隔離 fixture 驗證全新安裝、舊版升級、metadata 唯讀拒絕、晚發生的 config 寫入失敗回滾，以及可重試還原。Node 更新若移除原絕對路徑，需重新檢查設定；Steam 更新／驗證檔案亦可能覆蓋遊戲 hook。
+
+# 高倍率量測：設定上限與實際進度要分開
+
+官方 OpenSpeedy UI 可設定 0.001～1000 倍，這是工具設定範圍。Sixty Four 1.2.1 沒有可據此宣稱的固定有效倍率上限：原生 worker 每 5 ms 嘗試送出一次 tick，等 acknowledgement 才再送；每次 simulation delta 上限 1000 ms，超過部分直接丟棄，沒有 backlog。worker 與 rAF 分開，但共用 renderer 執行緒。5 ms 是被調整的 timer 參數，不能直接推成真實 200 Hz 上限。
+
+實機已用官方 CLI 設定並核對程序倍率，在 1／10／100／300／1000 倍各取短窗口；共 153 組 state／health 取樣沒有錯誤，health 最慢小於 15 ms，gateway wall clock 與外部時鐘比例約 1.001。首次降到 1 倍跨越時鐘倒退，該窗口的 clock／simulation ratio 無效，不能拿來當 1 倍效能。100／300／1000 倍窗口的 credited simulation 約為 93.4／283.1／618 倍，另一次較短 1000 倍窗口約 429 倍。這是有觀測開銷的短期遊玩時間統計，不是產量／深度倍率，也不是穩定或最高可達速度。1000 倍的 state 最慢約 1114 ms，health 仍快，顯示 API 排程隔離不能消除遊戲 IPC 延遲。不能只看 settings.json 的保存值當目前程序有效倍率。
+
+高倍率下 renderer／main 最忙執行緒約用滿一顆核心的 98～100%；同時整張 GPU 的使用率快照約 35～39%，後者不是每遊戲的 GPU profile，不能推出 GPU 沒瓶頸或指認特定函式。尚未套用遊戲效能優化。
+
+原生程式與精確方法 VM 已證明：Pump 大步灌入使 cube 超過 64 時，cube 仍填滿但該步可能不增加深度；Entropic 的 interval 300 ms 以 dt=1000 跑 10 秒只觸發 10 次，逐小步則接近 33 次；多種機器每次更新至多處理一次事件且重設 timer、捨棄 overshoot，Preheater 每次 tap 還有不依 dt 的燃料成本。因此移除 1000 ms cap、直接放大 dt 或任意改更新頻率都會改玩法，不是單純優化。VFX 的完成 callback 負責入帳與補料，不能為了省繪圖而停止 `updateVFX`。未來先量實際更新率、cap 次數、產量／深度及耗時，再評估僅減繪圖或服務排程的改動。
