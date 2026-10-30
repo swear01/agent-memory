@@ -28,8 +28,10 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 ## 測試與架構防護避坑
 
 - **Context 屬性可選化防 Mock 污染**：`HappyChatContextValue`（`web/src/components/AssistantChat/context.tsx`）擴充導航狀態（如 `conversationStartStatus`、`promptNavigationStatus`、`jumpToMessage`、`abortNavigation`）時，必須設為可選（`?:`）。若宣告為必填，會引發 shotgun mock 污染，逼迫超過 8 個與導航完全無關的元件測試（例如 `CodexPlanFooter.test.tsx`、`ToolGroupCard.test.tsx`、`markdown-a.test.tsx`、`ToolMessage.generatedMedia.test.tsx` 等）補寫 mock，導致 PR 觸碰檔案暴增且製造無謂 diff。保持可選能讓改動集中在真正的導航元件上。
-- **E2E 測試的大綱面板退場等待競態**：在 `e2e/load-earlier-running-session.spec.ts` 中，點擊大綱項目（`aside button`）觸發跳轉時，大綱面板（`aside`）需要非同步動畫退場。若未等待面板關閉就直接斷言目標進入可視區（`expect(selected).toBeInViewport()`），會因 overlay 遮蔽或版面尚未穩定而拋出 `viewport ratio 0`。點擊大綱按鈕後必須先等待 `await expect(page.locator('aside')).toHaveCount(0)`，再做可視區斷言。
+- **E2E outline `viewport ratio 0`（已更正）**：根因不是 `aside` 退場競態——單純加 `toHaveCount(0)` 反而每次失敗，因為導航本身超過 5 秒。真因是約 4 萬 px 的 smooth scroll 被串流 layout shift 取消，重試燒光 4s deadline 才 instant fallback。修法：`scrollTargetIntoView` 距離 > 3 個 viewport 時用 `behavior:'instant'`（HappyThread.tsx）。Playwright webServer 60s 在此主機會逾時，先手動啟 `bun run --cwd web dev -- --port 5179 --strictPort`。
 
 2026-09-14 證據：#1597 `17972547` 整合 #1542 `f8953d24`；root typecheck、3,187 web tests、最新 head CI／review 通過。Store handoff regression 已先重現失敗，再驗證修復；21 項 browser gate 與擴充後的 retained-tail regression 有實測。當時 PR 仍未合併／部署；之後須重查 live head，整合順序為 #1542 再 #1597。
 
 2026-10-30 證據：#1597 在 `upstream/main`（`f8e55fb93`）基礎上壓合為單一 commit `ade45ad36`；移除 6 個無關 mock 檔後觸碰檔案收斂至 32 檔。修復 E2E `aside` 退場等待後，`bun run typecheck:web` 通過（0 errors），151 個 web 測試與 Playwright E2E 全綠。Codex PR Review 與 GitHub Actions CI 觸發驗證中。
+
+2026-10-30 更新：#1597 `3c33ad013`（rebase/pr-1597-20261029 → fix/issue-1587-upstream）導航 props 改 optional、還原 6 個 fixture 檔、長距離改 instant；typecheck:web、web 單測（修 2 個過時 scrollIntoView mock）、e2e 4/4 通過，CI 綠。已貼 `/swear-review incremental`；Codex PR Review 兩次因 codex proxy Cloudflare 530/1033 失敗（infra，非程式碼），待重觸發。
