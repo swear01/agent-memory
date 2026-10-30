@@ -50,3 +50,9 @@ claude auth status
 - 未涵蓋：Athena（送修，與 Mazu 共用 home，入口檔已隨共用 home 更新，但沒有裝它自己的 cron）、Windows swop（離線）、Zeus 的 swear02 帳號（先前依指示排除）。
 - 風險：同一 NAS home 的多台主機各自自動更新可能同時寫同一份 npm 安裝，未驗證 Claude 是否有跨主機鎖；若安裝損毀，在入口加回 `DISABLE_UPDATES=1` 並只從 Mazu 手動更新。
 - 順帶觀察：Zeus 的 `hapi-runner.service` 當時是 `activating`，未處理。
+
+# 2026-10-31 修正：自動更新只留 Mazu
+
+- 上一節的「機群自動更新開啟」並未真的生效：共用 NAS home 的 `~/.claude.json` 有 `autoUpdates: false` 且 `installMethod: global`，Claude 的判斷是 `DISABLE_UPDATES`／`DISABLE_AUTOUPDATER` 環境變數，或 `autoUpdates === false` 且不是受保護的 native 安裝，任一成立就停用 npm 自動更新。只有沒有該設定的 Mac 與 Oracle 實際會更新。
+- 現行設計：入口在 Linux 上、主機不是 Mazu 時 `export DISABLE_AUTOUPDATER=1`（Mac 不動，手動 `claude update` 仍可用，不用 `DISABLE_UPDATES`）。Mazu 的 `~/.claude.json` 改成 `autoUpdates: true`（`claude config set` 已不存在，直接改檔第 4 行，備份在 `.claude.json.bak-autoupd`），Zeus／Athena 共用該 home 靠入口停用。Cthulhu／Valkyrie（另一個 NAS）與 Oracle 要更新時手動用 npm。
+- 原因：同一 NAS home 共用一份 npm 安裝，多台同時自動更新可能互相覆寫。
