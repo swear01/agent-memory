@@ -53,17 +53,31 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 
 舊版 `interact` 在 renderer 內用 `performance.now()`／`setTimeout` 控制長按與連點，因此受到 OpenSpeedy 倍率、時鐘倒退及 Chromium 背景排程影響。實機曾在 10 倍、視窗無 MainWindowHandle 時，`count:16` 讓操作佇列卡住約 15 分鐘後自行恢復，期間存檔與模擬仍前進；背景 timer throttling 是可能原因，未經 Chromium trace 證實。舊版可用外部呼叫端逐次單擊避開 renderer timer。當時亦曾建議 `Connection: close` 排查連線重用，但沒有單獨證實 `ECONNRESET` 根因。
 
-API v2 把 HTTP、認證、容量 16 的操作佇列、8 秒 deadline、連點的 30 ms 間隔與長按等待移到 **standalone Node.js 24+**。Electron main 透過 `child_process.fork`、明確 `execPath: config.nodePath`、空 `execArgv`、隱藏視窗與 IPC 啟動 `bridge-gateway.cjs`，自己只驗證命令並執行 renderer adapter；不是 `utilityProcess`。獨立 Node 以 `process.hrtime.bigint()` 計算 elapsed，API 回應中的遊戲 `performance.now()` 僅供診斷。必須讓該 Node 程序不被 OpenSpeedy 注入；實機已核對加速的遊戲 main／renderer／utility 載入 speedpatch，而 gateway 未載入。只換成另一個仍被注入的程序，不構成時鐘隔離。
+API v2 把 HTTP、認證、容量 16 的操作佇列、8 秒 deadline、連點的 30 ms 間隔與長按等待移到 **standalone Node.js 24+**。Electron main 透過 `child_process.fork`、明確 `execPath: config.nodePath`、空 `execArgv`、隱藏視窗與 IPC 啟動 `bridge-gateway.cjs`，自己只驗證命令並執行 renderer adapter；不是 `utilityProcess`。獨立 Node 以 `process.hrtime.bigint()` 計算 elapsed，API 回應中的遊戲 `performance.now()` 僅供診斷。必須讓該 Node 程序不被 OpenSpeedy 注入；中間版曾核對遊戲 main／renderer／utility 載入 speedpatch，而 gateway 未載入，後續另隔離遊戲本身的原生時鐘（見下文）。只換成另一個仍被注入的程序，不構成時鐘隔離。
 
 長按透過私有 `beginInteraction`／`endInteraction` 跨 IPC 配對，外部 gateway 計等待時間，renderer 只維持與釋放目標；私有命令不對 HTTP 開放。deadline 回覆 504 不等於原生操作已取消：已送進 renderer 的工作仍可能稍後完成，佇列須等該工作及清理 acknowledgement 才能執行下一個，過期的排隊工作則不能再開始。遊戲忙碌時 health 仍可直接回覆。退出、gateway 斷線或 child 結束時要 best-effort 釋放互動並關閉外部服務，不使用無限重啟迴圈。
 
-最終 1000 倍壓力測試又找到隔離缺口：main executor 曾殘留 15000 ms 的 `setTimeout`／`Promise.race` 與 `rendererTimeoutMs`。實機 `beginInteraction` 在約 2.285 真實秒回覆 `RENDERER_TIMEOUT`；該 timer 也處於被加速程序，原生 RPC 卻仍可能完成，gateway 若視它已結束就會過早推進操作佇列。最終修正完全移除 main 的 timer／race／timeout 設定，直接回傳實際 `executeJavaScript` promise；唯一 deadline 留在外部 gateway，回覆 504 後仍須等原生 RPC 與清理真的結束。回歸測試把遊戲程序所有時鐘／timer 設為一呼叫就拋錯，並用 deferred RPC、重複訊息與晚發生的原生錯誤驗證生命週期；main 10／10、全套 56／56 通過且無 skip。修正版已升級並經 Steam 重開，不能把前一中間版的短窗口當成最終版所有負載的完整壓測。
+API 隔離階段的 1000 倍壓力測試又找到缺口：main executor 曾殘留 15000 ms 的 `setTimeout`／`Promise.race` 與 `rendererTimeoutMs`。實機 `beginInteraction` 在約 2.285 真實秒回覆 `RENDERER_TIMEOUT`；該 timer 也處於被加速程序，原生 RPC 卻仍可能完成，gateway 若視它已結束就會過早推進操作佇列。修正完全移除 main 的 timer／race／timeout 設定，直接回傳實際 `executeJavaScript` promise；唯一 deadline 留在外部 gateway，回覆 504 後仍須等原生 RPC 與清理真的結束。回歸測試把遊戲程序所有時鐘／timer 設為一呼叫就拋錯，並用 deferred RPC、重複訊息與晚發生的原生錯誤驗證生命週期；當時 main 10／10、全套 56／56 通過且無 skip。該修正版經 Steam 重開，但仍不是遊戲原生時鐘隔離的驗證。
 
 隔離保證的是等待時鐘與 HTTP 排程不隨遊戲倍速縮放，**不保證硬即時的按鍵釋放或回應**。實機 `holdMs:1000` 在 1／10 倍的總回應約 1055 ms，1000 倍時約 4014 ms，差異包含 renderer IPC 排隊。回應的 hold timing 要分開列 requested hold、外部 hold wait、begin／end round trip；受控測試以 begin 250 ms＋wait 1000 ms＋end 600 ms，證明總耗時 1850 ms，不能把 requested hold 當成總回應或實際世界持續時間。
 
 安裝器記錄絕對 `nodePath` 並驗證 standalone Node 24+；正常 Steam Play 自動啟動 gateway。升級既有 API 時先保存並正常關遊戲，備份整個舊 bridge、CLI config 與 installation record，只更新 bridge 與兩份 config 的 runtime 路徑，保留 port、認證及原生 hook 的 hash／還原資訊。已用隔離 fixture 驗證全新安裝、舊版升級、metadata 唯讀拒絕、晚發生的 config 寫入失敗回滾，以及可重試還原。Node 更新若移除原絕對路徑，需重新檢查設定；Steam 更新／驗證檔案亦可能覆蓋遊戲 hook。
 
-# 高倍率量測：設定上限與實際進度要分開
+# 遊戲原生時鐘隔離：只在 OpenSpeedy 明確啟用時縮放模擬
+
+API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍前進，但 `renderLast` 固定、rAF 不再更新。這與先前「rAF 活著、worker 停住」相反，僅放在 renderloop 裡的 rollback recovery 無法救回沒有執行的 renderloop。**HTTP／simulation 活著不能當畫面正常的證據**；後續驗證另檢查 render 時鐘，並用實際 canvas 連續畫面與資源顯示確認畫面改變。沒有證明 Chromium／驅動內部的確切停頓原因。
+
+目前改採 Idle Spiral 已驗證過的架構模式：讓 OpenSpeedy 的原生 clock／wait hook 實效維持 1 倍，只讀原來的控制旗標與共享倍率，於遊戲自己的 dt 模擬套一次倍率。這是 Sixty Four 的獨立實作，不是直接套 Unity 補丁。`openspeedy-guard.exe` 是 x64 C# helper；僅支援 `speedpatch64.dll` SHA-256 `c72ba4d9e35c5c00efc113e541da91a02dbc0c85c6fb2effff5cee63898bc70c`，並驗證 PE export、`SP_IsEnabled` RVA `0x1170` 的機器碼，以及兩個 RIP 位址都指向對齊的 `pEnabled` slot `0xa458`，不符就拒絕。它保留原 `OpenSpeedy.<pid>` named mapping，將目標程序 slot 指向一頁私有 false 值，讓 native hook 不再縮放時間／等待；helper 自己載入 DLL 後也立即停用自己的原生 hook。
+
+所有相同 exe 路徑的遊戲 main／renderer／utility 都須保護成功，才可送出啟用的 speed sample；實際模擬啟用條件是原 main／renderer 旗標的 OR，utility 旗標不啟用模擬。helper 自己新載入 DLL 會造成 `SP_Install` 預設啟用，因此 bootstrap 只停用自己新注入的 PID；使用者已先注入的既有旗標則保留。設定中存著 100 倍不代表啟用，新 bootstrap 的程序仍為 Off／有效 1 倍，必須由使用者明確打開遊戲的 OpenSpeedy 開關。退出 helper 不會把目標 slot 改回去或釋放仍被 hook 參照的 false page；要恢復原生掛鉤使用方式須重開遊戲。
+
+`simulation-clock.cjs` 在 runtime 包裝 `game.updateLoop`，保留原 `updateCycle` 與原生遊戲規則；每次 worker tick 將真實 elapsed 乘有效倍率，以不超過 64 ms 的 substep 執行，最多 64 步、約每 4 真實 ms 在步驟邊界讓出，最後只送一次 worker acknowledgement。4 ms 是 cooperative budget，不能中斷單一步驟或保證硬上限。backlog 最多保留一真實秒對應的模擬時間；倍率改變會丟掉舊 backlog，外部 sample 超過 2 秒未更新即回到 1 倍。沒有全域覆寫 JavaScript clock。只縮放 dt 驅動的系統；render／native clocks、日曆、autosave 及依 performance 時間判斷的成就維持真實時間，不能宣稱所有遊戲功能完全等價加速。原生離散事件、每次 tap 的燃料成本及步長效應仍存在。
+
+安裝以 `-EnableSpeedControl` 明確啟用此架構；六個 runtime 檔案為原 bridge 三檔加 `simulation-clock.cjs`、`speed-control.cjs`、`openspeedy-guard.exe`，不安裝 C# 原始碼。helper 和其餘 runtime hash 記錄在 `apiIsolation.files`，DLL hash 另外記錄；既有啟用設定升級時會保留，legacy 未啟用安裝則不自動啟用。真實套件 fixture 已驗證 DLL／helper 缺失拒絕、六檔寫入後失敗的完整回滾、port／認證及 native hashes 保留、升級與可重試卸除。此版已正常保存、關閉，再經 Steam Play 自動載入 bridge／gateway／helper；Node 全套 74／74、helper 隔離自測 21／21 通過。
+
+實機先在「保存倍率 100、遊戲開關 Off」量到 simulation 約 0.996 倍、native clock 約 0.996 倍。On／100 倍兩個分開約 30 秒窗口，分別 98／91 組取樣零錯誤，simulation 約 99.992／100.212 倍，native clock 約 1.000／1.002 倍，render clock 約 1.000／1.002 倍，沒有 backlog 或 dropped simulation；這是兩段短期證據，不是永久穩定承諾。100→10 後約 9.979 倍，Off 後約 0.997 倍；實際 GUI 再關閉並保留設定 100 時，約 3 秒量到 1.002 倍。rollback recovery counter 僅啟動時為 1，之後倍率切換未增加。100 倍下兩次 `holdMs:1000` 成功釋放，總回應約 1159／1030 ms，外部等待約 1013／1008 ms，active 最後為 false。GUI 的 100 倍預設已選取並持久保存；仍須依遊戲開關決定實效倍率。
+
+# 歷史高倍率量測：不能外推到目前原生時鐘隔離版本
 
 官方 OpenSpeedy UI 可設定 0.001～1000 倍，這是工具設定範圍。Sixty Four 1.2.1 沒有可據此宣稱的固定有效倍率上限：原生 worker 每 5 ms 嘗試送出一次 tick，等 acknowledgement 才再送；每次 simulation delta 上限 1000 ms，超過部分直接丟棄，沒有 backlog。worker 與 rAF 分開，但共用 renderer 執行緒。5 ms 是被調整的 timer 參數，不能直接推成真實 200 Hz 上限。
 
