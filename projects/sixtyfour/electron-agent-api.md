@@ -51,5 +51,5 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 
 # 背景／遮蔽視窗下的批次自動化注意事項
 
-- **避免在視窗背景／遮蔽時傳入 `count >= 5` 或 `holdMs > 0`**：`renderer-adapter.cjs` 的 `interact` 在 `count > 1` 或 `holdMs > 0` 時會於 renderer 主執行緒內循環呼叫 `window.setTimeout`。當遊戲視窗處於背景、最小化或被其他全螢幕視窗遮蔽時，Chromium 的 **Intensive Wake Up Throttling** 會在 `setTimeout` 巢狀層數 `nesting_level >= 5`（即未提前擊碎方塊且 `count >= 6`）時，將後續每次 `setTimeout` 節流為 **每分鐘只喚醒一次（對齊每分鐘固定秒數）**，導致 `bridge-main.cjs` 的單執行緒序列化佇列（`pending: 1`）卡住數分鐘。
+- **避免在視窗背景／遮蔽時傳入 `count >= 5` 或 `holdMs > 0`**：`renderer-adapter.cjs` 的 `interact` 在 `count > 1` 或 `holdMs > 0` 時會於 renderer 主執行緒內循環呼叫 `window.setTimeout`。當遊戲視窗處於背景、最小化或被其他全螢幕視窗遮蔽時，Chromium 的 **Intensive Wake Up Throttling** 可能會將巢狀 `setTimeout` 節流為約每分鐘喚醒一次。2026-10-30 實機觀察：OpenSpeedy 10 倍、視窗無 MainWindowHandle 時，`interact count:16` 讓 `bridge-main.cjs` 佇列 `pending: 1` 卡住約 15 分鐘後自行恢復，期間存檔與模擬照常前進。節流是推測的原因，尚未用 Chromium trace 證實。
 - **建議呼叫方式**：批次腳本控制時，`interact` 一律使用預設單擊（`count: 1, holdMs: 0`），此時 renderer adapter 完全同步執行、不觸發任何 `window.setTimeout`；若需連點或等待 VFX 入帳，將迴圈與 `sleep` 放在外部 Node.js 呼叫端處理。此外，長時間連續發送 HTTP 請求的腳本建議加上 `Connection: close` header，避免 Node `fetch` 重用 keep-alive 連線時撞上 `server.requestTimeout = 10000` 而發生 `ECONNRESET`。
