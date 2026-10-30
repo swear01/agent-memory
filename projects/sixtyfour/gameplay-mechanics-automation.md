@@ -95,3 +95,20 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
   7. **`strange2`（Hollow Rock Facility）與 `strange3`（Reconstructed Hollow）**：
      - 解鎖條件：建造 Annihilator 並產出 Void（`resources[8] > 0`）。
      - 功能：升級北方的虛空石基地（`(-100, -100)`），將虛空石上限倍增至 16 顆並極速生成，徹底打通終局維度躍遷。
+
+## 9. 原生 Agent API 整合與 client.mjs SDK 效能躍升
+
+- **API 傳輸層瓶頸與修正實測**：
+  - 傳統 Node.js 24 內建 `fetch()` 受限於 Undici 的 `scheduleIdleSocketValidation` timer 機制，即使本機 loopback 重用連線，每次請求仍被強制延遲約 13.6ms～15ms。
+  - 官方 SDK（`client.mjs`）使用原生 `http.Agent` 搭配明確的 `setNoDelay(true)` 與 Socket 連線池管理，將本機交互中位數直接壓至 **0.47ms（health）與 4.8ms（state）**，大幅降低輪詢開銷。
+- **雙模式整合規範**：
+  1. **CLI NDJSON 常駐交談模式**：
+     - 透過 `node sixtyfour.mjs session` 啟動常駐子程序，保持 stdin 開啟。
+     - 透過單一管道寫入每行 `{"id": N, "argv": ["health"|"state"|"catalog"|...]}`，輸出依序回傳對應 `id` 之 JSON。不頻繁關閉 pipe 或重啟 Node。
+  2. **常駐 Node Agent SDK 模式**：
+     - Windows ESM 匯入需使用 `pathToFileURL(path).href`（避免直接字串路徑解析失敗）。
+     - 於主迴圈外建立單例 `const client = await createClientFromConfig()`，全生命週期重用連線，結束時呼叫 `client.close()`。
+  3. **批次連擊與建築材料結構升級**：
+     - 支援 `interact` 的 `count: 1..64` 伺服器端 30ms 節拍連點（綁定 `targetId`，方塊破壞或消失即自動停止），打破過去單點 HTTP 迴圈的網路延遲限制。
+     - `catalog.data` 原生提供 `materials: [{index, name, amount}]`、`placementSupported` 與 `available`，免除前端自解碼陣列與繁瑣驗證。
+
