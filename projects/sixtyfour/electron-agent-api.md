@@ -57,6 +57,8 @@ API v2 把 HTTP、認證、容量 16 的操作佇列、8 秒 deadline、連點�
 
 長按透過私有 `beginInteraction`／`endInteraction` 跨 IPC 配對，外部 gateway 計等待時間，renderer 只維持與釋放目標；私有命令不對 HTTP 開放。deadline 回覆 504 不等於原生操作已取消：已送進 renderer 的工作仍可能稍後完成，佇列須等該工作及清理 acknowledgement 才能執行下一個，過期的排隊工作則不能再開始。遊戲忙碌時 health 仍可直接回覆。退出、gateway 斷線或 child 結束時要 best-effort 釋放互動並關閉外部服務，不使用無限重啟迴圈。
 
+最終 1000 倍壓力測試又找到隔離缺口：main executor 曾殘留 15000 ms 的 `setTimeout`／`Promise.race` 與 `rendererTimeoutMs`。實機 `beginInteraction` 在約 2.285 真實秒回覆 `RENDERER_TIMEOUT`；該 timer 也處於被加速程序，原生 RPC 卻仍可能完成，gateway 若視它已結束就會過早推進操作佇列。最終修正完全移除 main 的 timer／race／timeout 設定，直接回傳實際 `executeJavaScript` promise；唯一 deadline 留在外部 gateway，回覆 504 後仍須等原生 RPC 與清理真的結束。回歸測試把遊戲程序所有時鐘／timer 設為一呼叫就拋錯，並用 deferred RPC、重複訊息與晚發生的原生錯誤驗證生命週期；main 10／10、全套 56／56 通過且無 skip。修正版已升級並經 Steam 重開，不能把前一中間版的短窗口當成最終版所有負載的完整壓測。
+
 隔離保證的是等待時鐘與 HTTP 排程不隨遊戲倍速縮放，**不保證硬即時的按鍵釋放或回應**。實機 `holdMs:1000` 在 1／10 倍的總回應約 1055 ms，1000 倍時約 4014 ms，差異包含 renderer IPC 排隊。回應的 hold timing 要分開列 requested hold、外部 hold wait、begin／end round trip；受控測試以 begin 250 ms＋wait 1000 ms＋end 600 ms，證明總耗時 1850 ms，不能把 requested hold 當成總回應或實際世界持續時間。
 
 安裝器記錄絕對 `nodePath` 並驗證 standalone Node 24+；正常 Steam Play 自動啟動 gateway。升級既有 API 時先保存並正常關遊戲，備份整個舊 bridge、CLI config 與 installation record，只更新 bridge 與兩份 config 的 runtime 路徑，保留 port、認證及原生 hook 的 hash／還原資訊。已用隔離 fixture 驗證全新安裝、舊版升級、metadata 唯讀拒絕、晚發生的 config 寫入失敗回滾，以及可重試還原。Node 更新若移除原絕對路徑，需重新檢查設定；Steam 更新／驗證檔案亦可能覆蓋遊戲 hook。
@@ -65,7 +67,7 @@ API v2 把 HTTP、認證、容量 16 的操作佇列、8 秒 deadline、連點�
 
 官方 OpenSpeedy UI 可設定 0.001～1000 倍，這是工具設定範圍。Sixty Four 1.2.1 沒有可據此宣稱的固定有效倍率上限：原生 worker 每 5 ms 嘗試送出一次 tick，等 acknowledgement 才再送；每次 simulation delta 上限 1000 ms，超過部分直接丟棄，沒有 backlog。worker 與 rAF 分開，但共用 renderer 執行緒。5 ms 是被調整的 timer 參數，不能直接推成真實 200 Hz 上限。
 
-實機已用官方 CLI 設定並核對程序倍率，在 1／10／100／300／1000 倍各取短窗口；共 153 組 state／health 取樣沒有錯誤，health 最慢小於 15 ms，gateway wall clock 與外部時鐘比例約 1.001。首次降到 1 倍跨越時鐘倒退，該窗口的 clock／simulation ratio 無效，不能拿來當 1 倍效能。100／300／1000 倍窗口的 credited simulation 約為 93.4／283.1／618 倍，另一次較短 1000 倍窗口約 429 倍。這是有觀測開銷的短期遊玩時間統計，不是產量／深度倍率，也不是穩定或最高可達速度。1000 倍的 state 最慢約 1114 ms，health 仍快，顯示 API 排程隔離不能消除遊戲 IPC 延遲。不能只看 settings.json 的保存值當目前程序有效倍率。
+移除上述 main timeout 前的中間版，已用官方 CLI 設定並核對程序倍率，在 1／10／100／300／1000 倍各取短窗口；共 153 組 state／health 取樣沒有錯誤，health 最慢小於 15 ms，gateway wall clock 與外部時鐘比例約 1.001。首次降到 1 倍跨越時鐘倒退，該窗口的 clock／simulation ratio 無效，不能拿來當 1 倍效能。100／300／1000 倍窗口的 credited simulation 約為 93.4／283.1／618 倍，另一次較短 1000 倍窗口約 429 倍。這是有觀測開銷的短期遊玩時間統計，不是產量／深度倍率，也不是穩定或最高可達速度。1000 倍的 state 最慢約 1114 ms，health 仍快，顯示 API 排程隔離不能消除遊戲 IPC 延遲。不能只看 settings.json 的保存值當目前程序有效倍率。
 
 高倍率下 renderer／main 最忙執行緒約用滿一顆核心的 98～100%；同時整張 GPU 的使用率快照約 35～39%，後者不是每遊戲的 GPU profile，不能推出 GPU 沒瓶頸或指認特定函式。尚未套用遊戲效能優化。
 
