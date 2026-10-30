@@ -168,3 +168,16 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
 
 
 
+
+### 14. Phase 14: Hollow Rock Cultivation (Flowers, Fruits) & Inverse Chasm Progress (2026-10-31)
+- **Flower & Fruit Automation**:
+  - Hollow rocks around (-100, -100) are automatically upgraded to Flowers (flower, soulPower: 32) and Fruits (fruit, soulPower: 128).
+  - Strange3 periodically feeds seeds to Fruits (fruit.seed()), which grow and directly yield Hollow stones via resource transfer into storage.
+  - Plane 1 sweeping across Flowers & Fruits rapidly scales Reality harvest.
+- **Foam & Chromalit Governance**:
+  - converter76 consumes 8,192 Celestial foam per cycle and outputs 2,048 Chromalit + 1 Hell Gem.
+  - Keeper v7.9 limits converter76 refill once Chromalit >= 20,000, allowing all Celestial foam cubes to accumulate toward the 2,000,000 requirement for The Inverse Chasm.
+  - Hollow stone target raised to 4,200 (breaking hollows and harvesting fruits).
+- **Chasm Readiness**:
+  - 5/10 materials already met (Charonite, Elmerine, Qanetite, Beta-Pylene, Void).
+  - Active accumulation in progress for Celestial foam, Hollow stones, Hell gems, and Reality.
