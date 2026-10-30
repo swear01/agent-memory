@@ -48,3 +48,8 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 已核對 AppID `2659900` 的安裝資訊與 Steam 快取啟動設定：Windows 執行檔為 `win-unpacked/sixtyfour.exe`，沒有 per-app LaunchOptions 覆寫。遊戲載入鏈是 `main.js` → `game/index.html` → `scripts/game.js`，所以修改的就是正常 Steam Play 使用的原檔，不需要另外的 launcher。實機另經保存、正常關閉、按 Steam 綠色 Play 重新啟動，確認新遊戲由 Steam 建立、API 自動啟動，並且 simulation 連續前進。
 
 `state.data.timing.clockFixActive` 是唯讀診斷，檢查目前遊戲實際使用的 `game.renderloop` 函式是否含 clock-fix marker；正常 Steam Play 重啟後已讀到 true。它補足磁碟 hash 檢查，能確認執行中的函式已載入補丁。這不代表 Steam 更新或驗證檔案後仍保留修改；兩者可能覆蓋原檔，屆時需重新檢查與安裝。
+
+# 背景／遮蔽視窗下的批次自動化注意事項
+
+- **避免在視窗背景／遮蔽時傳入 `count >= 5` 或 `holdMs > 0`**：`renderer-adapter.cjs` 的 `interact` 在 `count > 1` 或 `holdMs > 0` 時會於 renderer 主執行緒內循環呼叫 `window.setTimeout`。當遊戲視窗處於背景、最小化或被其他全螢幕視窗遮蔽時，Chromium 的 **Intensive Wake Up Throttling** 會在 `setTimeout` 巢狀層數 `nesting_level >= 5`（即未提前擊碎方塊且 `count >= 6`）時，將後續每次 `setTimeout` 節流為 **每分鐘只喚醒一次（對齊每分鐘固定秒數）**，導致 `bridge-main.cjs` 的單執行緒序列化佇列（`pending: 1`）卡住數分鐘。
+- **建議呼叫方式**：批次腳本控制時，`interact` 一律使用預設單擊（`count: 1, holdMs: 0`），此時 renderer adapter 完全同步執行、不觸發任何 `window.setTimeout`；若需連點或等待 VFX 入帳，將迴圈與 `sleep` 放在外部 Node.js 呼叫端處理。此外，長時間連續發送 HTTP 請求的腳本建議加上 `Connection: close` header，避免 Node `fetch` 重用 keep-alive 連線時撞上 `server.requestTimeout = 10000` 而發生 `ECONNRESET`。
