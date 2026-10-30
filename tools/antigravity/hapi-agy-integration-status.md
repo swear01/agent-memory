@@ -9,13 +9,42 @@ evidence: >-
   上游 PR/issue、release audit TSV、hub DB sessions metadata、runner log，
   以及 `agy --output-format=json models` 與 `agy -p` 的實際輸出。
 created: 2026-09-20
-updated: 2026-10-29
+updated: 2026-10-30
 tags:
   - antigravity
   - agy
   - hapi
   - integration
 ---
+
+## 2026-10-30 常駐 stdin transport（HAPI PR #2248）
+
+- #2244 已於 2026-10-29 合併；傳輸重寫另開 #2248，基底 upstream `013ace8e8`。
+  此處是分支實作與驗證結果，合併／release 狀態另查。
+- 改為 lazy spawn `agy --input-format stream-json --output-format stream-json`，
+  逐行寫入 `{event:"user",message:{content:prompt}}`。同 model/effort/permission
+  設定重用 child；config key 不含後來從 init 採用的 conversation UUID。
+- `result` 是 turn boundary，process close 是 transport boundary。先 flush
+  planner/sendChain、派送 acknowledgement，再接受下一輪；stdout buffer 和
+  listeners 屬 process，planner/acceptance/ack/model attribution 屬 turn。舊
+  process 的晚到 close/error 不能清掉新 process 或終止新回合。
+- 設定改變先關 stdin，給 500ms 正常 EOF 退場，再必要時 kill process tree；
+  active Stop 直接 kill tree，下輪 `--conversation` resume。任何 prose/tool/
+  user_input/result 證實接受後，不可自動重播該 prompt。未接受才 bounded retry。
+- native 空字串／純空白會 ERROR+exit1，HAPI 必須寫入前攔截並保全原訊息。
+  `/model` 等 CLI 自答命令會 ERROR+exit2；control_request/response 也不支援，
+  不能把 stdin 協定當 ACP 或用 slash command 偷改 runtime 設定。
+- stderr soft-deny 可在 result 之後才到；需保留 idle callback 去重顯示，不要為
+  等 stderr 而阻塞下一輪。whole-kill 與 queue wakeup 相撞時，已 dequeue 的
+  delivery 仍須在 kill 返回前 restore/ack，不能漏訊息或放行新程序。
+- agy 1.4.11 實測：原生兩輪及 source driver 兩輪都同 process/init 一次/result
+  兩次、第二輪保留 context、沒有工具呼叫。source driver 確認兩次 ready/ack，
+  idle kill 後 process cleanup 完成。原生關 stdin exit0；idle SIGINT exit1，
+  所以 Stop 後重啟是必要方案（未另做 active-turn 真實推論中斷）。
+- num_turns、usage、duration 是 session 累計；本次不加入新的 usage 計數，將來
+  接用量時不能把各 result 的累計值逐輪相加。對外 transcript 格式保持原樣。
+- CLI 全套 3659 pass/16 skipped；最後 persistent regression 檔 17/17 pass，
+  CLI typecheck 通過。所有 CLI test invocation 都用不同 TMPDIR。
 
 ## 2026-10-29 模型／effort 修正實作（HAPI PR #2244）
 
