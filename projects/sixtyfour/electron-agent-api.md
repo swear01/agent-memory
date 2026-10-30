@@ -17,6 +17,7 @@ Windows 遊戲版本 1.2.1 的 Electron 程式碼未封裝於 ASAR。`<game-inst
 - `game.stuff`、`stuffMap`、`resources`、`codex.entities` 提供世界與目錄資料；`entityAtCoordinates([x,y])` 查格子。
 - 放置與升級走 `pickupItem(type)`、設定 `hoveredCell` / `hoveredEntity`，再 `processClick()`。不要直接呼叫 `addEntity`，否則會跳過成本與副作用。
 - `processClick()` 本身不檢查商店解鎖和唯一性。Adapter 必須另驗證 `canPurchase`、`unlockedEntities[type]` / `shouldUnlock(game)`、`onlyones`、目前 plane、`canAfford`、佔位與升級目標，並確認放置後的實體。
+- catalog 保留原生名稱、描述與 `getRealPrice(type)` 的即時 indexed price，另以 state 相同的 resource index／名稱加入非零 `materials: [{index,name,amount}]`；缺名稱時用 `resource-N`。`placementSupported` 必須與 place 的限制一致：eraser 系列及沒有 class 的項目為 false，且 `available` 為 false；商店可購買不代表可透過 place 放置。可放置項目的 `available` 仍只是目前 plane、解鎖、資源和唯一性資格，實際座標仍由 place 驗證。
 - 互動沿用 entity 的 `onmousedown` / `onmouseup` 或 dark callback；先檢查 `canHit()` / `canDarkHit()`。重複點擊每次重新檢查，cube 破裂後停止，並維持正常 `stats.totalCubeClicks`。Pump 長按期間需要 `game.hoveredEntity === target`，否則其 `update()` 立即釋放；結束時必須 `onmouseup()`。
 - 長按不能只每 25 ms 重設 hover：`updateTranslation` / `processMousemove2` 的原生游標刷新會在兩次重設之間改寫 `hoveredEntity`，讓 Pump 提前取消。已驗證的修正是在長按期間暫時包裝目標的 `update`，每次呼叫原生方法前先設定 `game.hoveredEntity = target`；在 `finally` 恢復原本 own / prototype 方法關係並釋放按鍵。VM 測試重現游標覆寫後通過，實機長按 5 秒的 pump 深度由 0 增至約 0.795 並生成 cube；後續正常點擊破壞 cube、回收及區域清理均驗證完成。
 - 回收依 `eraserType` 選 `eraser` / `eraser2` / `eraser3`，先跑 `canEraseNow()` 再走 `processClick()`；不可直接 `clearCell()`。這樣才能保留 cube / indestructible / 最後一台 excavator 的保護、回收費用、退款和統計。
@@ -65,11 +66,25 @@ API 隔離階段的 1000 倍壓力測試又找到缺口：main executor 曾殘�
 
 # 唯讀延遲監測：fetch 路徑不等於伺服器處理時間
 
-Windows／Node.js 24.19.0 的同一個 client 程序，以同一本機 `/health`、未修改的 gateway 做循序唯讀比較，各 30 次皆零錯誤：fetch burst 的 median／P95 約 15.475／16.523 ms；原生 `node:http` keep-alive 約 0.267／0.598 ms；原生 HTTP 每次新連線約 0.807／1.017 ms。另各 30 次、間隔 200 ms 的取樣，fetch median 約 16.278 ms，原生 HTTP keep-alive 約 0.714 ms；伺服器自己回報的處理時間 median 約 0.01 ms。同程序再交錯呼叫 fetch／原生 HTTP 各 30 次，median 約 15.129／0.379 ms、皆零錯誤，支持當時額外延遲與 fetch client 路徑相關，並非該 API 無法避免的本機網路或 handler 成本。未證明 Undici 的特定 bug 或 Windows timer 成因，也不能外推為所有 Node 版本／環境的通則。
+Windows／Node.js 24.19.0 的同一個 client 程序，以同一本機 `/health`、未修改的 gateway 做循序唯讀比較，各 30 次皆零錯誤：fetch burst 的 median／P95 約 15.475／16.523 ms；原生 `node:http` keep-alive 約 0.267／0.598 ms；原生 HTTP 每次新連線約 0.807／1.017 ms。另各 30 次、間隔 200 ms 的取樣，fetch median 約 16.278 ms，原生 HTTP keep-alive 約 0.714 ms；伺服器自己回報的處理時間 median 約 0.01 ms。同程序再交錯呼叫 fetch／原生 HTTP 各 30 次，median 約 15.129／0.379 ms、皆零錯誤，支持當時額外延遲與 fetch client 路徑相關，並非該 API 無法避免的本機網路或 handler 成本。該輪尚未定位 Undici 內部等待，不能外推為所有 Node 版本／環境的通則；後續 source／trace 定位見下節。
 
 fetch 並非永遠需要約 16 ms：另一程序曾在明確指定 Connection header 時量到約 1 ms，但後續同程序交錯測 default fetch／明確 keep-alive／帶 AbortSignal，各 30 次 median 仍約 15.64／15.51／15.47 ms，沒有可靠重現 header 可解決問題。故只能記錄目前環境及呼叫條件下反覆出現的差異；`Connection: close` 或 `keep-alive` 都不是已證實的修復。
 
-同次原生 HTTP keep-alive 的 state 取樣排除前兩次 warm-up 後，18 次 median 約 3.951 ms、最慢 5.764 ms；較早的 fetch state 49 次 median 約 20.309 ms、最慢 24.209 ms。state 是不同窗口，不能當成相同遊戲狀態的確定性重播；較乾淨的 client A/B 證據來自上述相同 health endpoint。逐次啟動 CLI 程序另有約 100～127 ms 的啟動成本，須與 HTTP latency 分開。這次僅監測，沒有修正或更換 client，也沒有修改遊戲、server、CLI 或設定；短期循序取樣不等於並行負載測試。
+同次原生 HTTP keep-alive 的 state 取樣排除前兩次 warm-up 後，18 次 median 約 3.951 ms、最慢 5.764 ms；較早的 fetch state 49 次 median 約 20.309 ms、最慢 24.209 ms。state 是不同窗口，不能當成相同遊戲狀態的確定性重播；較乾淨的 client A/B 證據來自上述相同 health endpoint。較早逐次啟動 CLI 的完整耗時約 100～127 ms，包含程序初始化、設定、HTTP 與輸出，不能當成純程序啟動成本，須與單獨 HTTP latency 分開。該輪僅監測，當時沒有修正或更換 client，也沒有修改遊戲、server、CLI 或設定；短期循序取樣不等於並行負載測試。
+
+# 低延遲 client 與 Antigravity 的常駐終端入口
+
+後續在 Node.js 24.19.0 隨附的 Undici 7.29.0 找到 `scheduleIdleSocketValidation` 的 `setTimeout(callback, 0)` 路徑；`resumeH1` 等它完成才重用 idle socket。隔離 fixture 交錯 fetch／原生 HTTP 各 40 次，fetch 每次都有 idle validation，timer median 約 13.675 ms、request create 到 send headers 約 13.840 ms，server work 僅約 0.017 ms；全程重用同一連線。這把該輪主要延遲定位到 headers 送出前的 client 排程，沒有證明 OS kernel 根因。版本 source 對照與可重用驗證方式記在 [Node HTTP 延遲筆記](../../tools/node/http-client-latency.md)。
+
+專案新增無 npm 相依的 `client.mjs`，用 `node:http`／`node:https` keep-alive Agent。SDK 在 agent 主循環外建立一次，結束時 `close()`；保留固定路由與認證、涵蓋 socket queue／headers／body 的完整 wall-clock deadline、8 MiB 回應上限及關閉清理，不自動重送 mutation，不覆寫全域 timer 或 patch Undici。
+
+Antigravity 等已有終端工具的 agent 使用 `node <package-root>/sixtyfour.mjs session` 一次啟動並保持 stdin；後續透過同一個終端程序寫入 `{"id":1,"argv":["state"]}` 等 NDJSON。每行回覆一個附相同 id 的 JSON，錯誤不終止後續行；按序執行、單行上限 16 KiB，EOF 完成已輸入工作後清理，SIGINT／SIGTERM 中止 client 並放棄尚未輸出的結果，避免 stdout backpressure 卡住終止。這個入口不另監聽埠、不需要 MCP，也不需要 agent 規則或全域 app 設定。保留一次性 CLI，但每次另啟 Node 仍會重做程序初始化與首筆請求；持續使用要把 Node process 和 HTTP pool 一起重用。
+
+升級後的新遊戲確由 Steam 父程序建立並自動載入新 renderer；該輪是外部 Steam 活動重新啟動，並非手動點 Play 的新證據。實際 catalog 58 項皆有有效原生說明與 named materials：55 項支援放置，3 個 eraser 工具的 `placementSupported`／`available` 為 false。當時 OpenSpeedy 保存倍率為 1000、新程序原旗標 Off，有效倍率仍為 1；本次量測沒有改變保存倍率，不可拿來當已啟用 1000 倍的效能測試。
+
+最終輸出處理修正後的唯讀 benchmark，SDK health 30 次 median／P95／max 約 0.470／0.604／0.732 ms；SDK state 30 次約 4.803／11.710／179.450 ms，server median 3.694 ms，逐筆扣除 server elapsed 的 client residual median 約 0.839 ms。session 的 health 15 次、state 7 次、catalog 8 次 median 分別約 0.932／4.956／9.601 ms，全部零錯誤；catalog 最慢約 212.507 ms，包含 server outlier，materials 也通過。session 第一筆完整回覆約 114.927 ms，包含初始化、設定、首筆 HTTP 與輸出，不能叫純啟動時間。消除 client 固定等待後仍有遊戲／server outlier，不能承諾每筆 state 都小於 5 ms；以上亦非長期或並行壓測。
+
+最終全套 Node 測試 95／95 通過、無 skip，包含 client 13、CLI 9、renderer 20 及其餘 53 項。CLI 的 2 MiB stdout backpressure 測試覆蓋 SIGINT／SIGTERM handler：Windows 使用非同步 `fs.write()` 使 handler 可執行，先關閉 client，再只以 SIGKILL 終止自身 PID、放棄未輸出結果；EOF 則正常排空。Windows 該路徑 exit code 為 1，Unix 為 130／143。不能把 `process.stdout.write()` 的 backpressure 當成 API 卡住，也不能假設 `process.exit()` 一定不等待被堵住的 pipe worker；可重用限制見上述 Node 筆記。
 
 # 遊戲原生時鐘隔離：只在 OpenSpeedy 明確啟用時縮放模擬
 
@@ -79,7 +94,7 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 
 所有相同 exe 路徑的遊戲 main／renderer／utility 都須保護成功，才可送出啟用的 speed sample；實際模擬啟用條件是原 main／renderer 旗標的 OR，utility 旗標不啟用模擬。helper 自己新載入 DLL 會造成 `SP_Install` 預設啟用，因此 bootstrap 只停用自己新注入的 PID；使用者已先注入的既有旗標則保留。設定中存著 100 倍不代表啟用，新 bootstrap 的程序仍為 Off／有效 1 倍，必須由使用者明確打開遊戲的 OpenSpeedy 開關。退出 helper 不會把目標 slot 改回去或釋放仍被 hook 參照的 false page；要恢復原生掛鉤使用方式須重開遊戲。
 
-`simulation-clock.cjs` 在 runtime 包裝 `game.updateLoop`，保留原 `updateCycle` 與原生遊戲規則；每次 worker tick 將真實 elapsed 乘有效倍率，以不超過 64 ms 的 substep 執行，最多 64 步、約每 4 真實 ms 在步驟邊界讓出，最後只送一次 worker acknowledgement。4 ms 是 cooperative budget，不能中斷單一步驟或保證硬上限。backlog 最多保留一真實秒對應的模擬時間；倍率改變會丟掉舊 backlog，外部 sample 超過 2 秒未更新即回到 1 倍。沒有全域覆寫 JavaScript clock。只縮放 dt 驅動的系統；render／native clocks、日曆、autosave 及依 performance 時間判斷的成就維持真實時間，不能宣稱所有遊戲功能完全等價加速。原生離散事件、每次 tap 的燃料成本及步長效應仍存在。
+`simulation-clock.cjs` 在 runtime 包裝 `game.updateLoop`，保留原 `updateCycle` 與原生遊戲規則；每次 worker tick 將真實 elapsed 乘有效倍率，以不超過 64 ms 的 substep 執行，最多 64 步、約每 4 真實 ms 在步驟邊界讓出，最後只送一次 worker acknowledgement。4 ms 是 cooperative budget，不能中斷單一步驟或保證硬上限。backlog 最多保留一真實秒對應的模擬時間；倍率改變會丟掉舊 backlog，renderer 距離最後收到狀態同步超過 2 秒即回到 1 倍。沒有全域覆寫 JavaScript clock。只縮放 dt 驅動的系統；render／native clocks、日曆、autosave 及依 performance 時間判斷的成就維持真實時間，不能宣稱所有遊戲功能完全等價加速。原生離散事件、每次 tap 的燃料成本及步長效應仍存在。
 
 安裝以 `-EnableSpeedControl` 明確啟用此架構；六個 runtime 檔案為原 bridge 三檔加 `simulation-clock.cjs`、`speed-control.cjs`、`openspeedy-guard.exe`，不安裝 C# 原始碼。helper 和其餘 runtime hash 記錄在 `apiIsolation.files`，DLL hash 另外記錄；既有啟用設定升級時會保留，legacy 未啟用安裝則不自動啟用。真實套件 fixture 已驗證 DLL／helper 缺失拒絕、六檔寫入後失敗的完整回滾、port／認證及 native hashes 保留、升級與可重試卸除。此版已正常保存、關閉，再經 Steam Play 自動載入 bridge／gateway／helper；Node 全套 74／74、helper 隔離自測 21／21 通過。
 
