@@ -181,3 +181,8 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
 - **Chasm Readiness**:
   - 5/10 materials already met (Charonite, Elmerine, Qanetite, Beta-Pylene, Void).
   - Active accumulation in progress for Celestial foam, Hollow stones, Hell gems, and Reality.
+
+- **Flower Price Scaling Discovery & Cap**:
+  - Discovered Hollow flowers have exponential price scaling (40th flower cost ~1,469 Hollow stone & 11,758 Void).
+  - Capped flower planting at current 40 units in Keeper v7.10 to protect Void and Hollow stone reserves for The Inverse Chasm (both require 4,000).
+  - Void and Hollow stone production actively regenerating via Annihilator and Fruit cultivation.
