@@ -2,7 +2,7 @@
 title: Claude Code fleet 訂閱啟動入口
 scope: tools/anthropic
 status: active
-updated: 2026-10-21
+updated: 2026-10-31
 ---
 
 # 訂閱入口與更新方式
@@ -37,3 +37,8 @@ claude auth status
 - 原程序不會隨磁碟更新切換版本，需重開。直接 HTTP／SDK、套件內 binary 或 settings 重新注入認證仍可繞過入口；這不是全域 API key 封鎖。
 
 來源：transfer_MAC PR #64（merge `8460f976bce1e9c192f46d4acebd24c5afd94c65`），120 項測試與 CI 通過；完整部署記錄位於該 repo `docs/claude-subscription-fleet.md`。
+
+# 2026-10-31 Mac 的 npm 入口被自動更新覆寫與 "Multiple installations" 警告
+
+- Claude 自動更新用 npm 重裝，會把 `<npm-prefix>/bin/claude` 重寫成直接指向 `claude.exe`，跳過入口，API key 排除失效。Mac 已加 LaunchAgent `com.swear.claude-relink`（`WatchPaths` 監看 `~/.npm-global/bin`，已連對時為 no-op；實測手動改壞後 12 秒內連回）。來源 plist 在 transfer_MAC `config/snapshot/home/Library/LaunchAgents/`。其他機器沒有此保護，仍靠手動重接。
+- `claude update`／`/doctor` 的 “Multiple installations found” 是誤報：2.1.314 的偵測只看 `<npm-prefix>/bin/claude` 加 npm 套件存在，且 `~/.local/bin/claude` 存在就標 "native"，沒有設定可關。`~/.local/bin/claude` 其實是入口 wrapper，真正的程式只有 npm 那份；不要照警告 `npm uninstall -g @anthropic-ai/claude-code`，會讓入口失效。要消除警告只能把入口搬離 `~/.local/bin`，影響整個機群 PATH，判斷不值得。
