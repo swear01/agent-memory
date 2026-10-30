@@ -5,7 +5,7 @@ machine: swop
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-09-25
+updated: 2026-10-31
 tags:
   - windows
   - path
@@ -49,6 +49,16 @@ QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、�
 Gateway binary、設定、route、launcher、logs 與 active secret blobs 都位於 `<program-data>/DeepSeekGateway`。五組 upstream credential 以 LocalMachine DPAPI blob 保存，ACL 僅授權 `SYSTEM`、Administrators 與本機使用者；launcher 解密到自己的 Process environment 後啟動 gateway，User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。舊 CurrentUser DPAPI blobs 與 task XML backup 暫留作無重開機驗證前的 rollback。
 
 2026-09-04 的 live verification 為 Task `Running`、principal `SYSTEM`、trigger `MSFT_TaskBootTrigger`，gateway process owner 為 `NT AUTHORITY\SYSTEM`、`health=ok`、零 stderr；另一條 SSH connection 在部署程序退出後仍能讀到同一個 listener。HAPI machine `pi-models` 正好八筆，Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。HAPI Runner PID 與當時的一個 active Codex session 均保留，沒有重啟 Runner。為保留該 session，未做實機 reboot；BootTrigger、SYSTEM context 與斷線存活已驗證，首次真實開機後仍應再確認 task last-run 與 health。
+
+## PowerShell 5.1 native stderr 造成 Gateway 退出（2026-10-31）
+
+SYSTEM launcher 的 `$ErrorActionPreference = 'Stop'` 搭配 native stderr redirect，
+會把 Gateway 的 provider stderr 當成 `NativeCommandError`，導致服務在第一筆錯誤輸出後退出。
+隔離的 harmless `cmd` stderr self-check 已重現。DPAPI／secret 前置檢查維持 `Stop`；
+只在 `& $gatewayExe` 前設定 `$ErrorActionPreference = 'Continue'`，並保留 `exit $LASTEXITCODE`。
+原 SYSTEM principal 與排程 action 不變。正式請求驗證 HTTP 200、
+`X-Gateway-Active-Endpoint: opencode-go-3`、回答 `OK`，同一 listener PID 在請求後仍存活。
+只看 restart 後 health 成功不足以證明修復，必須再送一次真實請求確認程序未退出。
 
 ## 2026-09-07 Gateway 更新驗證
 
