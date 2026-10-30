@@ -145,5 +145,26 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
   - 建造 Void Sculpture 後，點擊切換進入暗面空間（`plane = 1`）。
   - 在暗面空間中將游標 hover 於帶有 `soul === 1` 之建築物上方（觸發 `ondarkhover`），即可吸取其靈魂轉化為對應 `soulPower` 之真實能量（`Reality`），用於升級 Strange3（需 2,048 Reality）與開闢反轉深淵（The Inverse Chasm，需 4,000 Reality）。
 
+## 13. Strange2 與虛空雕塑雙落成、路標暗面傳送與反轉深淵（The Inverse Chasm）終局架構
+
+- **里程碑達成**：
+  - **Strange2（Hollow Rock Facility）**：成功於 `(-100, -100)` 升級完成！
+  - **Void Sculpture（虛空雕塑）**：成功落成於 `(8, 2)`（造價 1,024 Void）。
+- **暗面空間（Plane 1）首度啟動與路標機制**：
+  - 虛空雕塑落成後，需建造路標（**Waypoint**，造價 52.4 萬 Charonite、26.2 萬 Qanetite、26.2 萬 Beta-Pylene、8 空心石）。
+  - 對路標進行互動（消耗 512 Hell Gem），觸發通往暗面（Dark Plane，`plane = 1`）的首次維度躍遷。
+  - 暗面空間中所有建物帶有 `soul === 1`，透過吸收靈魂產出 **Reality（`resources[9]`）**。累積達 512 Reality 後，點擊暗面雕塑返回光面，並將雕塑永久啟動為雙向傳送門（`bridge = true`）。
+- **反轉深淵（The Inverse Chasm，`chasm`）機制全解析**：
+  - **定義與背景**：「通往未知之橋（A bridge to the unknown）」，直通終局維度裂隙的超巨型終極引力結構。
+  - **解鎖條件**：`entitiesInGame.strange3 > 0`（Strange3 造價：2,048 Hell Gem、128 Hollow Stone、2,048 Void、2,048 Reality）。
+  - **造價**：2,000 萬 Charonite、2,000 萬 Elmerine、2,000 萬 Qanetite、2,000 萬 Beta-Pylene、4,000 Hell Gem、20,000 Chromalit、200 萬 Celestial Foam、4,000 Hollow Stone、4,000 Void、4,000 Reality。
+  - **深淵傳導網路（Chasm Network）**：
+    - 反轉深淵落成後，會透過 **Conductor（導體 / 雙向信號槽）** 與全場的 **Industrial Silo MKII（`silo2`）**、**General Decay Reactor（`generaldecay`）** 以及後續的 **Gradient Well（漸變井）** 連接成統一傳輸鏈網。
+    - 漸變井產出的資源將不再需要人工或普通物流，直接透過深淵通道（`createChasmTransfer`）向反轉深淵匯聚注入。
+- **終極通關鏈條（Singularity Collapse to Victory）**：
+  - $\text{Strange2} \to \text{Void Sculpture} \to \text{Waypoint / Reality} \to \text{Strange3} \to \text{The Inverse Chasm} \to \text{Gradient Well} \to \text{Pinhole (針孔)}$。
+  - 針孔落成後引發奇點坍縮事件（Singularity Event，播放結尾音樂 `shallow_anne`，釋放宇宙閃電摧毀全工廠直至 `stuff.length < 3`），點擊北方奇異岩石觸發 `watchCredits()` 正式通關！
+
+
 
 
