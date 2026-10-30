@@ -72,3 +72,26 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
      - **黃色保護**：當 Charonite > 500,000 時，節流 `converter41`，讓 Beta-Pylene 順暢累積至 Hell Vault #2 所需的 3,145,728 巨量儲備。
      - **白色保底**：3 座 `converter32` 將充沛的紫色轉為白色，維持 Silo 充能無休。
   3. **方塊連擊秒碎**：主坑方塊採用每秒多重連擊破裂，方塊即生即碎，源源不絕產出黃色方塊與天體泡沫，讓黑、黃、白、紫四色淨產能全數維持為正。
+
+## 8. 後期高級巨構與終局科技樹解鎖鏈（Endgame Celestial Tech Tree）
+
+- **終局進階建築功能與解鎖階梯**：
+  1. **`vessel`（Containment Vessel，收納容器）**：
+     - 單座隔絕保護 32 單位 Chromalit 不受半衰期裂變衰變。建造 8 座達成 **256 Chromalit** 容量，為解鎖 `converter76` 的必經前置。
+  2. **`converter76`（Celestial Irradiator，天體輻照機）**：
+     - 造價：262,144 Charonite, 128 Hell Gem, 256 Chromalit, 65,536 Celestial Foam。
+     - 運作機制：消耗 1 Chromalit + 8,192 天體泡沫，產出 **2,048 Chromalit + 1 顆 Hell Gem**。
+     - 戰略價值：直接引爆 Chromalit 產能（從百位數暴衝至數千），且為解鎖天體反應堆（`converter64`）之絕對必備前置。
+  3. **`converter64`（Celestial Reactor，天體反應堆）與 `reflector`（天體反射板）**：
+     - 解鎖條件：建造至少 1 座 `converter76`。
+     - 運作機制：融合 4,096 Chromalit 與 32,768 天體泡沫，產出公式為 $(32768 + \text{reflectorCount} \times 8192) \times 4$。
+     - 產能效果：周圍環繞 4 座反射板時，單次運轉即可爆出 **262,144 巨量 Beta-Pylene（黃色方塊）**，直接滿足 Hell Vault #2（需 3,145,728）之巨額門檻。
+  4. **`generaldecay`（General Decay Reactor，全域衰變反應堆）**：
+     - 單一唯一建築，極大化 Chromalit 衰變性能，吸收裂變脈衝轉化為海量低階元素。
+  5. **`preheater`（Catalytic Preheater，催化預熱器）**：
+     - 緊鄰轉化器放置，提供高達 +200%～+300% 速度倍率加成（最高達 4 倍運轉速度）。
+  6. **`consumer`（Catalytic Refinery，催化精煉廠）**：
+     - 吞噬方塊破碎資源，累積滿 1,024 單位後連續爆發，最高提供 +100% 額外資源掉落加成。
+  7. **`strange2`（Hollow Rock Facility）與 `strange3`（Reconstructed Hollow）**：
+     - 解鎖條件：建造 Annihilator 並產出 Void（`resources[8] > 0`）。
+     - 功能：升級北方的虛空石基地（`(-100, -100)`），將虛空石上限倍增至 16 顆並極速生成，徹底打通終局維度躍遷。
