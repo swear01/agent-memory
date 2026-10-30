@@ -27,11 +27,15 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
   `hollowHardness = Math.max(4, hollowHardness / 2)`。
 - 歷經 64 → 32 → 16 → 8 → 4 後，後續生成的 Hollow 僅需 4 次點擊即可破碎。
 
-## 3. 轉化器（Converters）與資源平衡陷阱
+## 3. 轉化器（Converters）與後期黑色／紫色資源飛輪機制
 
-- **Converter41（Beta-Pylene oxidizer）**：消耗 8,192 Beta-Pylene 產出 Charonite。在後期需要累積 1,048,576 Beta-Pylene 建造 Hell Vault 時，必須完全停止自動填充 Converter41，否則會把泯滅產出的 Beta-Pylene 迅速吃光。
-- **Converter32（Charonite enrichment vat）**：消耗 256 Charonite + 32 Qanetite 產出 256 Elmerine，為 Elmerine 核心供給源。
-- **Converter13（Charonite sump）**：消耗 4,096 Charonite + 64 Elmerine + 32 Beta-Pylene 產出 256 Qanetite。
+- **深層地層資源斷層**：深度達 10,000m～30,000m+ 後，地層方塊組成僅含天體泡沫（約 75%～90%）與 Beta-Pylene（約 10%～25%），地層已完全不再天然生成黑色（Charonite）與紫色（Qanetite）方塊。
+- **黑色方塊（Charonite）後期唯一製造源**：
+  社群與實機驗證確認，後期黑色方塊完全依賴 **Beta-Pylene 氧化器（`converter41`）** 工業化轉化。每座運轉一次消耗 8,192 Beta-Pylene，產出 **16,384 Charonite**。
+- **紫色方塊（Qanetite）供應鏈**：
+  由 **Charonite 沉澱槽（`converter13`）** 消耗 4,096 Charonite 產出 **256 Qanetite**。若黑色方塊匱乏，紫色方塊供應將徹底停擺，導致地獄寶石注入器（Injector）斷油，方塊失去地獄寶石，破壞器（`destabilizer2a`）失去 625 倍破碎加成，造成主坑挖掘停滯。
+- **冷啟動拆解法（Scrap & Rebuild）**：
+  若因斷產導致黑色與紫色雙雙見底，可拆除外圍冗餘的 Elmerine 槽（`converter32`）或次要共振器，取得高額黑色與紫色方塊退款，立即注入 `converter13` 啟動紫色方塊，隨即擴建 `converter41` 矩陣，引爆「Beta-Pylene → 16,384 Charonite → 256 Qanetite → Injector 注入 Hell Gem → 625x 秒碎方塊 → 巨量 Beta-Pylene」之自持飛輪。
 
 ## 4. 湮滅機（Annihilator）與虛空（Void）生成
 
