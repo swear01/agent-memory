@@ -42,3 +42,11 @@ claude auth status
 
 - Claude 自動更新用 npm 重裝，會把 `<npm-prefix>/bin/claude` 重寫成直接指向 `claude.exe`，跳過入口，API key 排除失效。Mac 已加 LaunchAgent `com.swear.claude-relink`（`WatchPaths` 監看 `~/.npm-global/bin`，已連對時為 no-op；實測手動改壞後 12 秒內連回）。來源 plist 在 transfer_MAC `config/snapshot/home/Library/LaunchAgents/`。其他機器沒有此保護，仍靠手動重接。
 - `claude update`／`/doctor` 的 “Multiple installations found” 是誤報：2.1.314 的偵測只看 `<npm-prefix>/bin/claude` 加 npm 套件存在，且 `~/.local/bin/claude` 存在就標 "native"，沒有設定可關。`~/.local/bin/claude` 其實是入口 wrapper，真正的程式只有 npm 那份；不要照警告 `npm uninstall -g @anthropic-ai/claude-code`，會讓入口失效。要消除警告只能把入口搬離 `~/.local/bin`，影響整個機群 PATH，判斷不值得。
+
+# 2026-10-31 機群部署：自動更新開啟與 relink
+
+- 機群入口改為不含 `DISABLE_UPDATES=1` 的新版（131 bytes），之前只有 Mac 是新版，其他主機仍是 10-17 版（149 bytes，自動更新被關）。Mazu／Zeus 共用 NAS `.200` 的 home，Cthulhu／Valkyrie 共用 NAS `.199`，所以同一份安裝與入口各只有兩份；Oracle 獨立。
+- Linux 用 transfer_MAC `scripts/claude-relink.sh`：每分鐘把 `~/.nvm/versions/node/*/bin/claude` 連回入口，目標入口不存在時不動作（避免產生 dangling link）。cron 是每台主機本機的，所以 Mazu／Zeus／Cthulhu／Valkyrie 各裝一次；Oracle 沒有 `crontab`，自動改用 systemd user timer（linger 已開）。實測在 Mazu、Cthulhu、Oracle 手動改壞 symlink，75 秒內全部連回。
+- 未涵蓋：Athena（送修，與 Mazu 共用 home，入口檔已隨共用 home 更新，但沒有裝它自己的 cron）、Windows swop（離線）、Zeus 的 swear02 帳號（先前依指示排除）。
+- 風險：同一 NAS home 的多台主機各自自動更新可能同時寫同一份 npm 安裝，未驗證 Claude 是否有跨主機鎖；若安裝損毀，在入口加回 `DISABLE_UPDATES=1` 並只從 Mazu 手動更新。
+- 順帶觀察：Zeus 的 `hapi-runner.service` 當時是 `activating`，未處理。
