@@ -65,7 +65,9 @@ API 隔離階段的 1000 倍壓力測試又找到缺口：main executor 曾殘�
 
 # 唯讀延遲監測：fetch 路徑不等於伺服器處理時間
 
-Windows／Node.js 24.19.0 的同一個 client 程序，以同一本機 `/health`、未修改的 gateway 做循序唯讀比較，各 30 次皆零錯誤：fetch burst 的 median／P95 約 15.475／16.523 ms；原生 `node:http` keep-alive 約 0.267／0.598 ms；原生 HTTP 每次新連線約 0.807／1.017 ms。另各 30 次、間隔 200 ms 的取樣，fetch median 約 16.278 ms，原生 HTTP keep-alive 約 0.714 ms；伺服器自己回報的處理時間 median 約 0.01 ms。這將當時多出的延遲隔離到該環境的 fetch client 路徑，未證明 Undici 的特定 bug 或 Windows timer 成因，也不能外推為所有 Node 版本／環境的通則。
+Windows／Node.js 24.19.0 的同一個 client 程序，以同一本機 `/health`、未修改的 gateway 做循序唯讀比較，各 30 次皆零錯誤：fetch burst 的 median／P95 約 15.475／16.523 ms；原生 `node:http` keep-alive 約 0.267／0.598 ms；原生 HTTP 每次新連線約 0.807／1.017 ms。另各 30 次、間隔 200 ms 的取樣，fetch median 約 16.278 ms，原生 HTTP keep-alive 約 0.714 ms；伺服器自己回報的處理時間 median 約 0.01 ms。同程序再交錯呼叫 fetch／原生 HTTP 各 30 次，median 約 15.129／0.379 ms、皆零錯誤，支持當時額外延遲與 fetch client 路徑相關，並非該 API 無法避免的本機網路或 handler 成本。未證明 Undici 的特定 bug 或 Windows timer 成因，也不能外推為所有 Node 版本／環境的通則。
+
+fetch 並非永遠需要約 16 ms：另一程序曾在明確指定 Connection header 時量到約 1 ms，但後續同程序交錯測 default fetch／明確 keep-alive／帶 AbortSignal，各 30 次 median 仍約 15.64／15.51／15.47 ms，沒有可靠重現 header 可解決問題。故只能記錄目前環境及呼叫條件下反覆出現的差異；`Connection: close` 或 `keep-alive` 都不是已證實的修復。
 
 同次原生 HTTP keep-alive 的 state 取樣排除前兩次 warm-up 後，18 次 median 約 3.951 ms、最慢 5.764 ms；較早的 fetch state 49 次 median 約 20.309 ms、最慢 24.209 ms。state 是不同窗口，不能當成相同遊戲狀態的確定性重播；較乾淨的 client A/B 證據來自上述相同 health endpoint。逐次啟動 CLI 程序另有約 100～127 ms 的啟動成本，須與 HTTP latency 分開。這次僅監測，沒有修正或更換 client，也沒有修改遊戲、server、CLI 或設定；短期循序取樣不等於並行負載測試。
 
