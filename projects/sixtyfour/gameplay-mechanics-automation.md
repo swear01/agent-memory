@@ -112,3 +112,18 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
      - 支援 `interact` 的 `count: 1..64` 伺服器端 30ms 節拍連點（綁定 `targetId`，方塊破壞或消失即自動停止），打破過去單點 HTTP 迴圈的網路延遲限制。
      - `catalog.data` 原生提供 `materials: [{index, name, amount}]`、`placementSupported` 與 `available`，免除前端自解碼陣列與繁瑣驗證。
 
+## 10. 終局巨構 Annihilator 衝刺與工廠高階矩陣
+
+- **深度突破與資源儲備現狀（深度 57,800m+）**：
+  - **Hell Vault #2** 已於 `(13, 1)` 成功落成，地獄寶石（Hell Gem）隔絕上限提升至 2,048，實時儲備突破 **2,500+**（已完全達到 Annihilator 2,048 之硬性門檻）。
+  - **7 大建材中有 5 項完全超標達標**：
+    - Elmerine（白）：2.08M / 524k（400%）
+    - Qanetite（紫）：3.61M / 1.04M（347%）
+    - Beta-Pylene（黃）：7.69M / 256（300 萬 %）
+    - Hell Gem（紅）：2,219 / 2,048（108%）
+    - Hollow Stone（石）：2,441 / 32（7,600%）
+- **最後兩大瓶頸攻堅架構**：
+  1. **Chromalit（高階裂變體）**：建造 **General Decay Reactor（`generaldecay`）** 於 `(10, -2)` 吸收衰變輻射；部署 3 座 `converter76`（天體輻照機）搭配 `(11, 3)` 之 **Catalytic Preheater（`preheater`）** 與 `(12, 3)` 之 **Industrial Silo MKII**，使 Chromalit 產能壓制半衰期裂變損失，向 16,384 狂飆。
+  2. **Charonite（黑色方塊）**：啟用 4 座 `converter41`（氧化器）矩陣，並對 `converter13` 實施蓄積保護（紫色方塊 > 1.5M 時暫停黑轉紫），全力將 7.6M 黃方塊轉化為黑方塊，直奔 8.38M 目標。
+
+
