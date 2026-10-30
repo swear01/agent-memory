@@ -77,6 +77,8 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 
 實機先在「保存倍率 100、遊戲開關 Off」量到 simulation 約 0.996 倍、native clock 約 0.996 倍。On／100 倍兩個分開約 30 秒窗口，分別 98／91 組取樣零錯誤，simulation 約 99.992／100.212 倍，native clock 約 1.000／1.002 倍，render clock 約 1.000／1.002 倍，沒有 backlog 或 dropped simulation；這是兩段短期證據，不是永久穩定承諾。100→10 後約 9.979 倍，Off 後約 0.997 倍；實際 GUI 再關閉並保留設定 100 時，約 3 秒量到 1.002 倍。rollback recovery counter 僅啟動時為 1，之後倍率切換未增加。100 倍下兩次 `holdMs:1000` 成功釋放，總回應約 1159／1030 ms，外部等待約 1013／1008 ms，active 最後為 false。GUI 的 100 倍預設已選取並持久保存；仍須依遊戲開關決定實效倍率。
 
+後續另在 100 倍連續觀察約 119.79 真實秒，599 次 state 與 599 次 health 全部零錯誤：credited simulation 約 100.175 倍，native clock 約 1.00173 倍，gateway wall clock 約 1.00005 倍。state 的 P95 約 173.66 ms、最慢約 277.36 ms，health 最慢約 16.95 ms；rollback recovery counter 維持 1、沒有新增倒退恢復。這補足當次場景約兩分鐘的持續運作證據，仍不是長期穩定、所有場景或實際產量完全 100 倍的保證，也未驗證目前隔離版本的 1000 倍。
+
 # 歷史高倍率量測：不能外推到目前原生時鐘隔離版本
 
 官方 OpenSpeedy UI 可設定 0.001～1000 倍，這是工具設定範圍。Sixty Four 1.2.1 沒有可據此宣稱的固定有效倍率上限：原生 worker 每 5 ms 嘗試送出一次 tick，等 acknowledgement 才再送；每次 simulation delta 上限 1000 ms，超過部分直接丟棄，沒有 backlog。worker 與 rAF 分開，但共用 renderer 執行緒。5 ms 是被調整的 timer 參數，不能直接推成真實 200 Hz 上限。
