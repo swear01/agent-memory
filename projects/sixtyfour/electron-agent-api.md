@@ -114,6 +114,6 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 
 # 卡頓診斷：分開量音訊與 JavaScript 執行緒
 
-不能把 renderer 程序合計約 1.28 顆核心當成 JavaScript 執行緒飽和；必須用 `GetThreadDescription` 配對逐執行緒 CPU。2026-10-31 同一場景的 100→10→100 倍短窗中，`AudioOutputDevice` 約占 0.998／1.000／0.998 顆核心，`CrRendererMain` 僅約 0.19～0.215 顆；降速未立即清除音訊高負載。原生 `game.js:2481–2524` 的 `playSound` 每個事件建立 3～4 個 AudioNode，`source.onended` 的 disconnect 整段被註解，僅以 `setTimeout` 降低 `stackSize`；一般上限 128，`forced` 可越過。這是後續 AudioContext／CPU stack 對照與清理修復候選，尚未證實洩漏或卡頓因果。
+不能把 renderer 程序合計約 1.28 顆核心當成 JavaScript 執行緒飽和；必須用 `GetThreadDescription` 配對逐執行緒 CPU。2026-10-31 同一場景的 100→10→100 倍短窗中，`AudioOutputDevice` 約占 0.998／1.000／0.998 顆核心，`CrRendererMain` 僅約 0.19～0.215 顆；降速未立即清除音訊高負載。原生 `game.js:2481–2524` 的 `playSound` 每個事件建立 3～4 個 AudioNode，`source.onended` 的 disconnect 整段被註解，僅以 `setTimeout` 降低 `stackSize`；一般上限 128，`forced` 可越過。這是後續 AudioContext／CPU stack 對照與清理修復候選，尚未證實洩漏或卡頓因果。WPR CPU profile 在開始錄製前即被 Windows profiling policy 拒絕，因此未取得 native CPU stack。
 
 上述比較未重啟或更動建築：health median 均約 0.8 ms，state median 約 1498／804／1096 ms，首次 100 倍另有一次 8 秒逾時；10 倍與第二次 100 倍的實測模擬速率約 9.626／35.716 倍。首次 100 倍的 `renderDelta` 曾達 1517～1616 ms，恢復 foreground 後仍有長 frame；起初 `renderLast` 不變也可能與背景狀態有關，這次未以畫面觀察確認。native clock 約 1 倍、rollback 增量為 0，原生時鐘隔離仍 active，不能把 CPU 飽和當成唯一根因，也不能以 health 快代表畫面正常。這是動態世界的短窗對照，並非同存檔重播；結束已核對恢復 enabled／100 倍且 isolated。
