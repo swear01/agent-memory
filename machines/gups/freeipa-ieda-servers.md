@@ -30,3 +30,9 @@ updated: 2026-10-30
 - 140.112.186.23 已分配但無 A/PTR；預定名稱 `intl2.gups.ntu.edu.tw`。`intl` 公開名稱沒有任何設定依賴（SSH config 全用 IP；兩台 /etc/hosts 的 intl 別名指 LAN 192.168.100.254）。
 - 管理方：`186.112.140.in-addr.arpa` 與 `intl.gups.ntu.edu.tw` 都在計中 DNS（ntuns / dns.ntu.edu.tw），GUPS 不自管 zone；`gups.ntu.edu.tw` 是 CNAME 到 Bunny CDN。
 - 申請流程：由單位（GUPS 窗口歐姍姍）填計中「網域名稱申請表」、主管核章送網路組（https://ccnet.ntu.edu.tw/ccnet/domain.php ；DNS 業務窗口見申請表 PDF），學生不能自送。2026-10-30 已寄信請歐姍姍申請 intl2 A+PTR，待回覆。DNS 好了之後再請王信博老師在 TSRI「IP 登錄」上傳 .18、.23。
+
+## Account creation (2026-10-30)
+- `ieda1:/root/ipa_add_user.sh <user> <name> <email> [reset]` reads the password on stdin. It does a kinit as admin using the root-only credentials file, runs ipa user-add, adds the user to pdk_approved, and sets the password. It then sets krbPasswordExpiration to now+90d (so there is no forced change at first login) and creates the home with mkhomedir_helper on ieda1. Homes must exist on ieda1 or ieda2's autofs mount fails.
+- The Drive script `gups_accounts.sh` (in the GUPS TA folder) calls it over ssh and mails the password via himalaya. `--preview` sends nothing. It was tested end to end with a throwaway account on both servers, and that account was deleted.
+- The roughly 20 older student accounts on ieda1 are still local `/etc/passwd` users, not in IPA, so they cannot log in to ieda2. Migrating them is the user's call.
+- The handover doc 「GUPS伺服器交接資訊.md」 was rewritten on 2026-10-30. It points to Bitwarden for the IPA secrets; the ieda1 root password line was kept as it was.
