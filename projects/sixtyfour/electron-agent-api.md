@@ -3,7 +3,7 @@ title: Sixty Four 的 Electron agent API 接入與原生操作語意
 scope: project
 project: sixtyfour
 status: active
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 # 接入方式
@@ -111,3 +111,9 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 高倍率下 renderer／main 最忙執行緒約用滿一顆核心的 98～100%；同時整張 GPU 的使用率快照約 35～39%，後者不是每遊戲的 GPU profile，不能推出 GPU 沒瓶頸或指認特定函式。尚未套用遊戲效能優化。
 
 原生程式與精確方法 VM 已證明：Pump 大步灌入使 cube 超過 64 時，cube 仍填滿但該步可能不增加深度；Entropic 的 interval 300 ms 以 dt=1000 跑 10 秒只觸發 10 次，逐小步則接近 33 次；多種機器每次更新至多處理一次事件且重設 timer、捨棄 overshoot，Preheater 每次 tap 還有不依 dt 的燃料成本。因此移除 1000 ms cap、直接放大 dt 或任意改更新頻率都會改玩法，不是單純優化。VFX 的完成 callback 負責入帳與補料，不能為了省繪圖而停止 `updateVFX`。未來先量實際更新率、cap 次數、產量／深度及耗時，再評估僅減繪圖或服務排程的改動。
+
+# 卡頓診斷：分開量音訊與 JavaScript 執行緒
+
+不能把 renderer 程序合計約 1.28 顆核心當成 JavaScript 執行緒飽和；必須用 `GetThreadDescription` 配對逐執行緒 CPU。2026-10-31 同一場景的 100→10→100 倍短窗中，`AudioOutputDevice` 約占 0.998／1.000／0.998 顆核心，`CrRendererMain` 僅約 0.19～0.215 顆；降速未立即清除音訊高負載。原生 `game.js:2481–2524` 的 `playSound` 每個事件建立 3～4 個 AudioNode，`source.onended` 的 disconnect 整段被註解，僅以 `setTimeout` 降低 `stackSize`；一般上限 128，`forced` 可越過。這是後續 AudioContext／CPU stack 對照與清理修復候選，尚未證實洩漏或卡頓因果。
+
+上述比較未重啟或更動建築：health median 均約 0.8 ms，state median 約 1498／804／1096 ms，首次 100 倍另有一次 8 秒逾時；10 倍與第二次 100 倍的實測模擬速率約 9.626／35.716 倍。首次 100 倍的 `renderDelta` 曾達 1517～1616 ms，恢復 foreground 後仍有長 frame；起初 `renderLast` 不變也可能與背景狀態有關，這次未以畫面觀察確認。native clock 約 1 倍、rollback 增量為 0，原生時鐘隔離仍 active，不能把 CPU 飽和當成唯一根因，也不能以 health 快代表畫面正常。這是動態世界的短窗對照，並非同存檔重播；結束已核對恢復 enabled／100 倍且 isolated。
