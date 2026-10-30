@@ -45,6 +45,9 @@ tags:
   接用量時不能把各 result 的累計值逐輪相加。對外 transcript 格式保持原樣。
 - CLI 全套 3659 pass/16 skipped；最後 persistent regression 檔 17/17 pass，
   CLI typecheck 通過。所有 CLI test invocation 都用不同 TMPDIR。
+- 最終驗收 head `01b93147d`：完整 Test CI、integration、Windows checks
+  與 HAPI Bot review 全部通過。2026-10-30 再查 #2248 仍 OPEN；目前帳號只有
+  upstream READ 權限，合併被拒絕，乾淨 worktree 保留待上游合併。
 
 ## 2026-10-29 模型／effort 修正實作（HAPI PR #2244）
 
