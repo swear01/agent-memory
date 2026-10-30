@@ -124,18 +124,26 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
     - Hollow Stone（石）：2,441 / 32（7,600%）
 - **最後兩大瓶頸攻堅架構**：
   1. **Chromalit（高階裂變體）**：建造 **General Decay Reactor（`generaldecay`）** 於 `(10, -2)` 吸收衰變輻射；部署 3 座 `converter76`（天體輻照機）搭配 `(11, 3)` 之 **Catalytic Preheater（`preheater`）** 與 `(12, 3)` 之 **Industrial Silo MKII**，使 Chromalit 產能壓制半衰期裂變損失，向 16,384 狂飆。
-## 11. 湮滅機落成與虛空時代啟動（The Annihilator & Void Era）
+## 12. 4 路催化預熱陣列、高階裂變平衡突破與虛空儲備激增（Strange2 & Reality 衝刺）
 
-- **終局巨構落成里程碑**：
-  - **The Annihilator（湮滅機）已於 `(7, 2)` 正式落成並點火運轉！**
-  - 造價：Charonite 8,388,608、Elmerine 524,288、Qanetite 1,048,576、Beta-Pylene 256、Hell Gem 2,048、Chromalit 16,384、Hollow Stone 32 全數扣除成功。
-- **虛空能量（Void，`resources[8]`）突破**：
-  - 湮滅機成功以 Hollow Stone 自動供料，每次天體泯滅反應觸發 shockwave，穩定爆發產出 **Void**。
-  - 目前 Void 儲備已由 0 飆破 **8,224 單位**！
-- **通往反轉深淵（The Inverse Chasm）終極解鎖鏈**：
-  - **Strange2（Hollow Rock Facility）**：解鎖條件已滿足（需 Void > 0），需累積 8.38M Charonite、4.19M Elmerine、4.19M Qanetite、4.19M Beta-Pylene、32k Chromalit、16 Hollow Stone 與 64 Void。
-  - **Void Sculpture（虛空雕塑）**：解鎖條件為 `resources[8] > 0 && entitiesInGame.strange2 > 0`，造價 1,024 Void（目前 8,224 已大幅超標，待 Strange2 落成後即可秒建）。
-  - **The Inverse Chasm（反轉深淵）**：解鎖條件為 `entitiesInGame.strange3 > 0`。
+- **Chromalit 裂變衰變數學模型解密**：
+  - 遊戲中未被容器（Containment Vessel，每座容量僅 32）收納的 Chromalit，每 frame 會以 `decayChance = 2e-5 * dt` 發生放射性裂變衰變（`chromaToContain * decayChance`）。
+  - 單座天體輻照機（`converter76`）基礎轉換速率為 `1e-5`（每週期需 100,000 dt 產出 2,048 Chromalit，平均產能約 0.02048/dt）。7 座無大幅預熱之輻照機產能上限約 0.143～0.266/dt，導致在 18,000～20,000 Chromalit 處即與自然裂變損失達到動態平衡，無法自然觸及 32,768 門檻。
+- **4 路催化預熱器（Catalytic Preheater）與 8 座天體輻照機矩陣**：
+  - 每座預熱器（`preheater`）提供 `+1.5` 乘數（最高可達 300% 速度提升）。
+  - 於 `(10, 4)` 與 `(14, 4)` 新增部署第 3、第 4 座 Catalytic Preheater，並於 `(14, 3)` 部署第 8 座 Celestial Irradiator，形成緊密環繞的預熱加速矩陣。
+  - Chromalit 瞬間衝破 20,000 衰變天花板，以 +250/s 之極速向 32,768 突破！
+- **終局資源儲備現狀（深度 59,425m+）**：
+  - **Charonite（黑）**：6.34M+（正以 ~1M/min 速度回升向 8.38M，其他材料皆已遠超 Strange2 所需）
+  - **Elmerine（白）**：66.9M+（Strange2 需 4.19M，超標 1,590%）
+  - **Qanetite（紫）**：62.3M+（Strange2 需 4.19M，超標 1,480%）
+  - **Beta-Pylene（黃）**：174.5M+（Strange2 需 4.19M，超標 4,160%）
+  - **Hell Gem（紅）**：2,511（雙金庫安全絕緣，高於 2,048）
+  - **Void（虛空）**：**41,461+**（Strange2 僅需 64、Void Sculpture 僅需 1,024，超標 4,000%）
+  - **Hollow Stone（石）**：1,438+（Strange2 僅需 16）
+- **真實維度（Reality，`resources[9]`）機制解析**：
+  - 建造 Void Sculpture 後，點擊切換進入暗面空間（`plane = 1`）。
+  - 在暗面空間中將游標 hover 於帶有 `soul === 1` 之建築物上方（觸發 `ondarkhover`），即可吸取其靈魂轉化為對應 `soulPower` 之真實能量（`Reality`），用於升級 Strange3（需 2,048 Reality）與開闢反轉深淵（The Inverse Chasm，需 4,000 Reality）。
 
 
 
