@@ -2,7 +2,7 @@
 title: PHASE 關卡設計與捷徑檢查（第 1 章顏色草稿）
 scope: projects/gamejam1
 status: active
-updated: 2026-10-20
+updated: 2026-10-31
 tags: [PHASE, Gamejam1, level-design, shortcut, spike, dash, route, simulator]
 ---
 
@@ -35,3 +35,13 @@ tags: [PHASE, Gamejam1, level-design, shortcut, spike, dash, route, simulator]
 - 掛在 `PhaseSandbox` 上的重播協程，在出口載入 Build Settings 裡的下一個 scene 時會被銷毀，`finally` 不會執行；
   要在 `SceneManager.activeSceneChanged` 裡還原 `InputSystem.settings`、移除虛擬鍵盤並回報結果。
 - 正向進房（`checkpointOnEntry`）會把玩家放到出生點並重設為紅色，房間出入口高度只影響切換畫面是否連貫。
+
+## Verto 只剩跑跳＋蹬牆後的重做經驗（level-b，PR swear01/Verto#50）
+
+- 一般跳最高約 28 px；每步上升 2 格、水平間距約 6 格、3 格寬的落腳點，用 4–6 幀的輸入視窗就能過，節奏感也自然。
+- 單色柱子只在自己的顏色可蹬：用「跳上前一色平台 → 撞柱時剛好是柱色 → 蹬牆跳多換一色」強制蹬牆，下一個落腳點放「兩色之後」的顏色，直接跳過去會落在暗掉的平台上穿過去。
+- 單色柱子會擋同色雷射：全高紅柱在左時，左邊射來的紅雷射無效，只剩右邊有用；綠柱在右同理。雷射配色要先排除這種被擋死的組合。
+- 右緣出口在房間底下也算：玩家掉到 `y > Height + 14` 之前，只要 `x + w > Width` 就換關。只有 1 格厚的右牆，底下的縫可以從下面鑽出去，要用 2 格厚。
+- 選雷射帶的做法：先錄好路線，再對每個（列、左右、顏色）各加一條雷射重播路線；能過的顏色就是「路線經過時是安全色」的候選，三色都能過的代表路線根本沒經過那一列。
+- dotnet 搜尋用 6 幀為一步的巨集動作（左右/不動 × 跳/不跳），狀態鍵在地面用整數位置，空中用 2 px、速度/15 粗格，單房 BFS 約 25–50 秒。
+- 跨關的實機鍵盤重播：由靜態腳本在 `InputSystem.onBeforeUpdate` 裡（只處理 Dynamic update），用 `(Controller.time - 進房時間) / Dt` 當路線索引排入鍵盤狀態，再設定 `Time.captureDeltaTime = Dt`。換 scene 時腳本不會被銷毀，每幀都對得上，level 3→4→5 零死亡。
