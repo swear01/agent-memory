@@ -92,11 +92,11 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 
 目前改採 Idle Spiral 已驗證過的架構模式：讓 OpenSpeedy 的原生 clock／wait hook 實效維持 1 倍，只讀原來的控制旗標與共享倍率，於遊戲自己的 dt 模擬套一次倍率。這是 Sixty Four 的獨立實作，不是直接套 Unity 補丁。`openspeedy-guard.exe` 是 x64 C# helper；僅支援 `speedpatch64.dll` SHA-256 `c72ba4d9e35c5c00efc113e541da91a02dbc0c85c6fb2effff5cee63898bc70c`，並驗證 PE export、`SP_IsEnabled` RVA `0x1170` 的機器碼，以及兩個 RIP 位址都指向對齊的 `pEnabled` slot `0xa458`，不符就拒絕。它保留原 `OpenSpeedy.<pid>` named mapping，將目標程序 slot 指向一頁私有 false 值，讓 native hook 不再縮放時間／等待；helper 自己載入 DLL 後也立即停用自己的原生 hook。
 
-所有相同 exe 路徑的遊戲 main／renderer／utility 都須保護成功，才可送出啟用的 speed sample；實際模擬啟用條件是原 main／renderer 旗標的 OR，utility 旗標不啟用模擬。helper 自己新載入 DLL 會造成 `SP_Install` 預設啟用，因此 bootstrap 只停用自己新注入的 PID；使用者已先注入的既有旗標則保留。設定中存著 100 倍不代表啟用，新 bootstrap 的程序仍為 Off／有效 1 倍，必須由使用者明確打開遊戲的 OpenSpeedy 開關。退出 helper 不會把目標 slot 改回去或釋放仍被 hook 參照的 false page；要恢復原生掛鉤使用方式須重開遊戲。
+所有相同 exe 路徑的遊戲 main／renderer／utility 都須完成隔離或確認未掛鉤、維持原生時鐘，才可送出啟用的 speed sample；實際模擬啟用條件是原 main／renderer 旗標的 OR，utility 旗標不啟用模擬。helper 自己新載入 DLL 會造成 `SP_Install` 預設啟用，因此 bootstrap 只停用自己新注入的 PID；使用者已先注入的既有旗標則保留。設定中存著 100 倍不代表啟用，新 bootstrap 的程序仍為 Off／有效 1 倍，必須由使用者明確打開遊戲的 OpenSpeedy 開關。退出 helper 不會把目標 slot 改回去或釋放仍被 hook 參照的 false page；要恢復原生掛鉤使用方式須重開遊戲。
 
 `simulation-clock.cjs` 在 runtime 包裝 `game.updateLoop`，保留原 `updateCycle` 與原生遊戲規則；每次 worker tick 將真實 elapsed 乘有效倍率，以不超過 64 ms 的 substep 執行，最多 64 步、約每 4 真實 ms 在步驟邊界讓出，最後只送一次 worker acknowledgement。4 ms 是 cooperative budget，不能中斷單一步驟或保證硬上限。backlog 最多保留一真實秒對應的模擬時間；倍率改變會丟掉舊 backlog，renderer 距離最後收到狀態同步超過 2 秒即回到 1 倍。沒有全域覆寫 JavaScript clock。只縮放 dt 驅動的系統；render／native clocks、日曆、autosave 及依 performance 時間判斷的成就維持真實時間，不能宣稱所有遊戲功能完全等價加速。原生離散事件、每次 tap 的燃料成本及步長效應仍存在。
 
-安裝以 `-EnableSpeedControl` 明確啟用此架構；六個 runtime 檔案為原 bridge 三檔加 `simulation-clock.cjs`、`speed-control.cjs`、`openspeedy-guard.exe`，不安裝 C# 原始碼。helper 和其餘 runtime hash 記錄在 `apiIsolation.files`，DLL hash 另外記錄；既有啟用設定升級時會保留，legacy 未啟用安裝則不自動啟用。真實套件 fixture 已驗證 DLL／helper 缺失拒絕、六檔寫入後失敗的完整回滾、port／認證及 native hashes 保留、升級與可重試卸除。此版已正常保存、關閉，再經 Steam Play 自動載入 bridge／gateway／helper；Node 全套 74／74、helper 隔離自測 21／21 通過。
+安裝以 `-EnableSpeedControl` 明確啟用此架構；目前七個 runtime 為原 bridge 三檔、`audio-guard.cjs`、`simulation-clock.cjs`、`speed-control.cjs`、`openspeedy-guard.exe`，不安裝 C# 原始碼。未啟用 speed control 也安裝 audio guard；helper 和其餘 runtime hash 記錄在 `apiIsolation.files`，DLL hash 另外記錄。既有啟用設定升級時會保留，legacy 未啟用安裝則不自動啟用。真實套件 fixture 已驗證 DLL／helper 缺失拒絕、七檔寫入後失敗的完整回滾、port／認證及 native hashes 保留、升級與可重試卸除。2026-10-31 本輪 Node 全套 120／120、helper 隔離自測 38／38 通過；先前版也已驗證正常保存、關閉及 Steam Play 自動載入 bridge／gateway／helper。
 
 實機先在「保存倍率 100、遊戲開關 Off」量到 simulation 約 0.996 倍、native clock 約 0.996 倍。On／100 倍兩個分開約 30 秒窗口，分別 98／91 組取樣零錯誤，simulation 約 99.992／100.212 倍，native clock 約 1.000／1.002 倍，render clock 約 1.000／1.002 倍，沒有 backlog 或 dropped simulation；這是兩段短期證據，不是永久穩定承諾。100→10 後約 9.979 倍，Off 後約 0.997 倍；實際 GUI 再關閉並保留設定 100 時，約 3 秒量到 1.002 倍。rollback recovery counter 僅啟動時為 1，之後倍率切換未增加。100 倍下兩次 `holdMs:1000` 成功釋放，總回應約 1159／1030 ms，外部等待約 1013／1008 ms，active 最後為 false。GUI 的 100 倍預設已選取並持久保存；仍須依遊戲開關決定實效倍率。
 
@@ -117,3 +117,30 @@ API 隔離後使用者再次回報畫面凍結；當時 state 中 simulation 仍
 不能把 renderer 程序合計約 1.28 顆核心當成 JavaScript 執行緒飽和；必須用 `GetThreadDescription` 配對逐執行緒 CPU。2026-10-31 同一場景的 100→10→100 倍短窗中，`AudioOutputDevice` 約占 0.998／1.000／0.998 顆核心，`CrRendererMain` 僅約 0.19～0.215 顆；降速未立即清除音訊高負載。原生 `game.js:2481–2524` 的 `playSound` 每個事件建立 3～4 個 AudioNode，`source.onended` 的 disconnect 整段被註解，僅以 `setTimeout` 降低 `stackSize`；一般上限 128，`forced` 可越過。這是後續 AudioContext／CPU stack 對照與清理修復候選，尚未證實洩漏或卡頓因果。WPR CPU profile 在開始錄製前即被 Windows profiling policy 拒絕，因此未取得 native CPU stack。
 
 上述比較未重啟或更動建築：health median 均約 0.8 ms，state median 約 1498／804／1096 ms，首次 100 倍另有一次 8 秒逾時；10 倍與第二次 100 倍的實測模擬速率約 9.626／35.716 倍。首次 100 倍的 `renderDelta` 曾達 1517～1616 ms，恢復 foreground 後仍有長 frame；起初 `renderLast` 不變也可能與背景狀態有關，這次未以畫面觀察確認。native clock 約 1 倍、rollback 增量為 0，原生時鐘隔離仍 active，不能把 CPU 飽和當成唯一根因，也不能以 health 快代表畫面正常。這是動態世界的短窗對照，並非同存檔重播；結束已核對恢復 enabled／100 倍且 isolated。
+
+# 後建音訊 utility 與程序身分驗證
+
+AudioContext 初始化後才新建的 sandbox 音訊 utility 可能拒載 DLL；為隔離而強行 bootstrap 反而讓完整覆蓋失敗、模擬退回 1 倍。修正為 main／renderer 缺 DLL 才 bootstrap；非 controller utility 缺 DLL 時只讀確認，以 `nativeUnhooked:true`、`controllerEnabled:false`、`bootstrapInjected:false` 納入原生時鐘覆蓋，已載 DLL 則仍須原雜湊／機器碼驗證及 pointer 隔離。模組讀取失敗仍 fail closed。實機已驗證未掛鉤 utilities 與已隔離 renderer 並存時可啟用有效 100 倍。這仍是輪詢快照，外部若在確認後才注入，下一輪檢查前仍有窗口；不要在 bootstrap 同時操作外部注入來假定旗標所有權。
+
+提升程序存取權時保留唯讀 handle，先取得新 handle，再以 `GetProcessTimes` creation time 核對同一 instance，成功才關舊 handle，避免只按可重用 PID 重開的窗口。身分讀取／比對失敗須關新 handle 並拒絕，舊 handle 交 finally 清理；自測用本 helper 的真實 read／write handles，未開啟外部程序。
+
+直接呼叫官方 `bridge64.exe` 時必須把 cwd 設為 OpenSpeedy 安裝目錄；其 `LoadLibraryW` 使用相對 DLL 路徑。只給 executable 絕對路徑仍可能讓 ENABLE 僅印出首個 stderr 訊息、沒有實效；本輪修正 cwd 後才核對到原控制旗標 true、有效 100 倍，不能只憑 CLI 返回或保存倍率判定成功。
+
+# 音效 guard 與冷重開後的同程序對照
+
+`audio-guard.cjs` 共用上限 24 個自有 SFX voices，最近一秒最多 120 次、每個音效 id 最多 12 次，涵蓋一次性及 looping 音效；ended 後釋放並 disconnect 自有 nodes，不以全域 timer 模擬生命週期。自有 looping bundle 的停止 fade 在加速大於 1 倍時最多為 0.05 秒 AudioContext 時間，1 倍保留原 fade，music 維持原生。API `resume` 改走原生 `toggleSplash()`，保留初次 `initAudio` 及原有 mute 行為。state 增加 audio 狀態、AudioContext 時間／state／sample rate／base latency；普通 dispatch 會確保安裝，`syncSpeed` 每次都更新既有 audio controller 的倍率。
+
+guard 只擁有自身建立的 SFX：切換前的 native bundle 仍委派原 `stopSound`，native 模式的 `activeVoices:0` 不代表沒有聲音，切成 bounded 也不能宣稱清掉未知舊 graph。限流會改變全域 `Math.random` 的消耗順序，不能保證同存檔逐事件完全相同。simulation 超過 2 秒未收權威 sample 仍回 1 倍；audio 的 acceleration 是最近一次 `syncSpeed` 值，不可把它當即時有效模擬倍率。音訊 cleanup／重疊是源碼候選，尚無 native CPU stack，也未證實 graph leak 或原卡頓的唯一根因。
+
+冷重開後先以 native 委派取得基線，再在同 process／AudioContext、100 倍下依序觀察各約 20 秒，沒有在階段間重開；AudioContext 時間均約真實 1 倍，state／health 零錯誤，取樣 `renderDelta` 最大約 33.6 ms：
+
+| 模式 | AudioOutputDevice 核心占用 | 實測模擬倍率 | state median ms |
+| --- | ---: | ---: | ---: |
+| native | 0.3800 | 100.004 | 17.009 |
+| bounded | 0.0603 | 100.000 | 6.987 |
+| silent | 0 | 100.018 | 21.576 |
+| bounded 再次 | 0.0610 | 99.970 | 10.394 |
+
+native 冷重開基線已移除先前音訊近滿一核心的狀態，因此不能把全部改善歸給 guard；同程序對照支持 bounded 明顯降低此場景的音訊 CPU，但 state 延遲並未隨靜音單調下降。世界持續變動，這不是同存檔重播，也不是長期穩定或原異常根因的證明。
+
+恢復正式 runtime 後另測約 100 秒，300 組 state／health（600 次讀取）零錯誤：simulation 約 100.00425 倍，native／audio／render clock 約 1.000007／1.000017／1.000088 倍，state median／P95 約 4.275／153.817 ms，取樣 `renderDelta` 最大 35.8 ms；audio errors 為 0、peak voices 24，rollback 及 dropped simulation 增量為 0。100 倍的 `holdMs:1000` 成功釋放、active 最後為 false，外部等待約 1012.788 ms，begin／end RPC 約 121.021／6.301 ms。之後 100→10→Off→100 短窗分別約 9.9884／1.002596／99.97569 倍，Off 時 audio acceleration 為 1；四階段共 348 組 paired reads 零錯誤，沒有新增 rollback／dropped simulation／audio errors。最後核對 enabled、configured／effective 100 且 isolated，catalog 58 項的 descriptions／materials 通過、save persisted；七個 runtime hash 同時符合 record 與 package，遊戲由 `steam.exe` 父程序啟動，暫時診斷 sidecar 與讀取路徑均已移除。這仍不可宣稱長期不凍結或所有場景都完全 100 倍。
