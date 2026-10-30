@@ -124,6 +124,18 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
     - Hollow Stone（石）：2,441 / 32（7,600%）
 - **最後兩大瓶頸攻堅架構**：
   1. **Chromalit（高階裂變體）**：建造 **General Decay Reactor（`generaldecay`）** 於 `(10, -2)` 吸收衰變輻射；部署 3 座 `converter76`（天體輻照機）搭配 `(11, 3)` 之 **Catalytic Preheater（`preheater`）** 與 `(12, 3)` 之 **Industrial Silo MKII**，使 Chromalit 產能壓制半衰期裂變損失，向 16,384 狂飆。
-  2. **Charonite（黑色方塊）**：啟用 4 座 `converter41`（氧化器）矩陣，並對 `converter13` 實施蓄積保護（紫色方塊 > 1.5M 時暫停黑轉紫），全力將 7.6M 黃方塊轉化為黑方塊，直奔 8.38M 目標。
+## 11. 湮滅機落成與虛空時代啟動（The Annihilator & Void Era）
+
+- **終局巨構落成里程碑**：
+  - **The Annihilator（湮滅機）已於 `(7, 2)` 正式落成並點火運轉！**
+  - 造價：Charonite 8,388,608、Elmerine 524,288、Qanetite 1,048,576、Beta-Pylene 256、Hell Gem 2,048、Chromalit 16,384、Hollow Stone 32 全數扣除成功。
+- **虛空能量（Void，`resources[8]`）突破**：
+  - 湮滅機成功以 Hollow Stone 自動供料，每次天體泯滅反應觸發 shockwave，穩定爆發產出 **Void**。
+  - 目前 Void 儲備已由 0 飆破 **8,224 單位**！
+- **通往反轉深淵（The Inverse Chasm）終極解鎖鏈**：
+  - **Strange2（Hollow Rock Facility）**：解鎖條件已滿足（需 Void > 0），需累積 8.38M Charonite、4.19M Elmerine、4.19M Qanetite、4.19M Beta-Pylene、32k Chromalit、16 Hollow Stone 與 64 Void。
+  - **Void Sculpture（虛空雕塑）**：解鎖條件為 `resources[8] > 0 && entitiesInGame.strange2 > 0`，造價 1,024 Void（目前 8,224 已大幅超標，待 Strange2 落成後即可秒建）。
+  - **The Inverse Chasm（反轉深淵）**：解鎖條件為 `entitiesInGame.strange3 > 0`。
+
 
 
