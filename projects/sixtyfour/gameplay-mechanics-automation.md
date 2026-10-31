@@ -186,3 +186,32 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
   - Discovered Hollow flowers have exponential price scaling (40th flower cost ~1,469 Hollow stone & 11,758 Void).
   - Capped flower planting at current 40 units in Keeper v7.10 to protect Void and Hollow stone reserves for The Inverse Chasm (both require 4,000).
   - Void and Hollow stone production actively regenerating via Annihilator and Fruit cultivation.
+
+## 15. 反轉深淵（Chasm）點火、梯度井（Gradient Well）與導體網路實裝 (2026-10-31)
+
+- **深淵瞬間爆發點火（Burst Ignition）**：
+  - Chasm 造價需要 20,000 Chromalit。因 Chromalit 裂變半衰期極快，採用 `Promise.all` 同時激發 10 座 `converter76`，於 `+1085ms` 瞬間觸頂 **21,338 Chromalit**，精確於 `(0, 4)` 成功建造反轉深淵（`chasm`）。
+- **深淵超導網絡（Chasm Network）**：
+  - 以 Chasm 為根節點，透過 Conductor 鋪設東、西兩路超導鏈，連接至兩翼的 Industrial Silo MKII（`silo2`），形成 BFS 統一傳輸鏈網。
+- **梯度井（Gradient Well）與受限懲罰（Penalty 0.5）**：
+  - 於 `(0, 5)` 建造 Gradient Well。經代碼審查確認：
+    1. 平地直接建造時帶有 `penalty = 0.5`（全產出減半）。唯有先於暗面建造 Puncture（刺孔），再將 Gradient 蓋於 Puncture 上方方可消除懲罰（100% 滿額）。
+    2. **梯度井無手動點擊邏輯**（`onmousedown` 為空，`canInteract: false`），純靠相鄰的共振器（`entropic` / `entropic2` / `entropic3`）透過 `cell.tap(power)` 觸發抽取。
+    3. 梯度井僅認可 `destabilizer` 與 `destabilizer2` 作為倍率放大器，源碼明文排除 `destabilizer2a`。
+- **終局建築 Pinhole（針孔）解鎖**：
+  - 梯度井落成後正式解鎖 Pinhole（代號 `?`，`upgradeFrom: 'chasm'`）。
+  - 需求清單：5 大基礎原料各 **64,000,000,000 (64B)**、永久鉻岩 **640,000**，以及各 64 顆 Hell Gem、Hollow Stone、Void、Reality。
+
+## 16. 中局黑洞全自動永動優化與首座 Containment Silo (vessel2) 破局 (2026-10-31)
+
+- **緊湊型「黑洞-井-震-倉」四合一永動架構**：
+  - 解決梯度井閒置瓶頸：在 `(0, 6)` 拆除無用致不穩定器，加蓋 **熵共振器 II（`entropic2`）**（每 300ms 敲擊一次，100x 速度下每秒觸發逾 300 次敲擊）。
+  - 於 `(0, 7)` 緊貼共振器建造 **Industrial Silo MKII（`silo2`）** 並連回超導網絡，料倉自動下潛補油，達成 100% 免人工維護永動。
+  - 在 `(-2, 5)` 加蓋 `silo2`，自動滋養 `(-1, 5)` 與 `(-1, 6)` 的 `destabilizer2`，提供持續的 9x 敲擊倍率放大。
+  - 改造後 Charonite 產率暴漲至 +430k/s，總量突破 17.8 億；Celestial Foam 突破 2.7 億；Reality 突破 75 萬。
+- **首座 Containment Silo（`vessel2`，封存庫）瞬間拆解逆向點火**：
+  - 終局 640k Chromalit 不可衰變儲存需要 20 座 `vessel2`（單座容量 32,768 Chromalit，造價 16,384 Chromalit、268M 黑、134M 白、134M 紫、4096 現實）。
+  - 一般情況下因 Chromalit 衰變上限卡在 ~290，無法自然累積至 16,384。
+  - **拆解退款瞬間置換法**：利用同時拆除 Annihilator（退款 16,384 Chromalit）與最外層 Vault（退款 7,776 Chromalit），Chromalit 瞬間飆升至 23,608 峰值，耗時 29ms 立即在 `(8, -1)` 將 `vessel` 升級為全場首座 **Containment Silo（`vessel2`）**！
+  - 成果：首度將 6,900+ Chromalit 永久鎖定，徹底破除無儲存空間即刻衰變的物理限制，開啟向 640k 永久鉻岩挺進的關鍵通道。
+
