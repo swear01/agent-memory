@@ -2,7 +2,7 @@
 title: Verto Web 公開試玩：Cloudflare Pages 手動發布與 Unity build 縮小
 scope: projects/verto
 status: verified
-updated: 2026-10-22
+updated: 2026-10-31
 tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, build-size]
 ---
 
@@ -48,3 +48,4 @@ tags: [Verto, PHASE, Unity, WebGL, Cloudflare-Pages, wrangler, cloudflared, buil
 - 發布用 worktree：`git worktree add --detach <path> origin/main`，`cp -cR` 主 checkout 的 `Library`，以 `open -g -j -n -a .../Unity.app --args -projectPath <path>` 背景開 Editor；完整 `BuildWeb.py`（全部 Editor／Play Mode 套件＋build）約 9 分鐘。
 - Web build 會重新序列化 `Assets/DefaultVolumeProfile.asset`、`Assets/Settings/UniversalRP.asset`、`Assets/UniversalRenderPipelineGlobalSettings.asset`；一次性 checkout 裡直接還原，不要 commit。
 - build 期間 `main` 可能又前進（2026-10-22 build `acab4ef` 時 PR #11 改了 favicon）；部署前再 fetch，落後就重 build 最新 `main`。
+- 合併的 PR 若只改 `Assets/**/Tests/Editor/`（例如 Verto PR #49 的 route tolerance 工具），player build 不變，不需重新發布；以 `git diff --stat <live-commit> origin/main -- Assets Packages ProjectSettings` 確認。WebGL build 結束後若 Editor 已關，`Emscripten/node/node .../websockify.js` 可能殘留並讓 Dock 顯示「Unity 正在背景中執行」，直接結束該 node 行程即可。
