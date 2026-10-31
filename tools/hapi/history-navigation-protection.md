@@ -35,3 +35,5 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 2026-10-30 證據：#1597 在 `upstream/main`（`f8e55fb93`）基礎上壓合為單一 commit `ade45ad36`；移除 6 個無關 mock 檔後觸碰檔案收斂至 32 檔。修復 E2E `aside` 退場等待後，`bun run typecheck:web` 通過（0 errors），151 個 web 測試與 Playwright E2E 全綠。Codex PR Review 與 GitHub Actions CI 觸發驗證中。
 
 2026-10-30 更新：#1597 `3c33ad013`（rebase/pr-1597-20261029 → fix/issue-1587-upstream）導航 props 改 optional、還原 6 個 fixture 檔、長距離改 instant；typecheck:web、web 單測（修 2 個過時 scrollIntoView mock）、e2e 4/4 通過，CI 綠。已貼 `/swear-review incremental`；Codex PR Review 兩次因 codex proxy Cloudflare 530/1033 失敗（infra，非程式碼），待重觸發。
+
+2026-10-31 更新：#1597 `6d3950319` 把 token、in-flight、lease set、scroll AbortController 收斂成單一 navigation 物件（start/end/cancel 三個函式擁有所有清理，`signal.aborted` 是唯一所有權判斷），解決 bot 每輪冒一個「取消路徑漏清 X」的 Minor。prompt 回退查找在沒有後繼卡時回傳 null，不再從尾端猜。jump-navigation e2e 的 lease 輪詢需 15s（retry 4000 + settle 2500 ms）；HEAD 舊版在 5s 也會失敗。typecheck、686 單測、e2e 4/4 ×3 通過。
