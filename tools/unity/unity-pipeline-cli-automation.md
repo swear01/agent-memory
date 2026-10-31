@@ -2,7 +2,7 @@
 title: Unity Pipeline 套件 (com.unity.pipeline) 與 Unity CLI 運作機制與即時控制
 scope: tools/unity
 status: active
-updated: 2026-10-22
+updated: 2026-10-31
 tags:
   - unity
   - unity-cli
@@ -75,3 +75,4 @@ Unity 官方推出 Unity CLI 與 Unity Pipeline 模組（`com.unity.pipeline`）
 12. **沒有 `unity command status` 這個指令**（Pipeline 0.8.0-exp.1，2026-10-22）：會回 `400 Bad Request: Command Not Found` 並列出可用指令，而且每呼叫一次，Editor Console 就多一筆 `ExecuteCommandByName: No command named 'status'` error。用迴圈輪詢 `status` 等 Editor 開好，會在 Console 堆滿 error，之後數 `console` 的 error 時容易誤判成編譯錯誤。等 Editor 請用 `editor_status`；數 Console error 時要依訊息內容過濾。
 13. **`HideFlags.HideAndDontSave` 的物件在 Editor 離開 Play Mode 後仍然存在**（Verto `PhaseAudio`，2026-10-22）：執行期音效物件用了 `HideAndDontSave`，每次進 Play 時 `Init` 又加一個 `AudioListener`。同一個常駐 Editor 反覆 Play 後，listener 數量一直增加（2、3…），Play Mode 測試因此以 `There are N audio listeners in the scene` 失敗。打包後的遊戲不受影響，只有長時間開著的 Editor 會出現。修法：改用 `HideFlags.HideInHierarchy`，讓物件隨 Play Mode 結束一起銷毀，再重開 Editor 一次清掉已經洩漏的物件。
 14. **目標 Editor 還在連線時，`--project-path` 指令可能被另一個 Editor 接走**（CLI 1.0.0-beta.13、Pipeline 0.8.0-exp.1，Verto，2026-10-22 實測）：用 `open -g -j -n -a ... -projectPath` 開新 worktree 的 Editor、它的 Pipeline 還沒連上時，`unity command editor_status`／`eval --project-path <新 worktree>` 由主 checkout 已開著的 Editor 回答：回 ready，`eval` 讀到、甚至改到另一個專案的設定。回應 JSON 的 `data.target.projectPath`（另有 host／port）標示實際回答的 Editor；自動化腳本每個指令都要比對它，不符就當未就緒重試（Verto `Verification/BuildWeb.py` 的 `command()`）。
+15. **`run_tests --filter` 一次只接一個類別名**（Verto，2026-10-31 實測）：`--filter "A|B"` 這種 regex 回 `completed: 0/0`，不是全部通過；多個類別要逐一呼叫，每次等 `test_status` 完成再送下一個。送出後先等幾秒再輪詢，否則 `test_status` 可能還顯示上一輪的結果；判斷 `running` 時用 `grep -w running`。
