@@ -3,7 +3,7 @@ title: Sixty Four 後期數值公式、泯滅保護與自動化機制
 scope: project
 project: sixtyfour
 status: active
-updated: 2026-10-30
+updated: 2026-10-31
 ---
 
 # 後期核心資源與數值機制
@@ -214,4 +214,15 @@ Windows 遊戲 1.2.1 經原始程式碼（`game.js`、`stuff.js`）與實機驗�
   - 一般情況下因 Chromalit 衰變上限卡在 ~290，無法自然累積至 16,384。
   - **拆解退款瞬間置換法**：利用同時拆除 Annihilator（退款 16,384 Chromalit）與最外層 Vault（退款 7,776 Chromalit），Chromalit 瞬間飆升至 23,608 峰值，耗時 29ms 立即在 `(8, -1)` 將 `vessel` 升級為全場首座 **Containment Silo（`vessel2`）**！
   - 成果：首度將 6,900+ Chromalit 永久鎖定，徹底破除無儲存空間即刻衰變的物理限制，開啟向 640k 永久鉻岩挺進的關鍵通道。
+
+## 17. Pinhole 終局放置與簡單成就 (2026-10-31)
+
+- **終局已達成**：全部資源備齊後，先把 sim 降到低速，避免 Chromalit 衰減。再回收 `vessel2` 拿 Chromalit 退款，在 `(0, 4)` 的 Chasm 上放 `pinhole`，之後 `stats.gameIsFinished` 為 true，ENDBEGINNING 解鎖。放置曾被拒（409），原因是 `vessel2` 還佔著 Chromalit，全部回收後才通過。
+- **成就對應 Steam 快取**：`AchievementTimes` 的 bit 位置等於該成就在 codex 清單的 index。已解鎖並確認的是 COOKIECLICKER（19）、MRMINE（21）、HELLRAISER（23）。
+  - COOKIECLICKER：`game.cookie` 為真，由 cookie 實體的 `onmousedown()` 設定。
+  - MRMINE：`entitiesInGame.pump2 >= 9`。
+  - HELLRAISER：`entitiesInGame.vault >= 9`。
+- **價格與上限會卡住正常購買**：vault 要 Chromalit，pump2 要 Hell Gem，而 HG 上限約為 vaults 數 × 1024。要通過這兩個成就，用 `game.addEntity(type, [x, y])` 直接加蓋最直接，這會繞過價格與上限。
+- **其餘 4 個成就不可行**：YOUMAYRESETNOW、SIXTYFOURDOWN、REDBLUEROCK、NEOPHOBIA。NEOPHOBIA 要求沒蓋過 excavator，這個存檔已蓋過。
+- **回收代價**：為湊 Hell Gem 回收了 10 台 preheater 與 1 台 `converter76`，沒有重建，經濟機器比之前弱。
 
