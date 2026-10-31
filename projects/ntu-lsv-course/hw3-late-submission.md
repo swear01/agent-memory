@@ -28,3 +28,9 @@ tags:
 - Cyclic core 寫成兩張小表：「只有一個 1 的列 → essential prime」、「選中的 prime → 涵蓋的列」，最後一句結論。
 - Prove/disprove 題（例如 unate 題）證明保持一個論證、一次結論，不要再用額外段落或講義引述重講一遍。
 - AI disclosure：使用者要求寫明所有題目全部使用 AI、模型 Claude Opus 5.5、reasoning effort（以 session metadata 查實際值）；語音輸入的 prompt 改寫成摘要。
+
+# 檔案放哪裡（2026-10-31 整理後）
+
+- 課程雲端資料夾 `邏輯合成驗證/` 頂層放最終交付物：`LSV_HW3_<studentID>.pdf/.tex`（實際交出的 v3）、`hw3.pdf`（題目）、`..._receipt.json`、`..._receipt_0035.json`。
+- 工作資料放 `lsv/<hw|pa>/`；HW3 的 `lsv/hw3/` 只放被取代的 00:35 首次繳交版（`..._0035.pdf/.tex`）與 `ai_disclosure_log.md`。
+- Review 過程的中間檔（Codex/Gemini 輸出、v2/v3 草稿、submit prompt）不要存；不要在 Documents 另開 `LSV_HW3_review_*` 資料夾，見 [[keep-home-directory-clean]]。
