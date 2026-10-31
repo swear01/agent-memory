@@ -144,3 +144,14 @@ guard 只擁有自身建立的 SFX：切換前的 native bundle 仍委派原 `st
 native 冷重開基線已移除先前音訊近滿一核心的狀態，因此不能把全部改善歸給 guard；同程序對照支持 bounded 明顯降低此場景的音訊 CPU，但 state 延遲並未隨靜音單調下降。世界持續變動，這不是同存檔重播，也不是長期穩定或原異常根因的證明。
 
 恢復正式 runtime 後另測約 100 秒，300 組 state／health（600 次讀取）零錯誤：simulation 約 100.00425 倍，native／audio／render clock 約 1.000007／1.000017／1.000088 倍，state median／P95 約 4.275／153.817 ms，取樣 `renderDelta` 最大 35.8 ms；audio errors 為 0、peak voices 24，rollback 及 dropped simulation 增量為 0。100 倍的 `holdMs:1000` 成功釋放、active 最後為 false，外部等待約 1012.788 ms，begin／end RPC 約 121.021／6.301 ms。之後 100→10→Off→100 短窗分別約 9.9884／1.002596／99.97569 倍，Off 時 audio acceleration 為 1；四階段共 348 組 paired reads 零錯誤，沒有新增 rollback／dropped simulation／audio errors。最後核對 enabled、configured／effective 100 且 isolated，catalog 58 項的 descriptions／materials 通過、save persisted；七個 runtime hash 同時符合 record 與 package，遊戲由 `steam.exe` 父程序啟動，暫時診斷 sidecar 與讀取路徑均已移除。這仍不可宣稱長期不凍結或所有場景都完全 100 倍。
+
+# debugEval：本機除錯後門與關閉方式
+
+2026-10-31 為了直接加蓋實體，曾在本機 bridge 加入 `debugEval` 動作。它不是正式 API 的一部分，用完要關。
+
+- 改了三處：`bridge-gateway.cjs`（動作白名單、`cleanArgs` 與 POST 檢查）、`bridge-main.cjs`（白名單與 DISABLED 檢查）、`renderer-adapter.cjs`（`debugEval` 用 `AsyncFunction('game', code)(g)` 執行）。`client.mjs` 的動作白名單也加了它。
+- 只有 `bridge-config.json` 的 `debugEval` 為 true 才會執行，否則回 403 DISABLED。改設定後要重開遊戲才生效，改完當下舊程序仍會執行。
+- 遊戲 renderer 沒有 CSP，所以 `AsyncFunction` 可以用。
+- 原始 bridge 備份在 `%TEMP%gent-bridge-backup`。要徹底移除就還原這個備份，或把這幾處改動拿掉。
+- 重開遊戲後，新 PID 的 OpenSpeedy 旗標是 Off，即使共享倍率寫成 100，模擬仍是 1 倍。要由使用者在 OpenSpeedy 勾選 `sixtyfour.exe`。電腦操作權限被拒時不要繞過。
+
