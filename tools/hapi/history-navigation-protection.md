@@ -37,3 +37,6 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 2026-10-30 更新：#1597 `3c33ad013`（rebase/pr-1597-20261029 → fix/issue-1587-upstream）導航 props 改 optional、還原 6 個 fixture 檔、長距離改 instant；typecheck:web、web 單測（修 2 個過時 scrollIntoView mock）、e2e 4/4 通過，CI 綠。已貼 `/swear-review incremental`；Codex PR Review 兩次因 codex proxy Cloudflare 530/1033 失敗（infra，非程式碼），待重觸發。
 
 2026-10-31 更新：#1597 `6d3950319` 把 token、in-flight、lease set、scroll AbortController 收斂成單一 navigation 物件（start/end/cancel 三個函式擁有所有清理，`signal.aborted` 是唯一所有權判斷），解決 bot 每輪冒一個「取消路徑漏清 X」的 Minor。prompt 回退查找在沒有後繼卡時回傳 null，不再從尾端猜。jump-navigation e2e 的 lease 輪詢需 15s（retry 4000 + settle 2500 ms）；HEAD 舊版在 5s 也會失敗。typecheck、686 單測、e2e 4/4 ×3 通過。
+
+2026-11-01 更新：#1597 `c5795ed7a`–`370cb0281`。re-key 的 prompt 改用資料查：`buildAssistantReplyTargets` 的 replyTargets 經 `replyTargetsRef` 傳給 HappyThread 的 `findPromptTarget`，DOM 回退只作備援。Navigation trim 保留 tail 起點所在 turn 的 prompt（600 head + prompt + 400 tail），之後 bot 連續四輪各提一個 Minor，都出在這段 trim：(1) 被略過的同 turn 列要標 `~turn` gap（不重設 reply 關聯）；(2) gap 判斷要照顯示順序走整個 messages，不能用 seq 相鄰；(3) 重新 trim 要保留既有 gap marker；(4) 往回找 prompt 要跳過 `status === 'failed'`（與 reply targets 規則一致）。每項都有先在舊碼失敗的 regression test。
+**How to apply:** 再改這段 trim 時，用同一套「是否為 prompt」規則（user + 非 failed），並逐列照顯示順序處理。如果 bot 又在這裡冒新 case，就評估整段拿掉「保留 tail prompt」，回到「不顯示跳轉按鈕」的取捨。
