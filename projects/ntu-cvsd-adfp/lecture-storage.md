@@ -2,7 +2,7 @@
 title: CVSD 電腦輔助積體電路系統設計講義固定存放位置
 scope: projects/ntu-cvsd-adfp
 status: verified-local; cloud-sync-unverified
-updated: 2026-11-02
+updated: 2026-11-03
 ---
 
 # CVSD 講義存放規則
@@ -17,3 +17,9 @@ updated: 2026-11-02
 - `CVSD_115-1_Chap5_part2.pdf`：108 頁；`115_1_Chap6.pdf`：82 頁。
 - 兩份先被錯放在舊聊天的講義副本，現已補入上述正式目錄；目的地與下載來源 SHA-256 一致、PDF 可讀。
 - 未刪除舊副本；沒有驗證這兩份檔案的 Google Drive 雲端同步。
+
+## 資料夾角色（2026-11-03 補充）
+
+- `學校講義/碩一/電腦輔助積體電路系統設計/考古/` 放歷屆考古題（如 `CVSD_2015.pdf`、`CVSD_2023_fall_題目.pdf`）。
+- `學習紀錄/碩一/電腦輔助積體電路設計/` 放使用者自己的學習成果，子資料夾用英文（`lab1/`、`lab2/`、`lab3/`、`midterm-prep/`）。
+- 2023 fall 期中題目重打版的位置與缺漏見 `midterm-prep.md`。
