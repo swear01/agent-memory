@@ -222,3 +222,5 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - 增量（dirty window）rs 不可行：兩次 rs 之間 b/rw/rf 會改到 7–24% 的節點，2 hop 內就涵蓋 66–100%。
 - 後段 rs 只在 42M 個 root 裡的約 1K–15K 個找到 gain。早停規則：某次 rs 移除的節點少於 300 ppm 就跳過後面所有 rs。div_10xd −28%、sixteen −48%、rtl_vortex −9%，AND +0.07–0.15%，level 相同或更低。輸出會變，需要 CEC。
 - CEC 政策（使用者 2026-11-02 同意）：10M 以上節點的 `&cec` 在 10 分鐘內跑不完，所以只在 76 組裡的小電路跑完整 CEC；大電路只跑有上限的隨機模擬，並標為未證明。
+- rs 早停最後以 PR #24 合併（預設開）：門檻 300 ppm、最後一個 rs 一定跑、上次 rs 之後 b/rw/rf 又刪 ≥6000 ppm 就重開。40 個電路 resyn2rs 總時間 −18%，AND 平均 +0.038%、最大 +0.349%。
+- rw/rf 的早停（PR #25，預設開）：rw 家族與 rf 家族分開計，連續 3 次 <300 ppm 才停，b/st 照跑。只連一次就停會出事：square 的 rw 只刪 172 ppm，下一個 rwz 卻刪 36965 ppm，AND +4.7%。這條規則只對很深很窄的 hyp 系列有效（hyp_8xd resyn2 19.73 → 14.16 s），其他電路不觸發。
