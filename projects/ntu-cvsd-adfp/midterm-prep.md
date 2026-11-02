@@ -17,6 +17,8 @@ updated: 2026-11-03
 
 - 來源是 19 張手機照 `page-01..19.png`，位於 Codex 工作區（thread 01a199d8-bb16-7e70-8ae4-6a4a3f0eb461，2026-11-02）；該暫存區不是正式保存位置。
 - 照片缺封面與 Problem 5（原卷第 13–15 頁）；SDF TIMINGCHECK 最後兩行被截掉，重打版以 `...` 標示。
+- 原照片上有學生手寫作答與紅筆批改（Problem 2 的註記、Problem 7 setup/hold 表打勾），可當解答參考；Problem 7 的推算與批改答案一致。
+- 2026-11-03 修正：Problem 2 重打版原本結尾多一個 `end`，原卷是三個 `end` 收 always、缺 `endmodule`；兩份 PDF 已重產並覆蓋。
 - Problem 1、Problem 3 的波形轉折時間因照片歪斜，是從程式碼推回來的；area report 的 buf/inv 數讀成 60（也可能是 68）。引用這些數字前要對照原照片。
 
 ## 方法教訓
@@ -25,6 +27,13 @@ updated: 2026-11-03
 - 可行做法：把文字重打成 HTML，波形與電路用 inline SVG 重畫，再用 headless Chromium 列印成 PDF：`/Applications/Chromium.app/Contents/MacOS/Chromium --headless=new --no-pdf-header-footer --print-to-pdf=<out.pdf> <in.html>`。
 - 產生器腳本在臨時 scratchpad，沒有保留；要改版需重做。
 
-## 使用者進度
+## 解題慣例（以原卷批改為準）
 
-- 使用者已開始練習 Problem 1 Q1（Verilog timing control：fork/join、wait、negedge counter），尚未檢查答案。
+- STA：輸入/輸出延遲相對理想 CLK；Tclkx 是 clock latency，兩顆暫存器相同。暫存器端 setup required = T + Tclkx − Tsu，hold required = Tclkx + Th；輸出端 setup required = T − DO，hold required = −DO；暫存器起點 arrival 從 Tclkx + Tco 起算。
+- SDF：IOPATH 兩組括號是 output 的 rise/fall（不是 input），每組是 (min:typ:max)；max delay 取第三個，fast corner 取第一個。
+
+## 使用者進度（2026-11-03）
+
+- 已和使用者逐題走完所有有照片的題目（Problem 1–4、6、7）。
+- 弱點：fork 與 begin…end 的 `#` 延遲累加差異、運算式寬度與符號擴展（未標寬度常數是 32-bit signed）、SDF rise/fall 看 output、低溫在不考慮 temperature inversion 時變快、DesignWare 架構選擇是 area/speed trade-off 的關鍵字、WLM 估 interconnect area。
+- 待補：Problem 5（原卷 13–15 頁）需向照片來源或同學取得。
