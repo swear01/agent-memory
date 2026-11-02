@@ -2,7 +2,7 @@
 title: CULS GPU resub profiling 與開源版基準
 scope: projects/ntu-lsv-course
 status: verified
-updated: 2026-10-30
+updated: 2026-11-02
 tags: [CULS, gpuls, resub, nsight, cuda]
 ---
 
@@ -214,3 +214,11 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - `EvaluateNodeLaneM` 改成只跑有 cut 的 slot，並照 NPN class 排序：hyp_8xd resyn2 的評估從 3.91 s 變成 7.02 s。照 class 排序會把同一個節點的 slot 和相鄰的節點拆到不同 warp，fanin、`nRef`、hash table 的快取命中跟著沒了；只壓縮、保持節點順序則是 3.81 + 0.36 s，打平。結論：這類 kernel 的成本在 memory locality 和評估本身，不在空 lane 或 class 分歧。ncu 上看到「每 warp 只有 7.7 個活躍 thread」，不代表重排 work 就會變快。
 - rs 的 `collectDivisorWarp` 已經是 issue 72.7%、每 warp 29.5 個活躍 thread，接近 compute bound；`resubDivs2Warp` 的 occupancy 被 96 個暫存器加上 shared memory 限在 42%，就算拉高，整體也只有約 1%。
 - `su_cthulhu` 上跑 ncu 一定要加 `sudo -n`，不加會只印出「No kernels were profiled」，沒有其他錯誤。`--launch-skip` 要比該 kernel 的總啟動次數小，mem_ctrl_5xd resyn2rs 的 `resubDivs2Warp` 不到 40 次。
+
+## 2026-10-31 至 11-02：md5 不變的手段已接近用完，改走後段 rs 早停
+
+- PR #19–#23（CULS-fast main `f6ea5c2`）：sim screen 限 MFFC≥2、strash 16 B 表、rw host huge pages、rw TableLookup／reach 迴圈、MFFC-1 rs root 的 signature 預篩（約去掉 25% root）。76 個測例 md5 全同；div_10xd resyn2rs 從 24.3 s 降到 21.5 s。
+- 試過但放棄：strash fixpoint 微調（約 0.4%）；rw 選擇迴圈加 software prefetch（反而慢 0.16 s）；rw redundancy 開多執行緒（CULS 的 "full" 時間用 `clock()`，是整個 process 的 CPU 時間，會把所有 thread 加總）。rw host 剩下的空檔只能靠結構性改法：把選擇階段和 GPU 工作 pipeline，或把 refcount 的循序 greedy 精確搬到 GPU。
+- 增量（dirty window）rs 不可行：兩次 rs 之間 b/rw/rf 會改到 7–24% 的節點，2 hop 內就涵蓋 66–100%。
+- 後段 rs 只在 42M 個 root 裡的約 1K–15K 個找到 gain。早停規則：某次 rs 移除的節點少於 300 ppm 就跳過後面所有 rs。div_10xd −28%、sixteen −48%、rtl_vortex −9%，AND +0.07–0.15%，level 相同或更低。輸出會變，需要 CEC。
+- CEC 政策（使用者 2026-11-02 同意）：10M 以上節點的 `&cec` 在 10 分鐘內跑不完，所以只在 76 組裡的小電路跑完整 CEC；大電路只跑有上限的隨機模擬，並標為未證明。
