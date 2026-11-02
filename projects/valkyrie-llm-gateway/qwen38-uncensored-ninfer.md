@@ -6,7 +6,7 @@ machines: [valkyrie, zeus]
 tags: [qwen3.8, ninfer, bifrost, mtp, llm-inference]
 status: active
 created: 2026-08-25
-updated: 2026-08-26
+updated: 2026-11-02
 ---
 
 # Valkyrie Qwen3.8 Uncensored NInfer production
@@ -58,3 +58,9 @@ updated: 2026-08-26
 - 生產 chat template（uncensored 版）只接受 `reasoning_effort: none | minimal | low | medium`；`high`/`xhigh`/`max` 全部被 Bifrost 擋下，上游錯誤為 `reasoning_effort_not_supported: reasoning effort 'high' is not supported by the loaded chat template`（Bifrost 把 xhigh/max 映射成 high 後丟回 NInfer 拒絕）。
 - Pi 端對策：`~/.pi/agent/models.json` 的 `valkyrie-ninfer/qwen3.8-27b` 必須帶 `reasoning: true` 加上 `thinkingLevelMap: {off: none, minimal, low, medium, high/xhigh/max: null}` 與 `compat.requiresReasoningContentOnAssistantMessages: true`（回傳體用 `message.reasoning` 而非 `reasoning_content`，replay 時補空字串避免 NInfer 400 Invalid request payload）。Pi 會對不可用 level 自動向下 clamp（xhigh→medium），因此 `defaultThinkingLevel: xhigh` 不需改。
 - 沒有這組 `thinkingLevelMap` 時，pi 對本模型送出高階 effort 就會收到 400；UI 上也看不到可用的 effort 選項。若要解鎖 high，需重訓/替換 NInfer chat template，不是 pi 或 Bifrost 設定能救。
+
+## 暫停與恢復（2026-11-02）
+
+- 2026-11-02 依使用者要求暫停，讓出 4090 給 CULS GPU 實驗：`valkyrie-infer.service` 已 disable，容器 `valkyrie-infer-ninfer-1` 已 stop，restart policy 由 `always` 改成 `no`。
+- 一般帳號沒有 sudo，要經 `su_valkyrie` 用 `sudo -n` 操作；swear01 雖在 docker group，但 `su_valkyrie` 的帳號沒有，docker 指令需加 `sudo -n`。
+- 恢復：`ssh su_valkyrie 'sudo -n docker update --restart=always valkyrie-infer-ninfer-1 && sudo -n systemctl enable --now valkyrie-infer.service'`，再用 `nvidia-smi` 確認約 22.5 GB 佔用回來，並檢查 Bifrost `/v1/models`。
