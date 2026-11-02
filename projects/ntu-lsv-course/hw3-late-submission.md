@@ -3,7 +3,7 @@ title: LSV HW3 寫完卻漏交、遲交補救與排版慣例
 scope: projects/ntu-lsv-course
 status: verified-submitted-late-not-graded
 created: 2026-10-31
-updated: 2026-10-31
+updated: 2026-11-03
 tags:
   - ntu-cool
   - late-submission
@@ -31,6 +31,14 @@ tags:
 
 # 檔案放哪裡（2026-10-31 整理後）
 
-- 課程雲端資料夾 `邏輯合成驗證/` 頂層放最終交付物：`LSV_HW3_<studentID>.pdf/.tex`（實際交出的 v3）、`hw3.pdf`（題目）、`..._receipt.json`、`..._receipt_0035.json`。
+- 課程雲端資料夾 `邏輯合成驗證/` 頂層放最終交付物：`LSV_HW3_<studentID>.pdf/.tex`（2026-11-03 起是交件後修正的 v4，未重傳 COOL；實際交出的 v3 只在 Google Drive 版本紀錄裡，receipt 的 sha256 已對不上本機 PDF）、`hw3.pdf`（題目）、`..._receipt.json`、`..._receipt_0035.json`。
 - 工作資料放 `lsv/<hw|pa>/`；HW3 的 `lsv/hw3/` 只放被取代的 00:35 首次繳交版（`..._0035.pdf/.tex`）與 `ai_disclosure_log.md`。
 - Review 過程的中間檔（Codex/Gemini 輸出、v2/v3 草稿、submit prompt）不要存；不要在 Documents 另開 `LSV_HW3_review_*` 資料夾，見 [[keep-home-directory-clean]]。
+
+# 交件後修正：Q4 對角線慣例（2026-11-03）
+
+- 交出的 v3 把老師的講法寫成「把 j=i 代進公式」，結論變成「只有 S1 一定是等價關係」。這是 v2 那次 AI 改寫時對老師意思的誤讀，當時沒有回頭對逐字稿。
+- 老師在 10/27 HW3 檢討（`課程教材/影片解析/第08週_10-27/2_.../transcript.en.txt`，約 05:30、09:00、17:00、18:20）的說法是：i=j 就是把變數換成自己、不做任何取反，所以 (x_i,x_i) 一律在每個 S_k 裡；公式裡的取反只對 i≠j 有定義。
+- 依此慣例的正解：S1、S3–S8 是等價關係；S2 自反、對稱但不遞移（反例 f = x̄1·x2·x̄3，兩次 S2 互換組合起來負負得正，只得到 S1）。v4 已改成單一結論，AI disclosure 加 [G] 記錄這次修改。
+- 教訓：任何「老師說／instructor's reading」的寫法，都要回到 `影片解析/<週>/transcript.en.txt` 找原句再寫；作業檢討課的逐字稿比講義更能決定題意慣例。
+- 編譯：在 scratchpad 複製 tex 後 `xelatex` 兩次（Fandol 字型不存在時 tex 會自動退回 Noto Sans CJK TC），只把 PDF 複製回 Drive，避免 aux/log 留在雲端資料夾。
