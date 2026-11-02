@@ -224,3 +224,5 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - CEC 政策（使用者 2026-11-02 同意）：10M 以上節點的 `&cec` 在 10 分鐘內跑不完，所以只在 76 組裡的小電路跑完整 CEC；大電路只跑有上限的隨機模擬，並標為未證明。
 - rs 早停最後以 PR #24 合併（預設開）：門檻 300 ppm、最後一個 rs 一定跑、上次 rs 之後 b/rw/rf 又刪 ≥6000 ppm 就重開。40 個電路 resyn2rs 總時間 −18%，AND 平均 +0.038%、最大 +0.349%。
 - rw/rf 的早停（PR #25，預設開）：rw 家族與 rf 家族分開計，連續 3 次 <300 ppm 才停，b/st 照跑。只連一次就停會出事：square 的 rw 只刪 172 ppm，下一個 rwz 卻刪 36965 ppm，AND +4.7%。這條規則只對很深很窄的 hyp 系列有效（hyp_8xd resyn2 19.73 → 14.16 s），其他電路不觸發。
+- 早停之後（main e3d9c9f）div_10xd resyn2rs 17.35 s：rw 佔 44%、rs 佔 30%。量 per-pass 時要跑真正的 `resyn2rs` handler 加 `CULS_PASSTRACE=1`；在指令之間插 `time` 會繞過 handler，早停不會生效，拆解就錯了。76 組 md5 檢查是 `i5/md5ab.sh OLD NEW OUT`（19 個電路 × 4 個腳本）。
+- 已排除：只處理 dirty region 的 rs（K 逐次變大，dirty 範圍外仍有 25–100% 的增益）與 rw（成對的 rwz 本身 AND 增益為 0，作用是改結構）；md5 不變的 rw host 重疊（ReplaceSubgr → copyback → rebuild → choice → redundancy → reorder → Init/LC 是嚴格的鏈，最多省約 0.5 s）。md5 不變的手段到此用完。
