@@ -5,11 +5,13 @@ tool: yosys
 project: ntu-lsv-course
 status: active
 created: 2026-10-30
-updated: 2026-10-30
+updated: 2026-11-03
 tags: [yosys, abc, sv2v, aig, blif, nvdla, blackparrot, vortex, CULS, benchmark]
 ---
 
 # 大型 RTL → 組合 AIG
+
+> 2026-11-03：使用者要求合成改用 Synopsys DC 或 Cadence Genus，不要用 Yosys，見 global/preferences/synthesis-use-commercial-tools.md。本篇只是歷史紀錄。
 
 目的：給 CULS-fast 做「真實設計」樣本。實測三個設計都成功（yosys 0.69+post `143eb14f`、ABC 1.01、sv2v v0.0.13，全在 mazu CPU 上）：
 
