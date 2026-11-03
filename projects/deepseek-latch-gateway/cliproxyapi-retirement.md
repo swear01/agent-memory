@@ -14,8 +14,8 @@ updated: 2026-11-04
 
 - 舊 OpenCode slot2 是使用者確認的假值；新 slot2 使用原 slot3。slot 是配置名稱，不能視為永久帳號 identity。
 - Vault 的一般項目 API · deepseek 現為 local-gateway marker；官方 DeepSeek／OpenRouter 改為 _service/providers 下的明確 official 名稱，四個目前上游項目放 _service/deepseek-gateway。舊 Command Code 項目與現用 key 不同，保留於 _archive/providers，沒有覆寫或刪掉舊 credential。
-- 四把 key 的本機服務副本在 <gateway-config-dir>/secrets.env（0600）與 renderer 產生的私人 config，變數為 OPENCODE_API_KEY_1/2、COMMAND_CODE_API_KEY_1/2。一般 <home>/.secrets 只提供 local-gateway marker、DEEPSEEK_GATEWAY_API_KEY、DEEPSEEK_API_KEY 與本機 BASE_URL；顯式 unset 舊 OC／CC／OpenRouter（包含歷史 COMMAMD_CODE_API_KEY 拼字）防止繼承。
-- 官方 DeepSeek／OpenRouter key另保留在私人服務檔，不全域 export；其他服務的 OpenAI／ElevenLabs／HAPI token 未變更。改名、隱藏路徑與0600只能減少誤用，無法隔離同一 OS 帳號的 agent。
+- Unix 真 key 統一保留在 <home>/.secrets（0600）：OPENCODE_API_KEY_1/2、COMMAND_CODE_API_KEY_1/2、DEEPSEEK_OFFICIAL_API_KEY、OPENROUTER_OFFICIAL_API_KEY、OPENAI_API_KEY 使用 bare assignments；Gateway renderer 靜態讀取此檔，不 source/eval。原 <gateway-config-dir>/secrets.env 已移到私人 archive。DEEPSEEK_API_KEY／DEEPSEEK_GATEWAY_API_KEY=local-gateway 與本機 BASE_URL 仍 export；其他工具 export 保留。
+- Keybag 開頭暫停 allexport，unset 舊 export 屬性後才賦真 key，結尾還原呼叫端 set -a；只刪 export 字樣不足以應付 pi-safe／HAPI 的 set -a loader。bash／zsh 三種繼承情境已驗證，公開範例另測 POSIX sh。HAPI Hub setup 只在服務專用子 shell 讀 keybag，再原子產生0600 hub.env；移除 NFS .bashrc 的 OpenAI 全域 export，現有 Hub 語音 env hash 保持。改名、未 export 與0600不隔離同帳號 agent。
 - 同時保留上游 x-opencode-session 與 Gateway 可識別的 X-Session-ID／X-Session-Affinity。只有 x-opencode-session 時會落到內容 hash，不能證明對話固定。Pi 兩個公開模型的 compat.sendSessionAffinityHeaders=true、sessionAffinityFormat=openrouter 可產生 X-Session-ID；不要改其他模型／預設值。
 - 隔離測試必須讓不同 session 送完全相同內容，並讓同一 session 的歷史增長、compaction 後仍固定；僅重送同一內容會把 hash fallback 誤判為 session affinity。
 
@@ -28,3 +28,7 @@ updated: 2026-11-04
 - Zeus swear01 的 legacy runner 與 swear02 指向同一 runtime envfile但 owner1075，前者既有 activating；沒有為這次 Gateway 移轉修理／重啟它，勿把這項 baseline 問題當新部署成功或全 fleet runner 健康。
 
 八實例均實際驗證 Flash／Pro HTTP200且非空、官方 runtime版本/hash、loopback、未認證401、管理API404、Pi session設定。一次暖機樣本回報 cached2176/input2272；不是所有對話的命中率保證。Mac一次短 token-cap Pro回200但空，單次重試正常，保留證據；不要把HTTP200單獨當完成內容證明。
+
+## Source size measurement
+
+- Official v8.0.53 / main commit 01b24f1f95dc9b309765212c52b25b25e005ff01: cloc 2.06 measured production Go 274,919 code lines (827 files), _test.go 418,862 (1,174 files), all Go 693,836 code / 789,490 physical lines. Runtime single-binary simplicity does not imply small source. 2026-11-04 GitHub API: 57,415 stars / 8,794 forks; active-user count unavailable.
