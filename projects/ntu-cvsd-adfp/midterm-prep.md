@@ -36,6 +36,8 @@ updated: 2026-11-03
 
 - 已和使用者逐題走完所有有照片的題目（Problem 1–4、6、7）。
 - 弱點：fork 與 begin…end 的 `#` 延遲累加差異、運算式寬度與符號擴展（未標寬度常數是 32-bit signed）、SDF rise/fall 看 output、低溫在不考慮 temperature inversion 時變快、DesignWare 架構選擇是 area/speed trade-off 的關鍵字、WLM 估 interconnect area。
-- 待補：Problem 5（原卷 13–15 頁）需向照片來源或同學取得。推測單元是 Chap.4「Architecture Improvement of Timing, Area, and Power」（pipeline、retiming、parallel、area/power）：其餘題目已對應 Chap.1–3、5、6，只剩 Chap.4 沒出現；依據是 115-1 講義，2023 年版章節可能不同。
+- 待補：Problem 5（原卷 13–15 頁）仍缺原題。已確認單元是 Chap.4：2023 Spring 考卷 Problem 5 就叫 "Architecture Improvement"（8pts，pipelining/parallelizing 的 latency、throughput 填表 + overhead 簡答）；2018 Spring 也考過 retiming 與 skew 不等式。
+- 歷屆考古掃描檔在 `~/Documents/Codex/2026-11-02/new-chat-2/work/cvsd-exams/`（2020–2023 與 older/2013–2019），PDF 無文字層，要 `pdftoppm` + `tesseract` OCR 後才能 grep。STA 題型參考 2022 Fall p17–18、2023 Spring p19。
+- 2026-11-03 自編練習題（Chap.4 架構 13pts + STA 18pts，各 R 有不同 Tclk，同一終點 R3 同時有 setup/hold 違反）：Drive `midterm-prep/CVSD_練習_P5架構+STA_題目.pdf`，詳解在同資料夾 `_詳解.pdf`（使用者做題時不要先給詳解，改完再對照）。
 - 下一步（使用者要求）：再做一題 STA，並補 Problem 5。已在 Google 日曆建提醒（2026-11-04 10:00 Asia/Taipei）。
 - STA 常搞混：Tco（clock→Q，加在 arrival）與 Tsetup（加在 required 減項）在本題都是 0.4；題目沒給 clock uncertainty。
