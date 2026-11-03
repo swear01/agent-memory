@@ -2,10 +2,12 @@
 title: CVSD 期中考古題準備（2023 fall 題目重打版）
 scope: projects/ntu-cvsd-adfp
 status: verified-local; cloud-sync-unverified
-updated: 2026-11-03
+updated: 2026-11-04
 ---
 
 # CVSD 期中考古題準備
+
+期中考已於 2026-11-04 考完；本頁留作期末與日後複習參考。
 
 ## 成果位置（2026-11-03 驗證）
 
@@ -39,5 +41,14 @@ updated: 2026-11-03
 - 待補：Problem 5（原卷 13–15 頁）仍缺原題。已確認單元是 Chap.4：2023 Spring 考卷 Problem 5 就叫 "Architecture Improvement"（8pts，pipelining/parallelizing 的 latency、throughput 填表 + overhead 簡答）；2018 Spring 也考過 retiming 與 skew 不等式。
 - 歷屆考古掃描檔在 `~/Documents/Codex/2026-11-02/new-chat-2/work/cvsd-exams/`（2020–2023 與 older/2013–2019），PDF 無文字層，要 `pdftoppm` + `tesseract` OCR 後才能 grep。STA 題型參考 2022 Fall p17–18、2023 Spring p19。
 - 練習題一律用歷屆原題，不要自編（使用者 2026-11-03 明確要求）。已重打（去手寫答案、圖重畫）：2023 Spring P5 Architecture Improvement、2018 Spring P4 Important Timing Parameters（retiming/skew）、2022 Fall Problem V STA（28pts，參數 Tco 0.5、Tclk 0.3、Tsu 0.4、Th 0.1、DA=DB=DC=2.5、100MHz）→ Drive `midterm-prep/CVSD_歷屆原題_P5架構+STA.pdf`。產生器在 session scratchpad（build.py + gen/gen.py 的 STA2 時序圖）。2023 Spring P8 STA 電路與 2023 Fall P7 幾乎相同，不必重做。
-- 下一步（使用者要求）：再做一題 STA，並補 Problem 5。已在 Google 日曆建提醒（2026-11-04 10:00 Asia/Taipei）。
+- 考前（2026-11-04）走完 2023 Spring P5 與 2018 Spring P4；2022 Fall STA 沒做到。
 - STA 常搞混：Tco（clock→Q，加在 arrival）與 Tsetup（加在 required 減項）在本題都是 0.4；題目沒給 clock uncertainty。
+
+## Chap.4 解題慣例（115-1 Chap.4 投影片 p.6、p.10–15）
+
+- Latency（cycles）= 路徑上的 register 數；ns = cycles × T。Parallel 的 latency 不變。
+- Throughput：OPs/cycle = 路徑上各運算數相加；MOPS = OPs/cycle × f；Mb/s = 輸出 bit 數 × f（parallel 再乘路數）。
+- Overhead：pipeline 多 register 面積、latency、每級 Tco + Tsetup、切不平均；parallel 約 2 倍面積與功耗。
+- Setup：T ≥ tpcq + tpd,max + Tsetup。Hold：tccq + tcd,min ≥ Thold；hold 和 T 無關，不能靠降頻修，要加 buffer。
+- Capture 端 clock 晚到 δ：setup 變 T + δ ≥ …，hold 變 … ≥ Thold + δ。正 skew 對 setup 有利、對 hold 不利。
+- Retiming：register 往輸入側移過 n 輸入元件會變 n 顆；目標是讓各級 tpd 平衡（2018 Spring P4：5/1 → 3/3，同時修好 setup 與 hold）。
