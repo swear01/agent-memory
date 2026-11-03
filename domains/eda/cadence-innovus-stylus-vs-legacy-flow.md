@@ -2,7 +2,7 @@
 title: "Cadence Innovus 25.10 Stylus Common UI 與 Legacy UI 實作與 UMC 0.18µm 整合規範"
 scope: "domains/eda"
 status: active
-updated: 2026-10-21
+updated: 2026-11-04
 ---
 
 # Cadence Innovus 25.10 Stylus Common UI 與 Legacy UI 實作與 UMC 0.18µm 整合規範
@@ -100,3 +100,18 @@ updated: 2026-10-21
    - **時序驗證**：
      - 執行 `report_timing`，讓學生檢查最長進位鏈路徑在目標時脈下是否達標（Setup Slack $> 0$），並透過緊縮時脈週期觀察時序違規。
 
+
+
+## 25.10 Qt GUI 實測：interpreter 與 menu callback 的界線
+
+2026-11-04 在 Innovus `25.10-p002_1` 的實際 Stylus GUI 驗證 Import、Global Net Connections、Floorplan、Add Rings 與 SRoute 表單；透過原生按鈕執行設計操作，並比對執行時表單狀態與 callback。以下是驗證工具的內部介面，不是建議學生依賴的穩定公開 API。
+
+- Stylus command interpreter 與 GUI 的 legacy Tcl interpreter 分開。直接在 CUI 呼叫 `uiVar::Get` 可能讀到空值；讀實際 GUI 欄位應使用 `eval_legacy {uiVar::Get RdaPG pins}`。`qtfForm::getactiveform` 能取得實際 active form 名稱，大小寫必須一致。舊 `uiForm::win`／`uiForm::subWin` 不適用這個 Qt GUI。
+- `gui_replay_menu_cmd`、`gui_replay_set_var`、`gui_replay_button_cmd` 可操作真正的 menu、欄位與按鈕。例如 `gui_replay_menu_cmd {Power,Connect Global Nets...}` 與 `gui_replay_set_var RdaPG pins VCC`。先開表單，再讀回欄位與 active form，最後才觸發會改設計的按鈕；不要把直接執行 APR command 當成操作 GUI 的證據。舊錄製 wrapper 在主 CUI interpreter 未提供可靠的操作紀錄，不能據此宣稱已取得 GUI echo。
+- `gui_get_ui` 的 generic item 名稱可能重複；同名查詢可能回傳另一個 action。應連同完整 menu labels、唯一 action ID 與執行時 callback 驗證，不能只依內部短名稱猜功能。
+- 安裝的 Common UI Menu Reference 與實際 menu 有差異。實際為 `Power > Power Planning > Add Ring...`（menu 單數，form 是 `Add Rings`），Global Net Connections 的 Connect 選項為 `Pin`（單數）。實際 Clock menu 存在 `Synthesize Clock Tree...`，但 menu 出現不代表它執行 script 所需的 integrated algorithm。
+- `Place > Place Standard Cell...` 的 callback 執行 `place_design`，不等於 `place_opt_design`；`Clock > Synthesize Clock Tree...` 的 callback 執行 `clockDesign`，不等於 `clock_opt_design`。要重現 integrated script，應在同一 GUI session 的 console 執行精確命令，並明說這兩步不是全程滑鼠操作。
+- NanoRoute 表單同時勾 `Global Route` 與 `Detail Route` 時，實際 callback 建立 `routeDesign -globalDetail`。另有名為 `Global Detail Route` 的 checkbox，內部是 `routeWithEco`；不能因名稱相似而替代前兩個選項。這裡驗證的是 callback 分支；routing 設定與最終幾何是否等同仍須另查實際執行結果。
+- SRoute 的 `Follow Pins` 對應 `corePin`；變數 `noCorePins=1` 實際代表 checkbox 開啟，不能從 `no` 前綴推斷反向。Basic 的 Layer Change Control 與 Via Generation 的 crossover／target layer range 是不同設定；不要把前者的上限錯套到後者。
+
+證據來源為相同安裝的 `doc/MRcom`、`doc/TCRcom`、`etc/innovus/uiReplay.tcl`、執行時 callback 與實際表單 readback。GUI callback 可能印出展開 defaults 的 legacy 命令；與 normalized Stylus equivalent 分開標示，不能把後者冒充原始 console echo。
