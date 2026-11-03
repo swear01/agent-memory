@@ -1,7 +1,7 @@
 ---
 title: CVSD 期中考古題準備（2023 fall 題目重打版）
 scope: projects/ntu-cvsd-adfp
-status: verified-local; cloud-sync-unverified
+status: verified
 updated: 2026-11-04
 ---
 
@@ -13,7 +13,7 @@ updated: 2026-11-04
 
 - 學習用副本：`<GoogleDrive-root>/document/學習紀錄/碩一/電腦輔助積體電路設計/midterm-prep/CVSD_2023_fall_midterm_questions.pdf`（15 頁，只有題目，無手寫答案或批改）。該資料夾 README.md 已加一行索引。
 - 同檔另放講義區：`<GoogleDrive-root>/document/學校講義/碩一/電腦輔助積體電路系統設計/考古/CVSD_2023_fall_題目.pdf`（與 `CVSD_2015.pdf` 並列）。
-- `<GoogleDrive-root>` = 使用者指定帳號的 DriveFS「我的雲端硬碟」。兩份用 `cmp` 核對本機逐位元組相同；Google Drive 雲端同步未驗證。
+- `<GoogleDrive-root>` = 使用者指定帳號的 DriveFS「我的雲端硬碟」。兩份用 `cmp` 核對本機逐位元組相同。2026-11-04 查到這兩份一直沒有 `com.google.drivefs.item-id#S`（沒上傳），`touch`、刪 quarantine 都無效；複製成新檔、刪原檔、改回原名後幾十秒內取得 item-id。練習卷 `CVSD_歷屆原題_P5架構+STA.pdf` 原本就有 item-id。
 
 ## 來源與已知缺漏
 
