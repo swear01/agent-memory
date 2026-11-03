@@ -38,6 +38,6 @@ updated: 2026-11-03
 - 弱點：fork 與 begin…end 的 `#` 延遲累加差異、運算式寬度與符號擴展（未標寬度常數是 32-bit signed）、SDF rise/fall 看 output、低溫在不考慮 temperature inversion 時變快、DesignWare 架構選擇是 area/speed trade-off 的關鍵字、WLM 估 interconnect area。
 - 待補：Problem 5（原卷 13–15 頁）仍缺原題。已確認單元是 Chap.4：2023 Spring 考卷 Problem 5 就叫 "Architecture Improvement"（8pts，pipelining/parallelizing 的 latency、throughput 填表 + overhead 簡答）；2018 Spring 也考過 retiming 與 skew 不等式。
 - 歷屆考古掃描檔在 `~/Documents/Codex/2026-11-02/new-chat-2/work/cvsd-exams/`（2020–2023 與 older/2013–2019），PDF 無文字層，要 `pdftoppm` + `tesseract` OCR 後才能 grep。STA 題型參考 2022 Fall p17–18、2023 Spring p19。
-- 2026-11-03 自編練習題（Chap.4 架構 13pts + STA 18pts，各 R 有不同 Tclk，同一終點 R3 同時有 setup/hold 違反）：Drive `midterm-prep/CVSD_練習_P5架構+STA_題目.pdf`，詳解在同資料夾 `_詳解.pdf`（使用者做題時不要先給詳解，改完再對照）。
+- 練習題一律用歷屆原題，不要自編（使用者 2026-11-03 明確要求）。已重打（去手寫答案、圖重畫）：2023 Spring P5 Architecture Improvement、2018 Spring P4 Important Timing Parameters（retiming/skew）、2022 Fall Problem V STA（28pts，參數 Tco 0.5、Tclk 0.3、Tsu 0.4、Th 0.1、DA=DB=DC=2.5、100MHz）→ Drive `midterm-prep/CVSD_歷屆原題_P5架構+STA.pdf`。產生器在 session scratchpad（build.py + gen/gen.py 的 STA2 時序圖）。2023 Spring P8 STA 電路與 2023 Fall P7 幾乎相同，不必重做。
 - 下一步（使用者要求）：再做一題 STA，並補 Problem 5。已在 Google 日曆建提醒（2026-11-04 10:00 Asia/Taipei）。
 - STA 常搞混：Tco（clock→Q，加在 arrival）與 Tsetup（加在 required 減項）在本題都是 0.4；題目沒給 clock uncertainty。
