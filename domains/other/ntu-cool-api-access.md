@@ -75,3 +75,7 @@ auto mode 的安全分類器會把「頁面 JS 把本機檔 bytes 搬進另一�
 ## 下載課程檔到本機（2026-10-25 驗證）
 
 `/api/v1/files/<id>` 的 `url` 與 `/files/<id>/download` 都要 cookie，shell `curl` 拿不到。在已登入分頁用頁面 JS 取 `/api/v1/files/<id>/public_url`，回傳帶 `verifier=` 的連結，shell `curl -L` 可直接下載，不需權杖。日文二上課程 id 64097，練習題 L13–L18 PDF 中第 15 課是第 9–12 頁（頁序不是依課排列，需渲染縮圖確認）。
+
+## CLI 環境沒有瀏覽器工具時：AppleScript 進 Brave 分頁（2026-10-31 驗證）
+
+Claude Code CLI 沒有內建瀏覽器，但使用者 Brave 已登入 COOL 時，可用 `osascript` 對該分頁 `execute t javascript "<js>"`（找 URL 含目標路徑的 tab）。只回傳同步結果，所以用同步 `XMLHttpRequest`（`x.open(...,false)`）而不是 `fetch`。上面三步上傳、`public_url` 下載驗證、繳交都照用，不需權杖。同名檔重交時 `on_duplicate:"rename"` 會讓 COOL 顯示名變成 `<name>-1.pdf`，內容不變。
