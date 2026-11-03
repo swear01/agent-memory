@@ -14,7 +14,7 @@ updated: 2026-11-04
 
 - 舊 OpenCode slot2 是使用者確認的假值；新 slot2 使用原 slot3。slot 是配置名稱，不能視為永久帳號 identity。
 - Vault 的一般項目 API · deepseek 現為 local-gateway marker；官方 DeepSeek／OpenRouter 改為 _service/providers 下的明確 official 名稱，四個目前上游項目放 _service/deepseek-gateway。舊 Command Code 項目與現用 key 不同，保留於 _archive/providers，沒有覆寫或刪掉舊 credential。
-- 四把 key 只在 <gateway-config-dir>/secrets.env（0600）與 renderer 產生的私人 config，變數為 OPENCODE_API_KEY_1/2、COMMAND_CODE_API_KEY_1/2。一般 <home>/.secrets 只提供 local-gateway marker、DEEPSEEK_GATEWAY_API_KEY、DEEPSEEK_API_KEY 與本機 BASE_URL；顯式 unset 舊 OC／CC／OpenRouter（包含歷史 COMMAMD_CODE_API_KEY 拼字）防止繼承。
+- 四把 key 的本機服務副本在 <gateway-config-dir>/secrets.env（0600）與 renderer 產生的私人 config，變數為 OPENCODE_API_KEY_1/2、COMMAND_CODE_API_KEY_1/2。一般 <home>/.secrets 只提供 local-gateway marker、DEEPSEEK_GATEWAY_API_KEY、DEEPSEEK_API_KEY 與本機 BASE_URL；顯式 unset 舊 OC／CC／OpenRouter（包含歷史 COMMAMD_CODE_API_KEY 拼字）防止繼承。
 - 官方 DeepSeek／OpenRouter key另保留在私人服務檔，不全域 export；其他服務的 OpenAI／ElevenLabs／HAPI token 未變更。改名、隱藏路徑與0600只能減少誤用，無法隔離同一 OS 帳號的 agent。
 - 同時保留上游 x-opencode-session 與 Gateway 可識別的 X-Session-ID／X-Session-Affinity。只有 x-opencode-session 時會落到內容 hash，不能證明對話固定。Pi 兩個公開模型的 compat.sendSessionAffinityHeaders=true、sessionAffinityFormat=openrouter 可產生 X-Session-ID；不要改其他模型／預設值。
 - 隔離測試必須讓不同 session 送完全相同內容，並讓同一 session 的歷史增長、compaction 後仍固定；僅重送同一內容會把 hash fallback 誤判為 session affinity。
