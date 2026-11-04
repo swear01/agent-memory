@@ -16,14 +16,14 @@ updated: 2026-11-04
 
 ## 版面（2026-11-04 定版：單一頁）
 
-- 使用者要求作業只有一頁：根目錄 `index.html`（英文 EMI，0 CJK），評分→共同 00–02→Part A CLI→Part B GUI→Exploration→Submit。不要再拆 `gui/`、`homework_gui.html`、`windows_gui.html` 等頁，也不要連到外部作業頁。
+- 使用者要求作業只有一頁：根目錄 `index.html`（英文 EMI，0 CJK），評分→00 Setup（環境、X11、MobaXterm 連線）→Part A CLI（01 模擬、02 合成、03–10）→Part B GUI（B01–B08）→Exploration→Submit。使用者不要「Shared steps」分組：01/02 是有評分練習的 CLI 步驟，不是 setup；Setup 只放環境與 GUI 連線。不要再拆 `gui/`、`homework_gui.html`、`windows_gui.html` 等頁，也不要連到外部作業頁。
 - 答案直接寫在頁面（localStorage），Submit 下載成 `homework/answers.html`（`body data-saved="true"`）；存下的那份用頁內 JS `REQ`/`OPT` 陣列檢查同資料夾的繳交檔（圖片用 `Image`，其他用 `<script>`）。新增繳交檔要同步改 `REQ`、Submit 表、Hand in 張數。
 - 圖在 `images/*.webp`；TA 專用 `ta_notes/`（`answer_key.md` 為實跑參考答案）。
 
 ## 配分（TA 提案，待老師確認）
 
-- 總分 120：基本 100 = 共同 00–02 25 + Part A CLI 45 + Part B GUI flow 30；Exploration 加分 20（X1–X5 各 4，X6 自選替換一項）。使用者認可 Part B 份量大（越後面越難拿分）。
-- Part B：B01 波形 4、B02 Genus schematic 3、B03 3、B04–B08 各 4。
+- 總分 120：基本 100 = Part A CLI 65（01 練習 4、Ex1 6、02 4、Ex2 8、evidence 7、DRC 4、Ex3–5 各 7、Ex6 11）+ Part B GUI 35；00 Setup 不計分；Exploration 加分 20（X1–X5 各 4，X6 自選替換一項）。使用者認可 Part B 份量大（越後面越難拿分）。
+- Part B：B01 5、B02 4、B03 4、B04 4、B05 5、B06 4、B07 4、B08 5。
 - X5 改為從 `gui_06_place` 先設 `design_top_routing_layer 3` 再做 CTS/route（從 `gui_07_cts` 設 3 會 `NRDB-954`，設 2 會 SEGV）。
 
 ## 工作站實測事實（Innovus/Genus 25.10，Xcelium 25.03，Verisium Debug 25.03）
