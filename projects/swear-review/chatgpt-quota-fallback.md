@@ -1,7 +1,7 @@
 ---
 title: Swear Review 的 ChatGPT 額度備援與 OCR 認證隔離
 scope: projects/swear-review
-status: deployed on Oracle; DeepSeek primary; ChatGPT activation deferred by user
+status: deployed on Oracle; DeepSeek primary; ChatGPT fallback enabled with inference success unverified
 updated: 2026-11-04
 ---
 
@@ -10,4 +10,5 @@ updated: 2026-11-04
 - DeepSeek 保持 primary；省略 `llm.chatgpt_fallback` 即關閉。符合條件才對相同 immutable SHAs 重跑一次，併發不變，兩次共用原本 hard deadline，不形成 retry loop。部分 primary findings 會保留並與備援 findings 去重；備援 skipped、覆蓋不足、失敗或逾時仍 fail closed，不能假裝完整成功。Abort/supersession 照常丟棄舊結果。GitHub summary 與 DB 記錄實際模型。
 - OCR 的 ChatGPT store 固定依 HOME 找 `.opencodereview/auth/chatgpt`，包含 `accounts.json`、`host.json`、token rotation lock，沒有可用的獨立 auth-path env。不要為每個 job 複製 token 檔，會遺失 refresh rotation／造成競爭；只把隔離 HOME 的 auth 子目錄 symlink 到 service-owned persistent store，sessions 仍放 job HOME。目錄 `0700`、帳號與 host 檔 `0600`，驗證 service ownership、regular file、位於 review workspace 之外。VM 使用自己的固定 host ID；不要連同筆電 host ID 一起複製。
 - `--provider chatgpt` 會優先於 primary LLM env，但仍需要隔離 HOME 內的非秘密 `config.json` 含 `providers.chatgpt: {}`。備援顯式選 provider／可選 model，並移除 gateway token、endpoint 與私有 headers。真人 OAuth、plan permission 與模型可用性須另行驗證；單元測試、mock quota capture 或合併 PR 都不能代替這個證據。
-- 真人 OAuth 與 plan scopes 已驗證，受保護的帳號 store 已匯入 Oracle，保留 VM 自己的 host ID；本機 bootstrap 憑證副本已刪除。真實 native probe 在 primary 六次 HTTP 429 後確實嘗試 ChatGPT `gpt-6.1-sol`，但回傳 `subscription_sharing_usage_limit_exceeded`，沒有成功的 ChatGPT inference。此錯誤可能是應用層上限，不代表整個 ChatGPT 方案額度耗盡；官方要求暫停 plan requests，不可猜測重置時間。使用者隨後明確選擇「先保持 DeepSeek，ChatGPT 備援稍後啟用」；憑證保留，正式 runtime 刻意不設定或啟用 `llm.chatgpt_fallback`。這是使用者延後選配功能，並非認證未完成；未收到後續要求前不再發出 ChatGPT 請求。
+- 真人 OAuth 與 plan scopes 已驗證，受保護的帳號 store 已匯入 Oracle，保留 VM 自己的 host ID；本機 bootstrap 憑證副本已刪除。真實 native probe 在 primary 六次 HTTP 429 後確實嘗試 ChatGPT `gpt-6.1-sol`，但回傳 `subscription_sharing_usage_limit_exceeded`，沒有成功的 ChatGPT inference。此錯誤可能是應用層上限，不代表整個 ChatGPT 方案額度耗盡；官方要求暫停 plan requests，不可猜測重置時間。
+- 使用者最後明確要求「ChatGPT 不用保持關閉，可以啟用，驗證不了沒關係」。Oracle runtime 已設定 `llm.chatgpt_fallback`，`auth_dir` 指向 `<service-data>/chatgpt-auth`、model 為 `gpt-6.1-sol`；primary 仍是 `deepseek-flash`，經原本 loopback gateway 入口，`review.auto: false`。佇列閒置後備份並原子更新設定，compiled `loadConfigFile` 驗證通過，服務重啟且 healthz／readyz 通過。啟用後未再發出 ChatGPT 請求；設定啟用與服務健康不代表已成功使用 ChatGPT inference，已知 sharing-limit 錯誤仍須保留在回報中。
