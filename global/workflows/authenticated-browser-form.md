@@ -3,7 +3,7 @@ title: Authenticated browser form continuity and submission gates
 scope: global
 status: active
 created: 2026-09-03
-updated: 2026-10-08
+updated: 2026-11-04
 tags:
   - browser
   - forms
@@ -38,3 +38,11 @@ tags:
 AX 點擊後第一次觀察沒有變化，可能是載入尚未完成；先重新觀察頁面、網址與可見內容，不盲目重複點擊。原生座標操作若回報 `noWindowsAvailable`，不代表 accessibility 操作必然無法使用，兩者應分開判斷。不得因 native 操作成功就宣稱 extension 的 CDP 問題已修復。
 
 文件按鈕若開啟 PDF 預覽，可透過瀏覽器 Command+S／下載儲存。儲存視窗初期按鈕可能 disabled；確認實際檔名欄與狀態後再儲存。完成後驗證本機檔案格式與內容，而不是把控制 API 回覆或下載按鈕點擊當成交付證據。
+
+# Google Forms 編輯與回覆驗證
+
+2026-11-04 實測：Drive connector 搜尋只回傳連結的回覆試算表，不能據此認定原始表單不存在。內建瀏覽器的 Google 表單首頁搜尋可找到原始表單；確認結果標示「Google 表單」，不要把「回覆」試算表當作表單編輯頁。截圖轉錄的不透明 ID 容易混淆字母，直接用網站搜尋結果取得正確網址，不輪流猜網址。
+
+同一工作階段的 Brave extension 可讀頁面但點擊反覆逾時，使用者指定內建瀏覽器後，內建瀏覽器可正常完成相同任務。各控制面分別驗證；舊的 `Local browser use is disabled in Work settings` 不代表之後仍停用，也不能把讀取成功當作點擊可用。
+
+編輯選項後先確認「所有變更都已儲存到雲端硬碟」，再重新載入核對題名、選項與「其他」是否已移除。既有回覆仍可能保留舊選項字串，改選項不等於改歷史記帳資料。查今天回覆時區分提交時間與消費日期，並交叉核對表單回覆與連結試算表；不為驗證而新增測試消費。私人表單網址及消費明細不存共享記憶。
