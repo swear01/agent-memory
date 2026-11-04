@@ -46,3 +46,12 @@ AX 點擊後第一次觀察沒有變化，可能是載入尚未完成；先重�
 同一工作階段的 Brave extension 可讀頁面但點擊反覆逾時，使用者指定內建瀏覽器後，內建瀏覽器可正常完成相同任務。各控制面分別驗證；舊的 `Local browser use is disabled in Work settings` 不代表之後仍停用，也不能把讀取成功當作點擊可用。
 
 編輯選項後先確認「所有變更都已儲存到雲端硬碟」，再重新載入核對題名、選項與「其他」是否已移除。既有回覆仍可能保留舊選項字串，改選項不等於改歷史記帳資料。查今天回覆時區分提交時間與消費日期，並交叉核對表單回覆與連結試算表；不為驗證而新增測試消費。私人表單網址及消費明細不存共享記憶。
+
+# Google 相簿取檔與 Google Forms 檔案上傳
+
+2026-11-04 實測（Claude 桌面 App 內建瀏覽器，已登入 Google）：
+
+- Google 相簿剛上傳的文件照片，中文關鍵字搜尋可能尚未索引；以照片上的英文字（公司名等）搜尋或「最近新增」（`/search/_tra_`）較快找到。開啟單張照片後按 `Shift+D` 會下載原檔到本機 `~/Downloads`，檔名為數字時間戳 `.jpg`；以 `ls -t` 與 `sips` 核對新檔後再使用。
+- Google Forms 的「新增檔案」是 Drive picker iframe（同源，可讀 DOM），但無法從頁面 JS 塞入本機檔案：`fetch('http://127.0.0.1:…')` 直接 `Failed to fetch`（伺服器未收到請求）；`window.open` 在內建瀏覽器會取代目前分頁而非開 popup，表單頁會被導走。Forms 草稿會自動還原文字欄，但單選題可能需重選並以 `aria-checked` 核對。
+- 可行做法：把檔案複製到 Google Drive for desktop 的同步資料夾（`<home>/Library/CloudStorage/GoogleDrive-<account>/我的雲端硬碟/`），幾秒後在 picker 的「我的雲端硬碟」分頁搜尋檔名、雙擊插入即可。表單提交時會複製一份，事後可刪掉 Drive 暫存副本。
+- 只收 PDF 的上傳欄位，多張圖片可用 `uv run --with pillow` 以 `Image.save(..., save_all=True, append_images=[...])` 合併成單一 PDF（系統 Python 未裝 Pillow）。
