@@ -10,20 +10,32 @@ updated: 2026-11-04
 
 ## 正本在哪
 
-- 正本是整包資料夾：swop（Windows）`<swop-home>/Documents/gups_final/innovus_u18_tutorial/`。`~/Downloads/homework_gui.html` 只是使用者方便看的副本，不是正本；改版要回寫整包。
-- 工作站 `/cad/tutorial/innovus_u18_tutorial/`（學生 `cp -r` 與 `scp homework/` 的來源）與 Google Drive「GUPS助教/innovus_u18_tutorial」都還是 10-26 舊版，部署到工作站是另一步。
-- 學生入口 `gui/homework_gui.html`（英文 EMI，0 CJK），圖在 `gui/images/*.webp`；`gui/gui_flow.html` 只是 03–08 圖文參考（不含評分）；根目錄 `gui_flow.html` 是同內容、路徑加 `gui/` 前綴的副本。`homework/answers.html` 以 img/script 載入檢查繳交檔是否存在（`.tcl|.txt|.html` 的 error 事件要 preventDefault）。
+- 正本是整包資料夾：swop（Windows）`<swop-home>/Documents/gups_final/innovus_u18_tutorial/`。Downloads 裡的 html 只是使用者方便看的副本，不是正本；改版要回寫整包，回寫後用 MD5 逐檔比對。
+- 工作站 `/cad/tutorial/innovus_u18_tutorial/`（學生 `cp -r` 與 `scp homework/` 的來源）與 Google Drive「GUPS助教/innovus_u18_tutorial」都還是 10-26 舊版，部署到工作站是另一步（不要帶 `ta_notes/`）。
+- 備份：`gups_final/backup_20261104_before_regrade.zip`、`backup_20261104_before_singlepage.zip`。
 
-## 2026-11-04 改版決定（TA 提案，待老師確認）
+## 版面（2026-11-04 定版：單一頁）
 
-- 老師要總分 120：基本 100 = 共同 00–02 25 + Part A CLI 45 + Part B GUI flow 30；Exploration 加分 20（X1–X5 各 4，X6 自選可替換一項）。
-- Part B 改成一次走完的 baseline（B01 Verisium 波形、B03–B08 表單），原本「variant→restore」移到 Exploration，各自從 `gui_0X` checkpoint 開新 session、不覆寫 `gui_*`。B02 Genus GUI 暫缺：`genus` 有 DISPLAY 會開 GUI、有 `gui_schematic`，但選單路徑未實測。
-- 回寫前先比對 swop 與快照 MD5，備份 `gups_final/backup_20261104_before_regrade.zip`。
+- 使用者要求作業只有一頁：根目錄 `index.html`（英文 EMI，0 CJK），評分→共同 00–02→Part A CLI→Part B GUI→Exploration→Submit。不要再拆 `gui/`、`homework_gui.html`、`windows_gui.html` 等頁，也不要連到外部作業頁。
+- 答案直接寫在頁面（localStorage），Submit 下載成 `homework/answers.html`（`body data-saved="true"`）；存下的那份用頁內 JS `REQ`/`OPT` 陣列檢查同資料夾的繳交檔（圖片用 `Image`，其他用 `<script>`）。新增繳交檔要同步改 `REQ`、Submit 表、Hand in 張數。
+- 圖在 `images/*.webp`；TA 專用 `ta_notes/`（`answer_key.md` 為實跑參考答案）。
 
-## 工作站實測事實（Innovus/Genus 25.10，Xcelium 25.03）
+## 配分（TA 提案，待老師確認）
 
-- `get_db rows`（23 列）、`get_db designs .core_bbox`、`keep` helper、`cts_max_fanout`（預設 100，07_cts.tcl 用 16）、`report_clock_trees/report_skew_groups -summary` 都可用。
-- hold 報告是 `reports/07_timing/hold_hold.summary.gz`（`time_design -report_prefix hold`），09 同理。
-- Top layer：`route_design_top_routing_layer` 已過時（NRIF-91），用 `design_top_routing_layer`。本 UART signal 只用 metal1–4，限 metal4 幾乎無差；設 3 會因 CTS 已有 metal4 線 `NRDB-954` 中止。
-- 快捷鍵：ruler `K`、fit `F`、zoom `Z`（來源 `INNOVUS251/etc/innovus/uiView.tcl`）。
-- 驗證方式：`ssh innovus-server`（root）後 `su - gupstest`，在 scratch copy 跑 `innovus -stylus -batch`，結束刪除。
+- 總分 120：基本 100 = 共同 00–02 25 + Part A CLI 45 + Part B GUI flow 30；Exploration 加分 20（X1–X5 各 4，X6 自選替換一項）。使用者認可 Part B 份量大（越後面越難拿分）。
+- Part B：B01 波形 4、B02 Genus schematic 3、B03 3、B04–B08 各 4。
+- X5 改為從 `gui_06_place` 先設 `design_top_routing_layer 3` 再做 CTS/route（從 `gui_07_cts` 設 3 會 `NRDB-954`，設 2 會 SEGV）。
+
+## 工作站實測事實（Innovus/Genus 25.10，Xcelium 25.03，Verisium Debug 25.03）
+
+- `get_db rows`（23 列）、`get_db designs .core_bbox`（`{15.5 15.12 141.36 131.04}`）、`cts_max_fanout`、`report_clock_trees/report_skew_groups -summary` 可用；hold 報告是 `hold_hold.summary.gz`。
+- `route_design_top_routing_layer` 已過時（NRIF-91），用 `design_top_routing_layer`。
+- Verisium：`cd sim/rx && verisium_debug -lwd xcelium.d -db ida.db &`，Hierarchy 分頁 tb → i_uart_rx 加訊號。參考圖要裁掉底部 value bar，否則會露出第 3 個 byte 答案。
+- Genus GUI：有 DISPLAY 時 `genus` 直接開視窗。`syn.tcl` 最後一行改成 `if {![info exists KEEP_GUI]} { exit }`，學生 `set KEEP_GUI 1; source ../scripts/syn/syn.tcl` 後 GUI 不會關。Schematic：Tcl `gui_sv_load [get_db designs]` 實測可開，`gui_snapshot_sv -png -overwrite f` 存圖（實際輸出是 GIF，611×451）。選單路徑「Design Browser 右鍵 Hier Cell → Schematic View (Module) → In Main」只來自 25.1 GUI guide（`GENUS251/doc/genus_gui/design_browser_topics_re_Design_Browser_Component_Hier_Cell.html`），沒點到。
+- 在 `genus -files x.tcl` 裡用 `vwait` 會卡住不進事件迴圈；用阻塞的 `after N` 即可。
+- 驗證方式：`ssh innovus-server`（root）後 `su - gupstest`，在 scratch copy 跑，結束刪除。
+
+## swop GUI 截圖的坑
+
+- 遠端 X11（MobaXterm）視窗：用 Windows `SetCursorPos`/`mouse_event` 點擊座標要以截圖原始像素 ×1（視窗 rect 為實體像素），y 約偏一列；Qt 右鍵選單不會出現在 `CopyFromScreen` 截圖裡。能用工具自己的 snapshot 指令就別用滑鼠驅動。另見 [[interactive-desktop-screenshot]]。
+- 全螢幕截圖會拍到使用者私人視窗（Gmail 等），只截目標視窗 rect，拍到就刪。
