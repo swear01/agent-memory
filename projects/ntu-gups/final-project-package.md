@@ -11,7 +11,7 @@ updated: 2026-11-04
 ## 正本在哪
 
 - 正本是整包資料夾：swop（Windows）`<swop-home>/Documents/gups_final/innovus_u18_tutorial/`。Downloads 裡的 html 只是使用者方便看的副本，不是正本；改版要回寫整包，回寫後用 MD5 逐檔比對。
-- 工作站 `/cad/tutorial/innovus_u18_tutorial/`（學生 `cp -r` 與 `scp homework/` 的來源）2026-11-04 已部署新版：`git archive HEAD` 排除 `ta_notes/`，保留 `run/`，root:PDK_approved、目錄 750、檔案 640，43 檔 MD5 與本地一致，gupstest `cp -r` 實測可讀。部署前備份在工作站 root 家目錄 `backups/innovus_u18_tutorial_20261026.tgz`。Google Drive「GUPS助教/innovus_u18_tutorial」仍是 10-26 舊版。比對 MD5 清單時兩邊都要 `LC_ALL=C sort`，否則 Linux 與 macOS 排序不同會誤判。
+- 工作站 `/cad/tutorial/innovus_u18_tutorial/`（學生 `cp -r` 與 `scp homework/` 的來源）2026-11-04 已部署新版：`git archive HEAD` 排除 `ta_notes/`，保留 `run/`，root:PDK_approved、目錄 750、檔案 640，43 檔 MD5 與本地一致，gupstest `cp -r` 實測可讀。部署前備份在工作站 root 家目錄 `backups/innovus_u18_tutorial_20261026.tgz`。Google Drive「GUPS助教/innovus_u18_tutorial」同日也同步成新版（舊版備份 `innovus_u18_tutorial_backup_20261026.zip`，TA 筆記放 `innovus_u18_answer_key/ta_notes/`）。2026-11-04 已從 NTU 信箱寄新版 zip 給王信博老師請他確認，回覆前不要發佈給學生。比對 MD5 清單時兩邊都要 `LC_ALL=C sort`，否則 Linux 與 macOS 排序不同會誤判。
 - 備份：`gups_final/backup_20261104_before_regrade.zip`、`backup_20261104_before_singlepage.zip`。
 
 ## 版面（2026-11-04 定版：教學頁 + 答案卷兩個檔）
