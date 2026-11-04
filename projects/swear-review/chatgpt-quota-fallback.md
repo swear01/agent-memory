@@ -1,0 +1,12 @@
+---
+title: Swear Review 的 ChatGPT 額度備援與 OCR 認證隔離
+scope: projects/swear-review
+status: implemented and merged; deployment and ChatGPT authentication unverified
+updated: 2026-11-04
+---
+
+- `swear01/swear-review` PR #18 已合併，merge `a42b65be7c8158ee8b71749e9a10c7569f29c98b`；最新 head `686a661` 的 CI、Gemini review 通過。此筆記不代表 Oracle 已部署或真人已完成 ChatGPT OAuth。
+- 實測 OCR 1.13.5 會隱藏 gateway 的 429 錯誤本文：coverage 只留下 `provider or subtask request failed`，stderr 也沒有原始 `insufficient_quota`。不能掃留言、stdout 文字或只看到 429 就切換；使用版本化 `ocr.llm-retry-report/v1`。條件是 run 為 failed/partial、未取消或逾時、coverage 有失敗且全部為 provider、至少一個 failed logical request；每個 failed request 有多次 attempt，最後為 HTTP 429／`rate_limited`／`http`，且 report 不含 cancelled 或未知 outcome。quota 耗盡與持續性限流在這份輸出中無法區分。
+- DeepSeek 保持 primary；省略 `llm.chatgpt_fallback` 即關閉。符合條件才對相同 immutable SHAs 重跑一次，併發不變，兩次共用原本 hard deadline，不形成 retry loop。部分 primary findings 會保留並與備援 findings 去重；備援 skipped、覆蓋不足、失敗或逾時仍 fail closed，不能假裝完整成功。Abort/supersession 照常丟棄舊結果。GitHub summary 與 DB 記錄實際模型。
+- OCR 的 ChatGPT store 固定依 HOME 找 `.opencodereview/auth/chatgpt`，包含 `accounts.json`、`host.json`、token rotation lock，沒有可用的獨立 auth-path env。不要為每個 job 複製 token 檔，會遺失 refresh rotation／造成競爭；只把隔離 HOME 的 auth 子目錄 symlink 到 service-owned persistent store，sessions 仍放 job HOME。目錄 `0700`、帳號與 host 檔 `0600`，驗證 service ownership、regular file、位於 review workspace 之外。VM 使用自己的固定 host ID；不要連同筆電 host ID 一起複製。
+- `--provider chatgpt` 會優先於 primary LLM env，但仍需要隔離 HOME 內的非秘密 `config.json` 含 `providers.chatgpt: {}`。備援顯式選 provider／可選 model，並移除 gateway token、endpoint 與私有 headers。真人 OAuth、plan permission 與模型可用性須另行驗證；單元測試、mock quota capture 或合併 PR 都不能代替這個證據。
