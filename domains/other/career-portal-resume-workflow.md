@@ -3,7 +3,7 @@ title: Career portal resume artifacts and submission evidence
 scope: domains/other
 status: active
 confidence: high
-updated: 2026-08-22
+updated: 2026-11-04
 tags:
   - resume
   - career-portal
@@ -51,3 +51,11 @@ the user's location, profile completeness, or a successful application.
 In the in-app browser's attachment flow, clicking the visible `Upload new file`
 control while listening for the file chooser worked when clicking the hidden
 file input directly timed out.
+
+# Applicant facts source (Google TW 2027)
+
+Form-filling facts (role, phone, M.S. GPA 3.68/4.30, expected grad Jun 2028,
+program name) live in `~/Documents/google-intern-2027/resume-facts.md`; the
+submitted role is visible at Google Careers → Applications dashboard. The
+Google TW 2027 Tech+ information form (Silicon Engineering Intern) was
+submitted 2026-11-04 with explicit user approval.
