@@ -14,10 +14,11 @@ updated: 2026-11-04
 - 工作站 `/cad/tutorial/innovus_u18_tutorial/`（學生 `cp -r` 與 `scp homework/` 的來源）與 Google Drive「GUPS助教/innovus_u18_tutorial」都還是 10-26 舊版，部署到工作站是另一步（不要帶 `ta_notes/`）。
 - 備份：`gups_final/backup_20261104_before_regrade.zip`、`backup_20261104_before_singlepage.zip`。
 
-## 版面（2026-11-04 定版：單一頁）
+## 版面（2026-11-04 定版：教學頁 + 答案卷兩個檔）
 
-- 使用者要求作業只有一頁：根目錄 `index.html`（英文 EMI，0 CJK），評分→00 Setup（環境、X11、MobaXterm 連線）→Part A CLI（01 模擬、02 合成、03–10）→Part B GUI（B01–B08）→Exploration→Submit。使用者不要「Shared steps」分組：01/02 是有評分練習的 CLI 步驟，不是 setup；Setup 只放環境與 GUI 連線。不要再拆 `gui/`、`homework_gui.html`、`windows_gui.html` 等頁，也不要連到外部作業頁。
-- 答案直接寫在頁面（localStorage），Submit 下載成 `homework/answers.html`（`body data-saved="true"`）；存下的那份用頁內 JS `REQ`/`OPT` 陣列檢查同資料夾的繳交檔（圖片用 `Image`，其他用 `<script>`）。新增繳交檔要同步改 `REQ`、Submit 表、Hand in 張數。
+- `index.html` 是唯一教學頁（英文 EMI，0 CJK）：評分→00 Setup（環境、X11、MobaXterm 連線）→Part A CLI（01 模擬、02 合成、03–10）→Part B GUI（B01–B08）→Exploration→Submit。不要再拆 `gui/`、`homework_gui.html`、`windows_gui.html`；不要「Shared steps」分組（01/02 是有評分練習的 CLI 步驟）。
+- 所有表格與問答在 `homework/answers.html`（沿用 10-26 原版答案卷：Name/ID、Save answers 用 File System Access API 存回同檔、Files 區直接顯示同資料夾的截圖並標 Found/Missing，`.tcl/.txt` 用 `<script>` 探測）。教學頁只留 Hand in 勾選與 `answers.html: …` 指引，不放輸入框、不放上傳預覽。使用者曾明確要求「照原本的做法」，不要把答案併進教學頁。
+- 新增繳交檔要同步改答案卷 Files 區、教學頁 Submit 表、Hand in 張數。
 - 圖在 `images/*.webp`；TA 專用 `ta_notes/`（`answer_key.md` 為實跑參考答案）。
 
 ## 配分（TA 提案，待老師確認）
@@ -38,4 +39,5 @@ updated: 2026-11-04
 ## swop GUI 截圖的坑
 
 - 遠端 X11（MobaXterm）視窗：用 Windows `SetCursorPos`/`mouse_event` 點擊座標要以截圖原始像素 ×1（視窗 rect 為實體像素），y 約偏一列；Qt 右鍵選單不會出現在 `CopyFromScreen` 截圖裡。能用工具自己的 snapshot 指令就別用滑鼠驅動。另見 [[interactive-desktop-screenshot]]。
+- `start_innovus_gui.ps1`（VcXsrv + SSH reverse tunnel）實測 `-Probe` 可用，但遠端 display 固定 178：第二個人同時連會 `remote port forwarding failed for listen port 6178`，全班只能一人用；且預設直接開 `innovus -stylus`（頁面卻寫會開 xterm），無金鑰時要輸入 4 次密碼。教學主線用 MobaXterm。
 - 全螢幕截圖會拍到使用者私人視窗（Gmail 等），只截目標視窗 rect，拍到就刪。
