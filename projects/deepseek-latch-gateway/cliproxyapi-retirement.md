@@ -1,12 +1,12 @@
 ---
-title: CLIProxyAPI 接替自製 DeepSeek Gateway 與 Swear Review 退役
+title: CLIProxyAPI 接替自製 DeepSeek Gateway，Swear Review 繼續使用
 scope: projects/deepseek-latch-gateway
 status: active
 updated: 2026-11-04
 ---
 
-- 自製 deepseek-latch-gateway 與 swear-review 的 GitHub repo 已封存；Oracle 的 swear-review 與 cloudflared-swear 專用服務均 disabled/inactive，DB、取消狀態與備份保留。後續勿再觸發 Swear Review。
-- 改用官方 CLIProxyAPI v8.0.53，不維護自製 proxy／plugin。transfer_MAC PR80 保存模板、私人設定 renderer 與 Windows launcher；shared-skills PR56 merge 8f219872 移除 Swear、保留 Gemini 優先與最新 head review gate。
+- 只有自製 deepseek-latch-gateway 封存。使用者明確糾正：Swear Review 必須繼續使用新 Gateway；先前將 Swear Review 封存／停服務是 agent 的誤解，不是使用者要求。Swear Review repo 已解除封存，Oracle swear-review／cloudflared-swear 服務已 active/enabled，本機與公開 healthz／readyz200（公開探測使用正常 User-Agent；預設 urllib UA 可能被 edge403）。
+- 改用官方 CLIProxyAPI v8.0.53，不維護自製 proxy／plugin。transfer_MAC PR80 保存模板、私人設定 renderer 與 Windows launcher；shared-skills PR56 曾誤移除 Swear，PR59 merge40498da 恢復 Swear 優先、Gemini備援與最新 head review gate。
 - 八個本機 Gateway 實例已部署並驗證：Mac、mazu、cthulhu、valkyrie、zeus swear01、su_zeus swear02、Oracle、swop。Athena 送修排除；共享 NFS 檔案變更不等於驗證 Athena。一般 localhost port35001，su_zeus35002。Oracle 是 aarch64，不能裝 amd64 binary。
 - 公開模型只有 deepseek-flash／deepseek-pro；四個同等 slot 各一把 key（OpenCode1/2、CommandCode1/2），新對話輪替，同一對話固定，失敗後重新綁定成功替代 key並冷卻。上游沒有跨供應商通用 latest alias，推出新型號仍需更新兩個官方設定 mapping，不能承諾永遠自動選到最新版本。
 
@@ -32,3 +32,11 @@ updated: 2026-11-04
 ## Source size measurement
 
 - Official v8.0.53 / main commit 01b24f1f95dc9b309765212c52b25b25e005ff01: cloc 2.06 measured production Go 274,919 code lines (827 files), _test.go 418,862 (1,174 files), all Go 693,836 code / 789,490 physical lines. Runtime single-binary simplicity does not imply small source. 2026-11-04 GitHub API: 57,415 stars / 8,794 forks; active-user count unavailable.
+
+## Swear Review restoration
+
+- Runtime review.auto=false、gate.mode=off、OCR1.13.5/concurrency4、llm.model=deepseek-flash、URL localhost35001/v1/chat/completions，專用 env 的 OPENCODE_GO_KEY 改用 local-gateway。不要把健康端點200或gateoff check success單獨當LLM或無findings證據；需讀實際review結果／inline findings。PR59 job1695確實經webhook與publication成功，但OCR無selecteditems而skipped，不能稱其已實際打LLM。
+- Verto local trigger-pr-review helper從pre-retirement備份逐byte還原為Swear，sh-n通過；舊誤退役期間取消的PR56 review對應PR現已merged，沒有擅自重跑其他進行中的PR。
+
+- 復原完成：shared-skills PR59 final40498da 恢復規則且8個aliases逐target驗證，transfer_MAC PR82 merge4f6647e 用 git mv 恢復 active runbook 與指標；Swear Review PR19 mergeb7bd7b8 加入同reviewUUID的 X-Session-ID/nativeheader並拒絕configuredaffinityoverride。PR19 exacthead61f6f05 經正式Swear job1696/run1653實際DeepSeekreview completed，1項可選maintainabilityfinding經判斷回覆resolved，非skipped；已觀測OCR→localhost35001連線與marker/model設定。
+- 使用官方 scripts/deploy-oracle.sh b7bd7b8 部署，151tests/typecheck/build於正式部署流程通過；服務新PID與啟動狀態、已部署dist兩種header、公開／本機healthready、DBintegrityok、舊gateway仍archived與Swearrepo未archived均核對。不要為換Gateway而退役使用它的應用程式；本次是誤解範圍後的修復，歷史取消review不自動補跑。
