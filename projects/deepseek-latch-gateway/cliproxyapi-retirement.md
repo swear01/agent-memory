@@ -10,6 +10,11 @@ updated: 2026-11-04
 - 八個本機 Gateway 實例已部署並驗證：Mac、mazu、cthulhu、valkyrie、zeus swear01、su_zeus swear02、Oracle、swop。Athena 送修排除；共享 NFS 檔案變更不等於驗證 Athena。一般 localhost port35001，su_zeus35002。Oracle 是 aarch64，不能裝 amd64 binary。
 - 公開模型只有 deepseek-flash／deepseek-pro；四個同等 slot 各一把 key（OpenCode1/2、CommandCode1/2），新對話輪替，同一對話固定，失敗後重新綁定成功替代 key並冷卻。上游沒有跨供應商通用 latest alias，推出新型號仍需更新兩個官方設定 mapping，不能承諾永遠自動選到最新版本。
 
+## 需求邊界
+
+- 使用者只要淘汰自製 Gateway；Swear Review 是保留的呼叫端，不是要淘汰的元件。後續換供應商、改 key、更新 Gateway 時仍須保留 Review 服務、專用 tunnel、GitHub App 與 review 規則，除非使用者明確另改需求。
+- 停用與封存前的範圍核對流程見 [全域替換範圍規則](../../global/workflows/config-change-scope-discipline.md#停用封存前核對範圍)。
+
 ## 憑證與呼叫端
 
 - 舊 OpenCode slot2 是使用者確認的假值；新 slot2 使用原 slot3。slot 是配置名稱，不能視為永久帳號 identity。
