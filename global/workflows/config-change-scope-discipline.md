@@ -1,11 +1,11 @@
 ---
-title: 改名／替換任務只改目標項目，清單類設定必須保留其他項目
+title: 替換只改指定目標，停用與封存必須核對範圍
 scope: global
 status: active
 confidence: high
 evidence: 2026-09-11 至 2026-09-12 DeepSeek model id 改名時，Pi 的三層 allowlist 被過度收斂到只剩兩個模型，連 Codex/Meta/Qwen 一起移除；使用者退回並要求還原（PR #46 → 更正 PR #47）。
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-11-04
 tags:
   - scope
   - config
@@ -55,3 +55,16 @@ DeepSeek id」。結果 `openai-codex/*`（Luna / Sol / Terra / Daybreak / Astra
 - 使用者只說了「改名」嗎？那「只留 X」是誰的主張？
 - 若是 fleet 級變更，單機驗證「其他項目還在」的證據在哪？
 - 命名為「allowlist / 白名單 / filter」的檔案，我是改了它的**內容指向**，還是改了它的**範圍**？
+
+
+# 停用／封存前核對範圍
+
+2026-11-04，使用者要用現成 CLIProxyAPI 替換自製 Gateway，Swear Review 應繼續使用新 Gateway。Agent 卻把相近名稱與含糊措辭解讀成連 Review 都退役，封存 repo、停止服務／tunnel、改掉 review 規則與文件。使用者糾正後已復原。這是範圍誤解，不是 Swear Review 故障，也不是使用者要求停用。
+
+下次執行方式：
+
+1. 先以實際 repo／服務名稱核對「替換對象、保留的呼叫端、明確要停用的對象」，每個停用動作都要能對應到使用者的明確要求。替換 Gateway、資料庫或其他基礎元件，不能推導成停用依賴它的應用程式。
+2. 發現名稱近似、語音轉錄含糊，或「繼續用」與「archive」的對象不清楚時，先完成不會中斷服務的設定／查證，再只問一個具體的範圍問題；未釐清前保留相關服務與資料。範圍清楚且已獲授權的例行工作直接繼續。
+3. 先讓保留的呼叫端實際經過新元件完成工作，再停用明確被替換的舊元件。驗證要同時證明「目標已換新」與「依賴服務仍正常」，不能只看新 Gateway healthz 或模型清單。
+
+本案目前意圖與驗證紀錄見 [Gateway 與 Swear Review 記憶](../../projects/deepseek-latch-gateway/cliproxyapi-retirement.md)。錯誤結論要從 active 記憶／文件中改正；歷史紀錄應標明是 agent 誤解，不能改寫成 owner 授權退役。QMD 是索引：修改 canonical Markdown 後才 update/embed，並 search/get 回讀新版內容。
