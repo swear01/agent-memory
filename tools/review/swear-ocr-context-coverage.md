@@ -2,7 +2,7 @@
 title: Swear Review 的 OCR 規格背景與不完整結果處理
 scope: tools/review swear-review and Open Code Review
 status: backend fix merged and deployed; Spec2RTL integration canceled
-updated: 2026-10-21
+updated: 2026-11-04
 ---
 
 - Swear Review backend 使用 Alibaba Open Code Review（OCR）；本次查驗的版本為 `1.12.9`；2026-10-21 起 Oracle 部署為 `1.13.2`（升級與 rollback 見 `projects/swear-review/ocr-upgrade-fixture-capture.md`）。OCR 支援 `--background-file`，Swear 原本沒有傳入，不能因此推斷 OCR 本身沒有規格背景能力。
@@ -19,3 +19,11 @@ updated: 2026-10-21
   CVSD2026 PR #15（`48c3264`）已加入 `{"include": ["**/*.command", "**/test_*.py"]}`，Markdown 刻意不納入；
   `ocr review --preview --from <base> --to <head> --repo <dir>` 不呼叫 LLM，可在合併前驗證選檔結果。
 - Spec2RTL 整合 PR #11 已按使用者要求關閉，未合併；background/include/output ignore 調整並未因此發布到該 repo。後續使用 Cursor Bugbot 的保存設定見 `tools/cursor/bugbot-pr-review.md`。
+
+## Verilog context（OCR 1.13.5）
+
+- 不需額外 plugin：內建 `.v`／`.vh`／`.sv` 對應 Verilog／SystemVerilog 規則，涵蓋 latch、位寬與 signedness、時脈/reset、CDC、模擬與合成行為差異；這是模型 review 指引，不能代替模擬、lint、合成或形式驗證。
+- `.opencodereview/background.md` 適合簡述已核准的時脈、reset 極性與同步方式、介面、延遲、位寬／signedness 合約，並指向 tracked 規格與驗證檔。OCR 建議不超過 2,000 字元，超過 8,000 字元會拒絕；仍須按上面的 contributor-controlled 信任界線核對。
+- `tb_*.sv`／`*_tb.sv` 預設遭 `default_path` 排除；`.opencodereview/rule.json` 的 `include` 可恢復這類預設排除，不能恢復更早被 `.gitignore` 過濾的檔案。新增自訂 `rules` 預設會取代該檔案的內建規則；要補充 RTL 專案約束而保留 HDL 規則，設定 `merge_system_rule: true`。
+- 真實無 LLM 的 `ocr review --preview` probe：DUT＋TB 起初 selected 1，加入 include 後 selected 2。這只證明選檔覆蓋，沒有模型準確率、RTL 正確性或合成結果的證據。
+- 官方來源：[Verilog 規則](https://github.com/alibaba/open-code-review/blob/v1.13.5/internal/config/rules/rule_docs/verilog.md)、[規則覆寫與選檔](https://github.com/alibaba/open-code-review/blob/v1.13.5/pages/src/content/docs/en/review-rules.md)、[背景文字限制](https://github.com/alibaba/open-code-review/blob/v1.13.5/cmd/opencodereview/background_file.go)。
