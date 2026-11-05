@@ -2,7 +2,7 @@
 title: NTU COOL 內建瀏覽器 filechooser 逾時改用 Enter
 scope: tools/computer-use
 status: verified
-updated: 2026-10-16
+updated: 2026-11-06
 tags:
   - ntu-cool
   - filechooser
@@ -45,3 +45,5 @@ await tab.ax.write();
 # 2026-10-16 再驗證
 
 LSV HW2 再次重現 click 未觸發 filechooser；建立等待後對最新 file input AX index 按 `Return`，立即選到正確 PDF。對目前 Submit Assignment 按 `locator.press('Enter')` 取得 `Submitted!`；`downloadMedia()` 下載回執附件，與本機最終 PDF 逐位元相同。優先搜尋並沿用此方法；多輪 click、顯示視窗或改用私人瀏覽器不是已驗證的解法。具體繳交紀錄見 `projects/ntu-lsv-course/hw2-submission-and-writing.md`。
+
+2026-11-06 再驗證：AX／locator click 仍未觸發選檔；對最新 file input index 按 `Return` 立即成功。對繳交按鈕按 `Return` 取得回執，`downloadMedia()` 下載的 PDF 與原稿逐位元相同。第一次遇到這個症狀就先查本筆記，不要再輪流重試 click 或改用 CDP。
