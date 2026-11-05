@@ -3,7 +3,7 @@ title: 用 HAPI 派多個模型做程式審查
 scope: tools/hapi
 tool: hapi spawn-peer
 status: active
-updated: 2026-10-30
+updated: 2026-11-06
 tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-mode]
 ---
 
@@ -11,15 +11,15 @@ tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-m
 
 2026-10-29 在 CULS-fast PR 上用 HAPI 派 Codex、Claude、Gemini（agy）、OpenCode、Cursor、Grok、DeepSeek（dsh）做靜態審查。
 
-## 權限模式：無人看管的審查要開高權限
+## 權限模式：明確指定，Claude 審查用 Auto
 
-使用者明確要求：「session 要給他比較高的權限等級，他才能自己好好運作」，多個 session 開在同一資料夾也可以。這是針對無人看管的審查；一般 session 仍照 [[session-permission-preference]] 用 Auto。
+2026-10-29 使用者曾要求無人看管的審查開高權限。2026-11-06 再次明確要求 Claude Code 新 session 開 Auto，因此 Claude 審查也依 [[session-permission-preference]] 明確傳 `--permission-mode auto`；這取代先前 Claude 的高權限例外。多個 session 可開在同一資料夾。
 
 `--permission-mode` 合法值（取自 `hapi` binary 字串）：
 
 | agent | 高權限值 | 備註 |
 |---|---|---|
-| claude | `bypassPermissions` | 省略時是 `default`（Manual），每步等核准 |
+| claude | `auto` | 使用者 2026-11-06 確認；省略時是 `default`（Manual） |
 | codex | `yolo` | `read-only` 連 FINDINGS.md 都寫不了 |
 | agy（Gemini） | `always-proceed` | 另一個是 `request-review` |
 | cursor | `yolo` | |
@@ -27,7 +27,7 @@ tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-m
 | opencode | `yolo` | |
 | dsh（DeepSeek） | 無此旗標 | |
 
-教訓：使用者提高權限要求後，只改了新開的 session，先前用 `read-only`（Codex）和 `default`（Claude）開的兩個繼續跑了幾小時、零產出，使用者很不滿。要求一改，就檢查所有執行中的 session（`spawn_*.json` 的 `session.permissionMode` 或 `hapi inspect-peer`），模式不對就 archive 後用同一份 remit 重開。開完立刻確認 `permissionMode`。
+教訓：使用者提高權限要求後，只改了新開的 session，先前用 `read-only`（Codex）和 `default`（Claude）開的兩個繼續跑了幾小時、零產出，使用者很不滿。要求一改，就檢查所有執行中的 session（`spawn_*.json` 的 `session.permissionMode` 或 `hapi inspect-peer`），模式不對先用支援的 `hapi set-mode <exact-session-id> <mode>` 修正；不支援時才按 session-control 的清理與重開流程處理。只操作本次自己建立或使用者精確指定的 session。開完立刻確認 `permissionMode`。
 
 ## 登入狀態（2026-10-29）
 
