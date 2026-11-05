@@ -14,8 +14,9 @@ source_refs:
   - user-confirmed:2026-08-26
   - user-confirmed:2026-10-22
   - user-confirmed:2026-10-25
+  - user-confirmed:2026-11-06
 created: 2026-08-26
-updated: 2026-10-29
+updated: 2026-11-06
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -51,9 +52,10 @@ Agents」擋掉 `spawn-peer --permission-mode bypassPermissions`。這種情況�
 `--permission-mode auto`，使用者可接受。要 YOLO 就得由使用者加 permission rule，
 或在 web UI 切換。
 
-上游 main 的 `hapi` CLI 不能改執行中 session 的模式，也不能代按 pending
-approval。開錯模式的唯一修法是 archive 後用同樣的 remit 重開。PR
-`tiann/hapi#2095`（`hapi set-mode`）尚未合併。
+2026-11-06 已在維護版 HAPI CLI `0.30.7.7` 實測
+`hapi set-mode <exact-session-id> auto` 成功，回覆 session 已切換為 auto。
+因此此版本開錯模式時可先用這個命令修正，不必直接 archive。這只證明
+維護版支援，不延伸宣稱上游版本已支援。
 
 ## MCP `spawn_peer` 與「Default = Manual」（2026-10-25）
 
@@ -69,6 +71,15 @@ Claude Code 現在把 `default` 叫 **Manual**；`dontAsk` 是「會詢問的一
 省略時的預設，由 agent 自己選模式；`tiann/hapi#2166` 只把 Claude 的標籤改成
 Manual。
 
-## 無人看管的審查 session（2026-10-29）
+## Claude Code 審查也用 Auto（2026-11-06）
 
-使用者要求派去做無人看管審查的 session 開高權限（Claude `bypassPermissions`、Codex `yolo` 等），各 agent 的模式名稱與「要求改了要回頭檢查執行中的 session」見 [[multi-model-review]]。
+使用者再次明確要求：「開 session 要開 auto」，並要求更新記憶與 QMD。
+新建 Claude Code session，包含無人看管的審查，一律明確傳
+`--permission-mode auto`，除非使用者當次指定其他模式。這取代 2026-10-29
+對 Claude 審查使用 `bypassPermissions` 的舊例外；其他 agent 的模式另按其合法值。
+
+本次教訓：漏傳旗標會以 `default`（Manual）啟動，Claude 幾秒內已產生 Bash
+工具呼叫，卻停在 permission request；HAPI `inspect-peer` 只顯示 `thinking=true`，
+`wait-peer` 最後 timeout。不能據此說 Claude 正在長時間檢查數學，也不能直接歸檔。
+先查本次自己建立的 session 是否卡在工具核准，再依已授權的 Auto 偏好修正模式。
+不要把排除 Bash、改用 Read 當作 Auto 設定的替代品。
