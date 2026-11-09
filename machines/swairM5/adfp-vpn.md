@@ -3,7 +3,7 @@ title: SwairM5 NTU ADFP VPN（adfp-vpn／openfortivpn）
 scope: machines/swairM5
 status: active
 created: 2026-10-20
-updated: 2026-11-05
+updated: 2026-11-09
 tags: [ADFP, VPN, openfortivpn, FortiGate, Guacamole, sudoers, macOS]
 ---
 
@@ -54,6 +54,15 @@ tags: [ADFP, VPN, openfortivpn, FortiGate, Guacamole, sudoers, macOS]
   不要輸出或寫入記憶。若已失去舊登入 session，登出目前 session 不保證能釋放舊連線。
 - pool 的 `activeConnections` 是全群組總數，不能當成此使用者占用數；活動連線 API 回 `{}`
   也不足以確定權限問題。這次確認了恢復方法，未確認舊連線來源或伺服器根因，不能斷言只能等逾時。
+- 2026-11-09 再驗證（VPN 斷線重連後出現上限錯誤）：一行 CDP 刪掉目前 token，再 `adfp-vpn login`，
+  約 30 秒回到 XFCE 桌面；不用等 60 秒、不用反覆按「重新連接」。
+  `(async()=>{const s=angular.element(document.body).injector().get("authenticationService");`
+  `return (await fetch(new URL("api/tokens/"+encodeURIComponent(s.getCurrentToken()),document.baseURI),{method:"DELETE"})).status})()`
+  回 204 後執行 `adfp-vpn login`。token 在 localStorage `GUAC_AUTH_TOKEN`，不是 `GUAC_AUTH`。
+- 一般使用者逐筆關連線不可行：`mysql`、`mysql-shared`、`ldap` 三個 data source 的
+  `activeConnections` 都回 0 筆（即使正連著），所以無法 DELETE 單一舊連線。
+- English keywords: Guacamole "exceeded connection limit" / max connections per user / stale tunnel after VPN drop /
+  reconnect refused → logout token (DELETE api/tokens or api/session) + `adfp-vpn login`.
 
 ## 不用 Playwright 的 ADFP 操作（2026-10-25 驗證）
 
