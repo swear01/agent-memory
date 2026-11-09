@@ -15,4 +15,5 @@ updated: 2026-11-09
   - lemma 語言沒有量詞／index 變數；issue 001 加了 `X[e]`，issue 010 family expansion（模板＋實例化＋Houdini）在 p27a benches 從 6/16 提高到 12/16。
   - 離線分析：13 個未解 run 中有 6 個的候選池其實已含完整 invariant（kernel 損失，不是模型失敗）；wrap 的位寬算術 lemma 在低 frame 會被默默接受（issue 016 width lint）。
   - 2026-11-09 Opus 5.5 medium pilot：single_adder_ws_miter、nerv-pc-bwd 首次 SAFE（rIC3 3600 s TO），但比較對象是舊 kernel 的 DeepSeek run，還不能歸功於模型。
+- 對照文獻 IC3Syn（arXiv:2605.24619，TLA+，2026-11-09 讀原文）：admission 逐條（`Init ⇒ c`、`F_{k-1} ∧ c ∧ Next ⇒ c'`），沒有整組 Houdini；可以逐條成立是因為 LLM 直接寫帶量詞的 TLA+ clause，一條 ∀ 就涵蓋整個 index family。TLC 在有限實例上用全部可達狀態篩候選；clause memory 會重用；prompt 帶 known-true/known-false 清單與批次 bad states。評估：每題 600 s（兩題 2 h）、看不出有重複跑、沒報 token 成本、沒有污染對照（Endive 題目公開）。TLAPS 的無界證明主要由 LLM agent 寫，不是全自動。
 - NeuroAbs `develop`（到 PR #33）另有 adaptive split flow：LLM 選 index 拆分、timeout 時看 rIC3 lemma 摘要決定 resplit/abstract；結論是 split 有效、abstraction 至今沒有可測收益。
