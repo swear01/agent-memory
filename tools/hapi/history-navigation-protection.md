@@ -41,3 +41,5 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 2026-11-01 更新：#1597 `c5795ed7a`–`370cb0281`。re-key 的 prompt 改用資料查：`buildAssistantReplyTargets` 的 replyTargets 經 `replyTargetsRef` 傳給 HappyThread 的 `findPromptTarget`，DOM 回退只作備援。Navigation trim 保留 tail 起點所在 turn 的 prompt（600 head + prompt + 400 tail），之後 bot 連續四輪各提一個 Minor，都出在這段 trim：(1) 被略過的同 turn 列要標 `~turn` gap（不重設 reply 關聯）；(2) gap 判斷要照顯示順序走整個 messages，不能用 seq 相鄰；(3) 重新 trim 要保留既有 gap marker；(4) 往回找 prompt 要跳過 `status === 'failed'`（與 reply targets 規則一致）。每項都有先在舊碼失敗的 regression test。
 第五輪（長 turn 跨 gap）找到根因：store 用 raw `content.role === 'user'` 判斷 prompt，runtime 用 normalize 後的 user lane（含 agent 包裝的終端機輸入），兩套定義不一致，bot 才會一直冒 tail case。`8ac25491d` 把兩處統一：prompt = `normalizeDecryptedMessage(m)?.role === 'user'` 且非 failed；被略過的列裡沒有 prompt 時，gap 就是 `~turn`（不再用「前一列是保留的 prompt」這種特例）。bot 在這個 head 回報沒有問題。
 **How to apply:** store 與 runtime 只能用同一個 prompt 定義，gap 的語意要直接從被略過的資料推得（裡面有沒有 prompt）。不要再為單一 case 補位置性的特例。
+
+2026-11-09 狀態：#1597 head `178a601c2`（2026-11-08 合併 upstream/main）。drift-gate、test、integration、windows-codex-mcp、pr-review 全綠，bot 回報沒有問題，GitHub 顯示 MERGEABLE/CLEAN，等 maintainer 合併。這個 merge head 沒有在本機重跑測試。
