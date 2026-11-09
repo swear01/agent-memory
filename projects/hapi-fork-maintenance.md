@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-10-27
+updated: 2026-11-09
 tags:
   - hapi
   - fork
@@ -289,3 +289,4 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - Gemini 在 release PR 上的 critical finding「`MetadataSchema` 未 import」是誤報（第 39 行就有 import，typecheck 通過）；回覆說明後視為通過。
 - 部署（2026-10-25）：oracle 本機裝好後 `pm2 restart hapi --no-treekill --update-env` + `pm2 save`，runner 是 `0.30.7.7`、`treekill=false`，舊 binary 上的 3 個 session 經過 idle-wait 後用 `stop-peer` 遷移；自己的 orchestrator session 留給使用者處理。oracle 刪掉沒人用的 runtime `0.30.7.5`（175 MB），`0.30.7.6` 因為自己的 session 還在用而保留。其他主機交給 Mac 的 `spawn-peer` session：mazu Hub（升級前有 DB 備份，schema 29）、mazu／cthulhu／valkyrie／zeus／Mac 的 runner 經 hub 回報都是 `0.30.7.7`，公開 Web 也已提供 `.7` 的 assets。swop 在部署期間 SSH 逾時，之後從 hub 機器清單消失，部署結果未確認。部署 session 還在做 retention 時，使用者轉而要它做效能檢查，所以其他主機的舊 session 遷移與 runtime 清理並未完成確認。
 - 從 oracle 只能部署 oracle 本身：mazu 和 cthulhu 的公開 SSH 都會逾時，其他 alias 無法解析。其餘主機一律交給 Mac 的 session。另外，`hapi machines --json` 的結果不含版本，要查版本請用 hub `/api/machines`（先用 CLI token 換 JWT），讀 `metadata.happyCliVersion`。
+- 上游 `Codex PR Review` 在 fork PR 上偶發失敗（「likely failed because of a workflow file issue」、沒貼 review），同時其他 PR 正常跑時，是暫時性的：用 `gh api -X PATCH repos/tiann/hapi/pulls/<N> -f body="<原內文加換行>"` 觸發 `edited` 事件，會在同一 head 重跑（#2346，2026-11-09）。上游的 `/swear-review` 留言不會有回應；swear01 也不能 rerun 上游 job。
