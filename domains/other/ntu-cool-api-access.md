@@ -35,6 +35,8 @@ tags:
 
 IEDA（EDA 課）course id `64904`；HW2「Logic synthesis and verification with Berkeley ABC」assignment id `422755`（online_upload）。
 
+寫入成績（2026-11-10 驗證，IEDA HW2）：swairM5 的 `~/IEDA/tools/cool_put.sh` 在同一個 Brave 分頁送 `PUT /api/v1/courses/<c>/assignments/<a>/submissions/<user_id>`，body `{"submission":{"posted_grade":"<分數>"}}`，`X-CSRF-Token` 取 `_csrf_token` cookie 並 decodeURIComponent；回 200 後用 GET 讀回核對 score。該作業是 `post_manually`，寫入後 `posted_at` 仍為 null，學生看不到，要另按 Post grades。改成績須使用者明確授權；先送一筆讀回確認再送其餘。
+
 ## 產生權杖：UI 被 CSS 隱藏，不是沒有
 
 NTU 在 `https://cool.ntu.edu.tw/profile/settings` 把「已核准的整合」藏起來：
