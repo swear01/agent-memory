@@ -27,7 +27,9 @@ tags:
 
 ## 權杖存放
 
-兩帳號的權杖分別存於本機 mode 600 secrets 檔；公開記憶不記錄帳號、具體路徑或權杖。權杖用途名稱可在 COOL 設定頁辨識與撤銷。
+權杖不一定存在本機：2026-11-10 查過，本機 `~/.secrets` 與 `~/.config` 都沒有 COOL 權杖，要用就重新產生。公開記憶不記錄帳號、具體路徑或權杖。權杖用途名稱可在 COOL 設定頁辨識與撤銷。
+
+2026-11-10：研究所權杖（用途 `mazu-agent`）已產生並放到 mazu 的 `~/.config/ntu-cool/`（`tokens.env`，變數 `NTU_COOL_TOKEN_GRAD`，目錄 700／檔案 600）；大學部權杖（`NTU_COOL_TOKEN_UG`）尚未產生，需先在 Brave 切換登入大學部帳號。
 
 2026-11-10 實查：swairM5 與 mazu 的 `~/.secrets`、`~/.config` 都**沒有** COOL 權杖，上面這句不可當成權杖一定存在。swairM5 現行可用的存取方式是 `~/IEDA/tools/cool.sh <api-path>`：用 `osascript` 在 Brave 網址剛好為 `https://cool.ntu.edu.tw/courses` 的分頁內跑同步 XHR（靠瀏覽器登入狀態），並去掉 `while(1);`。session cookie 是 HttpOnly，`document.cookie` 拿不到，無法把它搬到別台機器給 curl 用。要在其他機器處理 COOL 資料，最快的做法是在 Mac 用 cool.sh 下載後 `rsync -a ~/IEDA/ mazu:IEDA/`（Mac 的 `~/.ssh/config` 可直接解析 `mazu`）。
 
@@ -42,6 +44,14 @@ NTU 在 `https://cool.ntu.edu.tw/profile/settings` 把「已核准的整合」�
 3. 用頁面腳本把 `.approved_integration_content` 改成 `display: block`。
 4. 點「新訪問令牌」→ 填用途 → 到期留空 → 產生。
 5. 權杖只寫入 secrets 檔（mode 600），絕不截圖、不寫進對話或 memory 正文。
+
+### 用 Brave 分頁自動產生（2026-11-10 驗證）
+
+- `POST /profile/tokens` 回 404，API 路徑不可用；新版 UI 是 React 對話框，得走頁面。
+- 在已登入的 `https://cool.ntu.edu.tw/courses` 分頁（同 `cool.sh` 的 osascript）用 JS 插入隱藏 iframe 載入 `/profile/settings`，等 6 秒後：`.approved_integration_content` 設 `display:block`，點 `a.add_access_token_link`；用原生 `HTMLInputElement.prototype.value` setter 加 `input` 事件填 `#TextInput_2`（用途）；點對話框內 `type=submit` 的「產生憑證」。
+- 權杖只顯示一次，在 iframe 的 `body.innerText` 用 `/[A-Za-z0-9~]{30,}/` 取出（64 字元，不一定有 `數字~` 前綴），經 `umask 077` 的暫存檔寫入，不印出；用權杖打 `/api/v1/users/self/profile`（Bearer 標頭）回 200 驗證，之後移除 iframe、`shred` 暫存檔。
+- 目前 Brave 登入哪個帳號可看 `/api/v1/users/self/profile` 的 `login_id`（研究所為 `r14…`）。
+- 寫到遠端：`ssh mazu 'umask 077; mkdir -p …; cat > …' < 暫存檔`，權杖不進命令列。
 
 ## 台大單一登入（ADFS）表單填寫
 
