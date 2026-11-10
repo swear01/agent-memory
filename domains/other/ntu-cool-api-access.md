@@ -3,7 +3,7 @@ title: "NTU COOL（Canvas）API 存取與隱藏權杖 UI"
 scope: "domains/other"
 status: active
 confidence: high
-updated: 2026-10-27
+updated: 2026-11-10
 tags:
   - ntu-cool
   - canvas
@@ -28,6 +28,10 @@ tags:
 ## 權杖存放
 
 兩帳號的權杖分別存於本機 mode 600 secrets 檔；公開記憶不記錄帳號、具體路徑或權杖。權杖用途名稱可在 COOL 設定頁辨識與撤銷。
+
+2026-11-10 實查：swairM5 與 mazu 的 `~/.secrets`、`~/.config` 都**沒有** COOL 權杖，上面這句不可當成權杖一定存在。swairM5 現行可用的存取方式是 `~/IEDA/tools/cool.sh <api-path>`：用 `osascript` 在 Brave 網址剛好為 `https://cool.ntu.edu.tw/courses` 的分頁內跑同步 XHR（靠瀏覽器登入狀態），並去掉 `while(1);`。session cookie 是 HttpOnly，`document.cookie` 拿不到，無法把它搬到別台機器給 curl 用。要在其他機器處理 COOL 資料，最快的做法是在 Mac 用 cool.sh 下載後 `rsync -a ~/IEDA/ mazu:IEDA/`（Mac 的 `~/.ssh/config` 可直接解析 `mazu`）。
+
+IEDA（EDA 課）course id `64904`；HW2「Logic synthesis and verification with Berkeley ABC」assignment id `422755`（online_upload）。
 
 ## 產生權杖：UI 被 CSS 隱藏，不是沒有
 
