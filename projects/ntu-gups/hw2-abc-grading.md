@@ -14,7 +14,7 @@ tags:
 # GUPS3006 EDA（IEDA）HW2 批改（2026-11-10 完成）
 
 COOL course `64904`、assignment `422755`（Logic synthesis and verification with Berkeley ABC）。使用者是助教。
-7 份已評分寫入 COOL（作業為手動公布，寫入後仍需助教自己按 Post grades）。COOL 名單上未繳的那位是**旁聽生，不用給分**。
+7 份已評分寫入 COOL；2026-11-10 老師同意後已公布（HW2 與期中 Midterm Score 皆 7/7 posted），並發公告 discussion_topic 545830。HW1（417944）仍未公布。COOL 名單上未繳的那位是**旁聽生，不用給分**。
 成績與評分紀錄在 mazu `~/IEDA/HW2/reference/`（`RUBRIC.md`、`grades/summary.csv`、`grades/<學號>.md`），不放本庫。
 
 ## 取得資料（快路徑）
