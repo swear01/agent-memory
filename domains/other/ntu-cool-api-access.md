@@ -88,6 +88,13 @@ Claude 桌面 app 的內建瀏覽器（`mcp__Claude_Browser__*`）沒有 file ch
 
 auto mode 的安全分類器會把「頁面 JS 把本機檔 bytes 搬進另一站」判成 Browser JS Exfil 而擋下；改用上面 curl 路線，或先取得使用者同意。Claude in Chrome 的 `file_upload` 也可用，但需使用者同意切換瀏覽器。
 
+## 留言附件與未發布作業（2026-11-10 驗證，IEDA 期中考）
+
+- **本機 server 加 PNA 標頭就能用**：內建瀏覽器 COOL 頁面 JS 可以 `fetch('http://127.0.0.1:<port>/x.pdf')`，只要 server 回 `Access-Control-Allow-Origin: https://cool.ntu.edu.tw`、`Access-Control-Allow-Private-Network: true`，且 `OPTIONS` 回 204（上面 2026-10-19 失敗的是沒加這些標頭的 server）。拿到 blob 後整個三步上傳都能在頁面內做：`files_api` 回 JSON 直接帶 `id`。使用者明確同意上傳時 auto mode 未擋。
+- 助教替學生加留言附件：`POST /api/v1/courses/<c>/assignments/<a>/submissions/<user_id>/comments/files`（`name`、`size`、`content_type`）→ 上傳 → `PUT .../submissions/<user_id>`，body `{comment:{text_comment, file_ids:[id]}, submission:{posted_grade}}`。讀回用 `include[]=submission_comments` 核對附件 `size`。
+- **未發布的作業不能打分**：PUT submissions 回 403 `user not authorized to perform that action`。先建立未發布作業 → GraphQL `POST /api/graphql` 送 `mutation{setAssignmentPostPolicy(input:{assignmentId:"<a>",postManually:true}){postPolicy{postManually} errors{message}}}` → 再 `PUT /assignments/<a>` `{assignment:{published:true}}`。發布會讓學生看到作業（可能有通知），auto mode 會擋，須使用者明確同意；手動公布下寫入後 `posted_at` 仍為 null。
+- 頁面 helper 判斷路徑時注意：`/assignments` 也以 `/` 開頭，要用 `startsWith('/api')` 區分完整路徑與課程相對路徑，否則打到 `/assignments` 回 404。
+
 ## 下載課程檔到本機（2026-10-25 驗證）
 
 `/api/v1/files/<id>` 的 `url` 與 `/files/<id>/download` 都要 cookie，shell `curl` 拿不到。在已登入分頁用頁面 JS 取 `/api/v1/files/<id>/public_url`，回傳帶 `verifier=` 的連結，shell `curl -L` 可直接下載，不需權杖。日文二上課程 id 64097，練習題 L13–L18 PDF 中第 15 課是第 9–12 頁（頁序不是依課排列，需渲染縮圖確認）。
