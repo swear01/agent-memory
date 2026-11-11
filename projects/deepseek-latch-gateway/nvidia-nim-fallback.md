@@ -30,5 +30,5 @@ tags: [gateway, cliproxyapi, nvidia-nim, priority, failover, request-scoped-erro
 - OpenCode Go：$10/月可用 $100 額度（照官方價扣），等效約 input $0.015、output $0.06、cache $0.0003；每 workspace 只能訂一份（使用者用不同帳號）；5h $20、週 $50 上限。Go Plus $40 換 $200，只有 5 倍，比較不划算。
 - Vercel AI Gateway 的列表價 $0.022/$0.30 是拼湊不同 provider 的最低值；同一家同時最便宜的是 `pareto` provider $0.075/$0.30、cache $0.0015（尖峰加倍，p50 TTFT 約 1.1 s、116 tok/s）。要指定 provider 才拿得到。Vercel 免費月額度不含 DeepSeek。
 - OpenRouter 沒有 Vercel 的 pareto provider；OpenRouter 的 `openrouter/pareto-code` 是用 `min_coding_score` 自動挑模型的 router，跟 Vercel 的 pareto 無關。DeepInfra flex（0.8×）是 best-effort，實測 uptime 很低，不適合當主力。
-- 免費：AMD Radeon Cloud（`developer.amd.com.cn`）有 `DeepSeek-V4.1-Flash-1017`；ModelScope 每日約 100 次。兩者都沒實測。
+- 免費：AMD Radeon Cloud（`developer.amd.com.cn`）有 `DeepSeek-V4.1-Flash-1017`；ModelScope 每日約 100 次。兩者都沒實測。AMD Radeon 後續已實測並全 fleet 啟用，見 `radeon-fleet-fallback.md`。
 - 使用者已在 2026-11-11 儲值 OpenRouter（`OPENROUTER_OFFICIAL_API_KEY`）；DeepSeek 官方 key 餘額為負、已停用。
