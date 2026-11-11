@@ -16,7 +16,7 @@ tags: [gateway, cliproxyapi, nvidia-nim, priority, failover, request-scoped-erro
 - 四個舊群組（opencode-1/2、command-code-1/2）加 `request-scoped-errors: [{status: 400, match: ["insufficient credits"], action: continue-and-cooldown}]`。CLIProxyAPI 預設 400 不 failover（只對 403/408/429/5xx），所以 Command Code 沒額度時新對話會直接 400；加這條後會換下一組並 cooldown。
 - 套用範圍：Mac、mazu（swear01 NFS home，cthulhu/valkyrie 共用同檔）、su_zeus（swear02）、Oracle；各自重啟 `deepseek-gateway` 並實測 HTTP 200。**沒有做**：swop（Windows）、Athena（送修，只是共用 NFS 檔案已變）、zeus swear01 那個 gateway 未重啟。
 - 回復點：各 home `<gateway-config-dir>/archive/nim-<timestamp>/`（含舊 `.secrets` 與 `cliproxy.yaml`）。
-- **注意**：這次是直接改 render 後的 `cliproxy.yaml`；transfer_MAC 的模板與 renderer 尚未同步，重新 render 會蓋掉 NIM 群組與 failover 規則。
+- 同日稍後 transfer_MAC PR #85–#88 已把這些併入模板／renderer：`DEEPSEEK_GATEWAY_NVIDIA=1`、`DEEPSEEK_GATEWAY_OPENROUTER=1`、Radeon 都是 opt-in、priority -1，全部群組都有 insufficient-credits 規則，另加 command-code-3；14:45 已重新 render 到 fleet，zeus swear01 也在 14:46 重啟。swop 從 Mac SSH timeout，HAPI 狀態也沒回應，尚未確認。
 
 # 行為與坑
 
