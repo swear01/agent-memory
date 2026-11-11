@@ -46,4 +46,4 @@ updated: 2026-11-04
 - 復原完成：shared-skills PR59 final40498da 恢復規則且8個aliases逐target驗證，transfer_MAC PR82 merge4f6647e 用 git mv 恢復 active runbook 與指標；Swear Review PR19 mergeb7bd7b8 加入同reviewUUID的 X-Session-ID/nativeheader並拒絕configuredaffinityoverride。PR19 exacthead61f6f05 經正式Swear job1696/run1653實際DeepSeekreview completed，1項可選maintainabilityfinding經判斷回覆resolved，非skipped；已觀測OCR→localhost35001連線與marker/model設定。
 - 使用官方 scripts/deploy-oracle.sh b7bd7b8 部署，151tests/typecheck/build於正式部署流程通過；服務新PID與啟動狀態、已部署dist兩種header、公開／本機healthready、DBintegrityok、舊gateway仍archived與Swearrepo未archived均核對。不要為換Gateway而退役使用它的應用程式；本次是誤解範圍後的修復，歷史取消review不自動補跑。
 
-- 2026-11-11 加入 NVIDIA NIM 備援（priority -1）與 400 insufficient-credits failover 規則：見 [NIM 備援](nvidia-nim-fallback.md)。模板／renderer 尚未同步。
+- 2026-11-11 加入 NVIDIA NIM 備援（priority -1）與 400 insufficient-credits failover 規則：見 [NIM 備援](nvidia-nim-fallback.md)。模板已由 transfer_MAC PR #85–#88 同步。
