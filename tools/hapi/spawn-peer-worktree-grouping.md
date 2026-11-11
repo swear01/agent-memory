@@ -11,6 +11,11 @@ updated: 2026-10-27
 
 做法：`hapi spawn-peer --dir <repo 主目錄> --session-type worktree ...`。HAPI 會從 repo 目前的 HEAD 建 `<repo>-worktrees/<MMDD-xxxx>`、branch `hapi-<MMDD-xxxx>`，並在 metadata 記 `worktree.basePath`，UI 依此分組（2026-10-27 在 mazu 驗證路徑和 branch；`inspect-peer` 不顯示 worktree metadata）。使用者要求分組時，這個規則優先於「worktree 放在 ~/.agent-worktrees」。
 
+`--dir` 必須是 git repo 本身：指到非 repo 目錄（例如 `~/Documents`）時 runner 會拒絕，
+但 CLI 只回 `spawn_failed: HTTP 502`，真正原因在 runner log 的
+`Worktree creation failed: Path is not a Git repository`（2026-11-11 實測）。
+判讀流程見 `spawn-peer-failure-triage.md`。
+
 相關行為（同日驗證）：
 - `spawn-peer --message-file -` 前面不要加 `unbuffer`：stdin 被換成 tty，指令會一直卡住。改用檔案並加上 `</dev/null`。
 - `ping-peer` 送給正在跑的 session 時，訊息會排隊等目前這輪結束；要立刻處理就先 `abort-peer`。
