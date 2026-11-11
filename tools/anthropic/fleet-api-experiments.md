@@ -2,7 +2,7 @@
 title: Claude API 實驗用 fleet 環境
 scope: tools/anthropic
 status: active
-updated: 2026-10-28
+updated: 2026-11-11
 tags:
   - anthropic
   - fleet
@@ -17,7 +17,7 @@ tags:
 - 切換：shell 函式 `anthropic-use-lab`（同時設定 workspace ID）、`anthropic-use-swear`（unset workspace ID）。SDK 與 Claude Code 都不會在額度用完時自動換 key。
 - 已驗證：Mac（使用者測過兩把）與 mazu 的共用 home（2026-10-27 用 SWEAR 打 `count_tokens` 與 Opus 5.5 生成成功，沒帶 workspace header）。其他主機沒逐台驗證。
 - **改檔前就啟動的 shell 和程序，env 裡仍是舊值**（`ANTHROPIC_API_KEY` = lab key）。要指定扣哪把的程式，不要依賴繼承的 env：agentic-ic3-repro 的 `scripts/run_matrix.py` 改從 mazu `~/.config/agentic-ic3/anthropic.env`（0600）讀 key。
-- vault（Vaultwarden）裡沒有 Console API key，只有 `Claude Code OAuth token`（`claude setup-token` 訂閱 token，不是 API key）。
+- vault（Vaultwarden）2026-11-11 起有個人 key：項目 `API · anthropic personal-org (agentic-ic3)`（username `ANTHROPIC_API_KEY`、password 為 key，hash 與 `ANTHROPIC_API_KEY_SWEAR` 一致）。lab key 不在 vault。另有 `Claude Code OAuth token`（訂閱 token，不是 API key）。
 
 ## 已驗證狀態（2026-09-30）
 
@@ -45,5 +45,10 @@ tags:
 
 ## 實驗批次不要走訂閱 `claude -p`（2026-10-28）
 
-- 使用者指示：大量實驗呼叫（例如逐題問 Claude 60 次）不要用 claude.ai 訂閱帳號的 `claude -p`，有被封鎖的風險；改用 `ANTHROPIC_API_KEY_SWEAR`（明確引用 `_SWEAR`，不要依賴 `ANTHROPIC_API_KEY` 的預設值）。`_LAB` 不可用於使用者的個人實驗。
+- 使用者指示：大量實驗呼叫（例如逐題問 Claude 60 次）不要用 claude.ai 訂閱帳號的 `claude -p`，有被封鎖的風險；改用 `ANTHROPIC_API_KEY_SWEAR`（明確引用 `_SWEAR`，不要依賴 `ANTHROPIC_API_KEY` 的預設值）。`_LAB` 原則上不用於個人實驗；例外見下節。
 - 互動式 Claude Code session 本身照常用訂閱，這條只限制實驗程式的批次呼叫。
+
+## Agentic-IC3 的 Opus run：個人 key 用完改 lab key（2026-11-11）
+
+- 使用者指定順序：先用 `ANTHROPIC_API_KEY_SWEAR`，額度用完或 rate limit 時改用 `ANTHROPIC_API_KEY_LAB`（含 `ANTHROPIC_WORKSPACE_ID_LAB` header）接續跑。這條是 agentic-ic3 實驗的明確授權，取代上一節對這個專案的禁止。
+- mazu `~/.config/agentic-ic3/anthropic.env` 目前是 SWEAR 那把（hash 比對確認）；2026-11-11 Opus low 補跑 26 runs（$16.04）全用 SWEAR，沒有觸發 fallback。
