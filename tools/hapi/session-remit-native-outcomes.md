@@ -2,7 +2,7 @@
 title: HAPI remit 結果必須依 native terminal outcome 判定
 scope: tools/hapi
 status: verified
-updated: 2026-10-28
+updated: 2026-11-11
 ---
 
 `Session.thinking === false` 不是成功證據：heartbeat expiry、abort、native error 都可能清除 thinking。`wait-peer` 必須在該 remit 的訊息視窗找到明確 native success；部分 prose 加 idle 不能回傳 completed。`ready` 也不是成功事件，部分 launcher 在失敗後仍會發送。
@@ -24,3 +24,5 @@ Pi 文字輸出也是 cumulative snapshot：Hub row id 每筆不同，但 nested
 2026-09-27 的 swairM5 Pi 文件查核案例：父 session 兩次 `wait-peer` 逾時後封存子 session；後來 `inspect-peer --limit 100` 回傳 `lifecycleState=archived`，只擷取到三則 user 文字、沒有 agent 文字。`inspect-peer` 會從 Hub 訊息列擷取可辨識的文字，這個結果不能區分 Hub 未儲存、同步中斷或擷取器未解析，也不能推論 Pi 本機沒有回覆或正式文件沒有部分寫入。重新寫入前先以已核對身分的帳號讀回正式文件。另一次重開 Pi 在 webhook 前因 `Canonical hapi-session-control skill is shadowed or could not be verified` 退出，屬於獨立的啟動錯誤；該訊息只表示實際解析的技能未通過與內建內容的比對，不能單憑字面斷定哪個路徑遮蔽。事後本機技能解析比對通過，新 Pi 也成功啟動；舊 Pi 的訊息缺失原因仍未證實。
 
 2026-10-27 委派修 PR 的經驗：子 session 在等 Monitor 或 HAPI Bot review 時會先結束自己的回合，`wait-peer` 因此回報 completed，但工作其實還沒做完。長時間的 PR 修正改用背景迴圈輪詢 `hapi inspect-peer <id> --json`：直到 `thinking` 為 false，且最後一則 agent 文字含 PR 連結、長度像最終報告，才讀取結果。`Claude AI usage limit warning|...` 這類用量警告也是 agent 訊息，判斷條件和最後印出結果時都要先濾掉，否則會把警告當成報告。背景 Bash 有時間上限，等 bot 的迴圈要設 `timeout` 7200000。
+
+2026-11-11 CULS-fast 長時間委派的經驗：Claude 子 session 撞到 5 小時用量上限時不會結束，`inspect-peer` 會一直顯示 `lifecycleState=running`、`thinking=false`，最後一則 agent 訊息是 `You've hit your 5-hour limit ...`；`wait-peer` 會持續等待，不會回報 `session_ended`。在本機用 `wait-peer` 迴圈等它，會無聲地卡到額度重置。重置後要對同一個 session `ping-peer` 一則「從中斷處接續、先檢查 worktree 和背景工作」的 resume 訊息，拿到新的 remitId 再等。好幾個 worker 會在同一時間撞上限、也在同一時間重置，所以要一起 resume。這類需要盯十幾小時的監督工作，交給 HAPI 上同一台機器的協調者 session 來做，比本機 session 穩：本機 session 會一直被 context 壓縮和用量上限打斷。
