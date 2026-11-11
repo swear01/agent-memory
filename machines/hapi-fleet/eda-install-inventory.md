@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-10-08
+updated: 2026-11-12
 tags:
   - eda
   - abc
@@ -14,6 +14,19 @@ tags:
   - tsri
   - yosys
 ---
+
+# PrimeTime 2026.03 原生 libsasl 相容修補（2026-11-12）
+
+- Mazu、Cthulhu、Valkyrie、Zeus 的 `/apps` 均掛載同一 NFS export，只部署一次；四台 Ubuntu 26.04.1／kernel 7.0.0-38／glibc 2.43。Athena 送修，未連線／驗證。
+- PT launcher 環境下 `pt_shell_exec` 唯一缺少的外部 library 是 `libsasl2.so.3`。直接 `ldd` 的 libRtxStable／libnffr／libNPI／libnffw／libnsys 已由內附 `linux64/pt/shlib2` 提供；exec2 的 Qt5Core／Qt5Gui 也已內附於 `linux64/pt/shlib/qt/lib`，不是需要另裝的套件。兩個 worker 與六個 FSDB shlib2 DSOs 在內附 runtime 路徑下無缺漏。
+- 從 Rocky Linux 8 官方 BaseOS [cyrus-sasl-lib-2.1.27-6.el8_5.x86_64.rpm](https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.27-6.el8_5.x86_64.rpm) 抽出 library；RPM SHA-256 `b1a98c3128e57243d2ce7212ced1d8676d4196feac16079e6335413a0b57ca41`。未執行 RPM 安裝、apt 或更動 `/usr/lib`，沒有用 `.so.2` 冒充 `.so.3`。
+- 放置於 `/apps/eda/synopsys/primetime/2026.03/lib/compat-rocky8/`：`libsasl2.so.3.0.0`、原 RPM 的 `libsasl2.so.3 -> libsasl2.so.3.0.0` 連結、`COPYING`。Library SHA-256 `7de4d792e5a89acf1d1e38949e0fe9e0a21b42235c21aa0d38fd20d5fb660b30`；所需 GLIBC symbol versions 最高 2.15（2.2.5、2.3、2.3.4、2.4、2.14、2.15），主機提供且 `ldd` 全部解析成功。
+- `/apps/eda/env.sh` 的 `synopsys/primetime` → `2026.03` 分支僅加 `libs=lib/compat-rocky8`，由既有 LD_LIBRARY_PATH 邏輯載入。修補後 env SHA-256 `cf2cd1d1d3d3ee7a69b5de4653515c8d083dd2020ef53992df72f5c48f3f3429`。`primetime.sh`、原廠 binary、其他版本、cur、系統 library、license 設定均未修改；PT 重複 source 不重複加入路徑，無效版本拒絕，DC 2026.03 不會載入此相容目錄。
+- 管理入口使用 `su_cthulhu`＋sudo；改共享檔前備份至 `<pt-root>/.dvlab-backups/20261112-pt-libsasl/`，保留 `env.sh.before`、未修改的 `primetime.sh.before`、原始 RPM、manifest、`ROLLBACK.md`。相容目錄原本不存在。
+- 四台均以一般帳號、新的 `env -i` Bash，公開 `source /apps/eda/synopsys/primetime.sh 2026.03` 入口讀取 CBDK_IC_Contest_v2.5 的 `SynopsysDC/db/typical.db`、IOTDF gate netlist／SDF／絕對 VCD：成功 link 1,171 leaf cells、report_timing、update_power、report_power，exit 0、精確完成 marker、無 Error；Total Power 均 `5.596e-04`。保留 PTE-066（annotated arcs 零 transition）與 PTE-003（停用 timing arcs）兩項 warning，不能稱零 warning。
+- Mazu 以 VCS＋Verdi 2026.03、`-debug_access+all`、`tb.v` 不加 `+define+VCD` 產生 `gt.fsdb`，模擬 RESULT PASS（141 cycles／1415 ns）；FSDB SHA-256 `ed12871b6024c0cf1aed7adc93ec04737a8ccea38f28f55d8d3a4d79827dc34d`。原生 PT 從絕對路徑 `read_fsdb`，並完成 update_power／report_power（同 power），exit 0；另有 FSDB 太小而改 regular power analysis 的提示。time_based 的 read_fsdb 只讀 header，須完成 update_power 才證明 event 讀取。不要加舊式 `-P novas.tab pli.a`：2026.03 已拒絕該方式，依 VERDI_HOME 自動整合。
+- Mazu 一般帳號使用既有 `docker-shell` 預設 Rocky r7 亦完成相同 VCD 設計／power 測試（exit 0、相同 power）。驗證資料在一般帳號 `~/pt-native-20261112/`：`smoke.tcl`、`dependency-audit.txt`、各 `<host>-native/pt.log`、`mazu-fsdb/pt.log`、`fsdb-sim/auto-pli/`、`docker-check/pt.log`。跨機首次測試漏傳 harness 的 PT_CHECK_* 環境變數，Tcl 報錯但 PT 仍 exit 0；已保留失敗 log，補齊變數重跑並檢查完成 marker／Error 行後才判定通過。
+- 還原：先確認沒有新 PT job 使用相容目錄，並核對 env.sh 仍為上述修補後 SHA；以 sudo 將備份 `env.sh.before` 原子複製回 `/apps/eda/env.sh`，再把 `<pt-root>/lib/compat-rocky8` 搬到備份下 `compat-rocky8.disabled`，開新 Bash。若 env.sh 後來另有修改，只移除 PT 2026.03 的 `; libs=lib/compat-rocky8`，不可整檔覆蓋；完整命令在備份的 ROLLBACK.md。還原後 Ubuntu 原生啟動會恢復缺 libsasl，原容器路徑仍可用。未驗證 GUI、分散式分析或大型 signoff 專案。
 
 # SAED32/28nm RVT 補充庫與 compiler 移除（2026-10-08）
 
