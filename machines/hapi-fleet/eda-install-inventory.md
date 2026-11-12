@@ -40,7 +40,7 @@ tags:
 
 - 搬移前後 1,930 個官方檔案逐檔 SHA-256 相同（1,928 個 library 檔案加 SOURCE.sh、CHANGELOG）；既有 13,168 個檔案 inode／大小／mtime 未改。搬移紀錄在 verification/rvt-relocation-20261008.json。之後僅調整新增 SOURCE.sh 的原廠硬編碼路徑為 `/apps/cad/cell_library/SAED32_EDK`，手動 source 已讀回 SAED32_PATH。搬移前 rvt-staging／rvt-nas 證據屬歷史紀錄；重跑使用 verification/rvt-unified/smoke.tcl。
 
-# ARM memory compiler：四台依賴已補，Athena 待補（2026-10-08；Athena 2026-11-12 已歸還，四個套件仍未裝，需 sudo）
+# ARM memory compiler：五台依賴已補（四台 2026-10-08；Athena 2026-11-12 回機後補，套件與 SHA 相同）
 
 - 使用者要求實驗室五台都補相同依賴。Mazu、Cthulhu、Valkyrie、Zeus 已完成系統套件安裝；Athena 未安裝／未驗證，使用者確認送修中，連不上正常。回機後再補相同套件與驗證，不要反覆把送修當成 SSH 故障處理，也不要宣稱五台完成。
 - 四台 Ubuntu 26.04 原本均缺 `libxt6t64:i386`、`libxtst6:i386`、`libxp6:i386`。現已安裝 `libxt6t64:i386 1:1.2.1-1.3build1`、`libxtst6:i386 2:1.2.5-1build1`、`libxp6:i386 1:1.0.2-1ubuntu1`；依賴包括 `libice6:i386`、`libsm6:i386`、`libuuid1:i386`。安裝沒有移除或升級既有套件。
