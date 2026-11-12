@@ -2,7 +2,7 @@
 title: HAPI inactive lease 不能代替 runner 程序退出確認
 scope: tools/hapi
 status: verified
-updated: 2026-09-28
+updated: 2026-11-12
 ---
 
 Hub `Session.active` 是心跳 lease；30 秒失聯即可變為 false，並不證明 detached runner child 已退出。新 lifecycle 操作不能只依賴 inactive 就 archive 或 delete，否則程序可能仍在跑，Hub 紀錄卻已消失。
@@ -16,6 +16,17 @@ Hub `Session.active` 是心跳 lease；30 秒失聯即可變為 false，並不�
 Hub 已保留 child session id 的 spawn 請求，即使在真正建立 child 前被拒絕，也必須留下可供 cleanup 使用的退出證據。`spawnSessionOnce` 的 `failBeforeChild` 會記錄 verified-exit tombstone；machine RPC 若提前因 workspace roots 拒絕，便跳過此 bookkeeping，造成沒有 PID 也沒有 tombstone，`stopSession` 只能回 still_alive，預留 row 無法封存。保留傳給 runner 的 `validateDirectory` callback，讓同一個 pre-child rejection 路徑完成驗證和退出記錄；不要靠刪除資料庫紀錄來繞過退出確認。
 
 驗證：新增真實 Hub → machine RPC → runner integration regression，舊實作回 `outside_workspace_roots` 且 `cleanedUp:false`；修正後 `cleanedUp:true`、預留 session 已 archived、stop 回 already_gone、沒有 child 或被拒絕的目錄。完整 serial runner integration：15 passed、1 skipped，測試所屬程序清理 audit 通過。
+
+## 現場修復：卡住的 row 補 tombstone（2026-11-12 驗證）
+
+`unknown` 卡死時的操作復原：把該 session id append 進
+`<home>/.hapi/runner.state.json.verified-exits.json`（先備份），再重啟 runner 讓它重新載入，
+`stopRunnerSession` 才會改判 `already_gone`、hub 也才能 archive。
+
+重啟本身**不構成**修復：只補一筆就重啟時，另一筆沒補的照樣每 5 秒被重試。
+重啟也不會斷掉 session（`hapi runner --help` 寫 `sessions stay alive`，launchd
+`AbandonProcessGroup=true`／systemd `KillMode=process`；實測同一個 session 撐過兩次重啟）。
+完整的排查與修復步驟見 `spawn-peer-failure-triage.md`；上游 issue #2408。
 
 ## Codex 最後 root 的首次 archive 誤報失敗
 
