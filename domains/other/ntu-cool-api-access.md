@@ -3,7 +3,7 @@ title: "NTU COOL（Canvas）API 存取與隱藏權杖 UI"
 scope: "domains/other"
 status: active
 confidence: high
-updated: 2026-11-10
+updated: 2026-11-13
 tags:
   - ntu-cool
   - canvas
@@ -66,7 +66,7 @@ NTU 在 `https://cool.ntu.edu.tw/profile/settings` 把「已核准的整合」�
 
 ## 讀寫原則
 
-讀課程／檔案／公告／作業優先用 API。交作業、討論區發文、寄信、改設定須使用者明確確認。
+NTU COOL 的預設順序：先試現有授權的 API；API 回 401、不可用或沒有該功能，再用 Codex 內建瀏覽器。不要因本頁保留 Brave 歷史做法而先開 Brave；外部瀏覽器僅在使用者指定或授權時使用。繳交前核對課程、作業、附件與是否已有回執；使用者明確要求這次繳交後，確認資料即可直接送出，不重問。討論區發文、寄信、改設定也須明確授權。
 
 不想動權杖時，可在內建瀏覽器已登入的 COOL 分頁用頁面 JS `fetch('/api/v1/...', {headers:{Accept:'application/json'}})`，靠同源 cookie 認證；回應前綴有 `while(1);`，要先去掉才能 `JSON.parse`。
 

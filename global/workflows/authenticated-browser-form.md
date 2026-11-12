@@ -3,7 +3,7 @@ title: Authenticated browser form continuity and submission gates
 scope: global
 status: active
 created: 2026-09-03
-updated: 2026-11-04
+updated: 2026-11-13
 tags:
   - browser
   - forms
@@ -13,7 +13,7 @@ tags:
 
 # Browser selection
 
-預設使用 Codex 內建瀏覽器，沿用該瀏覽器已授權的登入狀態。只有使用者明確指定或授權時，才操作私人 Brave 或其他外部瀏覽器；不可自行啟動另一個 Chrome 自動化 profile 作為替代。先確認控制工具實際連接的 browser identity。若連線失敗，回報控制限制，不要重啟、清除 profile 或搬移 cookies。此偏好取代早期的通用 Brave 預設，特定任務已授權的 Chromium/CDP 例外仍有效。
+有可用的官方 API 或已連線的 connector，先用現有授權探測 API；若不可用（例如 401）、功能不足或需互動登入，第二步用 Codex 內建瀏覽器。先確認控制工具連接的是內建瀏覽器，不要先開 Brave。只有使用者明確指定或授權時才用私人 Brave 或其他外部瀏覽器；不要自行啟動另一個 Chrome profile、搬移 cookies 或清除 profile。需要登入時，先檢查內建瀏覽器是否可用既有密碼自動填寫，或是否有已授權的保管庫流程；不在對話或工具輸出顯示憑證。此順序適用於 NTU COOL 與其他已驗證的登入工作流。
 
 另一個自動化瀏覽器顯示登入頁，只能證明該 browser context 未登入，不能推論使用者日常 Brave、桌面 App 或 repository integration 已登出／停用。
 
