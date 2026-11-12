@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-11-09
+updated: 2026-11-13
 tags:
   - hapi
   - fork
@@ -290,3 +290,14 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 部署（2026-10-25）：oracle 本機裝好後 `pm2 restart hapi --no-treekill --update-env` + `pm2 save`，runner 是 `0.30.7.7`、`treekill=false`，舊 binary 上的 3 個 session 經過 idle-wait 後用 `stop-peer` 遷移；自己的 orchestrator session 留給使用者處理。oracle 刪掉沒人用的 runtime `0.30.7.5`（175 MB），`0.30.7.6` 因為自己的 session 還在用而保留。其他主機交給 Mac 的 `spawn-peer` session：mazu Hub（升級前有 DB 備份，schema 29）、mazu／cthulhu／valkyrie／zeus／Mac 的 runner 經 hub 回報都是 `0.30.7.7`，公開 Web 也已提供 `.7` 的 assets。swop 在部署期間 SSH 逾時，之後從 hub 機器清單消失，部署結果未確認。部署 session 還在做 retention 時，使用者轉而要它做效能檢查，所以其他主機的舊 session 遷移與 runtime 清理並未完成確認。
 - 從 oracle 只能部署 oracle 本身：mazu 和 cthulhu 的公開 SSH 都會逾時，其他 alias 無法解析。其餘主機一律交給 Mac 的 session。另外，`hapi machines --json` 的結果不含版本，要查版本請用 hub `/api/machines`（先用 CLI token 換 JWT），讀 `metadata.happyCliVersion`。
 - 上游 `Codex PR Review` 在 fork PR 上偶發失敗（「likely failed because of a workflow file issue」、沒貼 review），同時其他 PR 正常跑時，是暫時性的：用 `gh api -X PATCH repos/tiann/hapi/pulls/<N> -f body="<原內文加換行>"` 觸發 `edited` 事件，會在同一 head 重跑（#2346，2026-11-09）。上游的 `/swear-review` 留言不會有回應；swear01 也不能 rerun 上游 job。
+
+## 2026-11-13：v0.35.0.1 候選（base 06d9e51f5 = 官方 v0.35.0）的已驗證陷阱
+
+- 候選：分支 `release/v0.35.0.1`（`47ed36f3`），28 patches，20 carry，`REHEARSAL_OK`。不再帶 #1771（官方 #2167／#2054 已涵蓋）；`fork/session-control-skill` 的 overlay 直接 cherry-pick 到官方 main 即可（只有 `skills.ts` 和官方 DSH case 衝突）。
+- 停在 fork Actions：`gh workflow run fixtures.yml -R swear01/hapi` 又回 422 `Actions has been disabled`，`GET /actions/permissions` 卻顯示 enabled；最後一次 run 是 11/01，push 也不會觸發 Test。症狀和 10/08 那次相同，要由使用者到 GitHub 端恢復，之後再做 main force-with-lease、tag 和 Release。
+- 官方 v0.35.0 的 CLI 和 Hub 已經沒有 `stop-peer` 與 `/sessions/:id/stop`。upstream 的 runner `stop-session` 會送 SIGTERM，CLI 會以 'Hub restart' 為由把 session archive 掉，這不等於 process-only stop。所以舊 session 的遷移必須在 Hub 換版之前，用舊 CLI＋舊 Hub 執行 `stop-peer`；之後由 Web 在送訊息時自動 resume 給新 runner。
+- Hub DB：fork schema 29（V27 steered、V28 ACP cost、V29 session_read_states）可以用官方程式升到 35（31→32、32→33 會補跑 27→30 的步驟）。拿 mazu 正式 DB 的副本實測（5.2 GB）：耗時 9 分 43 秒，`quick_check=ok`，session 全數保留。唯一缺的是 `idx_messages_future_scheduled_queued`，要在 Hub migrate 後手動補 `CREATE INDEX IF NOT EXISTS`；多出來的 fork 欄位都有 default，不影響。也就是說，換版時 Hub 會停約 10 分鐘。
+- 官方 base 已正式 merge Antigravity（#1320）和 Jobs（#1424），依「官方 merge 的內容就繼承」的規則處理。#2342 會把 schema 改成 V35，和官方 V35 `session_redirects` 撞號，所以跳過。
+- 官方 `packageManager` 已經是 bun@1.4.4。workflow 的 pin 和 `tools/maintenance/tests/test_release_workflows.py` 要一起改；mazu 的 bun 1.3.14 跑 frozen install 會失敗，不能拿它當代表。
+- 在 Mac 上，官方 base 本身就有 6 個測試會失敗：opencode 的「parses ss output on linux」，以及 web 的 sessionLastSeen（3 個）和 markdown-a（2 個）。carry 造成的失敗仍然是 `vi.mock` 缺少官方新 export（`getTelegramWebApp`、`isComposerPrimaryFillHeight`），解法是 spread `importOriginal`。
+- manifest 裡 regenerate 列的 source 必須是舊 origin/main 裡的 commit；如果來源是別的分支（例如 `3efcb7ec`），要寫 `-`，否則會報 `MANIFEST_COMMIT_NOT_IN_ORIGIN_MAIN`。
