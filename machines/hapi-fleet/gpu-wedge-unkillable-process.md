@@ -20,5 +20,5 @@ updated: 2026-11-12
 - 需要 root 時用 `ssh su_<host>`（見 [[machines/hapi-fleet/system-install-via-admin]]），不要因為 swear01 沒有 sudo 就停下來等使用者。
 - root `kill -KILL` 一樣殺不掉；`sudo nvidia-smi --gpu-reset -i 0` 在 GeForce 上回 `Not Supported`。唯一解法是重開機。
 - 重開前先看 `who` 和 `ps -eo user | sort | uniq -c`，有其他使用者的 process 就先問使用者。
-- 2026-11-12 15:57 在 valkyrie 下 `sudo systemctl reboot` 後，10 分鐘以上 ping 和 SSH 都沒有回應（同網段其他主機正常），多半是關機時卡在這個殺不掉的 process。fleet 沒有 IPMI/BMC 這類遠端電源控制，只能到現場按電源強制重開。下次可以先試 `sudo systemctl reboot --force --force`，跳過 unit 的停止流程。
+- 2026-11-12 15:57 在 valkyrie 下 `sudo systemctl reboot` 後，10 分鐘以上 ping 和 SSH 都沒有回應（同網段其他主機正常），多半是關機時卡在這個殺不掉的 process。fleet 沒有 IPMI/BMC 這類遠端電源控制，只能到現場按電源強制重開。下次可以先試 `sudo systemctl reboot --force --force`，跳過 unit 的停止流程。這次是現場人工斷電後 17:16 開機，GPU 回到 `P8`、本次開機 0 個 Xid、`gpu.lock` 沒有持有者、hapi runner 自動起來。
 - 使用者規則（2026-11-12）：自己的 job 卡住太久就主動處理，不要一直排隊等 lock。
