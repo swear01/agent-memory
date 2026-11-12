@@ -111,7 +111,7 @@ BMC/PDU 的下一步驗證。
   2026-08-23 當時的 passwd/group 順序為 `files systemd nis sss`，並停用 nscd 的
   passwd/group cache。2026-10-12 因 SpyGlass 2026.03 的 snpsmem／NSS 衝突，Mazu、
   Cthulhu、Valkyrie 改為 `files nis sss systemd`；Zeus 保留 NIS-only 的
-  `files nis systemd`。Athena 送修離線，待回機同步；本次未修改 PAM 或 SSSD 快取政策。
+  `files nis systemd`。Athena 於 2026-11-12 回機後同步為 `files nis sss systemd`；本次未修改 PAM 或 SSSD 快取政策。
   四台帳號解析與 public-key SSH／sudo 已驗證，未重測密碼登入與 reboot；細節見
   [SpyGlass NSS 修復](synopsys-spyglass-linux7-compatibility.md)。
 - PAM 必須讓 `pam_sss` 同時在 auth 與 account 的 Primary block、位於
