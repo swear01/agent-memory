@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-10-26
+updated: 2026-11-12
 tags:
   - hapi
   - supervisors
@@ -31,6 +31,8 @@ Restart only the supervisor's main runner:
 - PM2: `treekill=false`
 
 Do not manually kill runner-created children. Do not use broad process matchers.
+
+2026-11-12 實測（macOS `launchctl kickstart -k`，兩次）：正在跑的那個 session 全程存活，PID 與對話都沒斷；`hapi runner --help` 也是這樣寫的（`sessions stay alive`）。所以清 runner 端卡住的狀態不需要先担心斷線，真正該担心的是區塊裡列的其他步驟。
 
 # Handoff recovery
 
