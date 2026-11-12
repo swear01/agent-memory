@@ -16,7 +16,7 @@ source_refs:
   - user-confirmed:2026-10-25
   - user-confirmed:2026-11-06
 created: 2026-08-26
-updated: 2026-11-06
+updated: 2026-11-12
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -56,6 +56,8 @@ Agents」擋掉 `spawn-peer --permission-mode bypassPermissions`。這種情況�
 `hapi set-mode <exact-session-id> auto` 成功，回覆 session 已切換為 auto。
 因此此版本開錯模式時可先用這個命令修正，不必直接 archive。這只證明
 維護版支援，不延伸宣稱上游版本已支援。
+
+2026-11-12：`set-mode` 只影響之後的工具呼叫。在 default 模式下已經送出、正在等批准的請求不會因此通過（Hub `agentState.requests` 仍有 1 筆），session 會一直顯示 `thinking: true`，卻沒有任何進度。修正方式是 `hapi abort-peer <id>` 中斷這一輪，再用 `ping-peer` 叫它繼續；之後檢查 `requests` 應為 0。最根本的還是 spawn 時就要帶 `--permission-mode auto`。
 
 ## MCP `spawn_peer` 與「Default = Manual」（2026-10-25）
 
