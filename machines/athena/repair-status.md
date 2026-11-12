@@ -1,24 +1,22 @@
 ---
-title: Athena 送修未歸還與 fleet 操作排除
+title: Athena 送修歸還與回機後狀態
 scope: machines/athena
 status: active
-updated: 2026-10-17
+updated: 2026-11-12
 ---
 
 # 目前狀態
 
-2026-10-17 使用者再次確認：Athena 已送修，至今尚未歸還。這是使用者提供的實體狀態，不需要以 SSH 重試驗證；先前在線／版本核對只作歷史證據。
+2026-10-17 至 2026-11-12 送修；2026-11-12 使用者確認修好歸還，已恢復一般 fleet 操作範圍，不再排除 SSH、探測、部署或同步。
 
-# 操作規則
+# 回機核對（2026-11-12）
 
-- 使用者明確確認歸還前，排除 SSH、ping、健康探測、重啟、升級、部署、skill／memory 同步及其他 fleet 維護；不定期探測回機、不把送修當連線故障重試。
-- fleet 作業處理其他主機，另列「Athena：送修待回機」，不得宣稱八台或實驗室五台全數完成。保留機器身分、設定、來源與待辦。
-- HAPI 控制腳本的無 target `status` 與 `all` 批次仍包含 Athena；目前改用明確的其他單機 target。指南已更新，腳本未修改。
-- mazu 更新共用 NFS source 不代表 Athena 已載入、reload 或通過驗證；其主機驗證須延後。
-- 回機後才核對 SSH／機器身分、Runner／supervisor、版本與待同步設定，再恢復 active fleet 範圍。
+- SSH 正常；hostname `athena`、LAN `192.168.1.202`、Ubuntu 26.04、kernel `7.0.0-31`（其他四台為 `7.0.0-38`，未升級，需要 sudo）。`/apps` 為 automount，`/usr/local/bin/abc` 仍在。
+- 送修期間本機 `/var/tmp` 被清空：`/var/tmp/hapi-runner/runner.env`、`/var/tmp/hapi-athena/settings.json` 與 codex／opencode／cursor 本機 state 目錄都消失，`hapi-runner.service` 卡在 `Failed to load environment files` 的 auto-restart 迴圈。NFS home 上的 unit、binary（`0.30.7.7`）與 `hapi-runner-sync` 都還在。
+- 修復：從 cthulhu 複製 `runner.env`（只改 `HAPI_HOME=/var/tmp/hapi-athena`）、從 cthulhu 的 `settings.json` 換回原 machineId `68d64dd8-4b63-4b86-956a-ae807d75b6f1`（不這樣做 runner 會註冊成新機器）、重建並從 `.nfs-seed` 種回本機 state 目錄。重啟後 active/running、KillMode=process、MainPID 等於 `runner.state.json` pid，hub 顯示該 machineId active。
+- 教訓：任何本機 `/var/tmp` 被清掉的 NAS 機器都要先重建 `runner.env` 與帶原 machineId 的 `settings.json`，再啟動 runner。
 
-# 待回機補做
+# 仍待補（需要 sudo，Athena 沒有免密碼 sudo）
 
-- [ARM memory compiler 依賴與 AWT／compiler 檢查](../hapi-fleet/eda-install-inventory.md)。
-- [SpyGlass NSS 順序與帳號解析](../hapi-fleet/synopsys-spyglass-linux7-compatibility.md)。
-- 送修期間其餘 fleet 設定、skills、memory 與版本的差異核對。
+- [ARM memory compiler 依賴](../hapi-fleet/eda-install-inventory.md)：`libxt6t64:i386`、`libxtst6:i386`、`libxp6:i386`、`multiarch-support` 皆未安裝。
+- [SpyGlass NSS 順序](../hapi-fleet/synopsys-spyglass-linux7-compatibility.md)：Athena 是 `passwd/group: files systemd nis sss`，需把 `systemd` 移到 NIS／SSSD 後方（cthulhu 為 `files nis sss systemd`）。
