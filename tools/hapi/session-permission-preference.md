@@ -16,7 +16,7 @@ source_refs:
   - user-confirmed:2026-10-25
   - user-confirmed:2026-11-06
 created: 2026-08-26
-updated: 2026-11-12
+updated: 2026-11-13
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -25,7 +25,7 @@ generated_by: openai-codex/gpt-5.6-sol
 When creating a new HAPI coding-agent session for this operator, use Auto mode
 unless the operator explicitly selects another permission mode: Claude
 `auto`, Codex `autoReview` (Codex rejects `auto`). Always pass the mode
-explicitly; an omitted mode starts Claude in `default` (Manual). Use YOLO only
+explicitly; an omitted mode starts Claude in `default` (Manual). Symptom of a missed flag on a `spawn-peer` child (2026-11-12, valkyrie): the child stays `thinking` with zero assistant messages and no file changes for 30+ min, because its first tool call waits for an approval nobody sees; archive it and respawn with `--permission-mode auto`. Also pass `hapi wait-peer --timeout <s>` for long remits; the default timeout returns `ok:false` while the child is still working. Use YOLO only
 when the operator asks for it. The permission mode changes approval handling
 only; it does not expand the requested task scope or authorize destructive
 actions.
