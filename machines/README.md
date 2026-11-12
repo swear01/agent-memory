@@ -4,4 +4,5 @@
 
 ## 目前可用性
 
-- [Athena：送修未歸還，排除 fleet 連線與維護](athena/repair-status.md)（使用者於 2026-10-17 確認；待使用者確認回機才恢復）。
+- [Athena：2026-11-12 修好歸還，已恢復一般 fleet 操作並補齊同步](athena/repair-status.md)。
+- [實驗室四台 degraded 的常駐原因與修法（logrotate、sssd 輪替、apport、gdm 殘骸）](hapi-fleet/degraded-units-cleanup-20261112.md)。
