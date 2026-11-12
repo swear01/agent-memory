@@ -2,10 +2,12 @@
 title: Agentic-IC3 重現與改良的實驗位置與目前結論
 scope: projects/agentic-ic3
 status: active
-updated: 2026-11-09
+updated: 2026-11-12
 ---
 
 # Agentic-IC3 實驗在哪裡
+
+**誰是主 session（2026-11-12 起）**：Mazu hapi session「aic3 future-work 指揮」（`0222d37e-760c-469a-9788-dd071fa57c2c`，cwd `<remote-home>/agentic-ic3-repro`）負責所有實驗排程、驗收、merge。desktop 端 session 只負責跟使用者溝通與發佈 artifact（報告 claude.ai/artifact/UJLVBPjVpgencGTWmWjjKn、主簡報 claude.ai/artifact/9jwij31TVrFFEDu2r7sQF7、論文介紹簡報 claude.ai/artifact/QDcbxUBss9A6cyS3PvtHKM），隨時可換。接手時先讀 repo 根目錄 `STATUS.md`（現況／新結果／待使用者決定／artifact 待更新），使用者的答案用 `hapi ping-peer` 轉給主 session。
 
 使用者的「LLM 在 IC3 迴圈裡提 lemma」主線是 Agentic-IC3（arXiv:2609.27162）的重現與 kernel 改良，不在 NeuroAbs 或 pono-llm。回答「跟我的研究有什麼關係」這類問題前，要先讀這裡；只讀 pono-llm／NeuroAbs 會低估進度。
 
