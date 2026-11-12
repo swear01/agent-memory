@@ -2,13 +2,19 @@
 title: CLIProxyAPI 接替自製 DeepSeek Gateway，Swear Review 繼續使用
 scope: projects/deepseek-latch-gateway
 status: active
-updated: 2026-11-04
+updated: 2026-11-12
 ---
 
 - 只有自製 deepseek-latch-gateway 封存。使用者明確糾正：Swear Review 必須繼續使用新 Gateway；先前將 Swear Review 封存／停服務是 agent 的誤解，不是使用者要求。Swear Review repo 已解除封存，Oracle swear-review／cloudflared-swear 服務已 active/enabled，本機與公開 healthz／readyz200（公開探測使用正常 User-Agent；預設 urllib UA 可能被 edge403）。
 - 改用官方 CLIProxyAPI v8.0.53，不維護自製 proxy／plugin。transfer_MAC PR80 保存模板、私人設定 renderer 與 Windows launcher；shared-skills PR56 曾誤移除 Swear，PR59 merge40498da 恢復 Swear 優先、Gemini備援與最新 head review gate。
 - 八個本機 Gateway 實例已部署並驗證：Mac、mazu、cthulhu、valkyrie、zeus swear01、su_zeus swear02、Oracle、swop。Athena 送修排除；共享 NFS 檔案變更不等於驗證 Athena。一般 localhost port35001，su_zeus35002。Oracle 是 aarch64，不能裝 amd64 binary。
-- 公開模型只有 deepseek-flash／deepseek-pro；四個同等 slot 各一把 key（OpenCode1/2、CommandCode1/2），新對話輪替，同一對話固定，失敗後重新綁定成功替代 key並冷卻。上游沒有跨供應商通用 latest alias，推出新型號仍需更新兩個官方設定 mapping，不能承諾永遠自動選到最新版本。
+- 遷移當時，公開模型只有 deepseek-flash／deepseek-pro；四個同等 slot 各一把 key（OpenCode1/2、CommandCode1/2），新對話輪替，同一對話固定，失敗後重新綁定成功替代 key並冷卻。上游沒有跨供應商通用 latest alias，推出新型號仍需更新兩個官方設定 mapping，不能承諾永遠自動選到最新版本。
+
+## 2026-11-12：Command Code 第三槽
+
+- [transfer_MAC PR #88](https://github.com/swear01/transfer_MAC/pull/88) 加入可選的 `command-code-3`，供 Flash 和 Pro 使用。這是 CLIProxyAPI 的部署設定，不是修改或重建 router 本身。Unix 由私人 keybag 的 `COMMAND_CODE_API_KEY_3` 產生設定；Windows 由既有 SYSTEM 排程讀取機器範圍的 DPAPI blob。沒配置第三槽時保留原路由與重試上限。
+- 8 個 CLIProxyAPI 實例都核對了第三槽與實際推論。第三把 key 直接打 Command Code 的 Flash／Pro 都成功；SWOP 核對 DPAPI 載入後的設定、模型清單和 Flash 推論，沒有另測 SWOP 的 Pro。Mazu 恢復連線後，用既有程序的日誌確認第三槽已出現，Flash／Pro 也成功，因此不必為了驗證而重啟忙碌的 router。
+- 若 SWOP 的公網 SSH 不通，先查 Tailscale 是否在線。使用 Tailscale 位址連線時，可用 `HostKeyAlias` 指向已信任的 SWOP 位址，保留嚴格主機金鑰驗證；先確認指紋吻合，再透過 SSH stdin 傳遞憑證，避免把 key 放進命令列或 agent 訊息。跨主機僅記錄 Vault 項目名稱與部署結果，實際 key 留在 Vault 和各機的私人設定。
 
 ## 需求邊界
 
