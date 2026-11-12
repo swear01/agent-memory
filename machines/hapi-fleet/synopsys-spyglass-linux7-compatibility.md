@@ -24,7 +24,7 @@ SpyGlass Y-2026.03 在 Mazu、Cthulhu、Valkyrie、Zeus 已保留原廠 `OPTIMIZ
 |---|---|---|
 | Mazu、Cthulhu、Valkyrie | `files nis sss systemd` | 已部署並驗證 |
 | Zeus | `files nis systemd` | 已部署並驗證，保留 NIS-only |
-| Athena | 尚未核對回機後設定 | 送修紀錄仍有效，live HAPI 離線；待回機同步，不能宣稱五台完成 |
+| Athena | `files systemd nis sss`（2026-11-12 回機核對） | 已歸還，尚未修正（需 sudo）；不能宣稱五台完成 |
 
 Oracle 的帳號來源只有 `files`，且沒有這套 SpyGlass 安裝；Mac／Windows 不適用 Linux NSS 修正。同步的是讓 `systemd` 排在原有 NIS／SSSD 後方的規則，不能把有 `sss` 的完整檔案盲目複製到 Zeus。
 
