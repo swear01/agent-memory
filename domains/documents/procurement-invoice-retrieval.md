@@ -3,7 +3,7 @@ title: 實驗室採購各電商平台的發票取得方式
 scope: domains/documents
 status: verified
 created: 2026-10-19
-updated: 2026-10-19
+updated: 2026-11-14
 tags:
   - procurement
   - invoice
@@ -18,7 +18,8 @@ tags:
 ## Yahoo 購物中心
 
 - 訂單列表：`tw.buy.yahoo.com/usertool/qryprocess.asp?hpp=qryprocess`（`/myaccount/order` 是 404）。每筆訂單有「發票」連結到 `/morder/invoice/home?orderid=<付款單號>&property=SHOPPING`，顯示發票號碼、抬頭與日期。
-- 「列印公司戶電子發票」實際請求 `/morder/invoice/print?orderid=<付款單號>&property=SHOPPING`，回傳 `Content-Disposition: attachment` 的 PDF。內建瀏覽器 pane 不存下載（請求顯示 `ERR_ABORTED`），可在已登入頁面用 `fetch(..., {credentials:'include'})` 取 bytes。
+- 優先在 Codex 內建瀏覽器開啟發票明細，點「列印公司戶電子發票」，稍等後到 `~/Downloads` 找 `CompanyInvoice-*.pdf`。2026-11-14 實測可直接下載，並用 `pdftotext -layout` 核對品項、發票號碼、統編與金額。
+- 若該次下載顯示 `ERR_ABORTED`，先確認下載資料夾是否已收到檔案。舊版環境的備用方式是從已登入的 Yahoo 頁面請求 `/morder/invoice/print?orderid=<付款單號>&property=SHOPPING` 取得 PDF。
 - **第一次列印**的證明聯標題是「電子發票證明聯」；之後每次列印都變成「電子發票證明聯(補印)」。報帳偏好無「補印」版本時，要保留第一次下載的檔案。
 - 出貨後次日才能列印公司戶發票。
 
