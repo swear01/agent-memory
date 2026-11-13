@@ -5,7 +5,7 @@ machine: SwairM5
 tags: [pmset, lid-close, clamshell, hapi, claude-code, launchd]
 status: active
 created: 2026-10-25
-updated: 2026-11-09
+updated: 2026-11-13
 ---
 
 # 結論
@@ -51,3 +51,9 @@ updated: 2026-11-09
 - root helper 每兩秒校正 `SleepDisabled`；直接執行 `pmset -a disablesleep 1` 可能當下讀到 1，幾秒後就被校正回 0。先查 `/var/log/hapi-smart-sleep.log`、watcher 的 launchd 狀態和 state 檔的新鮮度。
 - 當 watcher 未載入且既有 state 內容為 1、只是 mtime 過期，可用使用者 launchd 工作在期限內定期更新 mtime，讓現有 root helper 接手。記下原 mtime，期限到還原並移除臨時工作；若程序中斷且不再刷新，helper 會在過期後自行復原。不要與正在寫入同一個 state 的 watcher 併用。
 - 短時測試用 `pmset -g` 與 `IOPMrootDomain` 讀回啟用及恢復（1/Yes → 0/No）；同法啟動 90 分鐘工作並讀回啟用。未以實體合蓋驗證該次 90 分鐘工作。
+
+# 命令列防休眠（2026-11-13）
+
+- SwairM5 上用 `keep-awake 7200` 啟動兩小時合蓋防休眠；命令位於 `~/.local/bin/keep-awake`，參數為正整數秒數。不需開視窗、sudo 或允許「捷徑」執行 shell 指令。
+- CLI 沿用「合蓋不休眠」捷徑的心跳檔與互斥鎖，由既有 HAPI root helper 控制 `SleepDisabled`。已有手動倒數時會拒絕再啟動。
+- 已驗證 7 秒倒數讓 `SleepDisabled` 從 0 變 1 再回 0，另確認 7200 秒倒數啟動後為 1；當時自動 watcher 未載入，未實體合蓋測試。
