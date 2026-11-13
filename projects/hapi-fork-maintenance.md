@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-11-13
+updated: 2026-11-14
 tags:
   - hapi
   - fork
@@ -299,5 +299,17 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - Hub DB：fork schema 29（V27 steered、V28 ACP cost、V29 session_read_states）可以用官方程式升到 35（31→32、32→33 會補跑 27→30 的步驟）。拿 mazu 正式 DB 的副本實測（5.2 GB）：耗時 9 分 43 秒，`quick_check=ok`，session 全數保留。唯一缺的是 `idx_messages_future_scheduled_queued`，要在 Hub migrate 後手動補 `CREATE INDEX IF NOT EXISTS`；多出來的 fork 欄位都有 default，不影響。也就是說，換版時 Hub 會停約 10 分鐘。
 - 官方 base 已正式 merge Antigravity（#1320）和 Jobs（#1424），依「官方 merge 的內容就繼承」的規則處理。#2342 會把 schema 改成 V35，和官方 V35 `session_redirects` 撞號，所以跳過。
 - 官方 `packageManager` 已經是 bun@1.4.4。workflow 的 pin 和 `tools/maintenance/tests/test_release_workflows.py` 要一起改；mazu 的 bun 1.3.14 跑 frozen install 會失敗，不能拿它當代表。
-- 在 Mac 上，官方 base 本身就有 6 個測試會失敗：opencode 的「parses ss output on linux」，以及 web 的 sessionLastSeen（3 個）和 markdown-a（2 個）。carry 造成的失敗仍然是 `vi.mock` 缺少官方新 export（`getTelegramWebApp`、`isComposerPrimaryFillHeight`），解法是 spread `importOriginal`。
+- 在 Mac 的 HAPI session 裡跑測試，官方 base 會有幾個環境造成的失敗，已用 test overlay 修掉：Node 26 內建 `localStorage` 蓋掉 jsdom（vitest `execArgv` 加 `--no-experimental-webstorage`，用 `process.allowedNodeEnvironmentFlags` 判斷）、ss parser 測試沒指定 platform、macOS `/var` 對 `/private/var` 的 temp 路徑（`realpathSync`）、session 漏出的 `HAPI_INVOKED_CWD`（`vi.stubEnv`）。hub/shared/relay 用 `bun test`，不要用 vitest 跑。carry 造成的失敗仍是 `vi.mock` 缺官方新 export，解法是 spread `importOriginal`。
 - manifest 裡 regenerate 列的 source 必須是舊 origin/main 裡的 commit；如果來源是別的分支（例如 `3efcb7ec`），要寫 `-`，否則會報 `MANIFEST_COMMIT_NOT_IN_ORIGIN_MAIN`。
+
+## 2026-11-14：v0.35.0.1 發版與部署的已驗證陷阱
+
+- Actions 422 這次由使用者在 GitHub 網頁端恢復；用 API 把 Actions 關掉再打開無效。
+- 發版拖延期間官方會一直動：作者 rebase 會讓 carry 的 head 變（新 head 有最新 bot review 才能換，套回舊 base 時只留 PR 自己的 hunk；若新 head 依賴 base 之後的官方程式碼且衝突大就 defer，例如 #2035）。carry 被官方 merge 後就不在 open 集合，`pr-audit.tsv` 必須等於 open 集合，manifest 改記 `regenerate  backport-official-pr-N  -`。發版窗口中新開的個人 PR（#2432）照規則評估後 carry。
+- `main` 已經發布後再修正：rehearsal 要對 manifest 記的前一版 main，本機把 `refs/remotes/origin/main` 指回舊 SHA，並用一份停掉 `fetch origin` 那行的腳本副本跑。
+- GitHub 已下架 `macos-14` 映像（annotation：`The configuration 'macos-14-arm64-us-default' is not supported`），job 會在 0 秒內 cancelled、沒有任何 step。簽章 job 改成固定 `macos-26`。
+- Swear Review 對超大的 release diff 會逾時或一直排隊；Gemini 會審，但 finding 多半落在官方原樣或上一版就有的 fork 程式碼，要逐一用 `git diff <base> HEAD -- <file>` 確認是不是這次引入的。
+- 先推 tag 再推 main，Release 會被 release-from-main 檢查擋下；main 更新後 `gh run rerun` 即可。
+- Hub 升級實際只花 6 分 20 秒（schema 29→35），`hapi-ctl.sh update mazu` 的健康檢查會先逾時，改用自己的等待迴圈。之後補 `idx_messages_future_scheduled_queued` 只花 0.7 秒；遠端 SQL 用 `ssh mazu python3 - <<'EOF'` 從 stdin 傳，避免引號被 ssh 吃掉。
+- 在 mazu 換掉 NFS binary 會讓 cthulhu／valkyrie（以及 athena）的 runner 自己 handoff 到 systemd 外的新 runner，unit 一直重啟（Runner already running with matching version）。確認沒有 `--started-by runner` 子程序後：`systemctl --user stop hapi-runner.service; HAPI_HOME=/var/tmp/hapi-<m> hapi runner stop; systemctl --user start hapi-runner.service`。
+- 0.35 CLI 沒有 `stop-peer`、`archive-peer`；舊 session 在換 hub 前用 0.30 CLI 做 idle-wait＋`stop-peer` 遷移成功。Hub `POST /api/sessions/:id/archive` 拒絕 inactive session（`Session is inactive`），spawn 失敗留下的空白 row 只能 `DELETE /api/sessions/:id`。
