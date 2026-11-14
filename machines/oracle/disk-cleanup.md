@@ -26,4 +26,4 @@ updated: 2026-10-26
 ## 殘留程序
 
 - 2026-08-14 有一次 dsh 測試用 `nohup node_modules/.bin/dsh --profile web --patch hapi-no-web.yml --port 0 &` 在 `/tmp/dsh-runtime-test` 啟動，之後沒有 kill。它在 pm2 cgroup 底下掛了兩個多月，監聽 127.0.0.1 的隨機 port。agent 測試背景 server 時，結束前要記得 kill。
-- agent 跑 Android build 會留下 Gradle daemon（約 0.5G RSS），閒置 3 小時會自己結束，不需要處理。
+- agent 跑 Android build 會留下 Gradle daemon（約 0.5G RSS），閒置 3 小時會自己結束，不需要處理。2026-11-14 起這台已經沒有 Android SDK，Android build 改到遠端跑（見 heavy-work-goes-remote）。
