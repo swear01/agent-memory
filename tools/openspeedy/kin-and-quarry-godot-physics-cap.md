@@ -35,3 +35,12 @@ Steam 版 Kin and Quarry（App 3505770）的遊戲 log 確認使用 Godot 4.5.1�
 若在每輪倒數約 10 秒看見中央旋轉、大量粒子，Level 的 Geomancer 有六個各 100 顆、以 sin/cos 繞圈的發射器；最後一秒左右另有中央的 320 顆 MineResetParticle。只隱藏這些粒子及 Evertree 裝飾環的粒子、把 amount_ratio 設為 0，保留施法、重置和粒子節點腳本，減速後還原。screen_shake 是未被引用的設定；Block Shake 只旋轉個別方塊。本次另外在高倍率取消 Camera Auto-Pan 發起的新一天跳鏡，不覆寫玩家的存檔設定或手動鏡頭。
 
 若晃動在倒數最後 11 秒之前也持續出現，EvertreeShaderRing 更符合：它的 shader 取樣 SCREEN_UV 並以正弦波位移三個色彩通道，所以鏡頭靜止也能讓背後景物抖動；同時畫移動星點並發出 100 顆粒子。高倍率只隱藏這個 MeshInstance3D 與粒子，保留 Evertree 本體和進度。
+
+2026-11-15 後續在 Steam 正式程序，透過本機檔案信箱呼叫選擇存檔與「開始挖礦」，用同一天的兩個倒數樣本量有效倍率。移除 8,664 個礦塊空的 `_physics_process` 回呼後，25× 短樣本由約 16× 提到約 22×；倒數 41.6 秒切 10×，下一個樣本剩 27.2 秒、同一天再挖 15 塊、畫面多 56 幀，五人均移動。BlockPool 每次重生重新啟用回呼，於新挖礦日開始時對確切腳本且無 `_physics_process` 或 `_notification` 的礦塊做 `set_physics_process(false)`。隔離 A/B 在 9 Hz、4 worker 只關空回呼，25× 從 14.5× 到約 25×；SceneTree 每步中位數由 3.85 ms 降至 0.76 ms；逾八千塊的 RID space、collision layer、mask 和 shape disabled 逐一驗證不變。別用 PROCESS_MODE_DISABLED，這會影響碰撞。
+
+藍色粒子是 Evertree 光環發射器，隱藏扭曲 mesh 並關發射；背景樹和灌木另有 wind shader，令 wind_strength=0，回 1× 恢復。原來超過 15× 才關光環，降到 10× 會重現。木塊震動是獨立的 block_shake 設定；實測存檔已關。6 步 × 45 FPS / 9 Hz 約只有 30×，提高每幀補算也會降低 FPS。隔離 60× 測試四執行緒約 46–47×，Godot 預設執行緒池約 49.5×，轉深層靜態碰撞體無改善；Godot time_scale=60 與 540 真實步/秒的對照約 37–40×，目前沒理由以它替換 OpenSpeedy。
+
+Steam 40× 降到 10× 的換日確實卡死：兩份 minidump 的主執行緒均位於 Tween::step / PropertyTweener::step、_start_tweeners，起始 delta 為 2,305,843,003,392 秒，吻合 MainTimerSync 用 uint64_t 相減、再將下限設為輸入的八分之一；等 47 秒後仍追算。相容層在 process_frame 讀到異常 delta 會暫停正常節點，清掉僅用作裝飾的無限循環 Tween，下一個正常 frame 解除它自己設的暫停。用捕獲的異常值測試會略過該幀並保留有限 Tween 和既有暫停；不代表已修 OpenSpeedy 跨執行緒 QPC 競態。
+
+- [Godot 4.5.1 unsigned frame delta](https://github.com/godotengine/godot/blob/4.5.1-stable/main/main_timer_sync.cpp)
+- [Godot 4.5.1 Tween stepping](https://github.com/godotengine/godot/blob/4.5.1-stable/scene/animation/tween.cpp#L315-L409)
