@@ -88,4 +88,4 @@ Manual。
 
 ## HAPI 0.35（2026-11-14，valkyrie 實測 `0.35.0.1`）
 
-CLI 已移除 `spawn-peer`、`wait-peer`、`archive-peer`（`hapi archive-peer` 回 "Unknown command"）；派工改用 MCP 工具 `spawn_peer`（`waitForReply: true` 後結束這一輪，回覆會以新訊息送回），讀取用 `inspect_peer`，追問用 `ping_peer`。Archive／stop 改由使用者在 HAPI web app 操作，回報時列出已完成的 worker session id。`spawn_peer` 的工具說明寫預設是 yolo；依本偏好仍要明確傳 `permissionMode: "auto"`（2026-11-14 有兩個 CULS worker 沒傳而以 yolo 開出）。
+CLI 已移除 `spawn-peer`、`wait-peer`、`archive-peer`（`hapi archive-peer` 回 "Unknown command"）；派工改用 MCP 工具 `spawn_peer`（`waitForReply: true` 後結束這一輪，回覆會以新訊息送回），讀取用 `inspect_peer`，追問用 `ping_peer`。Archive 不要丟給使用者（使用者 2026-11-14 明確反對）：CLI 沒了但 hub API 還在。用 `$HAPI_HOME/settings.json` 的 `cliApiToken` 打 `POST $HAPI_API_URL/api/auth`（body `{"accessToken": ...}`）換 JWT，再 `POST /api/sessions/<id>/archive`（`authorization: Bearer <jwt>`），回 `{"ok":true}` 後 session 變 `active=false`。只 archive 自己開、已閒置的 worker。`spawn_peer` 的工具說明寫預設是 yolo；依本偏好仍要明確傳 `permissionMode: "auto"`（2026-11-14 有兩個 CULS worker 沒傳而以 yolo 開出）。
