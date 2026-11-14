@@ -16,7 +16,7 @@ source_refs:
   - user-confirmed:2026-10-25
   - user-confirmed:2026-11-06
 created: 2026-08-26
-updated: 2026-11-13
+updated: 2026-11-14
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -85,3 +85,7 @@ Manual。
 `wait-peer` 最後 timeout。不能據此說 Claude 正在長時間檢查數學，也不能直接歸檔。
 先查本次自己建立的 session 是否卡在工具核准，再依已授權的 Auto 偏好修正模式。
 不要把排除 Bash、改用 Read 當作 Auto 設定的替代品。
+
+## HAPI 0.35（2026-11-14，valkyrie 實測 `0.35.0.1`）
+
+CLI 已移除 `spawn-peer`、`wait-peer`、`archive-peer`（`hapi archive-peer` 回 "Unknown command"）；派工改用 MCP 工具 `spawn_peer`（`waitForReply: true` 後結束這一輪，回覆會以新訊息送回），讀取用 `inspect_peer`，追問用 `ping_peer`。Archive／stop 改由使用者在 HAPI web app 操作，回報時列出已完成的 worker session id。`spawn_peer` 的工具說明寫預設是 yolo；依本偏好仍要明確傳 `permissionMode: "auto"`（2026-11-14 有兩個 CULS worker 沒傳而以 yolo 開出）。
