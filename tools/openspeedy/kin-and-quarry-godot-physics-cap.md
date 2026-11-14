@@ -44,3 +44,7 @@ Steam 40× 降到 10× 的換日確實卡死：兩份 minidump 的主執行緒�
 
 - [Godot 4.5.1 unsigned frame delta](https://github.com/godotengine/godot/blob/4.5.1-stable/main/main_timer_sync.cpp)
 - [Godot 4.5.1 Tween stepping](https://github.com/godotengine/godot/blob/4.5.1-stable/scene/animation/tween.cpp#L315-L409)
+
+2026-11-15 根治降速再停擺：重現一次異常幀被 GDScript 防護攔下後，倒數與渲染仍進，後來兩天所有礦工卻在出生點完全不動。這道防護執行在 MainTimerSync 計算物理步數之後，不能修引擎已污染的計時歷史。以 OpenSpeedy 3.3.8 原碼重寫 Windows QPC detour，單一 SRWLock 同步上一筆實時間、累積虛時間、前一倍率和分數餘量，讓正常換速的 QPC 不倒退。保留共用成員在 8 位元組的 writable/shared PE section，否則位址雖一致而 DLL 跨程序設定無法傳遞。八緒擷取 4,140 萬筆、切速 2,581 次零倒退；分開程序測 1.75/25/10 讀到同樣倍率。用 Windows 使用者自己的平行安裝啟動 OpenSpeedy，保留原始系統版、沿用原設定，Steam 遊戲仍從原 App ID 啟動。正式接連四個真實挖礦日全部有六工人移動，25 設定實測 24.79，90 設定兩輪約 56.6–58.1 及 120 設定 42.8；原熱鍵在同一挖礦日 25→10，再挖 31 塊礦，畫面增 55 幀，沒有捕到異常幀。這套 QPC 修正未改所有其它 Windows 時鐘掛鉤。
+
+隔離步數對照：90 設定 24 步比 12 步有效倍率更高，但渲染常只有 21–27 FPS、每局挖礦量降低。不要從倒數推論有挖礦；記錄同天兩個礦塊計數、各工人座標、實際畫面與異常幀。原版 damage queue 每三個渲染更新才處理 50 個，完全移到物理時間消耗會令挖得更多但 FPS 約減半；有積欠時補一批也未提高速度。單純跳過畫面或縮放解析度的對照沒有穩定可部署的改善。
