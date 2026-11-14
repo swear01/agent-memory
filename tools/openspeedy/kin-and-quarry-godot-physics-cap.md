@@ -33,3 +33,5 @@ Steam 版 Kin and Quarry（App 3505770）的遊戲 log 確認使用 Godot 4.5.1�
 無滑鼠測試用 QUARRY_TEST_PROFILE 限定的 SceneTree 測試 API，只對白名單中的 BaseButton 呼叫 pressed.emit()，先驗證按鈕已啟用且可見；實測 start_day 執行真實處理器並進入挖礦。可使用 headless 的沙盒和複製的 AppData，不需切使用者焦點。OpenSpeedy 既有快捷鍵可透過 settings.json 的 gear4Shortcut/gear4Speed、gear5Shortcut/gear5Speed 儲存，程式啟動時才讀取並註冊；如果應用程式執行中寫檔，必須重新啟動才生效。
 
 若在每輪倒數約 10 秒看見中央旋轉、大量粒子，Level 的 Geomancer 有六個各 100 顆、以 sin/cos 繞圈的發射器；最後一秒左右另有中央的 320 顆 MineResetParticle。只隱藏這些粒子及 Evertree 裝飾環的粒子、把 amount_ratio 設為 0，保留施法、重置和粒子節點腳本，減速後還原。screen_shake 是未被引用的設定；Block Shake 只旋轉個別方塊。本次另外在高倍率取消 Camera Auto-Pan 發起的新一天跳鏡，不覆寫玩家的存檔設定或手動鏡頭。
+
+若晃動在倒數最後 11 秒之前也持續出現，EvertreeShaderRing 更符合：它的 shader 取樣 SCREEN_UV 並以正弦波位移三個色彩通道，所以鏡頭靜止也能讓背後景物抖動；同時畫移動星點並發出 100 顆粒子。高倍率只隱藏這個 MeshInstance3D 與粒子，保留 Evertree 本體和進度。
