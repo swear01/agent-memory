@@ -276,3 +276,7 @@ SceneTree body split 使用相同時間窗嵌套在主迴圈內，與排序及�
 實際將 stock Museum 183 張收藏卡的建構放在副本第一天開始前，兩組同樣由 Auto Mining 按原按鈕、無存檔。開始於 20 張的對照盤有 163 張在開挖後建立，等待組 183／183 才開工、挖礦中零張。Native idle `process_frame` 363→26 ms，但開工前多 0.884 秒，頭 45 遊戲秒 3.219→3.176 實秒，另有未重現的效果回呼尖峰；替代時機只適合分離冷啟動測量。真實 PCK 開啟收藏頁兩組皆不需要現建卡，普通換日不重建 Museum。
 
 全域 FTI 真實路徑 audit 的四個明確 ON 元件是 Title/Level 的 Sky3D/Skydome/MoonRender 各一，以及 Level 的 Drill 和 Inspector 各一個 SubViewport。正式遊戲與存檔均未改。下一候選只在確認是純視覺的 Sprite3D 上批次傳送 RenderingServer 座標，SceneTree 政策、粒子和 Jolt 不變；私有 native 源碼已通過語法，仍需可見畫面的 fixture 和同存檔整日 A/B。
+
+MessageQueue 原生 callable 以獨立探針每 32 筆抽一筆（不消耗遊戲 RNG），45 遊戲秒真實渲染 D9 `mailbox-jolt-profiler-0aa17d12`：423 筆中 `SpriteBase3D::_im_update` 391（估 12,512 次／51 ms），`CanvasItem::_redraw_callback` 17（估 39 ms，樣本少不可細推），`Control::_update_minimum_size` 15。這證實大量原生 callback 是每次 physics queue flush 的 Sprite mesh 重繪，與 Node3D transform 上傳不同；Godot 本有 pending flag，只合併同一次 flush。候選應只對核對過的純視覺 Sprite3D 合併到下一個可見畫面，保留 gameplay／collider／粒子的變換及查詢；舊 actor-only sprite hook 45 秒 3.44→3.48，不能引用成整局已省。這次同一採樣內 `explode` native class 全數而非抽樣，412 RigidBody3D Bomb 72.64 ms／47 Area3D 爆破手 17.05 ms，須分開找。
+
+死靈法師的發射分段在兩個真實 D9 渲染 45 秒副本都各 258 發（無 topmost perk 掃描）。四次座標更新共 1.14 ms；改成保守守衛的一次 2.44 ms（258 全接受），不採為效能修法。取池 27.68／27.96 ms、加入場景 27.15／26.37 ms（258 都重入）、取得層節點＋音效音高／開始播放＋傷害寫入 147.27／148.09 ms，是應優先拆的區段；現階段尚未量分音效子項，不要把 148 ms 全算解碼。真實 PCK/Jolt 小測五發的位置、音高抽樣、傷害、首次原生碰撞一致。正式檔未動，D9完整日目前較快組仍約 17×，尚未達到目標。
