@@ -119,3 +119,16 @@ Kin and Quarry 記憶體對照：舊礦坑的 `sonar_particles_instance` 在方�
 在一個 20 ms 渲染樣本每批約 20 ms 是腳本修改，接下來平均約 7–9 ms 到 render pre、約 13–14 ms 到 render post、約 4–5 ms 到下一批。這是 Godot 回呼區間而非 CPU/GPU 自動歸因，停 render loop 也沒有穩定縮短。把切片大小加大，單次引擎後續工作也隨之增加；主要瓶頸已是大量實際方塊、材質、碰撞套用，不是單純等畫面或算地形雜訊。若往 0.2 秒，需要改變何時提交場景工作，例如先準備下一天的材質／地形表示，保留最後一擊可能影響的掉落與切換碰撞；目前測試未改正式遊戲。
 
 獨立的理想下限診斷：在真正 100× 渲染的存檔副本保留轉場與 autosave，但故意略過全部礦坑重建，三輪約 53–61 ms 真正觸發 Start Day、93–103 ms 觀察到下一遊戲幀。此處下一天仍用舊礦坑，純量測不可部署；證明 0.2 秒不是動畫或自動腳本的下限，必須讓新礦坑在歸零前大致就緒才有機會。
+
+2026-11-16 使用者接受完全黑幕內較長幀，優先縮短黑幕。實際 OpenSpeedy 100×、Vulkan 加 autosave 的私有副本先呈現一個全黑畫格，再一次套用地形：約 396–417 ms 逐格工作、歸零到觀察到下一天開挖約 780–828 ms，尖峰 636–669 ms。145 ms 預算（三批）約 814–843 ms、尖峰 244–248 ms。AnimationPlayer finished 可能比真正 frame_post_draw 早 ~0.2 秒，不能當黑幕已退。
+
+固定種子一次重建的隔離診斷：完整對照 397 ms 逐格工作、647 ms 首次揭幕出圖；略過材質寫入（照樣抽 RNG）354/445 ms；略過碰撞寫入 382/635 ms；兩者略過 336/421 ms。材質不只當下提交，動畫結束到 frame_post_draw 還從 211→47 ms；停 draw loop 只把提交延後。原版 Block 的 ShaderMaterial 設 resource_local_to_scene；換日為所有方塊重設材質與偏移，Forward+ 將這些各別材質排入待處理佇列，故目前看不見的格子也耗時。以上略過操作會留下錯誤材質／碰撞，僅診斷。逐格抽樣約 8,451 實體 define + 968 provisional；遺物判定通常約 111–128 ms（有較高離群值），材質相關在逐格內約 80–87 ms、立即碰撞 setter 約 25–29 ms。
+
+保留遊戲行為的方案：只在重用格位、不跨幀的生成中快取當前遺物門檻和有序合格池；使用原 randf_range/Array.pick_random、原版較低稀有度回退及原池 erase。獨立 Godot 存檔資料 fixture 12 種情況 120,000 格，752 個結果的項目/稀有度、剩餘池順序、後續 RNG 逐一相同。實際 100× 渲染三輪逐格 319–355 ms、首次揭幕 frame_post_draw 547–614 ms、下一遊戲幀 663–751 ms；存檔與自動開挖成功，123 個碰撞取樣一致。最長間隔 541–599 ms，未部署。
+
+下一個材質方案：只延後真正寫入畫面外的材質，抽 RNG 仍原順序。原 Block.MeshBlock visibility_range_end=26 m，margin=1，stock Level 單相機；主執行緒 frame_pre_draw 在實際 draw 前，按當前渲染相機位置用約 ±29 m 的 Y band 保守補齊（最多約 684 格），其它 rows 分批。需驗證換日移鏡、手動跳鏡、滑鼠高亮（先補該格或保留最新 tint）、不同 renderer 和中途切場景。直接全共用材質加 instance uniforms 則有 Forward+ 預設只能容納約 4,096 個幾何實例的限制，9,360 格需另設容量和 renderer 支援。
+
+- [Godot 4.5.1 材質更新佇列](https://github.com/godotengine/godot/blob/4.5.1-stable/servers/rendering/renderer_rd/storage_rd/material_storage.cpp#L2024-L2060)
+- [Godot 4.5.1 主緒 frame_pre_draw](https://github.com/godotengine/godot/blob/4.5.1-stable/servers/rendering/rendering_server_default.cpp#L390-L399)
+
+2026-11-16 天賦樹高倍速拖曳：LevelUp/level_up_camera.gd:79 和 Evertree/evertree_camera.gd:90 都用 position.lerp(new_position, pan_speed * delta)，pan_speed=2。delta 是引擎遊戲時間，不是滑鼠/畫面真實秒；>0.5 秒外插越過目標，下一幀又以新相機位置算全域游標，會跳或回拉。獨立實際 OpenSpeedy 100× 私有 DLL、遊戲相同 Camera2D 腳本（非操作桌面滑鼠），120 px 拖曳目標在正常穩定幀約 7–8 px/幀；高倍遊戲 delta 0.464–0.571，原版移 111–137 px，其中兩樣本確實超過目標。相同高倍幀傳 44–50 ms 獨立牆鐘 delta 則移 10.6–12.0 px，不外插；兩棵相機結果一致。原拖曳無放手慣性或 OS warp。箭頭與部分 poll 滾輪也含 delta，另外 event 滾輪 +0.05 原本固定。若修，使用這兩個原 script path 的 Camera2D 子類只覆寫 _process 的 delta（系統 wall、上限 0.05 s，暫停前也更新基準）；保留 _input 和定位原行為。Ascension 頁與主礦坑 Camera3D 不在此路徑。本次未部署。
