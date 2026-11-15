@@ -210,3 +210,19 @@ Godot 4.5.1 的 `Script.has_script_method()` 是 C++ 方法，沒有綁給 GDScr
 傷害 FIFO 原版每 3 個 idle frame 套用至多 50 筆，在 1× 此存檔約每 0.055 遊戲秒；高倍渲染每張畫面本身就近 1 遊戲秒，即使既有提早排程仍每 5 物理步（0.417 秒）且至少 24 筆才開始。相同的督工/死靈/方塊修正副本，候選改為每物理步在 Jolt flush 後、角色決策前最多取 50 筆，即使只排了一筆也處理，不改 FIFO 或傷害旗標；首段 45 秒，巔峰排隊 223→16，應用 1,732→2,382，expired 718→353，挖 194→247，仍落後 1× 316，實際牆鐘 4.53→4.33 秒的一對不足證明穩定加速。此為副本診斷，量到慢派送與重複打早已該挖掉的方塊有關，尚未部署。
 
 官方 4.5.1 editor console 能跑同一 PCK 的腳本 profiler，前提是 scratch 用 export 的 Steam DLL 放到 packed GDExtension 指定的 debug DLL 路徑，並備齊所有自訂 loose scripts。隔離 45 遊戲秒 script profiler 產生 3 萬多行、耗約 23.5s（release render 約 4s）：只能看方法順序，不能做原遊戲倒數 benchmark。Museum UI 雖排在很前面，但完整 UI 只在初次載入隱藏 Museum／玩家進 Evertree 時排隊，此樣本是開挖時尚未完成的 183 條收藏 UI 佇列；不能當每天換日都重建的根因。
+
+2026-11-16 同第 9 層 50 人、主攻擊時計與每物理步傷害 FIFO 已修的最高完整整日對照：三日真實倒數 10.93×／12.23×／13.16×（7.270／6.536／6.069 秒）；挖 480／464／423，死靈 311／276／276、督工 143／127／127。三次換日約 610–622 ms，12 條碰撞抽樣無誤，確實自動繼續與寫入副本存檔。速度更快的舊版本明顯漏掉行為；不能把它當作已完成 50× 的可比較基準。正式安裝未改。
+
+死靈投射物的 60 Hz 遊戲步被合併計算到 12 或 9 Hz 世界步，快到能跨過一塊方塊時才用窄 Jolt sweep 找實際 60 Hz 接觸位置，傷害仍由原 Area 回呼。真實 PackedScene fixture 第 9 層首次命中從原粗步 25.50 還原到 19.92 遊戲秒（60 Hz 19.88）；8 組地形在 9/12 Hz 都命中原第一塊，最遲一個世界步，原本空的線仍不命中，1× 完全一致。真實渲染首個 45 秒 A/B 約 4.262→4.124 秒、挖 255→246，未證實整局增益。若套 ParticleClock 必須在路徑 allowlist 加 `quarry-necro-projectile-motion.gd`，避免另一個粒子物理回呼干擾比較。
+
+普通炸彈原 4 秒引信由 idle AnimationPlayer 呼叫；初始延遲 Timer 也是 idle，兩者在長幀一起推遲和集中引爆。使用同副本只為主炸彈 `explode` 和實際 Block `body_entered` 加整體統計：45 遊戲秒控制 413 次主爆，延遲均值 1.424／最大 2.917 遊戲秒，同一物理步最多 40 顆；保留原視覺、改以另一個 AnimationPlayer 在物理跑原方法鍵的候選 452 次、0.125／0.167 秒、峰值 10 顆。兩者單顆傷害都是 188，命中回報 1,091→1,117、過期傷害 277→139、挖 235→254，整段卻從 4.075→4.619 真實秒。需做共用引信排程，切勿直接部署每顆多一個播放器的版本。
+
+新分段取樣是高優先序物理 callback→第一個 deferred sentinel→第二個→零秒 physics SceneTreeTimer→下一個同畫面的 physics_frame。64 個渲染區間平均 2.558 ms，前 0.750 ms 等先排入的 deferred，第二哨兵等待 0.008 ms、到計時器 0.153 ms、計時器到下一步 1.647 ms（含 tweens、變形、刪除、導航、Jolt、下次碰撞回報，不能全算 Jolt）。未略過遊戲工作。`render_loop_enabled=false` 在原 Vulkan 仍繪了 45 幀；Godot 4.5.1 官方主迴圈有待處理 RenderingDevice 資源就會執行 draw，不能把該次當無繪圖。真正 dummy headless 相同 45 遊戲秒 3.394 秒，原 Forward+ 4.027 秒；Mobile 4.387，OpenGL Compatibility 5.591（pre/post draw 約 33 ms），無一足以解決核心運算瓶頸。穩定鏡頭省略 HTerrain 的 LOD 重算雖在實際渲染跳過 42 次，A/B 4.027→4.211，沒有證明改快。
+
+純讀取 Windows PSS thread metadata 取樣器按精確副本路徑與正式 PID：150 ms 左右取樣，兩個樣本內副本總 CPU 約 0.96–1.00 核，最忙一條約 0.95–0.98 核；同時正式遊戲約 4.6 核。不要從啟動前單次讀值推斷活躍優先權：兩個以 Normal 啟動的副本進入採礦後實際顯示 AboveNormal，另一組手動設 AboveNormal 仍在 4.09–4.16 秒，Normal 啟動控制約 4.12–4.18 秒。PSS 試具兩個程序平均約 0.95 ms/次；系統全域 `TH32CS_SNAPTHREAD` 本機約 50 ms CPU/次，不能用來比較真實速度。
+
+共用引信候選移除原 `AnimationPlayer` 單一 `explode` method track，保留視覺與原傷害路徑，改用一個 pausable 物理 FIFO 排程。真實渲染 45 遊戲秒：570 顆出生、507 顆掛入、466 顆主爆；平均／最大晚爆 0.042／0.083 遊戲秒、單步最高 9 顆、單顆傷害仍 188，實際方塊接觸 1,208 次、挖 280，耗時 4.648 秒。比多一個 AnimationPlayer 的 4.619 秒相近，慢於漏掉部分爆炸的 4.075 秒控制；僅證明引爆時序，尚未證明是加速方案，未部署。
+
+實際 D9 副本啟用 Godot 4.5.1 內建 servers profiler，以私有連線收 Jolt `physics_3d` 封包。第一次 launcher 遺漏 `QUARRY_PROBE_EARLY_FIFO`、`QUARRY_PROBE_FREQUENT_FIFO`、`QUARRY_PROBE_PRUNE_RAYS`，沒有提早清佇列，只挖 84 塊，不能當正常負載。補齊重跑挖 246 塊（無 profiler 的 headless 控制 240），340 批佇列提前處理、剩 7 筆；558 步／49 包、QPC/實時 49.990×、真實 4.108 秒。具名工作累計 563.51 ms；`FindCollisions` 382.02 ms（0.685 ms/步、占 67.8%），位置求解 74.12、速度求解 32.04、廣相位準備 38.88 ms。`PhysicsSystem::JobFindCollisions` 同時做活躍剛體的 broad-phase 尋對和後續 narrow-phase，名字不能分離兩者。累計值可重疊，也不是主執行緒專用時間；不能用偵錯版的整段秒數評估發行版增益。
+
+相同 PCK 的 12 Hz、刻意極粗 1 FPS 引信測試中，共用排程 22 顆都爆但接觸降到 55，低於原 88 與額外 AnimationPlayer 86；12 FPS（含暫停與降速）則有 84。匹配追蹤發現共用排程早一個步，少掉命中的八顆都在外部長幀最後一步生出，下一次物理 `flush_queries` 前原 idle 視覺 `destroy()` 已能刪掉 Area；選擇下一步能避開測試中的邊界，但根治方向是至少等第一個物理接觸派送，在確定當日還有效時才延後刪除。這種漏掉一整顆爆炸的傷害不屬於可忽略的微小差異。未部署。
