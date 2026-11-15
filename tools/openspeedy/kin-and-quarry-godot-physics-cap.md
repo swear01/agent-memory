@@ -169,3 +169,11 @@ Miner 三個查詢原本對 Vector3.ZERO 呼叫 force_raycast_update，再立刻
 副本的測試注入也可能自己製造崩潰。掘土者 PackedScene 在場景中指定 `explosion: PackedScene`；在 node_added 用 set_script 換腳本會刪掉舊 GDScript instance，遺失該 export。後期自動挖礦觸發 explosive_overheat_check()，Godot 4.5.1 release 從空的 PackedScene::instantiate 接收者讀取 state，Windows 0xc0000005（該遊戲執行檔 offset 0x1d42372）。乾淨、督工版能完成採礦；單開 Digger fall 或全開會崩，與是否渲染無關。應在生成前保留完整場景資源，僅替換 units.unit_scenes["digger"] 的 PackedScene script reference。比對 stock 與 patched instantiate 的 explosion 資源相同；相同全改渲染副本跑滿 45 遊戲秒。原本已知 tree3c 貼圖 warning 同樣出現在通過的控制組。
 
 Windows 的 Ctrl+C Y/N 來自 CMD 批次檔。PowerShell 用 `& '…/Auto Mining.ps1' -Directory '…/copy/control'` 在當前 shell 連正確信箱。真實 Windows ConPTY、原 PowerShell 客戶端及模擬信箱已確認按一次返回相同 shell，送出一次 stop 並釋放兩把鎖；主機政策若擋本機腳本可用同 console 的 `powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File …`，不用改全域。副本 runner 用可中斷的短 Start-Sleep 等待，finally 只終止自己啟動的進程並還原 caller 環境；一鍵中斷測試回報零副本殘留，正式遊戲和 OpenSpeedy 繼續運作。
+
+2026-11-16 後期第 9 層、50 單位的目標是同一副本至少兩個完整採礦日約 45–55× 真實倒數。使用者明確要求效能優先：命中回報順序、極少數接觸邊界等極微小差異可以忽略，亂數序列不用相同；仍保留正常兵種行為、攻擊頻率、傷害範圍和掉落規則。單純少打或少算不能當加速成果。
+
+同一測試副本用實際 OpenSpeedy 注入交替測 45 遊戲秒：全計時掛鉤 3.60／3.72 秒，只掛 QPC 為 3.35／3.07 秒；保留 OS 等待時間有助於這份負載，無法把差異歸給單一 API。只掛 QPC 跑兩個完整渲染日實測 15.0×／16.7×，自動接續和存檔成功，地形碰撞抽樣一致，未部署。若部署 QPC-only，先驗證相容層畫面節流不再對未掛鉤的 Sleep 重複乘倍率。無畫面對照仍只有約 18×；渲染副本 viewport GPU 約 1–2 ms，物理每步的場景回呼和步間合計約 2.5–3.3 ms。步間含同步和碰撞回呼，不能全算成 Jolt。12 Hz 遊戲物理在 50× 要每真實秒完成 600 步，加上其他工作需低於 1.67 ms 每步。
+
+三個排除項：普通 Exploder 的兩種炸彈路徑均未設定 `created_by_exploder_bombs`，樣本每輪約 500–980 顆皆為 0；Bomb 原場景 layer 64、mask 1，炸彈互撞排除掃描本就未執行。第 9 層上方 4,968 個全程不啟用的空格移出物理空間，渲染跑分落在對照波動內。這份存檔的方塊受擊晃動已關，勿把每次受擊 Tween 當成本來源。死靈投射物只在發射狀態改變時切粒子的候選獨立 Jolt 場景維持碰撞、傷害、軌跡與池重用；合併停用 Explosion/Supernova 無 layer 的可被偵測狀態，全局 A/B 未見效益，未採用。
+
+用既有礦坑座標做圓角方塊與爆炸球的空間查詢：原 Jolt 幾何獨立對照 6,560 組中 6,559 組命中集合相同；單一落差在幾乎相切的極限，原生 hit 回報順序與格子順序時常不同。方塊半寬/高 0.8、shape 中心 z≈0.8608521，角落要算 Jolt 的 0.04 圓角，方形近似會明顯誤判。真正 Area 共用球半徑縮放與晚啟用仍會改變進入事件；正常的重複進入應保留。測到的是幾何吻合，未證明執行期效能。
