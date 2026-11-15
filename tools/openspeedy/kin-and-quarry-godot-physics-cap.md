@@ -2,7 +2,7 @@
 title: Kin and Quarry：高倍數 OpenSpeedy 會碰到 Godot 的物理步數上限
 scope: tools/openspeedy
 status: active
-updated: 2026-11-15
+updated: 2026-11-16
 ---
 
 Steam 版 Kin and Quarry（App 3505770）的遊戲 log 確認使用 Godot 4.5.1。OpenSpeedy 選對程序且 speedpatch64.dll 已載入。用同一天挖礦的 TIME REMAINING 與牆鐘比對：2× 設定在大小視窗都實測約 2.0×；10× 設定在最大化約 3.7×、縮小後約 3.5×。短樣本只代表當時的遊戲場景。
@@ -132,3 +132,8 @@ Kin and Quarry 記憶體對照：舊礦坑的 `sonar_particles_instance` 在方�
 - [Godot 4.5.1 主緒 frame_pre_draw](https://github.com/godotengine/godot/blob/4.5.1-stable/servers/rendering/rendering_server_default.cpp#L390-L399)
 
 2026-11-16 天賦樹高倍速拖曳：LevelUp/level_up_camera.gd:79 和 Evertree/evertree_camera.gd:90 都用 position.lerp(new_position, pan_speed * delta)，pan_speed=2。delta 是引擎遊戲時間，不是滑鼠/畫面真實秒；>0.5 秒外插越過目標，下一幀又以新相機位置算全域游標，會跳或回拉。獨立實際 OpenSpeedy 100× 私有 DLL、遊戲相同 Camera2D 腳本（非操作桌面滑鼠），120 px 拖曳目標在正常穩定幀約 7–8 px/幀；高倍遊戲 delta 0.464–0.571，原版移 111–137 px，其中兩樣本確實超過目標。相同高倍幀傳 44–50 ms 獨立牆鐘 delta 則移 10.6–12.0 px，不外插；兩棵相機結果一致。原拖曳無放手慣性或 OS warp。箭頭與部分 poll 滾輪也含 delta，另外 event 滾輪 +0.05 原本固定。若修，使用這兩個原 script path 的 Camera2D 子類只覆寫 _process 的 delta（系統 wall、上限 0.05 s，暫停前也更新基準）；保留 _input 和定位原行為。Ascension 頁與主礦坑 Camera3D 不在此路徑。本次未部署。
+2026-11-16 Steam 正式套用材質分帶與天賦樹實時間：高速一般換日同步建立原格位與碰撞，由原 Block.define 記錄各格的材質輸入，但不立刻改 ShaderMaterial；主視窗在 RenderingServer.frame_pre_draw 用實際 3D 相機高度更新需要顯示的 16 m 深度帶。原版 MeshBlock 距離上限 26 m、遲滯 1 m，取垂直 ±28 m，加整帶範圍，不改著色器或碰撞。舊日尚未顯示的設定可被新日覆寫，之後的游標高亮比重建時的白色優先。已核對 Godot 4.5.1 材質變更進 dirty queue 即使畫面外也會處理；frame_pre_draw 先於 viewports，保留實際玩家跳層、縮放。固定種子的相同新路徑（即時套用與分帶）在開始層 1、5、14 共 68 個實際渲染視角的材質參數完全一致。
+
+使用者明確不要求保留舊版亂數結果。普通換日實體格移除四次結果未被使用的暫時泥土抽樣，保留真實的地形種子、貼圖變體和遺物機率；另略過深層馬上被覆寫的淺層取樣。禁止把測試固定種子搬入正式流程。最終同存檔渲染副本以實際 OpenSpeedy 100×、自動存檔及真正 Auto Mining 跑三次，歸零到第一張揭幕 384–409 ms、到原版開始按鈕實際觸發 415–438 ms、到下一幀觀察開挖 481–521 ms；三次的 123 條抽樣射線零差異。0.2 秒目標還差約 0.18–0.21 秒，重建方塊的主迴圈本身仍約 301–321 ms。日後可針對用戶較深起始層的必然空格消掉 provisional define，需先驗證空格轉木頭／煤炭的規則。
+
+兩棵天賦樹以原版 Camera2D 的繼承腳本，在 ready 前置換、限制真實 frame delta 為 0–50 ms；動作、放手、按鍵、縮放與各自限制沿用原版。真正渲染的遊戲場景在 1× 與注入 100× 都通過，100× 原本可能每幀走超過完整拖曳距離，調整後測到約 2.0–3.4%，故意卡 65 ms 時限於目標的 10%。保持原有 Auto Mining 和 OpenSpeedy 啟動方式。
