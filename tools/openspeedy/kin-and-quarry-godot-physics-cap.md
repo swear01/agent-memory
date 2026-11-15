@@ -82,3 +82,7 @@ Kin and Quarry 記憶體對照：舊礦坑的 `sonar_particles_instance` 在方�
 2026-11-15 操作交接：Steam 正式版已套粒子、礦工邊界和傷害隊列修正；在正式存檔確認設定 200× 後切回 10×、換日再挖。依使用者要求停止獨立 Auto Mining，留遊戲在 10×；當天結束後停在下一天等待玩家開始。之後需要才手動執行 Auto Mining.cmd。工具與 OpenSpeedy 各自獨立。
 
 捷徑名稱是 OpenSpeedy (Quarry clock)，它指向使用者目錄的 OpenSpeedy。比對兩個安裝位置的五個程式與 DLL，openspeedy.exe、bridge32.exe、bridge64.exe、speedpatch32.dll 雜湊完全相同，只有 speedpatch64.dll 不同；修正版主程式原樣，以自訂時鐘掛鉤解決高倍切低倍的計時倒退。兩個安裝的主程式共用 OpenSpeedy_SingleInstance Windows mutex；任一版本已開時，啟動另一個會立即退出，這不是 Steam 擋啟動。要切原裝需先關遊戲和目前的 OpenSpeedy，再開原裝並由 Steam 開遊戲，因既有遊戲程序仍載著先前的 DLL；原裝仍可調倍率，但測過降速可能卡住。
+
+2026-11-15：Kin and Quarry 在每個挖礦日開始會挪動 Windows 滑鼠。原版 `res://cursor.gd` 進入挖礦時以 `Input.warp_mouse` 對游標加上 (200, 100)；離開挖礦或開設定時重置一次性 `initialized` 旗標。Auto Mining 只透過本機信箱呼叫原版開始按鈕，不送輸入。Steam 的 `quarry-openspeedy.gd` 在 `SceneTree.process_frame` 先設定原版游標的旗標以阻止跳位，手動與自動開始都適用。用遊戲及存檔副本跨日兩次，修正後兩次跳位分支都沒有執行，採礦游標仍顯示。Steam 遊戲需重開才會載入新的本機腳本。保留 `Auto Mining.cmd`、`Invoke-QuarryAutoMine.ps1` 和 `Invoke-QuarryControl.ps1` 在同一個交付資料夾；入口仍是 `Auto Mining.cmd`。保留 Camera Auto-Pan 偏好及現有 OpenSpeedy 倍率。
+
+同日修正倒數歸零卡頓：GUI 停止採礦後，原版 MineGenerator 在單幀回收並重建 18×520 格礦坑。相同遊戲和存檔副本，headless、引擎模擬 2×、用正式的 advance_day 跨三次，原版最長幀間隔 859–895 ms（地形提交下一幀仍可達 290–340 ms）；回收池自身約 62–67 ms。新的 `quarry-mine-rollover.gd` 沿用原版礦坑生成順序，普通跨日才逐幀分批；原轉場遮住礦坑並延後原重置回呼，直到整座礦坑就緒才允許 Start Day。分幀回收前先停用碰撞形狀以免重疊在池座標，原版 Define 為新礦坑重新啟用。實測採用回收約 4 ms、生成約 7 ms 的 CPU 分批預算，三次跨日最長間隔 73–90 ms；歸零至 Start Day 從 1.46–1.50 秒變為 2.88–2.94 秒。三次自動開工皆成功。這是 headless 主執行緒對照，並非正式 Steam 渲染的效能數據；未調整原存檔、PCK、OpenSpeedy 和 Auto Mining 的啟動方式。保留載入及手動更換起始層的原流程。
