@@ -30,6 +30,8 @@ Steam 版 Kin and Quarry（App 3505770）的遊戲 log 確認使用 Godot 4.5.1�
 
 2026-11-15 用 GitHub 官方 OpenSpeedy 3.3.19 免安裝檔的 64 位元 speedpatch，在隔離程序中以八執行緒讀 QPC、約每 3 ms 反覆切換 25×/10×：切換 2,637 次，7,798 萬筆內倒退 12,550 次，最壞倒退約 267 ms 遊戲時間。同一壓測用修正版副本，切換 2,624 次、3,998 萬筆零倒退。兩顆 DLL 都只在隔離程序載入，不開另一個 OpenSpeedy UI，不改當前遊戲或安裝。這證明 3.3.19 仍有 QPC 倒退；壓測頻率不代表正常遊玩時的卡死機率。
 
+OpenSpeedy 上游歷史：[Issue #36](https://github.com/game1024/OpenSpeedy/issues/36#issuecomment-2937167818) 與 [#71](https://github.com/game1024/OpenSpeedy/issues/71) 回報的是取消勾選加速後時間倒退、卡死，列入 [v1.7.3-pre](https://github.com/game1024/OpenSpeedy/releases/tag/v1.7.3-pre) 修正。[2026-07-17 的 6c67f1847](https://github.com/game1024/OpenSpeedy/commit/6c67f1847fd1834c6b1b638b30646c58f9b83435) 另修換速時的計時競態，將各基準欄位改成 atomic；多欄位與倍率仍未作為一組讀寫。截至 2026-11-15，主分支的 speedpatch.cpp 與上述已實測出倒退的 3.3.19 相同，查閱公開 issue、PR 和 issue 留言沒有找到仍保持注入、25×/10× 切換的 QPC 倒退重現報告。若要回報，引用舊修正並附不需遊戲或存檔的多執行緒測試。
+
 同一五礦工存檔在 1280×720、前向 Vulkan、請求 25× 的採礦對照：原畫面約 21–22 FPS，關日月陰影約 21 FPS（GPU primitive 與 draw call 約減半），單關粒子約 21.5 FPS，隱藏局部燈約 23 FPS。圖形效果會影響渲染負載，但當時主要限速並非它。高倍率自動關 Level 的陰影與泛光，回 10× 還原；不刪節點或停用劇情／挖礦腳本。在 2× 以上把單幀補算限制為 6 步，避免掉幀時一口氣補算二十步又擠掉下幀，速度不足時讓實際倒數自行降速。25× → 10× 測試應跨過至少一次場景分日，分開報告換日短暫停頓與是否恢復。
 
 無滑鼠測試用 QUARRY_TEST_PROFILE 限定的 SceneTree 測試 API，只對白名單中的 BaseButton 呼叫 pressed.emit()，先驗證按鈕已啟用且可見；實測 start_day 執行真實處理器並進入挖礦。可使用 headless 的沙盒和複製的 AppData，不需切使用者焦點。OpenSpeedy 既有快捷鍵可透過 settings.json 的 gear4Shortcut/gear4Speed、gear5Shortcut/gear5Speed 儲存，程式啟動時才讀取並註冊；如果應用程式執行中寫檔，必須重新啟動才生效。
