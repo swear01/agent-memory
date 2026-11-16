@@ -32,7 +32,7 @@ tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-m
 ## 登入狀態（2026-10-29）
 
 - agy 只在 Mac（swairM5）登入；mazu、cthulhu、zeus 沒有。
-- cursor-agent 各機都沒登入，spawn 回 HTTP 502；要使用者 `agent login`。
+- cursor-agent：2026-11-17 起各機已重新登入並驗證（舊 token 失效時 spawn 會回 HTTP 502；重登見 cursor-login-nfs-shared-device-flow）。
 - grok 只裝在 Mac 且未登入（`grok login`）。
 - dsh 在 mazu 沒有 `DEEPSEEK_API_KEY`（`dsh --profile headless` 回 MISSING_CREDENTIAL）。使用者 2026-10-30 決定不用 dsh；DeepSeek 改用 OpenCode：`--agent opencode --model deepseek/deepseek-v4-pro --permission-mode yolo`（Mac 與 mazu 的 opencode 都已綁好 DeepSeek）。
 - CLI 沒登入時 HAPI session 會無聲結束（`session_ended`）；先用 headless 一行指令測試。
