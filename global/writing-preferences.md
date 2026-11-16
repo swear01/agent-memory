@@ -2,11 +2,12 @@
 title: "文章與研究報告的寫作偏好：清楚命名、程式碼比較與自然正文"
 scope: global
 status: active
-updated: 2026-09-23
+updated: 2026-11-17
 tags:
   - article-writing
   - research-report
   - writing-preferences
+  - gemini
 ---
 
 # 文章與研究報告的寫作偏好
@@ -19,3 +20,10 @@ tags:
 - 降低 AI 感要處理模糊命名、結構與重複，不只替換形容詞。保留數據的單位與計算範圍，區分完成結果、解釋、限制及下一步，不能因潤飾而誇大成果。
 
 完整規則以 `<skillshare-source>/article-writing/SKILL.md` 為準，重寫已由 `shared-skills` PR #35 合併。這份記憶保存偏好與理由，不複製整份 skill；來源追蹤的處理見 [自有 skill 的來源切換](../tools/skillshare/locally-maintained-skill.md)。
+
+## 給人讀的文字最後交給 Gemini 修訂
+
+2026-11-17，使用者明確要求記住：投影片、報告、文章等給人閱讀的文字，交付前要交給 Gemini 做最後修訂。使用者認為 Gemini 最擅長寫散文，是工作流程中重要的一環。
+
+- 交給 Gemini 前先鎖定引文、事實與數字；修訂後 Claude 要對照原稿 diff，確認這些內容沒有被改壞，再交付。
+- `GEMINI_API_KEY` 用 `vault` 取得（例如 `vault run GEMINI_API_KEY=<item> -- cmd`），不要印出或寫進檔案。
