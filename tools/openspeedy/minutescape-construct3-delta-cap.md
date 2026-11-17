@@ -20,3 +20,11 @@ Steam Minutescape（App 3327170，build 25433331，NW.js 0.100.1／Construct 3�
 最終直接套用補丁只修改 c3runtime.js：在 Dodge 對已變速的原生時間差做序列 Tick，每步不超過 25 ms、每幀最多 24 步且盡量在 8 ms 真實時間的工作預算內，最後只繪製一次。分辨 renderer-only 與兩個 clock 同加速；有可用的 WebAudio currentTime 時用它驗證真實間隔與預算。用原始倍率時間一次，不再乘全域值。保留原 _timeScale、原版 delta cap、關卡切換與暫停時的中斷。超出預算的時間不排進積壓。
 
 最終 SHA-256 29E2993AD2166413A58C905961B727955CE8DDADB73A40FFDBBEF7312B572593。無 Steam 整合的 NW.js 完整隔離遊戲，在約 63–64 個真實 gameplay callback／秒時，六程序實際注入啟用、關閉、再啟用皆成功。10× 兩輪有效 levelTime 量到 7.177×／8.122×，關閉時 1.000×；未停住或出現未處理 JS 錯誤。不要宣稱正式存檔或重場景已量到完整 10×。正式 Steam 重開驗證：載入相同修改 runtime、六程序均實際注入啟用、NAME 恢復、設定仍是 10×，視窗回應。只有 package.nw 被修改，保留原版備份；未修改存檔。
+
+
+## 遊戲內沿邊巡走
+
+同一 build 新增巡走時，只攔 Dodge 的 Player Movement 事件 #38（SID 944808599577142）的三個原生手動移動子事件；其他事件、Dodge 啟動與死亡照常。spr_player SID 971355649700802 實例使用原生 MoveTo 速度和 Tick，先向最近邊投影，再順時針走四角。場地不一定是 layout 的 1920×1080：實測初始 spr_box 牆為 200×200；以 spr_box SID 253185647818588 的 left、right、up、down 活實例中心位置計算可走矩形，再加半個角色寬高、像素邊距。這比讀固定畫面座標或無箱時都取同一矩形可靠。F8 只改本次程式的模式偏好，關閉時清掉巡走 waypoint，再放回原生滑鼠／手把事件；不開始、重開或編輯存檔。
+
+隔離完整遊戲經 Main Menu 到 Dodge 的 test-only 轉場驗證全四邊、F8 關閉後滑鼠可移到中心、再開啟、離開關卡停止；全圈測試為避隨機死亡只在隔離 fixture 停用碰撞，正式補丁保留碰撞。安裝仍只改 c3runtime.js（package.nw），SHA-256 C759BB370C0A43FA1D742409F6EFA571D4E3D1946E4A992B49A699BCF9E8BDE6。備份 package.nw.before-patrol 是原本的直接套用 OpenSpeedy 版本；測試還原不移除 OpenSpeedy 修正。Steam 重開已確認載入同一修正版與原有六程序 OpenSpeedy NAME 掛鉤，沒有寫入倍率或存檔。
+同一隔離版另以 OpenSpeedy 當時的 25× 設定、六程序原生注入，短樣本實測關卡約 19.126× 且連續巡走至少三圈；未變更共享倍率。
