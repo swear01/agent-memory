@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-05
-updated: 2026-10-12
+updated: 2026-11-19
 tags:
   - synopsys
   - spyglass
@@ -27,6 +27,8 @@ SpyGlass Y-2026.03 在 Mazu、Cthulhu、Valkyrie、Zeus 已保留原廠 `OPTIMIZ
 | Athena | `files nis sss systemd` | 2026-11-12 回機後部署；帳號解析、新 SSH／sudo 已驗證，未跑 SpyGlass 原生測試 |
 
 Oracle 的帳號來源只有 `files`，且沒有這套 SpyGlass 安裝；Mac／Windows 不適用 Linux NSS 修正。同步的是讓 `systemd` 排在原有 NIS／SSSD 後方的規則，不能把有 `sss` 的完整檔案盲目複製到 Zeus。
+
+2026-11-19 Zeus 失聯時，直接 NIS 排在 SSSD 前會先耗掉 RPC 逾時。Client 的 `files sss systemd` 候選順序仍讓中央身分來源排在 `systemd` 前面。SpyGlass 實測證據仍是上表的順序。遷移前須先通過封包 DROP 的三秒驗收，遷移後實測原生 SpyGlass 的 snpsmem 與 RTL lint。Zeus 保留上表設定。見 [NIS 復原 runbook](ubuntu-upgrade-recovery-runbook.md#2026-11-19-zeus-失聯與-nis-查詢逾時)。
 
 ## 根因與獨立重現
 
