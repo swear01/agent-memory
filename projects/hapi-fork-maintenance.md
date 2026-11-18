@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-11-14
+updated: 2026-11-18
 tags:
   - hapi
   - fork
@@ -312,4 +312,5 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 先推 tag 再推 main，Release 會被 release-from-main 檢查擋下；main 更新後 `gh run rerun` 即可。
 - Hub 升級實際只花 6 分 20 秒（schema 29→35），`hapi-ctl.sh update mazu` 的健康檢查會先逾時，改用自己的等待迴圈。之後補 `idx_messages_future_scheduled_queued` 只花 0.7 秒；遠端 SQL 用 `ssh mazu python3 - <<'EOF'` 從 stdin 傳，避免引號被 ssh 吃掉。
 - 在 mazu 換掉 NFS binary 會讓 cthulhu／valkyrie（以及 athena）的 runner 自己 handoff 到 systemd 外的新 runner，unit 一直重啟（Runner already running with matching version）。確認沒有 `--started-by runner` 子程序後：`systemctl --user stop hapi-runner.service; HAPI_HOME=/var/tmp/hapi-<m> hapi runner stop; systemctl --user start hapi-runner.service`。
+- 2026-11-18：skill 安裝器 overlay（`134047b63`，來自 `fork/session-control-skill`）已由 swear01/hapi#34 從 `main` 移除，`hapi-session-control` 改由 Skillshare 發布。下次 release rebuild 不要再 carry 這個 overlay；`origin/fork/session-control-skill` 與 `release/v0.35.0.1` 仍含它。`516201770`（spawn_peer／reply forwarding）照常 carry。
 - 0.35 CLI 沒有 `stop-peer`、`archive-peer`；舊 session 在換 hub 前用 0.30 CLI 做 idle-wait＋`stop-peer` 遷移成功。Hub `POST /api/sessions/:id/archive` 拒絕 inactive session（`Session is inactive`），spawn 失敗留下的空白 row 只能 `DELETE /api/sessions/:id`。
