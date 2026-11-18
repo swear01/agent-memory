@@ -55,3 +55,14 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 真實完整 NW.js、碰撞開啟、相同四顆 Red 子彈的 1× A/B：舊版 HP 3→1，尺寸維持 75、能量 100；新版 HP 維持 3，尺寸 75→37.5→75，最低能量約 85 並回充。獨立 OpenSpeedy 原生 100× 的逐 Tick trace 也見相同啟動、解除與回充，180 步測試彈幕期間血量不變且無未處理錯誤；這是控制彈幕驗證，不保證所有密集彈幕都不受傷。
 
 第四種橘色不是普通刷出或單純閃避所得。零橘色起步需先滿足原版前置條件，購買 `shield give orange`（100 紫色）後以 Shield 實際擋彈；`shrink give orange` 本身花 30 橘色，不能從零起步。第五種藍色的 Dodge 生成門檻為 `levelTime >= 150` 秒且存活，與 240 秒 Boss、300 秒 break box 無關。加速縮短真實等待時間，不降低這個關卡計時門檻。
+
+## 依裝備自動使用四種技能
+
+四技能版本 SHA-256 7BF4B4724051A7AACC7CFC036622A391BA3E235B078DDAF694E01074D7DC13F7；回滾 `package.nw.before-auto-skills` 是上述 1295C9AA 自動縮小版。沿用 singleLeft/singleRight 的原生按住輸入，僅自動使用目前裝備的兩種，換裝字串與 live player identity 防止沿用舊計畫。F8 控制自動移動和技能；F9 開自動刷分時同時開巡邊。原版 Upgrade #483/#489 在兩槽技能相同時清空另一槽，不需補丁支援重複裝備。
+
+- 技能字串為 `shrink`、`slow`、`shield`、`shockwave`，各有獨立充能。Slow CurrentCharge SID 990876506082785、drain 985590669122070；Shield charge 468190106749655、drain 757548987014003；Shockwave charge 955318864596436、charging timer 708128531638183、charging duration 719031418869378。
+- Shrink 仍以縮小後可通過的預測路徑為前提。Slow 保留原版 global 與玩家倍率差別；短請求自然到期，避免效果讓下一次掃描安全就立即開關。Shockwave 預設先花 1 次，持續按住 2.5 遊戲秒才清除半徑 400 內的 bullet，不能當作即時保命；附近至少三顆進入範圍的來彈才預先蓄力，已付費則持續至原版施放或合法失效。
+- Shield 是階層子物件 SID 377362559195784 的方向扇形，MoveTo maxSpeed=0 只旋轉、不移動中心。自動瞄準僅替換 #284/#285 的唯一 aiming action，跟隨來彈方向。Zap 是獨立類別，Shield 不能擋，Shockwave 不能清，仍需移動閃避。
+- 自動 held 並不重設實體滑鼠的 timeSinceClick。Shield 原版先收 drain×0.4 的預付費；若不處理，舊滑鼠計時會讓初始 0.4 秒額外持續扣款。只在原版 upfront TriggerOnce 成功的 #274/#279 記自動專屬 GetGameTime；#275/#280 唯一 ongoing drain action 在該預付窗內略過。其餘原版扣能／顯示／解除／回充照常；不寫真滑鼠計時器或充能。手動按住時不接管 aiming 或預付窗。
+
+最小驗證：85 個獨立行為案例、封包 runtime 語法、ZIP 解壓後重建同 hash、testcopy upgrade/restore 還原同 hash。真實 native 100× 的前一候選完成 12 左右排列×gap/ring/safe 共 36 案例；最後僅修正 Shield 預付窗後，重驗 Shield+Slow／Shield+Shockwave 左右交換共 8 個 ring/safe 案例。實測 upfront 恰為 12、首 0.4 遊戲秒不再重扣、之後正常扣，解除回到 100；原版 shield 擋彈／銷毀 callback、shockwave #312 完成蓄力施放均有實際記錄。碰撞保持開啟，為觀察完整效果使用 fixture HP 100，不能宣稱正常血量存活率改善或完整實速 100×。正式 Steam 安裝重開已比對載入 runtime 完全相同、六程序官方 DLL 和 enable byte 均為 1，官方共享倍率前後不變。
