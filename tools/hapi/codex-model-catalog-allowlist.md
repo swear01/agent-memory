@@ -6,7 +6,7 @@ tool: Codex app-server
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-10-28
+updated: 2026-11-19
 tags:
   - hapi
   - codex
@@ -29,6 +29,12 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 
 # Fleet policy
 
+目前可見集合為 `gpt-6.2-astra`、`gpt-6.2-sol`、`gpt-6.1-terra`、`gpt-6-luna`，預設 `gpt-6.2-sol`。Astra / Sol / Terra / Luna 四階級各自保留最新世代；唯一固定例外為 hidden `codex-auto-review`。使用者已無 Daybreak 權限，明確要求移除舊 `gpt-daybreak-blue-latest`；不能讓 updater 或下次 restore 再加回。
+
+Canonical generator 的移除政策及測試已在 [shared-skills PR #67](https://github.com/swear01/shared-skills/pull/67) 合併（`be509d3ab53cec40242a895eaaabb5ea77a6ba4e`）；transfer_MAC 的 submodule pointer、policy fixture 與復原文件見 [PR #94](https://github.com/swear01/transfer_MAC/pull/94)。Renderer 保留既有 `model`，此次部署另外用 renderer 的 `update_toml_value` 設定新預設，不改既有聊天。
+
+## 2026-10-27 historical rollout
+
 每個獨立 home 都要保留 canonical allowlist，並讓 `model_catalog_json` 指向該 host 的絕對路徑。更新 catalog 後先比較各 host 檔案內容，再實際呼叫 app-server `model/list` 或 HAPI machine Codex-models API，比對可見 ID。
 
 2026-10-27 Mac、mazu、cthulhu、valkyrie、zeus、oracle 的新 app-server `model/list` 驗證的可見集合為：
@@ -46,6 +52,10 @@ HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效�
 歷史：2026-09-30 曾完成八台 6.1 Sol catalog／HAPI 預設驗證，並把預設改為 Sol；該次在線與版本狀態只屬當日快照，不代表本次八台均已完成。
 
 # Client-version gate
+
+2026-11-19 本機同帳號比較：CLI `0.165.0` 的 live catalog 不含 6.2；升到 `0.170.0` 後出現 `gpt-6.2-astra` / `gpt-6.2-sol`，兩個 entry 的 `minimal_client_version` 都是 `0.166.0`。不可只更新 allowlist generator 卻沿用舊 CLI 查詢版本，也不可複製舊模型 metadata 改 slug。
+
+本機桌面 app 位於 `/Applications/ChatGPT.app`（bundle ID `com.openai.codex`），版本 `26.1111.21308`，內含 CLI `0.169.0-alpha.11.1`；該內建 app-server 已實測可見最新四項、預設 6.2 Sol、auto-review 隱藏且無 Daybreak。同一桌面 app 內建執行程序另以 `gpt-6.2-sol` 完成一次真實推論，精確回覆 `SOL62_OK`；此證據不代表每台或 Astra 都做過推論。全域 CLI 與桌面 app 內建 CLI 是不同版本；不要從 `/Applications/Codex.app` 不存在推斷未安裝。重新開啟 app 才載入新目錄，原聊天仍保留自己的模型。
 
 2026-09-30 在同一台 Mac、同一帳號實測：CLI `0.157.1` 連 live endpoint 只取得 10 個模型，沒有 `gpt-6.1-sol`；升至 `0.159.2` 後取得 11 個模型，出現 6.1 Sol。這是已驗證的版本比較，尚未測出最早支援版本。只重跑舊 CLI 的 updater 不會解決此問題，也不能因公開 API 文件列出模型就假設該 client 的帳號 catalog 已提供。
 
