@@ -80,3 +80,9 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 同日使用者要求找回誤按 Remove 的檔案。唯讀 Defender 紀錄確認正式安裝目錄 bridge64.exe 的 ThreatStatusID=8，而 events-native 測試副本為 7 且檔案仍存在，兩者不能混認。從 [官方 3.3.20 發行頁](https://github.com/game1024/OpenSpeedy/releases/tag/3.3.20) 重新取得 `OpenSpeedy-3.3.20-portable-signed.zip`，核對 GitHub asset SHA-256 `0C9BBC0F305583AAB264723EA5E6B8764CB3B41B718F02C5ECD561479C3CBF0E`；其中五個交付檔均驗得有效 SignPath Foundation Authenticode 簽章。bridge64.exe SHA-256 `75EC196D60DD51DBCFDF50E197976E749E14A6E0C062B64926C5977ACD5B9F64`。官方 README 的未簽署誤判概述不能代替對實際發行檔的驗證。
 
 一般權限寫入 Program Files 被 ACL 拒絕；使用者親自接受 UAC 後，以重新驗簽、核對 SHA 並拒絕覆寫既有目標的最小複製操作，補回正式 bridge64.exe。最後唯讀核對檔案存在、雜湊正確、簽章 Valid；未調整防毒設定或排除項，未修改遊戲封包及存檔。執行 bridge 讀倍率的後續驗證被工具自動審查拒絕（僅回 blocked by policy），不重試執行；最後觀察六個遊戲程序仍無 speedpatch64.dll，不能把檔案找回宣稱為原生加速恢復。
+
+## OpenSpeedy 留在背景時無法再次顯示
+
+同日後續「打不開」另有已核對根因：舊實例仍活、沒有可取得的可見主視窗；多次啟動日誌皆寫 `second instance exiting (window stays hidden)`。3.3.20 [main.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/main.rs#L13-L23) 固定單一實例 mutex，第二份直接退出，不喚回舊視窗。[useTray.ts](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src/hooks/useTray.ts#L29-L70) 的托盤左鍵才執行 unminimize/show/setFocus；X 預設 hideToTray，托盤 Quit 才 destroy。不能把再次點開無反應直接判作啟動崩潰或防毒又刪檔。
+
+補回磁碟 bridge 也不會讓舊實例重生已退出的子程序：[lib.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/lib.rs#L35-L104) 只在 setup ensure_bridges 啟動，已有 child collection 就略過。當次備份 settings.json／process.json 後，核對完整路徑並結束原 OpenSpeedy 和其擁有的 bridge32，正常開啟原本已安裝的 GUI；新日誌 startup complete、bridge64/32 ready，兩個元件與主程序均存活，前景 UI B64/B32 均綠色、倍率仍 25。兩份設定與備份 SHA 完全一致，未編輯程式或防毒設定。此結果證明 GUI 及橋接連線恢復，沒有另外量測正式遊戲實速，不能稱滿速 100×。
