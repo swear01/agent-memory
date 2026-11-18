@@ -86,3 +86,7 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 同日後續「打不開」另有已核對根因：舊實例仍活、沒有可取得的可見主視窗；多次啟動日誌皆寫 `second instance exiting (window stays hidden)`。3.3.20 [main.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/main.rs#L13-L23) 固定單一實例 mutex，第二份直接退出，不喚回舊視窗。[useTray.ts](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src/hooks/useTray.ts#L29-L70) 的托盤左鍵才執行 unminimize/show/setFocus；X 預設 hideToTray，托盤 Quit 才 destroy。不能把再次點開無反應直接判作啟動崩潰或防毒又刪檔。
 
 補回磁碟 bridge 也不會讓舊實例重生已退出的子程序：[lib.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/lib.rs#L35-L104) 只在 setup ensure_bridges 啟動，已有 child collection 就略過。當次備份 settings.json／process.json 後，核對完整路徑並結束原 OpenSpeedy 和其擁有的 bridge32，正常開啟原本已安裝的 GUI；新日誌 startup complete、bridge64/32 ready，兩個元件與主程序均存活，前景 UI B64/B32 均綠色、倍率仍 25。兩份設定與備份 SHA 完全一致，未編輯程式或防毒設定。此結果證明 GUI 及橋接連線恢復，沒有另外量測正式遊戲實速，不能稱滿速 100×。
+
+後續在正式遊戲（同一 7441E4DB 封包）做倍率對照。由 1× 換到 25× 後，畫面與彈幕停在 02:04，切回 1× 後同一局繼續至 02:10。尚未取得卡住瞬間的執行期時鐘。以相同 scheduler 獨立重現：冷啟動、兩個原生時鐘皆 25×、每 300 ms 一個 callback、音訊時鐘停住時，六次 Tick／繪製合計推進 0 ms，沒有建立校準；先以正常音訊暖機或讓音訊以真實速率前進則持續有步進。每次 7500 ms 的原始間隔落入未校準的 6000 ms 重設門檻。這確認前版測試未涵蓋的缺陷，未證實為正式卡住的唯一根因。
+
+使用者後續把驗收倍率指定為 OpenSpeedy 5×。讀到 GUI 保存倍率 5、正式遊戲主程序載入安裝目錄的 speedpatch64.dll，畫面觀察同一關卡從 04:09 前進至 04:29、角色與彈幕更新，之後回到升級介面的 Market。這是已存在補丁下的短段正式遊玩驗收，未另行量測滑鼠輸入延遲或絕對實速；該輪未改遊戲封包或倍率。
