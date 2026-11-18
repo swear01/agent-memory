@@ -5,7 +5,7 @@ project: hapi
 status: active
 confidence: high
 created: 2026-08-23
-updated: 2026-10-12
+updated: 2026-11-19
 tags:
   - ubuntu
   - release-upgrade
@@ -160,3 +160,31 @@ BMC/PDU 的下一步驗證。
   SSSD restart、集中 NIS 密碼、本機管理密碼、已 warm 的集中公鑰、Mazu 七天離線快取、
   delayed AppArmor denial、failed units、`dpkg --audit` 與 HAPI supervisor ownership
   全部通過。測試 NIS canary、四台 cache 與 NAS 測試 home 都已清除。
+
+# 2026-11-19 Zeus 失聯與 NIS 查詢逾時
+
+- Zeus 同時是機群唯一的 NIS master 與 dashboard nginx。重開後，Zeus 公網 SSH
+  連不上，從 utux 同網段直連也沒有 ARP 回應。其他主機的 TCP/22 仍通。復原時
+  分別驗證主控台、NIS 綁定、實際 SSH 登入與 dashboard HTTP。
+- `files nis sss systemd` 先走直接 NIS RPC，SSSD 已有快取時仍可能卡住。
+  這次 Mazu、Valkyrie、Cthulhu 的中央 SSH 約 130 秒被中斷。utux 本機帳號
+  通過公鑰驗證，SSH 命令總共約 142 秒才完成。即使帳號在本機，補充群組與登入
+  階段仍可能查到 NIS。
+- SSSD 2.12 的 proxy/NIS 身分查詢是同步呼叫。Ubuntu 26.04 的 libnsl 1.3.0
+  對單次 RPC 使用固定 25 秒逾時，且可能重試。SSSD 收到 `UNAVAIL` 才標記離線。
+  `offline_timeout` 控制離線後重試，`entry_cache_timeout` 與
+  `entry_cache_nowait_percentage` 控制快取更新時機，domain `timeout` 是程序
+  watchdog 間隔，這些設定均無法為首次 NIS RPC
+  設 1–3 秒上限。`files sss systemd` 可避開直接查 NIS 的路徑，仍需解決 proxy
+  對相同 RPC 的等待。Zeus 保留 `files nis systemd`，七天 PAM 快取政策照舊。
+- 中斷期間在 utux 用私有 mount namespace 對照，只將 passwd/group 改成
+  `files sss systemd`。本機 `id -G` 從 5.093 秒降到 19 毫秒，已快取的中央帳號
+  `id -G` 為 16 毫秒，本機 sudo 為 28 毫秒。utux 已有 proxy/NIS SSSD。正式檔案
+  與 PAM 保持原狀，這次尚未驗證新 SSH、線上資料、過期帳號及恢復重綁。
+- 驗收先在一台 client 保留本機管理連線並備份兩份設定。確認 NIS 正常時能取到
+  線上資料，再暫時 DROP 往 Zeus LAN 的封包，測冷查詢、已暖及過期的帳號快取、
+  新 SSH 與 sudo。首次和後續查詢都需符合三秒目標。解除 DROP 後確認 `ypwhich`
+  與實際線上資料恢復。停 ypbind 只能驗證快速 `UNAVAIL`，無法代表封包黑洞。
+- 來源見 [libnsl 1.3.0 RPC](https://github.com/thkukuk/libnsl/blob/v1.3.0/src/do_ypcall.c)、
+  [SSSD 2.12.0 proxy](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_id.c)
+  與 [Ubuntu SSSD 設定手冊](https://manpages.ubuntu.com/manpages/resolute/man5/sssd.conf.5.html)。
