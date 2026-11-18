@@ -83,6 +83,6 @@ HAPI AGY session rows and transcripts are independent of local AGY authenticatio
 
 `hapi-session-control` 不由 Skillshare 發布：HAPI 安裝器把它寫進各 Agent 的技能目錄（帶 `.hapi-managed`），正式版本是 `<HAPI_HOME>/runtime/<version>/skills/hapi-session-control/SKILL.md`。0.35 版改用 MCP `spawn_peer`／`ping_peer`／`inspect_peer`；`wait-peer`、`archive-peer`、`stop-peer`、`abort-peer`、`delete-peer` 已移除，見 [[peer-cli-0-35-command-changes]]。父 Agent 仍要在收完結果後清理自建子 session，等待失敗時也要清理。（舊紀錄：0.30 fork 時以 PR #1771 的 skill 為準，流程是 `spawn-peer` → `wait-peer` → `archive-peer`。）
 
-Grok 不需要 Skillshare target：Grok 本身就讀 `~/.claude/skills` 和 `~/.agents/skills`（claude 與 universal target 已寫入）。2026-11-18 試加 `grok` target 後，`skillshare doctor` 立刻警告重複路徑並建議移除。`skillshare target remove` 會把原本的連結轉成實體複本留在 `~/.grok/skills`，這些複本會遮住共用版本、之後變舊；移除 target 後要比對內容並移走。`~/.grok/skills` 應保持空的，舊的 HAPI-managed `hapi-session-control` 曾在這裡遮住新版，讓 Grok session 照舊指令執行 `archive-peer`。
+Grok 不需要 Skillshare target：Grok 本身就讀 `~/.claude/skills` 和 `~/.agents/skills`（claude 與 universal target 已寫入）。2026-11-18 試加 `grok` target 後，`skillshare doctor` 立刻警告重複路徑並建議移除。`skillshare target remove` 會把原本的連結轉成實體複本留在 `~/.grok/skills`，這些複本會遮住共用版本、之後變舊；移除 target 後要比對內容並移走。`~/.grok/skills` 平常只會有 HAPI 寫入的 `hapi-session-control`（見 [[peer-cli-0-35-command-changes]]）。
 
 PR 文件、共享來源、Agent target 及已安裝 HAPI 版本是四個不同層次。文件同步不能當作 binary 已升級；發布 shared-skills 也不能當作每台機器已 pull。遠端無法連線時明確列出未驗證範圍。更新記憶後刷新本機 QMD 並查詢驗證。
