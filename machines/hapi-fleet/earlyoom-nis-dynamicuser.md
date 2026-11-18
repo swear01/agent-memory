@@ -4,7 +4,7 @@ scope: machines/hapi-fleet
 tags: [earlyoom, systemd, nis, oom, fleet]
 status: active
 created: 2026-11-04
-updated: 2026-11-12
+updated: 2026-11-19
 ---
 
 2026-11-04 經使用者同意，用 `su_<host>` + `sudo -n` 在 valkyrie、cthulhu、mazu、zeus 裝 earlyoom，並停用 systemd-oomd。起因是 valkyrie 記憶體耗盡整台卡死，systemd-oomd 沒擋住。athena 於 2026-11-12 回機後補裝，設定相同。
@@ -15,3 +15,5 @@ updated: 2026-11-12
 - 驗證：`/proc/$(systemctl show -p MainPID --value earlyoom)/cmdline` 要是 `/usr/bin/earlyoom ...`，journal 有 `mem avail:` 行。
 - 2026-11-12 新發現：`user@.service` 對 `systemd-oomd.service` 有 Wants+After。NSS 把 `systemd` 放最後時，oomd 啟動也會卡住（推論同為 sandbox 內查 NIS，未用 strace 確認），每個新 user manager 要等 oomd 90 秒逾時，SSH 登入約 2 分鐘（Athena 實測）。只 `disable` 不夠，因為 Wants 仍會把它拉起來。
 - 處理（使用者同意）：athena、mazu、cthulhu、valkyrie 都 `apt-get remove systemd-oomd`（只移除它本身；gnome-settings-daemon、ubuntu-desktop 只是 Recommends），並保留 `systemctl mask systemd-oomd.service systemd-oomd.socket`，防止日後 desktop meta-package 又裝回來。四台 SSH 登入 0.3–0.5 秒，earlyoom active。zeus 本來就沒裝這個套件。
+
+- 2026-11-19：utux（有 NIS）在套件同步時新裝了 earlyoom，結果同樣卡在 `(earlyoom)`，而且握著 `/etc/.pwd.lock` 不放，導致其他套件的 `groupadd` 報 `cannot lock /etc/group`（glances postinst exit 82）。用 `lslocks` 可以看到是 `(earlyoom)` 持有鎖。套用同一個 drop-in，並移除＋mask systemd-oomd 後，`dpkg --configure -a` 就恢復正常。往後在 NIS 主機裝 earlyoom，要先放好 drop-in 再安裝。
