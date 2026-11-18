@@ -23,7 +23,7 @@ tags:
 # 修法（已套用）
 
 - `sudo systemctl --global disable snap.firmware-updater.firmware-notifier.timer`，再對已登入使用者 `systemctl --user stop` timer 與 service。
-- 已套用：Cthulhu、Valkyrie、Athena。Mazu、Zeus 沒裝 firmware-updater。utux 是單一使用者機器，改用 `systemctl --user mask` 在 utux 帳號關掉（不需要 sudo）。
+- 已套用：Cthulhu、Valkyrie、Athena。Mazu、Zeus 沒裝 firmware-updater。utux 是單一使用者機器，改用 `systemctl --user mask` 在 utux 帳號關掉（不需要 sudo）；2026-11-19 也已用 `sudo systemctl --global disable` 關掉全域 timer（utux 帳號有 NOPASSWD sudo）。
 - 免密 sudo 的作法：Cthulhu 等機器靠 `/etc/sudoers.d/swear02-nopasswd`（`swear02 ALL=(ALL) NOPASSWD: ALL`），`dvlab-admin` 只給 `%admin` 需要密碼的 sudo。utux 有接 NIS（domain `ee.ntu.edu.tw`，swear02 在 admin 群組），但 `/home` 不是 NFS，swear02 沒有 home 和 key，所以無法用 key 登入。
 - `snap stop --disable --users=all firmware-updater.firmware-notifier` 在多使用者機器上會因 per-user agent 逾時失敗，不要用。
 - snap refresh 後要確認 `/etc/systemd/user/timers.target.wants/` 裡沒有 firmware-notifier timer。
