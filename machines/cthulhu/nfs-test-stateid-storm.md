@@ -3,7 +3,7 @@ title: cthulhu NFS 卡頓：NFSv4.1 client 的 TEST_STATEID 風暴（kernel 7.0.
 scope: machines/cthulhu
 machine: cthulhu
 status: fixed by Ubuntu kernel 7.0.0-43; fleet reboot 2026-11-19 09:30 pending verification
-updated: 2026-11-18
+updated: 2026-11-19
 tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 ---
 
@@ -17,11 +17,11 @@ tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 
 2026-11-18 一開始自編了 -38 用的 `nfsv4.ko`，加上開機保護，後來發現 -43 已經修好，就全部移除了。升級時要注意：
 - 機群都關掉了自動更新，所以各台 kernel 版本會不一樣，看各自上次手動 apt 是什麼時候。
-- `apt full-upgrade` 裝了新 kernel，但**沒有幫 DKMS 的 `nvidia-srv` 編新版**（cthulhu 就發生過），重開前一定要確認 `modinfo -k <kver> -n nvidia` 找得到。2026-11-19 起 cthulhu、zeus、valkyrie 也和 mazu 一樣改用 Canonical 預編的 `linux-modules-nvidia-580-server-generic`（移除 `nvidia-dkms-580-server`、解除 nvidia 的 apt hold），新 kernel 會自動帶對應模組。
+- `apt full-upgrade` 裝了新 kernel，但**沒有幫 DKMS 的 `nvidia-srv` 編新版**（cthulhu 就發生過），重開前一定要確認 `modinfo -k <kver> -n nvidia` 找得到。2026-11-19 起全部改用 Canonical 預編模組，新 kernel 會自動帶對應模組；驅動版本見 [[machines/hapi-fleet/ubuntu-gpu-maintenance-plan]]。
 - zeus、valkyrie、mazu 的 apt 清單太舊，要先 `apt-get update`，才看得到新 kernel。
 
 **NAS 端**：DSM 的 NFS 設定介面和 API 都沒有關 delegation 的選項。只能 SSH 進 NAS 執行 `echo 0 > /proc/sys/fs/leases-enable`，但不持久，而且影響所有 client，所以不建議。
 
-狀態：cthulhu、zeus、valkyrie、mazu 連同 athena 都用 `shutdown -r` 排在 2026-11-19 09:30 重開（不等使用者的工作；原本 08:00 的 reboot-when-idle timer 已移除）。重開後用 `/proc/self/mountstats` 確認 TEST_STATEID 降到接近 0。
+狀態：cthulhu、zeus、valkyrie、mazu、athena（utux 也會排進來）都用 `shutdown -r` 排在 2026-11-19 09:30 重開（不等使用者的工作；原本 08:00 的 reboot-when-idle timer 已移除）。重開後用 `/proc/self/mountstats` 確認 TEST_STATEID 降到接近 0。
 
 相關：[[machines/cthulhu/shared-nfs-home]]、[[machines/hapi-fleet/system-install-via-admin]]
