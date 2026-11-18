@@ -90,3 +90,15 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 後續在正式遊戲（同一 7441E4DB 封包）做倍率對照。由 1× 換到 25× 後，畫面與彈幕停在 02:04，切回 1× 後同一局繼續至 02:10。尚未取得卡住瞬間的執行期時鐘。以相同 scheduler 獨立重現：冷啟動、兩個原生時鐘皆 25×、每 300 ms 一個 callback、音訊時鐘停住時，六次 Tick／繪製合計推進 0 ms，沒有建立校準；先以正常音訊暖機或讓音訊以真實速率前進則持續有步進。每次 7500 ms 的原始間隔落入未校準的 6000 ms 重設門檻。這確認前版測試未涵蓋的缺陷，未證實為正式卡住的唯一根因。
 
 使用者後續把驗收倍率指定為 OpenSpeedy 5×。讀到 GUI 保存倍率 5、正式遊戲主程序載入安裝目錄的 speedpatch64.dll，畫面觀察同一關卡從 04:09 前進至 04:29、角色與彈幕更新，之後回到升級介面的 Market。這是已存在補丁下的短段正式遊玩驗收，未另行量測滑鼠輸入延遲或絕對實速；該輪未改遊戲封包或倍率。
+
+## 正式存檔、背景步進與挑戰資源
+
+後續實速驗收證明 GUI 5× 與 enable byte=1 仍不等於玩法 5×：Broken L.A.B. 同局走 12 顯示秒需約 9.38 真實秒。音訊 `currentTime` 在正式遊戲有時和已變速 perf 同斜率，舊版依 WebAudio 判斷會降回單步。新版在 3–15× 從 OpenSpeedy 設定讀預算提示，只有正向、相容形狀且 <=500 ms 的原生間隔才啟用該提示。遊戲 dt 一直來自原生時間差，沒有用設定值乘時間。使用 `GetWallTime` 與外部 CLI Stopwatch 比較，另記 levelTime 和原版受擊 timeScale。10× 的 Stuck 前景取樣約 9.77–9.88× 基礎模擬，原生 perf 約 10×。
+
+背景需同時處理 Construct 啟動隱藏暫停、後續 visibility change 與 Chromium 不再發 rAF。`minutescape_background.js` 只在桌面 NW.js vsync 背景採單一 bounded timeout，等步進完成才排下一個，略過渲染；保留明確 suspension 與 context loss，切換 mode 清空計時基準與 `_dt1`。封包 manifest 套用遊戲範圍的背景旗標。正式 10× 普通 Dodge 持續回報 focused=false、background=true，從 0.56 到 299.59 關卡秒的 19.58 真實秒內，基礎模擬 9.953×、原生 perf 9.996×，到 300.027 原版勝利。這次樣本為失焦而仍 visible，不能等同真機最小化測試。
+
+`minutescape_patrol_challenges.js` 使用八段切角巡走及共用的切角閃躲範圍；遇擁擠選安全餘裕較多的短期逃離目標，每次掃描重新驗證。原版 Red/Purple/Blue 基礎傷害 1/2/5；第一順位完全避碰，無全避選項才用紫藍碰撞數優先。Purple 以實際速度和 `25° × bulletSpeed / 400` 轉向限制逐段預測。Blue stage 1 仍追瞄，stage>=2 且未加速才讀 #182 SID 935658439976762 的 native scheduled wait `_time` 及對應 SOL；倒數過後使用 `bulletSpeed*2.5`，已發射則以實際 `_dx/_dy` 為準。沒有改寫原版 wait。
+
+Stuck 的原版零速度曾讓技能規劃提前返回。新版原地預測，可施放但不送玩家 MoveTo。Broken L.A.B. (`noAbilities`) 額外擋掉殘留自動計畫。Shield 的 90% 用 `shieldMaxCharge` 乘原版 Broken L.A.B. 獎勵；普通紅彈只有躲不掉且近滿才開，紫藍保留優先，Fragile 紅彈可致命。用 native upfront 付款的 0.4 遊戲秒區間避免重扣；縮短預判開盾區間，過後釋放才依原版回充。震波不直接充盾，成對裝備時在護盾低量或難覆蓋多方向才依實際蓄力準備。Stuck 血量健康時保留震波給後段藍彈，紫彈只在血量較低、盾不足才動用。正式 10×、Shield/Wave、碰撞開啟：Stuck 1:18→3:23→3:54.804，標準結算移速 1.431273；Fragile 0:18→2:44→4:22.783，標準結算生命 1.592296。Stuck 3:23 局在 110–150 秒間用掉多數震波；保留版在 157 秒仍約 6.5 發且接近滿血。不能從這些樣本承諾每局。Dodge 原版 levelTime 在 300 秒封頂，並非十分鐘模式。
+
+使用者要求正式存檔、CLI、禁止控制桌面滑鼠。接下來的 production 測試透過有效 session marker 讓 `minutescape_challenge_cli.js` 只呼叫原版 Play / Challenge / Simulate / 結算事件，沒有任意 eval、網路監聽或寫入紀錄/數值。以 app `Init` 回報握手再於真實 Tick 消費，否則沒有 rAF 時即無任何回報。測試結束移走 marker。最終安裝 SHA `05DEA2D09A39B056C1EF4E2C7F66A67BA49D0CFFEF5B496EA53C8FC2A78DCF8C`，保留 `package.nw.before-story-cli`（eea5abf3 起首）及正式 IndexedDB/Local Storage 備份。OpenSpeedy 倍率保留使用者選的 10×；驗證既有 85 技能案例、模式規則、四側切角、藍彈階段、加速與背景排程、封包 CRC/語法與 ZIP 解壓重建相同 hash。
