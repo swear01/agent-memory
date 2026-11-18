@@ -5,7 +5,7 @@ project: hapi
 status: active
 confidence: high
 created: 2026-08-22
-updated: 2026-10-26
+updated: 2026-11-19
 tags:
   - ubuntu
   - nvidia
@@ -15,6 +15,8 @@ tags:
 ---
 
 # 已確認決策
+
+- 2026-11-18：使用者指示全面更新；snap hold 已解除、五台 apt full-upgrade 到 kernel `7.0.0-43`（NVIDIA 驅動仍 hold），排程 2026-11-19 09:30 重開。firmware-notifier 重啟迴圈的修法見 [[machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118]]。
 
 - Zeus 使用老舊 Supermicro `X10DAI`，BIOS `2.0`（2016）；使用者明確決定不更新 BIOS。
 - 2026-10-22：Mazu、Cthulhu、Valkyrie、Zeus 已 full-upgrade 到 `26.04.1`、kernel `7.0.0-38`（NVIDIA/CUDA/container toolkit 以 apt-mark hold 保留不動）；Mazu、Cthulhu、Zeus 已重開驗證，Valkyrie 因長工作待重開，見 [[machines/mazu/home-automount-boot-hang-2026-10-22]]。
