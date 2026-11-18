@@ -16,7 +16,7 @@ source_refs:
   - user-confirmed:2026-10-25
   - user-confirmed:2026-11-06
 created: 2026-08-26
-updated: 2026-11-14
+updated: 2026-11-18
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
@@ -25,7 +25,7 @@ generated_by: openai-codex/gpt-5.6-sol
 When creating a new HAPI coding-agent session for this operator, use Auto mode
 unless the operator explicitly selects another permission mode: Claude
 `auto`, Codex `autoReview` (Codex rejects `auto`). Always pass the mode
-explicitly; an omitted mode starts Claude in `default` (Manual). Symptom of a missed flag on a `spawn-peer` child (2026-11-12, valkyrie): the child stays `thinking` with zero assistant messages and no file changes for 30+ min, because its first tool call waits for an approval nobody sees; archive it and respawn with `--permission-mode auto`. Also pass `hapi wait-peer --timeout <s>` for long remits; the default timeout returns `ok:false` while the child is still working. Use YOLO only
+explicitly; an omitted mode starts Claude in `default` (Manual). Symptom of a missed flag on a `spawn-peer` child (2026-11-12, valkyrie): the child stays `thinking` with zero assistant messages and no file changes for 30+ min, because its first tool call waits for an approval nobody sees; archive it and respawn with `--permission-mode auto`. (0.30.x only: long remits also needed `hapi wait-peer --timeout <s>`; 0.35 has no `wait-peer`, see [[peer-cli-0-35-command-changes]].) Use YOLO only
 when the operator asks for it. The permission mode changes approval handling
 only; it does not expand the requested task scope or authorize destructive
 actions.
@@ -57,7 +57,7 @@ Agents」擋掉 `spawn-peer --permission-mode bypassPermissions`。這種情況�
 因此此版本開錯模式時可先用這個命令修正，不必直接 archive。這只證明
 維護版支援，不延伸宣稱上游版本已支援。
 
-2026-11-12：`set-mode` 只影響之後的工具呼叫。在 default 模式下已經送出、正在等批准的請求不會因此通過（Hub `agentState.requests` 仍有 1 筆），session 會一直顯示 `thinking: true`，卻沒有任何進度。修正方式是 `hapi abort-peer <id>` 中斷這一輪，再用 `ping-peer` 叫它繼續；之後檢查 `requests` 應為 0。最根本的還是 spawn 時就要帶 `--permission-mode auto`。
+2026-11-12：`set-mode` 只影響之後的工具呼叫。在 default 模式下已經送出、正在等批准的請求不會因此通過（Hub `agentState.requests` 仍有 1 筆），session 會一直顯示 `thinking: true`，卻沒有任何進度。修正方式是中斷這一輪（0.30.x 用 `hapi abort-peer <id>`；0.35 沒有這個指令，改從 Web UI 中斷），再用 `ping-peer` 叫它繼續；之後檢查 `requests` 應為 0。最根本的還是 spawn 時就要帶 `--permission-mode auto`。
 
 ## MCP `spawn_peer` 與「Default = Manual」（2026-10-25）
 
@@ -82,10 +82,10 @@ Manual。
 
 本次教訓：漏傳旗標會以 `default`（Manual）啟動，Claude 幾秒內已產生 Bash
 工具呼叫，卻停在 permission request；HAPI `inspect-peer` 只顯示 `thinking=true`，
-`wait-peer` 最後 timeout。不能據此說 Claude 正在長時間檢查數學，也不能直接歸檔。
+（0.30.x 的）`wait-peer` 最後 timeout。不能據此說 Claude 正在長時間檢查數學，也不能直接歸檔。
 先查本次自己建立的 session 是否卡在工具核准，再依已授權的 Auto 偏好修正模式。
 不要把排除 Bash、改用 Read 當作 Auto 設定的替代品。
 
 ## HAPI 0.35（2026-11-14，valkyrie 實測 `0.35.0.1`）
 
-CLI 已移除 `spawn-peer`、`wait-peer`、`archive-peer`（`hapi archive-peer` 回 "Unknown command"）；派工改用 MCP 工具 `spawn_peer`（`waitForReply: true` 後結束這一輪，回覆會以新訊息送回），讀取用 `inspect_peer`，追問用 `ping_peer`。Archive 不要丟給使用者（使用者 2026-11-14 明確反對）：CLI 沒了但 hub API 還在。用 `$HAPI_HOME/settings.json` 的 `cliApiToken` 打 `POST $HAPI_API_URL/api/auth`（body `{"accessToken": ...}`）換 JWT，再 `POST /api/sessions/<id>/archive`（`authorization: Bearer <jwt>`），回 `{"ok":true}` 後 session 變 `active=false`。只 archive 自己開、已閒置的 worker。`spawn_peer` 的工具說明寫預設是 yolo；依本偏好仍要明確傳 `permissionMode: "auto"`（2026-11-14 有兩個 CULS worker 沒傳而以 yolo 開出）。
+CLI 已移除 `wait-peer`、`archive-peer`、`stop-peer`、`abort-peer`、`delete-peer`（回 "Unknown command"）。`spawn-peer` 其實還在，只是 `hapi --help` 沒列（2026-11-18 更正；對照表見 [[peer-cli-0-35-command-changes]]）。在 session 內派工優先用 MCP 工具 `spawn_peer`（`waitForReply: true` 後結束這一輪，回覆會以新訊息送回），讀取用 `inspect_peer`，追問用 `ping_peer`。Archive 不要丟給使用者（使用者 2026-11-14 明確反對）：CLI 沒了但 hub API 還在。用 `$HAPI_HOME/settings.json` 的 `cliApiToken` 打 `POST $HAPI_API_URL/api/auth`（body `{"accessToken": ...}`）換 JWT，再 `POST /api/sessions/<id>/archive`（`authorization: Bearer <jwt>`），回 `{"ok":true}` 後 session 變 `active=false`。只 archive 自己開、已閒置的 worker。`spawn_peer` 的工具說明寫預設是 yolo；依本偏好仍要明確傳 `permissionMode: "auto"`（2026-11-14 有兩個 CULS worker 沒傳而以 yolo 開出）。

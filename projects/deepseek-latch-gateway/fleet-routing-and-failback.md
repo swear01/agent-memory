@@ -5,7 +5,7 @@ project: deepseek-latch-gateway
 tool: Bun/systemd/launchd/Windows-Task-Scheduler
 status: active
 created: 2026-08-25
-updated: 2026-10-30
+updated: 2026-11-18
 tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias, openrouter]
 ---
 
@@ -34,7 +34,7 @@ alias 到 `deepseek-flash`／`deepseek-pro`；`-fast`、`-vision-exp`、無關�
 swop 未部署（不在 HAPI，Mac 經 `Host swop` SSH timeout），Athena 送修排除。回復點
 `deepseek-gateway.bak-20261025-gw3`（Mac 為 `*.bak-20261025-gw2`）。部署腳本在 mazu
 `~/.cache/gw-deploy/`（`convert.ts`、`verify.sh`、`remit-*.md`）。Gotchas：HAPI peer 要
-`--permission-mode bypassPermissions`、`wait-peer --timeout 3300`，否則卡在第一個權限提示；
+`--permission-mode bypassPermissions`、`wait-peer --timeout 3300`（0.30.x；0.35 已無 `wait-peer`），否則卡在第一個權限提示；
 `verify.sh` 須相容 macOS bash 3.2（不可在 `"$(…)"` 內用 `'$$'` 拼引號）。
 
 # 部署不變量
@@ -472,7 +472,7 @@ github.com 22/443 暫時拒絕時，可用 `ssh://git@ssh.github.com:443/<owner>
   補做時把 binary 與 config 一起換：mazu `~/.cache/gw-deploy/convert.ts`（在 repo checkout 內用 bun 跑）與
   `verify.sh PORT` 保留著。
 - HAPI 派 Claude peer 做部署必須帶 `--permission-mode bypassPermissions`，否則 peer 停在第一個權限提示、
-  `wait-peer` 只會 timeout（預設 timeout 很短，要加 `--timeout 3300`）。`inspect-peer` 只顯示完成的訊息。
+  `wait-peer` 只會 timeout（0.30.x 預設 timeout 很短，要加 `--timeout 3300`；0.35 已無 `wait-peer`）。`inspect-peer` 只顯示完成的訊息。
 
 # 2026-10-29 Command Code 事故後 key 全面撤銷與 fleet 輪替
 

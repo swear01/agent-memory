@@ -9,7 +9,7 @@ evidence: >-
   上游 PR/issue、release audit TSV、hub DB sessions metadata、runner log，
   以及 `agy --output-format=json models` 與 `agy -p` 的實際輸出。
 created: 2026-09-20
-updated: 2026-10-30
+updated: 2026-11-18
 tags:
   - antigravity
   - agy
@@ -180,9 +180,10 @@ tags:
   `docs/guide/agents.md` 明講 "no HAPI injection"）。因此 agy session 沒有
   `hapi_change_title`、`display_image/video/media`、`skill_lookup`、
   `ping_peer`/`inspect_peer`/`spawn_peer` 這些其他 flavor 有的工具；標題改由
-  agy 原生 conversation title 同步（#1476），session 控制改用 fork carry 的
-  `hapi-session-runtime` skill（安裝在
-  `~/.gemini/antigravity-cli/skills/hapi-session-runtime`）。
+  agy 原生 conversation title 同步（#1476），session 控制原本靠 fork carry 的
+  `hapi-session-runtime` skill，已在 2026-11-17／18 移除（它教的 `archive-peer` 等指令在 0.35 不存在）。
+  現在 HAPI 安裝的是 `~/.gemini/antigravity-cli/skills/hapi-session-control`，但 0.35 版只寫 MCP 工具；
+  若 agy 仍沒有注入 HAPI MCP，agy 只能用 CLI `hapi spawn-peer`／`ping-peer`／`inspect-peer`（見 [[peer-cli-0-35-command-changes]]）。
 - agy 的權限沒有 hook bridge：用 agy 自己的 `settings.json` allow/deny 規則
   （`request-review`）或 `--dangerously-skip-permissions`
   （`always-proceed`）；沒有 allow rule 的 tool call（含 MCP）會被 agy 自動

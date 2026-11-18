@@ -7,7 +7,7 @@ status: active
 confidence: high
 evidence: Successful target sync, nested-skill naming fix, explicit migration precedence, and separate MCP workflow; legacy overlap remains a verification caveat.
 created: 2026-08-18
-updated: 2026-09-25
+updated: 2026-11-18
 tags:
   - skillshare
   - skills
@@ -81,6 +81,8 @@ HAPI AGY session rows and transcripts are independent of local AGY authenticatio
 
 所有已由 Skillshare 管理的 Agent 技能都應連到正式來源；不能只修 Claude，也不能保留同名的獨立舊副本。先以 `skillshare status --json` 找出每台 active source 與 targets，逐一檢查連結及內容。`sync` 的 `local` 計數代表仍有獨立項目；先比對、備份，再將正式來源已有的同名副本改為符號連結。沒有正式來源的獨有技能要先審查導入，不能直接刪除。不要移動 Skillshare manifest 或 plugin 自有技能。
 
-HAPI PR #1771 的 `cli/skills/hapi-session-control/SKILL.md` 是該功能的正式指引。以 PR 最新提交比對，而非以舊的全域副本反推功能缺失。CLI 流程為 `spawn-peer` → `wait-peer` → `archive-peer`；父 Agent 負責收集結果後清理自建子 session，等待失敗時也要清理。`abort-peer` 中斷回合、`stop-peer` 停止程序、`archive-peer` 停止並歸檔；舊的 `stop-peer --archive` 語法不適用。CLI 操作不需要 MCP。
+`hapi-session-control` 不由 Skillshare 發布：HAPI 安裝器把它寫進各 Agent 的技能目錄（帶 `.hapi-managed`），正式版本是 `<HAPI_HOME>/runtime/<version>/skills/hapi-session-control/SKILL.md`。0.35 版改用 MCP `spawn_peer`／`ping_peer`／`inspect_peer`；`wait-peer`、`archive-peer`、`stop-peer`、`abort-peer`、`delete-peer` 已移除，見 [[peer-cli-0-35-command-changes]]。父 Agent 仍要在收完結果後清理自建子 session，等待失敗時也要清理。（舊紀錄：0.30 fork 時以 PR #1771 的 skill 為準，流程是 `spawn-peer` → `wait-peer` → `archive-peer`。）
+
+Grok 不需要 Skillshare target：Grok 本身就讀 `~/.claude/skills` 和 `~/.agents/skills`（claude 與 universal target 已寫入）。2026-11-18 試加 `grok` target 後，`skillshare doctor` 立刻警告重複路徑並建議移除。`skillshare target remove` 會把原本的連結轉成實體複本留在 `~/.grok/skills`，這些複本會遮住共用版本、之後變舊；移除 target 後要比對內容並移走。`~/.grok/skills` 應保持空的，舊的 HAPI-managed `hapi-session-control` 曾在這裡遮住新版，讓 Grok session 照舊指令執行 `archive-peer`。
 
 PR 文件、共享來源、Agent target 及已安裝 HAPI 版本是四個不同層次。文件同步不能當作 binary 已升級；發布 shared-skills 也不能當作每台機器已 pull。遠端無法連線時明確列出未驗證範圍。更新記憶後刷新本機 QMD 並查詢驗證。

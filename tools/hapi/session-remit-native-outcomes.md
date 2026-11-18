@@ -2,8 +2,10 @@
 title: HAPI remit 結果必須依 native terminal outcome 判定
 scope: tools/hapi
 status: verified
-updated: 2026-11-11
+updated: 2026-11-18
 ---
+
+> 這裡的 `wait-peer` 規則針對 0.30.x 維護版（PR #1771）。0.35 已無 `wait-peer`（見 [[peer-cli-0-35-command-changes]]）；「不能只看 thinking=false 判定成功」的原則仍適用於輪詢 `inspect-peer`。
 
 `Session.thinking === false` 不是成功證據：heartbeat expiry、abort、native error 都可能清除 thinking。`wait-peer` 必須在該 remit 的訊息視窗找到明確 native success；部分 prose 加 idle 不能回傳 completed。`ready` 也不是成功事件，部分 launcher 在失敗後仍會發送。
 
