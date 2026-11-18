@@ -2,7 +2,7 @@
 title: Minutescape：OpenSpeedy 的兩種影格時鐘與 Construct 3 步進修正
 scope: tools/openspeedy
 status: active
-updated: 2026-11-18
+updated: 2026-11-19
 ---
 
 Steam Minutescape（App 3327170，build 25433331，NW.js 0.100.1／Construct 3）搭配 OpenSpeedy 3.3.20。已驗證 stock package.nw SHA-256 BE9F864E19141B337B2F43CD1E4F54A7632BACDA5BB310E86850A986AAF43119。DLL 載入和 OpenSpeedy.<pid> mapping byte 1 只證明原生加速開啟；到 OpenSpeedy 安裝目錄執行 bridge64.exe GETSPEED 的 stdout 可確認共享倍率，不能代替玩法量測。CLI ISENABLED／STATUS 不是可靠的程序啟用查詢。
@@ -66,3 +66,13 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 - 自動 held 並不重設實體滑鼠的 timeSinceClick。Shield 原版先收 drain×0.4 的預付費；若不處理，舊滑鼠計時會讓初始 0.4 秒額外持續扣款。只在原版 upfront TriggerOnce 成功的 #274/#279 記自動專屬 GetGameTime；#275/#280 唯一 ongoing drain action 在該預付窗內略過。其餘原版扣能／顯示／解除／回充照常；不寫真滑鼠計時器或充能。手動按住時不接管 aiming 或預付窗。
 
 最小驗證：85 個獨立行為案例、封包 runtime 語法、ZIP 解壓後重建同 hash、testcopy upgrade/restore 還原同 hash。真實 native 100× 的前一候選完成 12 左右排列×gap/ring/safe 共 36 案例；最後僅修正 Shield 預付窗後，重驗 Shield+Slow／Shield+Shockwave 左右交換共 8 個 ring/safe 案例。實測 upfront 恰為 12、首 0.4 遊戲秒不再重扣、之後正常扣，解除回到 100；原版 shield 擋彈／銷毀 callback、shockwave #312 完成蓄力施放均有實際記錄。碰撞保持開啟，為觀察完整效果使用 fixture HP 100，不能宣稱正常血量存活率改善或完整實速 100×。正式 Steam 安裝重開已比對載入 runtime 完全相同、六程序官方 DLL 和 enable byte 均為 1，官方共享倍率前後不變。
+
+## 慢畫格後的時鐘恢復
+
+2026-11-19 修正版封包 SHA-256 7441E4DB3B349084D2BDDF559FF8AEA29287D56E28782907DD9B81D54975BBE7；`package.nw.before-clock-recovery` 為上述四技能 7BF4B472 版。新增 `minutescape_speed_resilient.js`、`minutescape_recovery_packager.py`、安裝器 `-ClockRecovery` 與對應 ZIP／說明；技能策略不變。正式安裝前正常關閉並備份存檔，重開後比對載入 runtime 與驗證封包完全相同，主選單正常顯示。
+
+舊版原始時鐘間隔超過 6000 ms 會清空 dt、clock kind 和倍率校準。控制測試在 100×、61/75 ms 真實畫格或 25×、300 ms 畫格反覆歸零，完整遊戲副本也重現。新版保留有效校準，優先依可信 WebAudio／原生倍率推算真實時間；85–500 ms 中等慢畫格第一次保守略過，相同 clock/layout 連續第二次允許有上限的步進；連續穩定樣本可重新校準倍率。真正長暫停仍不追補積壓，保留 stock dt cap、約 11 ms 真實預算與每畫面一次 Render。沒有可用 audio 或先前校準的冷啟動仍採保守判斷。
+
+最小驗證：30 個恢復案例、35 個獨立邊界案例及原有時鐘測試通過；封包語法、ZIP 重建、testcopy 升級／回滾 hash 一致。完整遊戲使用明確標記的合成一致 perf/rAF 倍率與真實影格間隔下限，保持碰撞和原技能流程；25×／300 ms 暖啟動舊版停在約 5.983 遊戲秒，新版八秒觀察到 17.893 秒；單次 1.25 秒真暫停首幀不推進，後續恢復，無未處理錯誤。這批不能稱作原生 OpenSpeedy 100× 驗證。
+
+本次原生測試受另一外部條件阻擋：官方與獨立複本 bridge64.exe 均回 WinError 225，之後官方 bridge64.exe 路徑已不存在；OpenSpeedy GUI B64 紅色錯誤、正式重開的六程序皆無 DLL／enable mapping，選取主程序顯示 Not Injected。官方 GUI 倍率仍為 25×。未還原或重建被攔截的二進位、未更動防毒設定；不能因為修正版載入且視窗回應就宣稱原生加速已恢復。
