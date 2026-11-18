@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-11-12
+updated: 2026-11-18
 tags:
   - hapi
   - supervisors
@@ -153,9 +153,9 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
 
 # 升級後的舊 session 遷移（2026-10-24 起為常設規則）
 
-- 使用者要求每次升版都把仍跑舊 binary 的 session 移到新版，並直接刪掉舊版。做法：從 `--started-by runner` 程序的 cmdline 取得完整 `--hapi-session-id`。等 `hapi inspect-peer` 間隔一分鐘的兩次檢查都是 `active=true`、`thinking=false`，再執行 `hapi stop-peer`，這是 process-only stop，不 archive。下次從 Web 送訊息時，Hub 會以新版 binary 和 `claude --resume` 接回同一段對話。最後才重做 holder 檢查並刪除舊 runtime。
+- 使用者要求每次升版都把仍跑舊 binary 的 session 移到新版，並直接刪掉舊版。做法：從 `--started-by runner` 程序的 cmdline 取得完整 `--hapi-session-id`。等 `hapi inspect-peer` 間隔一分鐘的兩次檢查都是 `active=true`、`thinking=false`，再執行 `hapi stop-peer`，這是 process-only stop，不 archive。**0.35 起沒有 `stop-peer`，也沒有任何不 archive 的停止方式**：舊 session 只能等它自己變 inactive，再由 Web 送訊息時以新版 resume（見 `hapi` skill 的 `references/upgrade.md`）；不要為了釋放 runtime 而硬殺或 archive。下次從 Web 送訊息時，Hub 會以新版 binary 和 `claude --resume` 接回同一段對話。最後才重做 holder 檢查並刪除舊 runtime。
 - Binary 用 `mv` 原子替換後，舊 session 的 `/proc/<pid>/exe` 會顯示 `(deleted)`（NFS 上則是 `.nfs*`），可以用這點找出所有舊版 session。這些 session 仍可能隨時使用舊版的 `runtime/<old>/tools`，所以遷移前不能刪那個 runtime。
-- Agent 在未經使用者授權時對使用者 session 執行 `stop-peer`，會被 Claude Code auto-mode classifier 以 Interfere With Workloads 拒絕。使用者明確授權後，等 session 閒置才停的背景腳本就被允許。
+- （0.30.x）Agent 在未經使用者授權時對使用者 session 執行 `stop-peer`，會被 Claude Code auto-mode classifier 以 Interfere With Workloads 拒絕。使用者明確授權後，等 session 閒置才停的背景腳本就被允許。
 - 2026-10-24 在 oracle 發現 11 個 2026-08-15 漏掉的 vitest 子程序（`bun …/cli/src/index.ts claude --started-by runner`），PPID 都是 1。它們的 `HAPI_HOME=/tmp/hapi-test-*` 已不存在，連的是已經沒有 listener 的 `127.0.0.1:<port>`，env 帶 `VITEST=true`，合計約 850 MB RSS。逐一核對 env、PPID 並確認沒有 TCP 連線後，以 exact PID 送 TERM 清除。
 
 # 舊 binary 的 Mac session 一重啟 Claude 就 exit 126（2026-10-26）
@@ -170,4 +170,4 @@ same-version 分支；installed binary／probe unknown 的歸因仍未解。合�
   - 調查陷阱：zsh 的 `log` 是內建指令，要用 `/usr/bin/log show`。`kTCCServiceDeveloperTool` 和 `ListenEvent` 的 deny 是 syspolicyd 等的 preflight 雜訊，跟這次無關。
 - 結論：在 Mac 上，舊 binary 的 session 在換版後一段時間內還能用，但遲早會失去對 `~/Documents` 的存取，包括 stow 進去的 `~/.local/bin/claude`、`~/.ssh/config` 和 skills。之後只要需要重啟 Claude child，或讀到這些檔案就會失敗。Linux 沒有這個問題。切換 model 或 mode、遇到 crash 需要 respawn 時，就可能一直卡在 126，這時換回原 model 也沒用。
 - 根本預防（2026-10-26，transfer_MAC PR #71）：`scripts/stow-link.sh` 改用 Stow `--ignore` 排除 `.local/bin/claude`，再把它複製成實體檔，不再 symlink 進 `~/Documents`。這樣即使是舊 inode 的 session，重啟 Claude 也不會碰到 Documents。`~/.ssh/config` 和 skills 仍然在 Documents 裡，所以 Mac 換版後還是要盡快遷移舊 session。修改 repo 裡的 launcher 後要重跑 `stow-link.sh`。
-- 修法（已驗證）：等舊 process 停掉（或在授權下 `hapi stop-peer <id>`），然後執行 `hapi ping-peer <id> --message-file -`。inactive session 會先自動 resume（JSON 回 `"resumed":true`），由 runner 用新 binary 加 `claude --resume` 接回原對話，再把訊息送進去；被丟掉的訊息要手動重送。驗證方式：新 log 沒有 `launch error`、有 `stream message #`，`inspect-peer` 看得到 agent 回覆。
+- 修法（0.30.x 已驗證）：等舊 process 停掉（或在授權下 `hapi stop-peer <id>`），然後執行 `hapi ping-peer <id> --message-file -`。inactive session 會先自動 resume（JSON 回 `"resumed":true`），由 runner 用新 binary 加 `claude --resume` 接回原對話，再把訊息送進去；被丟掉的訊息要手動重送。0.35 沒有 `stop-peer`，而且 `ping-peer` 對 inactive session 會拒絕（exit 5），要加 `--wake` 才會 resume。驗證方式：新 log 沒有 `launch error`、有 `stream message #`，`inspect-peer` 看得到 agent 回覆。

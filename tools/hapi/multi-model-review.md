@@ -3,7 +3,7 @@ title: 用 HAPI 派多個模型做程式審查
 scope: tools/hapi
 tool: hapi spawn-peer
 status: active
-updated: 2026-11-06
+updated: 2026-11-18
 tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-mode]
 ---
 
@@ -39,10 +39,12 @@ tags: [hapi, review, codex, claude, agy, gemini, cursor, grok, dsh, permission-m
 
 ## 操作細節
 
-- `hapi spawn-peer` 偶爾卡住十幾分鐘不回；用 `timeout 180` 包起來並帶新的 `--remit-id`，失敗就重試。
-- `hapi wait-peer` 會 ECONNRESET 或 socket hang up，要在迴圈裡重試。
-- zsh 的 `set -- $s` 不分詞；讀 sessionId/remitId 用 `bash -c` 搭配 `read sid rid < <(python3 ...)`。
-- 收完結果就 `hapi archive-peer`。
+HAPI 0.35 的做法（指令對照見 [[peer-cli-0-35-command-changes]]）：
+
+- 在 session 裡用 MCP `spawn_peer`（明確帶 `agent`、`permissionMode`），`waitForReply: true` 後結束這一輪，回覆會以新訊息送回。在 shell 裡則用 `hapi spawn-peer`，再輪詢 `hapi inspect-peer <id> --json`。
+- 收完結果就 archive 自己開的 reviewer：Hub API `POST /api/sessions/<id>/archive`。0.35 沒有 `hapi archive-peer`（回 Unknown command）；archive 後用 `inspect-peer` 確認 `active=false` 才算收掉，不要沒驗證就回報。
+- zsh 的 `set -- $s` 不分詞；從 JSON 取 ID 用 `bash -c` 搭配 `read ... < <(python3 ...)`。
+- 0.30.x 的舊經驗：`spawn-peer` 偶爾卡十幾分鐘，用 `timeout 180` 包起來並帶新的 `--remit-id` 重試；`wait-peer` 會 ECONNRESET，要在迴圈裡重試。0.35 已沒有 `--remit-id` 和 `wait-peer`。
 
 ## 各模型的審查品質（這一次）
 

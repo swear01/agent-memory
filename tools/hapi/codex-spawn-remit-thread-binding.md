@@ -2,8 +2,10 @@
 title: Codex spawn-peer 將預留的新 session 誤當 cold resume
 scope: tools/hapi
 status: verified
-updated: 2026-09-28
+updated: 2026-11-18
 ---
+
+> 適用 0.30.7.x 維護版（carry #1771）。0.35 已不 carry #1771，`wait-peer`、`archive-peer` 與 remit 原子 spawn 都不存在，見 [[peer-cli-0-35-command-changes]]。
 
 HAPI `v0.30.7.2` 的 `spawn-peer --agent codex` 可在 runner 在線時立即失敗，回報 `Existing HAPI session has no Codex thread binding`。swairM5 的失敗呼叫回傳 HTTP 502，mazu runner stderr 亦有相同錯誤；這與後續機器離線或 Google 授權失效是不同問題。
 
