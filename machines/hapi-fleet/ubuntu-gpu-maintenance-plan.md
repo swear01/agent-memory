@@ -17,7 +17,7 @@ tags:
 # 已確認決策
 
 - 2026-11-18：使用者指示全面更新；snap hold 已解除、五台 apt full-upgrade 到 kernel `7.0.0-43`（NVIDIA 驅動仍 hold），排程 2026-11-19 09:30 重開。firmware-notifier 重啟迴圈的修法見 [[machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118]]。
-
+- 2026-11-19：NVIDIA 改用 Canonical 預編模組（`linux-modules-nvidia-<ver>-server-generic`），不再用 DKMS；DKMS 曾在 apt 升 kernel 時沒幫新 kernel 編模組。六台的 nvidia apt hold 全部解除，container toolkit 升到 `1.20.2`。使用者允許換新系列：cthulhu、valkyrie、mazu、athena（Ada）預先下載 `595.91.07`，用一次性 `nvidia-595-swap.timer` 在 09:15 安裝（log：`/var/log/nvidia-595-swap.log`），09:30 重開後載入。先下載、接近重開才裝，是為了避免使用者端程式庫和還在跑的 580 模組 API mismatch。**zeus 留在 580**：595 套件的 `Modaliases` 沒有 1080 Ti 的 PCI ID `10de:1B06`（590 系列起不支援 Pascal）。之後要換驅動系列，先用 `apt-cache show nvidia-driver-<ver>-server | grep Modaliases` 比對 `lspci -nn -d 10de:` 的 ID。
 - Zeus 使用老舊 Supermicro `X10DAI`，BIOS `2.0`（2016）；使用者明確決定不更新 BIOS。
 - 2026-10-22：Mazu、Cthulhu、Valkyrie、Zeus 已 full-upgrade 到 `26.04.1`、kernel `7.0.0-38`（NVIDIA/CUDA/container toolkit 以 apt-mark hold 保留不動）；Mazu、Cthulhu、Zeus 已重開驗證，Valkyrie 因長工作待重開，見 [[machines/mazu/home-automount-boot-hang-2026-10-22]]。
 - 五台實驗室主機已完成 Ubuntu `26.04 LTS` 升級；2026-09-15 驗證 kernel 為 `7.0.0-31-generic`、NVIDIA driver 為 `580.178.04`，GPU 正常。
