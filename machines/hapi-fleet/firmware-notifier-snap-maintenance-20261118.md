@@ -42,3 +42,11 @@ tags:
 - 2026-11-18 約 22:25 起，`api.snapcraft.io` 時好時壞（connection refused／逾時）；從實驗室和外部網路測都一樣，snapcraft.io 網站與 apt 套件庫正常。
 - snap refresh 是整批 change，任一步失敗就整批回滾；遇到 store 不穩時，每台每 90 秒重試，大約 3–5 次會成功。
 - snap 沒有公開鏡像：連 `snap download` 也需要 API，唯一的替代方案是 Canonical Enterprise Store／Snap Store Proxy。
+
+# 2026-11-19 後續：提前重開與 NIS 中斷
+
+- 使用者要求閒置的機器先重開。02:12 對 zeus 和 utux 下 `systemctl reboot`（先 `shutdown -c`）。到 02:45 zeus 都沒有回來，ping 不通、22 port 關閉；fleet 沒有遠端電源控制。
+- zeus 是 NIS master（192.168.1.201）。它一掛，各 client 的 SSH 認證能通過，但登入卡在 NSS：utux 77 秒、cthulhu 超過 120 秒被 sshd LoginGraceTime 斷線。重開 NIS master 之前，要先確定能到現場處理，或先排好其他台的時間。
+- 七天 SSSD 快取並沒有失效：根因是 NSS 順序 `files nis sss systemd`，ypbind 還活著、不斷重新 bind，每次查詢都先等 libnss_nis 的 RPC 逾時（寫死、無法設定）。8/23 的驗證是 stop ypbind，會立刻 UNAVAIL，所以沒測出這個問題。使用者的要求：先查線上、短逾時（1–3 秒）、再用快取。建議作法是 `files sss systemd`，由 SSSD proxy 查 NIS 並處理 offline；這也符合 SpyGlass「systemd 排最後」的限制。
+- NVIDIA 595（使用者授權，Zeus 除外）：athena 已裝好 `nvidia-driver-595-server`、`linux-modules-nvidia-595-server-generic`、`-7.0.0-43-generic`，還沒重開。valkyrie、mazu 因 SSH 卡住還沒裝。另一個 session 排的 `nvidia-595-swap.timer` 是 transient timer（重開就消失，而且只裝 -38 的模組）。
+- 後續交給 HAPI 上的 Codex session「DVLab NIS 中斷復原」（`f2908b12-d06d-42ca-8208-c4dc92ad0faf`）：zeus 恢復、NSS／SSSD 短逾時修正、595 與重開、記憶更新。最終狀態以那個 session 的回報為準。

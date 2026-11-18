@@ -127,6 +127,7 @@ BMC/PDU 的下一步驗證。
   再驗證集中密碼、本機管理帳號、已 warm identity 的集中公鑰與錯誤密碼拒絕；四台
   均通過，且 reboot 後 cache 仍可登入。臨時帳號已從 Zeus 刪除、`make -C /var/yp`
   已重建 maps，四台 client 的 canary cache 也已清除。
+- 2026-11-19 實際中斷發現：NSS 是 `files nis sss systemd` 時，zeus 斷線但 ypbind 還活著，每次查詢都會先卡在 NIS RPC 逾時，SSH 登入 77–130 秒以上，七天快取等於沒用上。測離線時要用防火牆 DROP 往 zeus 的封包，不要只 stop ypbind。見 [[machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118]]。
 - 公鑰登入本身不保證 SSSD identity 已 warm。要支援 NIS 離線時的公鑰登入，帳號必須
   已有 SSSD identity cache；可在線執行 `getent -s sss passwd <user>` 驗證並建立，
   然後用 `sssctl user-show <user>` 確認，不可用普通 `getent passwd`，避免輸出 NIS
