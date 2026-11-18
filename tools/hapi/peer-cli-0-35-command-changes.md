@@ -28,9 +28,9 @@ archive 之後一定要用 `inspect-peer` 讀回 `active=false`，才能回報�
 
 # 為什麼 agent 還會打舊指令（2026-11-18）
 
-一個 session 要收掉自己開的 Grok peer，照舊指令跑 `archive-peer`，先回報收掉了，之後才發現指令不存在、peer 還是 active。舊指令有兩個來源：
+一個 session 要收掉自己開的 Grok（Cursor flavor）peer，照舊指令跑 `archive-peer`，先回報收掉了，之後才發現指令不存在、peer 還是 active。最可能的來源是 `multi-model-review.md` 的「收完結果就 `hapi archive-peer`」（已改寫）。另外查到兩種可能讓舊指令繼續存在的來源：
 
-1. **HAPI 自己管理的舊 skill 副本**（目錄帶 `.hapi-managed`）。0.30 維護版的安裝器寫進各 Agent 的技能目錄；0.35 只更新 Claude、Codex、Cursor、agy 的 `hapi-session-control`，不會更新 Grok（`~/.grok/skills`）、Pi（`~/.pi/agent/skills`）的副本，也不會刪 `hapi-session-runtime`。Grok 會同時讀 `~/.grok/skills` 和 `~/.claude/skills`，同名時 `~/.grok/skills` 的舊副本蓋過新版。2026-11-18 已在 Mac 把這些舊副本移走（Pi 的換成 0.35 版）；其他機器還沒查。
+1. **HAPI 自己管理的舊 skill 副本**（目錄帶 `.hapi-managed`）。這是維護版 fork 的功能（`fork/session-control-skill`，上游沒有）：`cli/src/modules/common/hapiSessionControlSkill.ts` 的 `ensureHapiSessionControlSkill` 在 `bootstrapSession` 時，只把 skill 寫進**這次啟動的 flavor** 的技能目錄（例如 grok → `~/.grok/skills`），失敗只記 debug log。所以升級後還沒用 HAPI 開過的 flavor，副本會一直停在舊版；fork 的舊 `hapi-session-runtime` 也不會被刪。2026-11-18 Mac 上的 Grok（最後一次 session 在 10/30）和 Pi 副本都還是 0.30 版，已移走（Pi 的換成 0.35 版）；其他機器還沒查。用 HAPI 開 Grok session 時會先覆寫成新版，所以只有在 HAPI 外直接跑 `grok` 才會讀到舊副本（Grok 同時讀 `~/.grok/skills` 與 `~/.claude/skills`）。
 2. **記憶裡還在教舊指令的筆記。** 同日已改寫成上表的做法；歷史紀錄保留，但標明只適用 0.30.x。
 
 檢查方式：
