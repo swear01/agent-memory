@@ -22,6 +22,6 @@ tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 
 **NAS 端**：DSM 的 NFS 設定介面和 API 都沒有關 delegation 的選項。只能 SSH 進 NAS 執行 `echo 0 > /proc/sys/fs/leases-enable`，但不持久，而且影響所有 client，所以不建議。
 
-狀態：cthulhu、zeus、valkyrie、mazu、athena（utux 也會排進來）都用 `shutdown -r` 排在 2026-11-19 09:30 重開（不等使用者的工作；原本 08:00 的 reboot-when-idle timer 已移除）。重開後用 `/proc/self/mountstats` 確認 TEST_STATEID 降到接近 0。
+狀態：cthulhu、zeus、valkyrie、mazu、athena、utux都用 `shutdown -r` 排在 2026-11-19 09:30 重開（不等使用者的工作；原本 08:00 的 reboot-when-idle timer 已移除）。重開後用 `/proc/self/mountstats` 確認 TEST_STATEID 降到接近 0。
 
 相關：[[machines/cthulhu/shared-nfs-home]]、[[machines/hapi-fleet/system-install-via-admin]]
