@@ -76,3 +76,7 @@ Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔
 最小驗證：30 個恢復案例、35 個獨立邊界案例及原有時鐘測試通過；封包語法、ZIP 重建、testcopy 升級／回滾 hash 一致。完整遊戲使用明確標記的合成一致 perf/rAF 倍率與真實影格間隔下限，保持碰撞和原技能流程；25×／300 ms 暖啟動舊版停在約 5.983 遊戲秒，新版八秒觀察到 17.893 秒；單次 1.25 秒真暫停首幀不推進，後續恢復，無未處理錯誤。這批不能稱作原生 OpenSpeedy 100× 驗證。
 
 本次原生測試受另一外部條件阻擋：官方與獨立複本 bridge64.exe 均回 WinError 225，之後官方 bridge64.exe 路徑已不存在；OpenSpeedy GUI B64 紅色錯誤、正式重開的六程序皆無 DLL／enable mapping，選取主程序顯示 Not Injected。官方 GUI 倍率仍為 25×。未還原或重建被攔截的二進位、未更動防毒設定；不能因為修正版載入且視窗回應就宣稱原生加速已恢復。
+
+同日使用者要求找回誤按 Remove 的檔案。唯讀 Defender 紀錄確認正式安裝目錄 bridge64.exe 的 ThreatStatusID=8，而 events-native 測試副本為 7 且檔案仍存在，兩者不能混認。從 [官方 3.3.20 發行頁](https://github.com/game1024/OpenSpeedy/releases/tag/3.3.20) 重新取得 `OpenSpeedy-3.3.20-portable-signed.zip`，核對 GitHub asset SHA-256 `0C9BBC0F305583AAB264723EA5E6B8764CB3B41B718F02C5ECD561479C3CBF0E`；其中五個交付檔均驗得有效 SignPath Foundation Authenticode 簽章。bridge64.exe SHA-256 `75EC196D60DD51DBCFDF50E197976E749E14A6E0C062B64926C5977ACD5B9F64`。官方 README 的未簽署誤判概述不能代替對實際發行檔的驗證。
+
+一般權限寫入 Program Files 被 ACL 拒絕；使用者親自接受 UAC 後，以重新驗簽、核對 SHA 並拒絕覆寫既有目標的最小複製操作，補回正式 bridge64.exe。最後唯讀核對檔案存在、雜湊正確、簽章 Valid；未調整防毒設定或排除項，未修改遊戲封包及存檔。執行 bridge 讀倍率的後續驗證被工具自動審查拒絕（僅回 blocked by policy），不重試執行；最後觀察六個遊戲程序仍無 speedpatch64.dll，不能把檔案找回宣稱為原生加速恢復。
