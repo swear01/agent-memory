@@ -204,3 +204,8 @@ BMC/PDU 的下一步驗證。
 - 8/23 15:30 由本機管理帳號移除 `/home` 的 automount。9/14 10:05，Cursor 工作階段以中央管理帳號用 sudo 在 `/etc/fstab` 加入 `/apps` 的 NFS automount。9/15 與 10/22 即曾出現 `/home` 卸載忙碌，兩次仍完成重開。
 - 先結束使用掛載的工作，再從 Zeus 本機管理維護連線執行 `sudo /usr/local/sbin/zeus-safe-reboot`。入口先用一般卸載確認 `/apps` 與 `/home` 都已卸載。遇到 busy、逾時或巢狀掛載會拒絕重開，並嘗試還原先前的掛載與 automount。此入口無參數。排程或直接呼叫 `systemctl reboot` 不會走這個檢查。
 - 腳本已在 Zeus 安裝為 root 所有、模式 0750。六個模擬情境涵蓋 busy、還原及正常路徑，通過 Bash 語法與 ShellCheck。安裝後四個服務 `ypserv`、`ypbind`、`rpcbind`、`nginx` 均 active。實機尚未執行卸載或重開演練。
+
+## utux 的 Docker socket 群組
+
+- 11/19 開機時 `docker.socket` 嘗試解析 NIS-only 的 `docker` 群組，查詢失敗並以 216/GROUP 結束。`/etc/systemd/system/docker.socket.d/10-dvlab-socket-group.conf` 先以本機 root 群組建立 Unix socket，啟動完成前用 `chgrp +45000` 保留原本的 NIS Docker GID。無須更改任何群組成員或等 NIS 回線。
+- 實測 `docker.socket` 與 `docker.service` 均 active，`/run/docker.sock` 仍是 UID 0、GID 45000、權限 0660，Unix socket API `/_ping` 回 `OK`。後續若中央 Docker 群組改 GID，需同步核對這個 drop-in。
