@@ -57,3 +57,8 @@ tags:
 - 回線後兩台均已執行 `dpkg --configure --pending`，套件的 postinst 建回帳號並完成待處理的 trigger。再啟動 `nvidia-persistenced`。兩台的 `dpkg --audit` 都無輸出，595 套件與 `7.0.0-43` 模組均為 installed，服務 active，`nvidia-smi` 及 CUDA 裝置初始化都通過。
 - Mazu 在確認沒有 CUDA 工作及本機圖形登入後，短暫停掉 GDM 登入畫面和 persistence daemon。正常卸載 580 模組後安裝 595 與正在執行的 `7.0.0-43` 對應模組，再載入 595 並恢復服務。用 boot ID 和先前的 SSH／編輯器程序確認主機與連線持續運作，HAPI 入口 HTTP 200。Mazu 的 dpkg audit、GPU 與 CUDA 初始化均通過。Athena 已在 595，Zeus 的 Pascal GPU 維持 580。
 - 以套件安裝結束及 dpkg audit 當成重開前的檢查條件。先確認正在執行的核心有對應的 NVIDIA 模組，再驗證載入版本、套件狀態、服務和 CUDA；`nvidia-smi` 成功只能證明目前 GPU 與驅動通訊正常。
+
+# 2026-11-19 Zeus APT 更新收尾
+
+- NGINX 安全更新後，Zeus 已安裝其餘 11 個可立即更新的套件，包含 cloud-init、GStreamer 與 OpenJDK 21／25。OpenJDK 實測分別為 `21.0.13.1`、`25.0.5.1`。剩下 6 個套件由 Ubuntu 分批釋出，依 APT 預設保留。
+- 更新後 `dpkg --audit` 無異常，沒有重開需求，boot ID 一致。NGINX `1.28.3-2ubuntu1.13` 與 NIS 服務正常，Dashboard 和 Valkyrie gateway 皆回 HTTP 200。
