@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated rollout rehearsals, supervisor policy checks, exact-process recovery, cleanup ordering, platform verification, and a live Mac session-recovery check on 2026-08-20.
 created: 2026-08-18
-updated: 2026-11-18
+updated: 2026-11-19
 tags:
   - hapi
   - supervisors
@@ -72,6 +72,16 @@ For the Mac display name `swairM5`, treat an inactive session with `metadata.lif
 4. Check the exact process through `hapi runner list` and `hostPid`; do not infer active work from the database row alone.
 
 `active=true` confirms a live session connection, not an actively generating turn; `thinking=false` means the agent is currently idle or waiting. A resumed session can run, emit agent messages, and later archive, so report those states separately. Keep the recovery namespace-scoped and retain no raw transcript or token in memory.
+
+# Fleet reboot recovery（2026-11-19 驗證）
+
+機器重開（排程換 kernel、mazu hub 重開）後，找被打斷的 session：
+
+- 用 `GET /api/sessions` 篩 `active=false`、`metadata.lifecycleState` 是 `running` **或 `idle`**、`activeAt` 落在重開時間附近；正常結束的是 `archived`。`hapi ping-peer --list --all` 會截斷（`… more sessions available`），不能當完整清單。
+- 先確認該機器在 `GET /api/machines` 是 `active=true` 再 resume；runner 沒連回 hub 前不要試。NIS master（zeus）掛掉時 client 的 runner 也起不來，見 [[machines/hapi-fleet/ubuntu-upgrade-recovery-runbook]]。
+- `POST /api/sessions/:id/resume` 帶 `{}` 回 `{"type":"success"}`，之後 `hapi inspect-peer` 讀回 `active: true`。它只重新連上、不送訊息，重開前跑到一半的工作要另外送訊息叫它繼續。
+- 沒有訊息、名稱只是使用者名稱（如 `swear01`）的空 codex session 不要 revive。
+- 用 Python `urllib` 打公開 hub 要設 `User-Agent`，預設 UA 會被 Cloudflare 回 403；curl 沒事。
 
 # Session lifecycle and group actions
 
