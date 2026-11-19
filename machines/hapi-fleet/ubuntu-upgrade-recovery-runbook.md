@@ -182,9 +182,25 @@ BMC/PDU 的下一步驗證。
   `id -G` 為 16 毫秒，本機 sudo 為 28 毫秒。utux 已有 proxy/NIS SSSD。正式檔案
   與 PAM 保持原狀，這次尚未驗證新 SSH、線上資料、過期帳號及恢復重綁。
 - 驗收先在一台 client 保留本機管理連線並備份兩份設定。確認 NIS 正常時能取到
-  線上資料，再暫時 DROP 往 Zeus LAN 的封包，測冷查詢、已暖及過期的帳號快取、
+  線上資料，再暫時 DROP 往 Zeus 的所有綁定位址。Athena 用 FQDN 綁定，需同時涵蓋 LAN 與公網位址。測冷查詢、已暖及過期的帳號快取、
   新 SSH 與 sudo。首次和後續查詢都需符合三秒目標。解除 DROP 後確認 `ypwhich`
   與實際線上資料恢復。停 ypbind 只能驗證快速 `UNAVAIL`，無法代表封包黑洞。
 - 來源見 [libnsl 1.3.0 RPC](https://github.com/thkukuk/libnsl/blob/v1.3.0/src/do_ypcall.c)、
   [SSSD 2.12.0 proxy](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_id.c)
   與 [Ubuntu SSSD 設定手冊](https://manpages.ubuntu.com/manpages/resolute/man5/sssd.conf.5.html)。
+
+## 2026-11-19 部署與 DROP 驗收
+
+- Athena 通過 DROP 驗收後，依序部署到 Mazu、Cthulhu、Valkyrie、utux。五台在 `/etc/nsswitch.conf` 的 passwd／group 使用 `files sss systemd`，NIS 由 SSSD proxy 查詢。utux 原已裝 SSSD。四台 GPU client 皆以中央公鑰完成新 SSH、身分、補充群組及 sudo；utux 驗證本機帳號登入及 SSSD 中央身分查詢。
+- 每台保留 `/var/backups/dvlab-nss-<timestamp>/`，含原本的 NSS、SSSD 設定及 `restore`。若需還原，先確認對應部署時間及現行設定，再由本機管理帳號以 sudo 執行該份 `restore`。原本的 SSSD 主檔仍與備份一致。
+
+- 暫改 passwd／group 為 `files sss systemd`，以 nftables DROP 往 Zeus 的 LAN／公網封包，並追蹤計數器。SSSD 由 Online 轉 Offline，已建立身分快取的中央帳號以新 SSH 公鑰連線，含 `id`、完整群組及 sudo 約 0.56 秒。未快取的有效 NIS 帳號在離線時查無資料。預設重試設定下，解除 DROP 後仍觀察到 SSSD Offline。
+- 在 `/etc/sssd/conf.d/90-dvlab-nis-retry.conf` 的 `[domain/dvlab-nis]` 設 `offline_timeout = 2`、`offline_timeout_max = 2`、`offline_timeout_random_offset = 0` 後，第二次 DROP 共計 15 個封包，解除後約 0.19 秒就能查到先前未快取的有效身分。另一次約 32 秒 DROP 有 42 個命中，已標成過期的中央身分快取 `id` 為 16 毫秒，稍後重測為 192 毫秒，中央 SSH／群組／sudo 約 0.50 秒，解除後約 0.17 秒即取到未快取的線上資料。
+- 線上會使用仍有效的 SSSD 身分快取，在需要重新整理時查 NIS。兩秒是離線重試間隔，首次特定 RPC 的等待仍受 proxy 與底層 libnsl 影響。七天 PAM 原檔與政策維持。沒有身分快取的帳號仍需 Zeus 在線。Zeus 仍是唯一 master。
+
+## Zeus 計畫性重開
+
+- 11/19 上一輪開機的 journal 顯示，02:12 進入關機後 `/apps` 與 `/home` 出現卸載忙碌，網路停止後 NFS 還在重試。上一輪核心在重新開機前仍有紀錄，最後可見於 11:43。不能由該日誌追溯哪一個程序占用掛載。
+- 8/23 15:30 由本機管理帳號移除 `/home` 的 automount。9/14 10:05，Cursor 工作階段以中央管理帳號用 sudo 在 `/etc/fstab` 加入 `/apps` 的 NFS automount。9/15 與 10/22 即曾出現 `/home` 卸載忙碌，兩次仍完成重開。
+- 先結束使用掛載的工作，再從 Zeus 本機管理維護連線執行 `sudo /usr/local/sbin/zeus-safe-reboot`。入口先用一般卸載確認 `/apps` 與 `/home` 都已卸載。遇到 busy、逾時或巢狀掛載會拒絕重開，並嘗試還原先前的掛載與 automount。此入口無參數。排程或直接呼叫 `systemctl reboot` 不會走這個檢查。
+- 腳本已在 Zeus 安裝為 root 所有、模式 0750。六個模擬情境涵蓋 busy、還原及正常路徑，通過 Bash 語法與 ShellCheck。安裝後四個服務 `ypserv`、`ypbind`、`rpcbind`、`nginx` 均 active。實機尚未執行卸載或重開演練。

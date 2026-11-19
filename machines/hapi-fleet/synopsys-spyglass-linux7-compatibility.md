@@ -16,7 +16,7 @@ tags:
   - snpsmem
 ---
 
-## 2026-10-12 現況
+## 2026-10-12 部署紀錄
 
 SpyGlass Y-2026.03 在 Mazu、Cthulhu、Valkyrie、Zeus 已保留原廠 `OPTIMIZE_PERF = snpsmem`，修正主機 NSS 查詢順序後通過原生啟動、GUI、RTL 編譯與 lint。這次沒有把 2026.03 改成 `runtime`，也沒有修改共享 vendor binary、授權、compiler 或重啟 HAPI。
 
@@ -28,7 +28,11 @@ SpyGlass Y-2026.03 在 Mazu、Cthulhu、Valkyrie、Zeus 已保留原廠 `OPTIMIZ
 
 Oracle 的帳號來源只有 `files`，且沒有這套 SpyGlass 安裝；Mac／Windows 不適用 Linux NSS 修正。同步的是讓 `systemd` 排在原有 NIS／SSSD 後方的規則，不能把有 `sss` 的完整檔案盲目複製到 Zeus。
 
-2026-11-19 Zeus 失聯時，直接 NIS 排在 SSSD 前會先耗掉 RPC 逾時。Client 的 `files sss systemd` 候選順序仍讓中央身分來源排在 `systemd` 前面。SpyGlass 實測證據仍是上表的順序。遷移前須先通過封包 DROP 的三秒驗收，遷移後實測原生 SpyGlass 的 snpsmem 與 RTL lint。Zeus 保留上表設定。見 [NIS 復原 runbook](ubuntu-upgrade-recovery-runbook.md#2026-11-19-zeus-失聯與-nis-查詢逾時)。
+## 2026-11-19 Client 改由 SSSD 查 NIS
+
+Zeus 失聯時，直接 NIS 排在 SSSD 前會先耗掉 RPC 逾時。Athena 的封包 DROP 驗收通過後，Athena、Mazu、Cthulhu、Valkyrie、utux 的 passwd／group 改為 `files sss systemd`。SSSD proxy 承接 NIS 查詢，`systemd` 仍排最後。Zeus 維持 `files nis systemd`。
+
+Athena、Mazu、Cthulhu、Valkyrie 都以中央帳號驗證新 SSH／sudo，並執行 SpyGlass Y-2026.03 原生 smoke。實際程序載入 snpsmem 的 `libreplacemalloc.so`，`compile_design` 與 `lint/lint_rtl` 都是 0 fatal、0 errors、0 warnings。這輪驗證為批次模式。備份和故障注入方法見 [NIS 復原 runbook](ubuntu-upgrade-recovery-runbook.md#2026-11-19-zeus-失聯與-nis-查詢逾時)。
 
 ## 根因與獨立重現
 
@@ -49,7 +53,7 @@ SML::SMLUtil::sml_get_user_name()
 - 隔離測試使用 Mazu 原本的全部 host libraries 與 glibc 2.43，只將 NSS 的 systemd 排到後方即可保留 snpsmem 跑通，之後才部署到主機。
 - 現有 Rocky 8 `docker-shell` 亦保留 snpsmem 通過 GUI 與兩個 lint goals，可作為已驗證的環境替代路徑；不用降級主機 glibc。
 
-## 部署與還原原則
+## 10/12 部署與還原原則
 
 - 使用既有 `su_*` SSH 管理別名與 sudo；先備份 `/etc/nsswitch.conf`，保存已移除密碼欄位的帳號／群組解析基準。
 - 只原子更新 `passwd`、`group` 兩行，把 `systemd` 移到該行最後，保留 `files` 及原本 NIS／SSSD 的相對順序；`shadow`、`gshadow`、DNS 與 PAM 均未修改。
@@ -63,7 +67,7 @@ sudo nscd -i passwd
 sudo nscd -i group
 ```
 
-## 已驗證範圍與限制
+## 10/12 已驗證範圍與限制
 
 - Mazu 690、Cthulhu 698、Valkyrie 689、Zeus 676 項帳號／群組解析檢查，總計 2,753 項，修改前後一致；新的使用者 public-key SSH、管理員 SSH 與 sudo 均通過。
 - 四台分別在乾淨的新 SpyGlass 2026.03 程序中讀取自己的 `/proc/<pid>/maps`，確認實際載入 `libreplacemalloc.so`，再跑 RTL `compile_design` 與 `lint/lint_rtl`；均為 0 fatal、0 errors、0 warnings。
