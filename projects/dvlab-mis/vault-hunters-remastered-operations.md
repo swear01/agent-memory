@@ -2,7 +2,7 @@
 title: Vault Hunters Remastered small-server operations
 scope: projects/dvlab-mis
 status: active
-updated: 2026-09-29
+updated: 2026-11-19
 ---
 
 # Vault Hunters Remastered small-server operations
@@ -16,10 +16,17 @@ updated: 2026-09-29
 - `the_vault reloadcfg gen` 可載入此設定；實測約 11 秒主執行緒停頓，安排無在線玩家時操作。日誌讀取 loot_tables 並成功 reload，只證明載入，不代表已做玩家開箱分布測試。
 - 遊戲由 `vault-hunters.service` 執行，僅本機 FIFO 管理控制台，不開 RCON。每日臺灣時間 04:25 開始 5 分鐘、1 分鐘、10 秒遊戲聊天通知，04:30 正常停服備份後重啟；這不是偵測 Vault 後延後維護。
 - 控制台管理與權限：utux 無對外 SSH 埠，由公開伺服器（如 zeus）透過 ProxyJump 連線至內網位址；本地端 SSH 設定已配置 ProxyJump。伺服器管理依賴本機 FIFO 控制台指令 `sudo /usr/local/sbin/vault-hunters-console '<command>'`，可熱執行 `list`（查在線玩家）、`whitelist add <ID>`（加白名單）及 `op <ID>`（授予權限）；因指令透過具名管道單向寫入，執行回應需由 `journalctl -u vault-hunters -n <行數>` 或 `logs/latest.log` 查驗。目前伺服器白名單已擴充至多位朋友（含 `Cell_phone_9914` 等），且在線的 `swear01` 與 `Cell_phone_9914` 皆已設為 OP（權限等級 4，持久化於 `ops.json`）。
-- 本機與 NAS 各保留 7 份 daily、4 份 weekly；NAS 缺失時保留本機備份並重啟遊戲，但備份工作回報失敗。完成真人登入、拒絕非白名單、Vault 體驗與多人負載，仍需另外驗收。
+- 本機與 NAS 各保留 7 份 daily、4 份 weekly。NAS 掛載失敗時仍先產生本機備份，原先有在跑的遊戲會重啟，備份工作回報 NAS 同步失敗。完成真人登入、拒絕非白名單、Vault 體驗與多人負載，仍需另外驗收。
 - 主機的共享家目錄正式切換及整機重開機是另一項尚未完成的工作。不能因 Minecraft 或備份成功，就把 NIS/NFS 完整重開機驗證標成完成。
 - 正式文件為獨立的 Minecraft 維運 runbook；帳密／硬體回到 Overview、IP/MAC/NAT 回到 network manual、主機 NIS/NFS 實作回到 New Server Setup。
 - 2026-09-16 已透過共用網管帳號 Token 與 Docs API 增量寫回 Google Drive 正式文件《utux Minecraft 維運：Vault Hunters Remastered (private)》：包含版本映射、BCC 2.0.3 修正、MOTD (dvlab server)、DVLab 官方圖示與狀態驗收，並完成 text/plain 讀回校驗。
 
 - 公開 join（LAN／Mac 可 ping）：`140.112.171.142:25565`（inari 網站主機 port-forward，建議文件化的共用入口）與 `140.112.171.143:25565`（utux 1:1 NAT）皆回 MOTD `dvlab server`、max 8，且 server-list sample 含玩家名稱時可不靠 FIFO 做 `/players`。
 - Discord 狀態 bot（2026-09-29 已上線）：zeus 上 `dvlab-mc-discord-bot.service`（systemd enabled），程式在 swear01 家目錄 `dvlab-mc-discord-bot`，重用 DVLAB Bot；狀態欄活動名稱 `minecraft N/8 players`（Watching）；slash `/status` `/players` `/ip`。細節見 `minecraft-discord-bot-plan.md` 與 `machines/zeus/dvlab-mc-discord-bot-systemd.md`。
+
+## 2026-11-19 utux 備份專用 NAS 掛載
+
+- 暫時的 Gaia NFS 掛載在重開後消失，04:25 排程仍完成本機壓縮檔，但只留下本機副本。為既有 `/mnt/utux-nfs-test` 增加原生 systemd mount，使用原本的 Gaia NFS 匯出。mount 只在需要時啟動，`StopWhenUnneeded=yes` 在備份結束後卸載。本機 `/home` 不承載這個掛載。
+- `vault-hunters-backup.service.d/10-nas-mount.conf` 使用 `WantsMountsFor=/mnt/utux-nfs-test`，會先嘗試掛載，掛載失敗時備份服務仍可產生本機副本。計時器仍是台北時間每日 04:25。
+- 補傳既有本機備份時，沿用備份鎖、核對檔名及 NAS mount source，以原使用者寫入 NAS 的暫存檔，逐位元組比對後才改成正式檔名。這樣可保留既有備份及正常排程的保留策略。
+- 11/19 補傳 `daily-20261118T202501Z.tar.gz`（5,016,376,487 bytes），逐位元組比對通過，掛載也在補傳完成後自動卸載。遊戲服務維持 disabled/inactive。下次自動執行是 11/20 04:25，已核對計時器。
