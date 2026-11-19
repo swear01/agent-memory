@@ -22,6 +22,6 @@ tags:
 - **需要 sudo 的項目 agent 跑不了**：`mas upgrade`，以及含 pkg 或 sudo 的 cask（cyberduck、docker-desktop、google-drive、karabiner-elements、microsoft-office、obs、steam、tailscale-app、tunnelblick、xquartz、zoom）。把它們整理成一行 `sudo -v && mas upgrade && brew upgrade --cask --greedy ...` 交給使用者。
 - **pi 的 `--list-models` 只列 2 個 DeepSeek 不算 regression**：`~/.local/bin/pi` 是 `pi-safe` wrapper，會過濾 stdout。驗證要用 RPC：`{"id":"1","type":"get_available_models"}` 透過 `--mode rpc --no-session` 送出，應有 9 個模型。預設的 `valkyrie-ninfer/qwen3.8-27b` 走 xhigh thinking，`pi -p` 90 秒內常常回不來，冒煙測試改用 `--model opencode-go/deepseek-flash`。pi 1.5.2 已驗證可用（RPC 清單相同，Codex 推論也正常）。
 - **block-goose cask 有 receipt，但 `/Applications/Goose.app` 已經不在**，所以 upgrade 會失敗。CLI 改用 `block-goose-cli` formula。
-- Swear Review 遇到只改 docs 的 PR 會顯示 "Review skipped: no items were selected"，這不算真的通過，要改用 `/gemini review`。
+- Swear Review 遇到只改 docs 或只改 tests 的 PR 都會顯示 "Review skipped: no items were selected"，這不算真的通過，要改用 `/gemini review`。
 
 相關：[[bun-dual-install-path]]、[[fleet-cli-and-skill-upgrade]]
