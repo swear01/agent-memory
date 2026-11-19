@@ -18,3 +18,5 @@ SleepMargin=15
 ```
 
 平台遊戲的路徑規劃器即使只和原生 runner 差一兩個像素，也可能把擦過尖刺的路判成安全。每批控制指令從遊戲回報的最新位置、速度與按鍵狀態重新模擬。如果後續指令已預測會碰撞，就從該回報狀態重規劃。不要依賴位置偏差超過固定門檻才重算。
+
+高速測試在成就回呼後若只等數個遊戲步就讀 `steam_get_achievement`，以 Steam 客戶端同步後的狀態作最後驗證。《Minimalism》的結尾程式會查 `LEVEL31`，Steam schema 只註冊 `LEVEL1` 到 `LEVEL30`，第 31 關的通關成就是 `SPEC_3`（Comprehending Zen）。檢查本機 Steam 快取時，用 `UserGameStatsSchema_<app_id>.bin` 的 `stats` 群組和 `bits` 位置對照帳號快取的 `data` 位元，並核對 `PendingChanges` 與 `AchievementTimes`。這次結尾實際讀到 165／165、`PendingChanges=0`，`SPEC_3` 和全字母成就 `SPEC_4` 都有通關當下的解鎖時間。
