@@ -5,7 +5,7 @@ tool: hapi
 status: active
 confidence: high
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-19
 tags: [hapi, spawn-peer, ping-peer, inspect-peer, archive-peer, stop-peer, wait-peer, abort-peer, delete-peer, unknown-command, skills]
 ---
 
@@ -18,7 +18,7 @@ tags: [hapi, spawn-peer, ping-peer, inspect-peer, archive-peer, stop-peer, wait-
 | `hapi spawn-peer` | 還在，只是 `hapi --help` 沒列。沒有 `--remit-id`；`--permission-mode` 省略時是 yolo，依 [[session-permission-preference]] 明確傳。在 session 內優先用 MCP `spawn_peer`。 |
 | `hapi ping-peer` | 還在。inactive session 會被拒（exit 5），加 `--wake` 才會 resume；有 `--delivery-mode auto/queue/steer`。 |
 | `hapi inspect-peer`、`hapi set-mode` | 還在。 |
-| `hapi wait-peer` | Unknown command。在 session 內用 MCP `spawn_peer`／`ping_peer` 帶 `waitForReply: true`，然後結束這一輪；在 shell 裡輪詢 `hapi inspect-peer <id> --json`。 |
+| `hapi wait-peer` | Unknown command。在 session 內用 MCP `spawn_peer`／`ping_peer` 帶 `waitForReply: true`，然後結束這一輪；在 shell 裡輪詢 `hapi inspect-peer <id>`（0.35.0.1 沒有 `--json`，會回 `unexpected flag: --json`；要結構化資料就打 `GET /api/sessions/:id`）。 |
 | `hapi archive-peer` | Unknown command。用 `hapi-session-control` skill 的 `scripts/archive-peer.py <full-id> ...`（呼叫 Hub API `POST /api/sessions/<id>/archive` 並讀回 `active=false`）。只接受 active session，inactive 回 `Session is inactive`。 |
 | `hapi delete-peer` | Unknown command。inactive 紀錄用 `DELETE /api/sessions/<id>`。 |
 | `hapi stop-peer` | 沒有替代品。runner `stop-session` 會順便 archive，不是 process-only stop。 |
