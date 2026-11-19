@@ -49,4 +49,11 @@ tags:
 - zeus 是 NIS master（192.168.1.201）。它一掛，各 client 的 SSH 認證能通過，但登入卡在 NSS：utux 77 秒、cthulhu 超過 120 秒被 sshd LoginGraceTime 斷線。重開 NIS master 之前，要先確定能到現場處理，或先排好其他台的時間。
 - 七天 SSSD 快取並沒有失效：根因是 NSS 順序 `files nis sss systemd`，ypbind 還活著、不斷重新 bind，每次查詢都先等 libnss_nis 的 RPC 逾時（寫死、無法設定）。8/23 的驗證是 stop ypbind，會立刻 UNAVAIL，所以沒測出這個問題。使用者的要求：先查線上、短逾時（1–3 秒）、再用快取。建議作法是 `files sss systemd`，由 SSSD proxy 查 NIS 並處理 offline；這也符合 SpyGlass「systemd 排最後」的限制。
 - NVIDIA 595（使用者授權，Zeus 除外）：athena 已裝好 `nvidia-driver-595-server`、`linux-modules-nvidia-595-server-generic`、`-7.0.0-43-generic`，還沒重開。valkyrie、mazu 因 SSH 卡住還沒裝。另一個 session 排的 `nvidia-595-swap.timer` 是 transient timer（重開就消失，而且只裝 -38 的模組）。
-- 後續交給 HAPI 上的 Codex session「DVLab NIS 中斷復原」（`f2908b12-d06d-42ca-8208-c4dc92ad0faf`）：zeus 恢復、NSS／SSSD 短逾時修正、595 與重開、記憶更新。最終狀態以那個 session 的回報為準。
+- 後續交給 HAPI 上的 Codex session「DVLab NIS 中斷復原」（`f2908b12-d06d-42ca-8208-c4dc92ad0faf`）：zeus 恢復、NSS／SSSD 短逾時修正、595 與重開、記憶更新。NIS 變更與 DROP 驗收見 [復原 runbook](ubuntu-upgrade-recovery-runbook.md#2026-11-19-部署與-drop-驗收)，NVIDIA 套件狀態見下節。
+
+# 2026-11-19 NVIDIA 安裝收尾
+
+- Cthulhu 與 Valkyrie 在 09:15 啟動預排的 595 安裝。09:30 重開時，systemd 停掉仍在執行的安裝 unit。兩台的 `nvidia-compute-utils-595-server` 都停在 half-configured，其他相關套件已解包且仍有 initramfs 等 trigger 待跑。Valkyrie 的 journal 顯示 `adduser` 09:28:32 開始建立服務使用者，09:29:46 才開始建群組。重開後兩台都缺本機 `nvidia-persistenced` 帳號。當時 Zeus 仍失聯。日誌可證明安裝被截斷，未能證明每段帳號查詢延遲的來源。
+- 回線後兩台均已執行 `dpkg --configure --pending`，套件的 postinst 建回帳號並完成待處理的 trigger。再啟動 `nvidia-persistenced`。兩台的 `dpkg --audit` 都無輸出，595 套件與 `7.0.0-43` 模組均為 installed，服務 active，`nvidia-smi` 及 CUDA 裝置初始化都通過。
+- Mazu 在確認沒有 CUDA 工作及本機圖形登入後，短暫停掉 GDM 登入畫面和 persistence daemon。正常卸載 580 模組後安裝 595 與正在執行的 `7.0.0-43` 對應模組，再載入 595 並恢復服務。用 boot ID 和先前的 SSH／編輯器程序確認主機與連線持續運作，HAPI 入口 HTTP 200。Mazu 的 dpkg audit、GPU 與 CUDA 初始化均通過。Athena 已在 595，Zeus 的 Pascal GPU 維持 580。
+- 以套件安裝結束及 dpkg audit 當成重開前的檢查條件。先確認正在執行的核心有對應的 NVIDIA 模組，再驗證載入版本、套件狀態、服務和 CUDA；`nvidia-smi` 成功只能證明目前 GPU 與驅動通訊正常。
