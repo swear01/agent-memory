@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-11 前程似錦與 TIS-100 兩場讀書會簡報實作；TIS-100 於 2026-11-17 實際報告完畢。
 created: 2026-11-17
-updated: 2026-11-17
+updated: 2026-11-21
 tags:
   - slides
   - artifact
@@ -42,4 +42,11 @@ tags:
 ## 審稿
 
 - Gemini 審稿：`agy -p "<prompt>" --model gemini-4-hydrogen-high --print-timeout 600s`。每條意見都要查證；它會錯（按鈕名、彩蛋指令）也會抓到真問題。
+- agy 非互動模式會拒絕 read_file，結果沒有輸出。要把所有內容直接寫進 prompt，開頭加「不要使用任何工具或讀檔」，並在空目錄執行（2026-11-21 GSAT 實習報告驗證過）。
+- 要對講稿做深改時，先請 Gemini 列出缺少的資訊、問使用者，拿到答案再改寫，不要只用手邊素材硬寫。
+
+## pptx 渲染檢查
+
+- macOS 有 PowerPoint 時，用 osascript 讓它匯出 PDF（輸出在 `~/Library/Containers/com.microsoft.Powerpoint/Data/` 之下），再用 `pdftoppm` 和 `montage` 拼成總覽圖，比 LibreOffice 準。同名簡報如果已經開著，要先關掉。
+- 白底證書改成深色底：在 Lab 色彩空間反轉 L 通道，再用 Screen 混合主題深色。照片一律用 sharp `fit:cover` 裁切，不要拉伸。
 - 延伸推薦的發售年份、搶先體驗狀態要當天查證，並在交付時提醒報告前再確認。
