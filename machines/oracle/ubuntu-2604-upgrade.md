@@ -33,5 +33,5 @@ INPUT 有重複規則時，`iptables -D INPUT <規格>` 刪掉的是第一個符
 ## SSH 斷掉時的救援路徑
 
 1. hapi：oracle 的 runner 是主動連 hub 的，不需要 22 port。用 `hapi spawn-peer --machine <oracle-machine-id> --dir <remote-home> ...` 開 session，讓它在機器上執行修復指令。這次就是用這個方法救回來的。
-2. Tailscale：oracle 一直在 tailnet 上（`100.126.43.9`），ts-input 排在 REJECT 前面。但前提是 Mac 的 Tailscale 也要開著，這次 Mac 是關的。
+2. Tailscale：oracle 一直在 tailnet 上（`100.126.43.9`），ts-input 排在 REJECT 前面。但前提是 Mac 的 Tailscale 也要開著。這次 Mac 是關的，2026-11-20 已經設成開機自啟動，見 [[tailscale-autostart]]。從 M5 連線用 `ssh ubuntu@100.126.43.9`。
 3. OCI：用 `oci compute instance action --action reset` 或 serial console，見 hapi skill 的 fleet-ops。
