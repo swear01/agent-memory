@@ -76,6 +76,10 @@ Oracle 沒有 Docker image，rollback 靠檔案備份。
   （`z.never()`），部署前要先從 prod `config.yaml` 刪掉。
 - 1.13.13 的 native binary 叫 `opencodereview`（不是 `ocr-darwin-arm64`）；
   cancelled 要對它單獨送 SIGTERM。
+  PATH 上的指令仍是 `ocr`（oracle: `/usr/local/bin/ocr`，config `binary: "ocr"` 不用改）。
+- 2026-11-20 已部署 oracle：main `21020b4` + OCR 1.13.13；備份在
+  `data/backup-pre-ocr11313-20261120T171736Z`（config、dist、ocr 全域目錄、db）。
+  e2e PR #1 full review 3/3 完成、9 findings、51 秒。
 - 本機 gateway：token 字面值 `local-gateway`，且必須帶 `x-opencode-session`
   header，否則 400 `MissingSessionID`。
 - partial 需 `--max-tokens-budget 120000`（50000 在 1.13.13 會全部 dispatch 前失敗）。
