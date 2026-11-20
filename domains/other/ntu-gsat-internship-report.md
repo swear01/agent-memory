@@ -22,3 +22,8 @@ tags: [ntu, gsat, internship, docx, pdf, google-forms]
 ## 後續界線
 
 確認頁證明表單收件，不代表學程審核、口頭報告或實習成績已完成。若要核查收件副本或行政狀態，另查當次頁面或信件；不要重新提交既有表單。
+
+## 2026-11-21 submission notes
+- Slides submitted to the GSAT upload form (ICDA deadline 11/23 12:00); final files in Drive `碩一/實習/研發實習口頭報告/`.
+- Google Form file upload in the in-app browser: the picker's search tab finds Drive-synced files by name (form account must match the Drive account). Preview → 選取這個項目 → close preview → 插入.
+- The form's 「在我的回覆中記錄以下電子郵件地址」 checkbox is required; submit fails with 這是必填問題 until it is checked.
