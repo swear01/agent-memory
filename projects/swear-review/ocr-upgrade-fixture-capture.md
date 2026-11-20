@@ -4,7 +4,7 @@ scope: projects/swear-review
 project: swear-review
 status: active
 created: 2026-10-20
-updated: 2026-10-21
+updated: 2026-11-20
 tags: [swear-review, ocr, open-code-review, fixtures, upgrade, gateway]
 source_refs:
   - https://github.com/swear01/swear-review/pull/11
@@ -68,3 +68,16 @@ Oracle 沒有 Docker image，rollback 靠檔案備份。
 - Rollback：把備份的 `ocr-1.12.9` 複製回 `/usr/local/lib/node_modules/@alibaba-group/open-code-review`、
   app `git checkout --detach 1cf91e0` 並還原 `dist-1cf91e0` 後 `npm ci && npm prune --omit=dev`、
   還原 `config.yaml`，再 `sudo systemctl restart swear-review`。
+
+# 1.13.13 升級更新（2026-11-20，PR #22，merge `21020b4`）
+
+- OCR 1.13.8 移除 `--tools`（上游 #1894，無替代）；`ocr.tools_file` 與
+  `config/ocr-tools-no-search.json` 已刪，config 留著 `tools_file` 會在啟動時報錯
+  （`z.never()`），部署前要先從 prod `config.yaml` 刪掉。
+- 1.13.13 的 native binary 叫 `opencodereview`（不是 `ocr-darwin-arm64`）；
+  cancelled 要對它單獨送 SIGTERM。
+- 本機 gateway：token 字面值 `local-gateway`，且必須帶 `x-opencode-session`
+  header，否則 400 `MissingSessionID`。
+- partial 需 `--max-tokens-budget 120000`（50000 在 1.13.13 會全部 dispatch 前失敗）。
+- 1.13.12 起（#1030）退出碼：complete/skipped/budget-only partial = 0；
+  failed/quota/cancelled = 1。worker 先解析 stdout，無需改 runner。
