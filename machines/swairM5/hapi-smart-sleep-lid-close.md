@@ -2,10 +2,10 @@
 title: SwairM5 合蓋防睡眠：HAPI smart-sleep 與 Claude 活動偵測
 scope: machines/swairM5
 machine: SwairM5
-tags: [pmset, lid-close, clamshell, hapi, claude-code, launchd]
+tags: [pmset, lid-close, clamshell, hapi, claude-code, launchd, betterdisplay, lid-display-switch]
 status: active
 created: 2026-10-25
-updated: 2026-11-13
+updated: 2026-11-22
 ---
 
 # 結論
@@ -57,3 +57,13 @@ updated: 2026-11-13
 - SwairM5 上用 `keep-awake 7200` 啟動兩小時合蓋防休眠；命令位於 `~/.local/bin/keep-awake`，參數為正整數秒數。不需開視窗、sudo 或允許「捷徑」執行 shell 指令。
 - CLI 沿用「合蓋不休眠」捷徑的心跳檔與互斥鎖，由既有 HAPI root helper 控制 `SleepDisabled`。已有手動倒數時會拒絕再啟動。
 - 已驗證 7 秒倒數讓 `SleepDisabled` 從 0 變 1 再回 0，另確認 7200 秒倒數啟動後為 1；當時自動 watcher 未載入，未實體合蓋測試。
+
+# 虛擬螢幕切換加固（2026-11-22）
+
+- **前因（2026-11-21 當機）**：記憶體吃緊觸發 Jetsam 後 BetterDisplay GUI 無回應；舊版 `lid-display-switch` 每次 5 分鐘 health check 與事件都會衍生 BetterDisplay CLI，且 `retryWorkItem` 在開始執行時未清除，遇到連續事件會倍增平行重試鏈、繞過指數退避，每 10 秒狂戳 BetterDisplay；開蓋時又依賴 BetterDisplay CLI 切回主螢幕，最終 `WindowServer` 事件緩衝溢位並伴隨 `ap_panic` 強制重開機。
+- **方案 B 行為（`~/Library/Application Support/HAPI/lid-display-switch.swift`）**：
+  - 狀態檢查優先使用原生 `CGGetOnlineDisplayList` + `NSScreen.screens`（`detectVirtualDisplayNative`）；開蓋無虛擬螢幕或合蓋已掛上虛擬螢幕時 **0 次 BetterDisplay CLI 呼叫**，僅在真正切換或鏡像／未知狀態時才回退 CLI。
+  - 開蓋設回內建主螢幕改用原生 `CGConfigureDisplayOrigin(..., 0, 0)` + `CGCompleteDisplayConfiguration`（必要時先解除鏡像），不依賴 BetterDisplay。
+  - CLI timeout 縮短為 5 秒；連續超時 2 次自動 `SIGTERM → SIGKILL` 並 `open -g -b pro.betterdisplay.BetterDisplay` 背景重啟（冷卻 120 秒）；連續超時達 4 次進入 300 秒熔斷退避。
+  - 嚴格單一執行排程（`isReconcileRunning` + 清除 `weakWork`）：`health check` 與失敗期間的 `display reconfiguration` 不再重置退避，僅 `lid change` / `screens wake` / `session active` 會立即搶佔。
+- **部署與驗證**：依 `macos-launchagent-ad-hoc-binary-deploy.md` 以新 inode 替換並執行 `launchctl bootout` + `bootstrap`。已通過 `xcrun swiftc`、`--self-test`、`codesign --verify` 與啟動零 CLI 呼叫驗證；尚未實測實體合蓋／開蓋與 BetterDisplay 實機卡死復原。舊版備份於 `~/Library/Application Support/HAPI/backups/lid-display-switch-20261122-pre-plan-b/`；`transfer_MAC` snapshot 尚未同步。
