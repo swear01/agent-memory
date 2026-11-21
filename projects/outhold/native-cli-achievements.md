@@ -29,3 +29,5 @@ CLI bridge 載入原本的 Godot `user://` 存檔槽，呼叫原生關卡路由�
 - `Master` 由原生關卡結算檢查。普通關 10 關，Time Trial、Specialization、Token Limit、Prestige、Endless 各 9 關，另有 5 個 Artifact 關卡。Endless 第 1 關要完成 10 波，第 2–9 關要完成 20 波。原生一般與無限制模式共用完成旗標，第 9 關直接用一般 Endless。
 - `MAXED!` 由活躍中的 Upgrade Tree 檢查。普通關全通、目前配置有至少 5 個 Artifact，以及非里程碑升級已花 Basic 68,715、Advanced 53,600、Star 19、Time 36、Challenge 36。五種第一份 Artifact 即符合數量。透過升級介面的原生購買觸發判定並等候更新。
 - 普通關與 Prestige 提供全部 19 Star。九關 Time Trial、Token Limit、Endless 的首次獎勵分別合計 9、9、18 Time。九關 Specialization、Token Limit、Endless 的首次獎勵分別合計 9、18、9 Challenge。
+
+- MAXED! 的購買清單直接取原生 Upgrade Tree 的完整節點。`SaveSystem.save_game()` 只把目前配置中公開狀態達 `REVEALED` 的升級寫進存檔，單次讀檔會漏掉前置尚未買到的後續節點。這次補買並重讀後，清單從 175 增至 183、最後達 194 個節點。五類代幣支出全部符合原生門檻後，Steam 驗證為 15/15，含原生 MAXED!。
