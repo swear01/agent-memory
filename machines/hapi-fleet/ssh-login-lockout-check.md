@@ -35,7 +35,7 @@ log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎
 - zeus 的 rpc.yppasswdd 有在跑，學生可自行用 `yppasswd` 改密碼。
 - 換信箱重寄時只重設**原帳號**密碼、寄到新信箱，不開新帳號（使用者明確要求）。學生換學號（b→r）時工作站帳號仍是舊學號。
 - 2026-11-22 同一學生第二次重設 16:37（寄碩士信箱，第一封作廢），未建立任何新帳號（zeus `/etc/passwd` 9/20 後未變）。
-  當晚仍 `Failed password`，四台 hash 指紋與 zeus 一致、未鎖、未被 penalty 擋 → 是他輸入的密碼不對（多半用到第一封）。
+  當晚仍 `Failed password`，四台 hash 指紋與 zeus 一致、未鎖、未被 penalty 擋 → 真因是 client 的 SSSD 拿不到 NIS hash，只比對快取舊密碼；已修，見 [[ubuntu-upgrade-recovery-runbook]] 2026-11-22 段。重設密碼後在 client 失敗，先查這個。
 
 ## 2026-11-22 已套用的 penalty 設定（五台）
 - `/etc/ssh/sshd_config.d/50-persource-penalties.conf`：
