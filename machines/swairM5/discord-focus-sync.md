@@ -15,7 +15,7 @@ On swairM5 (macOS 27.2.1), opening any active macOS Focus sets the Discord user 
 
 - Shortcut `Focus Sync Current Focus` returns the literal text `on` or `off` via Apple's Get Current Focus action.
 - `local.focus-sync.sample` runs the shortcut under launchd about every five seconds and atomically records a successful result in `~/Library/Application Support/Focus Sync/focus-state`.
-- `local.focus-sync.watch` reads that state and applies Discord status. The program and official release framework are in `~/Library/Application Support/Focus Sync`. The two job definitions are in `~/Library/LaunchAgents`.
+- `local.focus-sync.watch` reads that state and applies Discord status. The program and official release dylib are in `~/Library/Application Support/Focus Sync`. The two job definitions are in `~/Library/LaunchAgents`.
 - Use `launchctl print gui/$UID/local.focus-sync.watch`, `launchctl print gui/$UID/local.focus-sync.sample`, and `~/Library/Application Support/Focus Sync/focus-sync.log` to verify operation. For a manual Shortcut test use `shortcuts run 'Focus Sync Current Focus' --output-path <new-output-file> --output-type public.plain-text`; stdout can be empty despite success.
 
 ## Verified behavior and limits
@@ -26,6 +26,6 @@ On swairM5 (macOS 27.2.1), opening any active macOS Focus sets the Discord user 
 
 ## SDK size and alternatives
 
-The official C++ archive is about 752 MiB on disk and contains debug/release and multiple platforms. The existing installation uses about 71 MiB, including a 70 MiB macOS framework that also bundles the Krisp native library and models for voice. The custom executable is about 1.1 MiB. The same official archive includes a separate universal release dylib of about 25 MiB. It passed signature verification and is a candidate for a smaller install; the current installation uses the framework.
+The official C++ archive is about 752 MiB on disk and contains debug/release and multiple platforms. The original installation used about 71 MiB, including a 70 MiB macOS framework with bundled Krisp voice assets. The current installation uses about 12 MiB: the standalone release dylib from the same archive with only its arm64 slice, plus a size-optimized helper of about 144 KiB. The dylib passed strict signature verification with the original Discord Team ID. The live LaunchAgent was relaunched, applied DND on the real Focus sample, restored Online on a synthetic off sample, and reapplied DND when the sampler resumed. Old and new watcher startup physical-footprint peaks were about 6.5 and 6.7 MiB respectively, so this change reduces disk usage without a measured RAM improvement. Discord does not offer a separate smaller C++ download for this configuration.
 
 Discord documents `SetOnlineStatus()` in the [Social SDK](https://discord.com/developers/docs/social-sdk/classdiscordpp_1_1Client.html). The [public local RPC](https://github.com/discord/discord-api-docs/blob/main/developers/topics/rpc.mdx) exposes Rich Presence activity updates, not the account's DND setting. [Metrolist's merged implementation and test notes](https://github.com/MetrolistGroup/Metrolist/pull/3874) show the official scoped OAuth and DND path in a non-game app.
