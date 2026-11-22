@@ -219,3 +219,10 @@ BMC/PDU 的下一步驗證。
   `Failed password`（journal 的 proxy_child 記 `pam_unix(sssd-shadowutils:auth): authentication failure`），zeus 本機可登入。
 - 影響：改密碼／重設密碼在 client 不生效；`cached_auth_timeout = 604800` 從最後一次線上驗證起算，約 11/25 後所有中央帳號在 client 的密碼登入都會失敗。公鑰登入不受影響。
 - `getent -s nis ...` 報 `yp_bind_client_create_v3: RPC: Unknown host` 是 getent `-s` 的假象；直接以 ctypes 呼叫 `_nss_nis_getpwnam_r` 正常。
+- 2026-11-22 20:31 已修（valkyrie、mazu、athena、cthulhu）：
+  1. `/etc/nsswitch.conf` passwd 改為 `files sss systemd nis`（備份 `/etc/nsswitch.conf.bak-20261122-2031xx`）。一般程式仍由 sss 回答，只有 sss 回 NOTFOUND 才查 NIS。
+  2. `/etc/systemd/system/sssd.service.d/20-no-self-memcache.conf`：`Environment=SSS_NSS_USE_MEMCACHE=NO`。
+     坑：nss_sss 的 memory cache 會繞過 `_SSS_LOOPS=NO`，proxy_child 查已在 memcache 的帳號仍拿到 `x`，nis 永遠輪不到。只對 sssd 程序關 memcache，其他程式照用。
+  - 驗證（不需密碼）：`sudo setpriv --reuid=sssd --regid=sssd --clear-groups env _SSS_LOOPS=NO SSS_NSS_USE_MEMCACHE=NO getent passwd <user> | cut -d: -f2 | sha256sum`
+    要等於 zeus `/etc/shadow` 該欄的指紋；`pgrep -x sssd_be` 的 environ 要有 `SSS_NSS_USE_MEMCACHE=NO`。
+  - 未實測：zeus 斷線且快取過期時的登入延遲；同學實際用新密碼登入的成功紀錄。
