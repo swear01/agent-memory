@@ -33,6 +33,9 @@ log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎
 - 驗證不印 hash：zeus `/etc/shadow` 第 2 欄與各 client `ypmatch user passwd.byname | cut -d: -f2` 各取 sha256 前 12 碼比對。
 - 密碼在單一 shell 指令內生成、餵 chpasswd、組信件後 pipe 給 `himalaya -a ntu message send --no-save`，不落地、不輸出；學號帳號信箱為 `<學號>@ntu.edu.tw`。
 - zeus 的 rpc.yppasswdd 有在跑，學生可自行用 `yppasswd` 改密碼。
+- 換信箱重寄時只重設**原帳號**密碼、寄到新信箱，不開新帳號（使用者明確要求）。學生換學號（b→r）時工作站帳號仍是舊學號。
+- 2026-11-22 同一學生第二次重設 16:37（寄碩士信箱，第一封作廢），未建立任何新帳號（zeus `/etc/passwd` 9/20 後未變）。
+  當晚仍 `Failed password`，四台 hash 指紋與 zeus 一致、未鎖、未被 penalty 擋 → 是他輸入的密碼不對（多半用到第一封）。
 
 ## 2026-11-22 已套用的 penalty 設定（五台）
 - `/etc/ssh/sshd_config.d/50-persource-penalties.conf`：
