@@ -209,3 +209,13 @@ BMC/PDU 的下一步驗證。
 
 - 11/19 開機時 `docker.socket` 嘗試解析 NIS-only 的 `docker` 群組，查詢失敗並以 216/GROUP 結束。`/etc/systemd/system/docker.socket.d/10-dvlab-socket-group.conf` 先以本機 root 群組建立 Unix socket，啟動完成前用 `chgrp +45000` 保留原本的 NIS Docker GID。無須更改任何群組成員或等 NIS 回線。
 - 實測 `docker.socket` 與 `docker.service` 均 active，`/run/docker.sock` 仍是 UID 0、GID 45000、權限 0660，Unix socket API `/_ping` 回 `OK`。後續若中央 Docker 群組改 GID，需同步核對這個 drop-in。
+
+## 2026-11-22 發現：`files sss systemd` 讓 client 的 NIS 密碼線上驗證全部失效
+
+- Zeus 的 NIS 用 `MERGE_PASSWD=true`，沒有 `shadow.byname`，hash 只在 `passwd.byname`。
+- 11/19 把 client 的 passwd 改成 `files sss systemd` 後，SSSD proxy auth（`proxy_pam_target = sssd-shadowutils` → pam_unix）
+  拿不到 hash：sss 只給 `x`，shadow 的 nis 沒有 map。所以 client 上的密碼登入只剩 SSSD 快取的舊密碼可用。
+- 證據：四台 client cache ldb 的 `lastOnlineAuth` 最新都在 11/18（重開前）；改過密碼的學生在 client 一律
+  `Failed password`（journal 的 proxy_child 記 `pam_unix(sssd-shadowutils:auth): authentication failure`），zeus 本機可登入。
+- 影響：改密碼／重設密碼在 client 不生效；`cached_auth_timeout = 604800` 從最後一次線上驗證起算，約 11/25 後所有中央帳號在 client 的密碼登入都會失敗。公鑰登入不受影響。
+- `getent -s nis ...` 報 `yp_bind_client_create_v3: RPC: Unknown host` 是 getent `-s` 的假象；直接以 ctypes 呼叫 `_nss_nis_getpwnam_r` 正常。
