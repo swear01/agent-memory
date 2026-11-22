@@ -33,3 +33,12 @@ log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎
 - 驗證不印 hash：zeus `/etc/shadow` 第 2 欄與各 client `ypmatch user passwd.byname | cut -d: -f2` 各取 sha256 前 12 碼比對。
 - 密碼在單一 shell 指令內生成、餵 chpasswd、組信件後 pipe 給 `himalaya -a ntu message send --no-save`，不落地、不輸出；學號帳號信箱為 `<學號>@ntu.edu.tw`。
 - zeus 的 rpc.yppasswdd 有在跑，學生可自行用 `yppasswd` 改密碼。
+
+## 2026-11-22 已套用的 penalty 設定（五台）
+- `/etc/ssh/sshd_config.d/50-persource-penalties.conf`：
+  `PerSourcePenaltyExemptList 140.112.0.0/16,192.168.0.0/16`、`PerSourcePenalties min:30`（其餘維持預設 authfail:5、max:600）。
+- 語意：penalty 以「連線」計、隨時間衰減。人手打密碼（每條連線 ~20 秒）累積不到 min，不會被擋；
+  bot 快速重連約 10 次失敗後被擋，最長 10 分鐘。這是使用者選的「失敗約 10 次才擋、校內不擋」。
+- zeus 的 sshd_config 是舊版、原本沒有 `Include`，已在第 1 行加上（備份 `/etc/ssh/sshd_config.bak-20261122`）。
+  之後在 zeus 改 sshd 設定可以用 drop-in 了。
+- 檢查：`sudo sshd -T | grep ^persourcepenalt`。
