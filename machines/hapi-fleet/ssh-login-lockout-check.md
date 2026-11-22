@@ -1,5 +1,5 @@
 ---
-title: DV Lab 機群沒有 SSH 封鎖機制；登入失敗先看 journal
+title: DV Lab 機群只有 sshd 內建 PerSourcePenalties；登入失敗先看 journal
 scope: machines/hapi-fleet
 tags: [ssh, fail2ban, nis, login, troubleshooting]
 status: active
@@ -7,18 +7,23 @@ created: 2026-11-22
 updated: 2026-11-22
 ---
 
-# DV Lab 機群沒有 SSH 封鎖機制
+# DV Lab 機群只有 sshd 內建 PerSourcePenalties
 
 2026-11-22 實查 zeus／valkyrie／athena／cthulhu／mazu：fail2ban 未安裝，sshguard、crowdsec、
 denyhosts 皆 inactive，PAM 無 faillock／tally，`/etc/hosts.deny` 空，iptables 無針對 SSH 的 DROP。
-所以「帳號被 ban」不成立；學生登不進去通常是密碼錯。
+但五台都是 Ubuntu 26.04／OpenSSH 10.2，預設啟用 `PerSourcePenalties`（authfail:5 noauth:1
+grace-exceeded:10 min:15 max:600，未設 exempt list）：同一來源 IP 累積 ≥15 秒 penalty 就短暫拒絕連線，
+log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎都是 exceeded LoginGraceTime，
+每次約 20 秒；是 per-host、per-IP，不經 NIS 同步。學生登不進去通常仍是密碼錯。
+2026-11-22 b09901086 經 192.168.1.1 在 valkyrie 被擋過一次約 20 秒，同時擋到所有經 NAT 進來的人。
 
 - 判斷：`sudo journalctl -t sshd -t sshd-session --since today | grep <user>`。每次都回
   `Failed password` 表示 sshd 有在驗密碼、沒被擋（被 ban 會是連線 timeout／refused）。
 - 不知道帳號時：彙整 `Failed password for <user>`（排除 `invalid user`），再用
   `getent passwd | cut -d: -f1,3,5` 對中文姓名（GECOS）。不要印整筆 passwd，見 [[nis-account-query-safety]]。
 - 帳號狀態只在 zeus `/etc/shadow` 用 awk 判斷 `!` 前綴與第 3/5/8 欄，不輸出 hash。
-- 外部連線經 router NAT 進來，log 來源常是 `192.168.1.1`。若日後裝 fail2ban，必須把
-  192.168.1.0/24 列入 `ignoreip`，否則一個人打錯密碼會把所有從外面連進來的人一起 ban 掉。
+- 部分連線經 NAT，log 來源是 `192.168.1.1`／`192.168.50.1`（共用 IP）。PerSourcePenalties 應設
+  `PerSourcePenaltyExemptList`，fail2ban 應設 `ignoreip`，否則一人打錯會擋到所有經 NAT 的人。
+- 7 天內外部掃描極少（每台 invalid user 0–3 次），登入 99% 為 publickey；pam_faillock 可被拿學號鎖人，不建議。
 - NIS（`MERGE_PASSWD=true`）讓帳密全機群共用，改密碼在 zeus 做後 `make -C /var/yp`；
   但封鎖（若有）屬各主機的防火牆，不會經 NIS 同步。
