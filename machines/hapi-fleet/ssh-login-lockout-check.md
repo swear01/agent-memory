@@ -42,3 +42,4 @@ log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎
 - zeus 的 sshd_config 是舊版、原本沒有 `Include`，已在第 1 行加上（備份 `/etc/ssh/sshd_config.bak-20261122`）。
   之後在 zeus 改 sshd 設定可以用 drop-in 了。
 - 檢查：`sudo sshd -T | grep ^persourcepenalt`。
+- 已寫入實驗室文件 `New Server Setup(private)` 第 8 節「SSH 登入保護」（DVLab-MIS Drive，2026-11-22）；之後改設定要同步更新該節。
