@@ -210,19 +210,15 @@ BMC/PDU 的下一步驗證。
 - 11/19 開機時 `docker.socket` 嘗試解析 NIS-only 的 `docker` 群組，查詢失敗並以 216/GROUP 結束。`/etc/systemd/system/docker.socket.d/10-dvlab-socket-group.conf` 先以本機 root 群組建立 Unix socket，啟動完成前用 `chgrp +45000` 保留原本的 NIS Docker GID。無須更改任何群組成員或等 NIS 回線。
 - 實測 `docker.socket` 與 `docker.service` 均 active，`/run/docker.sock` 仍是 UID 0、GID 45000、權限 0660，Unix socket API `/_ping` 回 `OK`。後續若中央 Docker 群組改 GID，需同步核對這個 drop-in。
 
-## 2026-11-22 發現：`files sss systemd` 讓 client 的 NIS 密碼線上驗證全部失效
+## 2026-11-22 NIS 密碼登入修復：SSSD proxy_child、PAM 與 AppArmor
 
-- Zeus 的 NIS 用 `MERGE_PASSWD=true`，沒有 `shadow.byname`，hash 只在 `passwd.byname`。
-- 11/19 把 client 的 passwd 改成 `files sss systemd` 後，SSSD proxy auth（`proxy_pam_target = sssd-shadowutils` → pam_unix）
-  拿不到 hash：sss 只給 `x`，shadow 的 nis 沒有 map。所以 client 上的密碼登入只剩 SSSD 快取的舊密碼可用。
-- 證據：四台 client cache ldb 的 `lastOnlineAuth` 最新都在 11/18（重開前）；改過密碼的學生在 client 一律
-  `Failed password`（journal 的 proxy_child 記 `pam_unix(sssd-shadowutils:auth): authentication failure`），zeus 本機可登入。
-- 影響：改密碼／重設密碼在 client 不生效；`cached_auth_timeout = 604800` 從最後一次線上驗證起算，約 11/25 後所有中央帳號在 client 的密碼登入都會失敗。公鑰登入不受影響。
-- `getent -s nis ...` 報 `yp_bind_client_create_v3: RPC: Unknown host` 是 getent `-s` 的假象；直接以 ctypes 呼叫 `_nss_nis_getpwnam_r` 正常。
-- 2026-11-22 20:31 已修（valkyrie、mazu、athena、cthulhu）：
-  1. `/etc/nsswitch.conf` passwd 改為 `files sss systemd nis`（備份 `/etc/nsswitch.conf.bak-20261122-2031xx`）。一般程式仍由 sss 回答，只有 sss 回 NOTFOUND 才查 NIS。
-  2. `/etc/systemd/system/sssd.service.d/20-no-self-memcache.conf`：`Environment=SSS_NSS_USE_MEMCACHE=NO`。
-     坑：nss_sss 的 memory cache 會繞過 `_SSS_LOOPS=NO`，proxy_child 查已在 memcache 的帳號仍拿到 `x`，nis 永遠輪不到。只對 sssd 程序關 memcache，其他程式照用。
-  - 驗證（不需密碼）：`sudo setpriv --reuid=sssd --regid=sssd --clear-groups env _SSS_LOOPS=NO SSS_NSS_USE_MEMCACHE=NO getent passwd <user> | cut -d: -f2 | sha256sum`
-    要等於 zeus `/etc/shadow` 該欄的指紋；`pgrep -x sssd_be` 的 environ 要有 `SSS_NSS_USE_MEMCACHE=NO`。
-  - 未實測：zeus 斷線且快取過期時的登入延遲；同學實際用新密碼登入的成功紀錄。
+- Zeus 用 `MERGE_PASSWD=true`，NIS 密碼雜湊在 `passwd.byname`。11/19 把 client 的 passwd 順序改為 `files sss systemd` 後，SSSD 線上驗證無法取得 NIS 雜湊；原有快取仍可能驗過舊密碼。
+- 20:31 加回末尾的 `nis` 並透過 systemd 設 `SSS_NSS_USE_MEMCACHE=NO`。21:00 valkyrie 登入仍失敗，AppArmor 擋了 `proxy_child` 執行 `/usr/sbin/unix_chkpwd`，另有 `loginuid` 讀取拒絕。21:02 改用 `/etc/sssd/conf.d/20-no-passwd-memcache.conf` 的 `[nss]`、`memcache_size_passwd = 0`，移除上述 systemd drop-in。這一步只處理 NSS 記憶體快取，四台仍實測登入失敗。
+- SSSD 2.12.0 的 `proxy_child` 啟動時呼叫 `clearenv()`，且以 `allow_sss_loop=true` 初始化，沒有補設 `_SSS_LOOPS=NO`。在 valkyrie 用相同 AppArmor profile 與 sssd UID/GID 驗證，空環境讀到 `x`，補上 `_SSS_LOOPS=NO` 才取得和 NIS 一致的雜湊。未見 NIS 拒絕紀錄。若要單獨查 NIS，對 `getent -s` 指定 passwd 資料庫和 nis 服務（用冒號連接）；`getent -s nis` 也會覆寫 hosts 查詢，可能誤報 RPC Unknown host。比較前先在主機端遮蔽雜湊，見 [[nis-account-query-safety]]。
+- valkyrie 一度試過將獨立的 NSS 設定用 `BindReadOnlyPaths` 套給 SSSD，但 AppArmor 在該 mount namespace 拒絕了 `/run/systemd/notify` 等 socket 存取，已回滾。
+- **正式部署**（valkyrie、athena、cthulhu、mazu）：保留 `files sss systemd nis` 和 passwd 記憶體快取停用設定。`/etc/sssd/conf.d/30-dvlab-nis-pam.conf` 指定 `[domain/dvlab-nis]` 的 `proxy_pam_target = sssd-dvlab-nis`。`/etc/pam.d/sssd-dvlab-nis` 在 auth 和 account 都先呼叫 `pam_dvlab_nis_nss.so`，再 include 套件原有的 `sssd-shadowutils`。模組只在專用 PAM service 設 `_SSS_LOOPS=NO`，由原有 `pam_unix` 驗證密碼。
+- 模組位於 `/usr/lib/x86_64-linux-gnu/security/pam_dvlab_nis_nss.so`，C 原始碼放在各 client 的 `/usr/local/src/dvlab-nis/pam_dvlab_nis_nss.c`。AppArmor 維持 enforce；`/etc/apparmor.d/local/usr.sbin.sssd` 只新增 `/etc/pam.d/sssd-dvlab-nis r,`。重新部署時先載入專用 PAM 檔的讀取規則，再切換 SSSD PAM target 並重啟；回滾時先撤掉 target override 並重啟，再移除專用檔案和規則。
+- **實測**（22:10 台北時間）：四台以同一臨時 NIS 帳號各走一次 SSH 密碼登入、在 zeus 重設後用新密碼登入、再試舊密碼。前兩次均有 `pam_sss` 成功和 `Accepted password`，舊密碼均被拒絕。無新增 `unix_chkpwd` 拒絕。四台公鑰、一般 NSS 查詢、SSSD 設定檢查均通過。臨時帳號已移除，四台均確認查不到。
+- 既有七天認證快取政策保留。在新密碼首次驗證成功前，舊快取密碼仍可能依原政策被接受。本輪未測 NIS 離線行為，尚無同學本人重登紀錄，`New Server Setup(private)` 仍暫停更新。
+
+原始碼參考：[proxy_child](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_child.c#L485-L537)、[server_setup](https://github.com/SSSD/sssd/blob/2.12.0/src/util/server.c#L456-L518)。
