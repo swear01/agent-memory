@@ -27,3 +27,9 @@ log 為 `srclimit_penalise` / `drop connection ... penalty`。實際觸發幾乎
 - 7 天內外部掃描極少（每台 invalid user 0–3 次），登入 99% 為 publickey；pam_faillock 可被拿學號鎖人，不建議。
 - NIS（`MERGE_PASSWD=true`）讓帳密全機群共用，改密碼在 zeus 做後 `make -C /var/yp`；
   但封鎖（若有）屬各主機的防火牆，不會經 NIS 同步。
+
+## 幫學生重設 NIS 密碼（2026-11-22 實作過）
+- zeus：`printf 'user:pw\n' | sudo chpasswd` 後 `sudo make -s -C /var/yp`（YPPWDDIR=/etc、MERGE_PASSWD=true），產生 yescrypt。
+- 驗證不印 hash：zeus `/etc/shadow` 第 2 欄與各 client `ypmatch user passwd.byname | cut -d: -f2` 各取 sha256 前 12 碼比對。
+- 密碼在單一 shell 指令內生成、餵 chpasswd、組信件後 pipe 給 `himalaya -a ntu message send --no-save`，不落地、不輸出；學號帳號信箱為 `<學號>@ntu.edu.tw`。
+- zeus 的 rpc.yppasswdd 有在跑，學生可自行用 `yppasswd` 改密碼。
