@@ -18,3 +18,8 @@ CVSD 2026 期末 SCE（tsmc13，28 顆 SRAM macro，1.80 ns，margin-0 floorplan
 - **Innovus 的 setup 與 post-sim 可以不一致**：setup −0.022 的 run，post-sim（native SDF）仍是 0 violation。但交付規則若要求 setup ≥ 0，post-sim 乾淨不能代替 setup。
 
 相關：[[innovus-physical-check-points]]
+
+## Restored DB: do not re-load or re-propagate constraints (verified 2026-11-24, Innovus 25.x, CVSD final SCE)
+- On a `restoreDesign` of a post-route DB, both `update_constraint_mode -sdc_files ...` and a bare `set_propagated_clock [all_clocks]` wipe the I/O latency CCOpt set at CTS. Every in2reg/reg2out path then reads about -0.5 ns setup and hold (the `default` path group), while reg2reg stays correct.
+- To retime under a changed uncertainty, change only that value: `set_interactive_constraint_modes [all_constraint_modes -active]; set_clock_uncertainty -hold 0.1 [get_clocks clk]; set_interactive_constraint_modes {}`.
+- Curated single-path setup ECO (ecoChangeCell + refinePlace -eco + ecoRoute): upsizing a failing output flop to an HQ flop can move the miss to its D pin (larger setup). A same-family drive-up (DFFQX2 -> DFFQX4) plus upsizing the D-side high-fanout driver closed a -0.006 miss to 0.000.
