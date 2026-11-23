@@ -23,4 +23,4 @@ tags: [SSH, NTU, firewall, IDS, polling, ControlMaster, dvlab, gups, 封鎖, 輪
 - 每台主機重用一條連線：`ssh -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%r@%h:%p -o ControlPersist=30m`。
 - 輪詢間隔至少 2–3 分鐘；更好的是讓伺服器端寫完成標記，由單一迴圈檢查。
 - 開批次前估算所有背景工作（含其他 session）加起來每分鐘新開的 SSH 次數，控制在約 5 次以內。
-- 被封鎖時不要用其他機器（例如 Oracle）繞路連回去：那是在規避防火牆。等解除、或請使用者處理。
+- 被封鎖時，使用者同意（2026-11-24）暫時用 Oracle VM 當跳板：只在 session 用的 `ssh -F` 設定裡讓 gups 走 `ProxyJump oracle`、dvlab 走 `ProxyJump gups`，不改 ~/.ssh/config，並保持 ControlMaster。
