@@ -13,7 +13,7 @@ updated: 2026-11-23
 
 ## Durable rule
 
-排查磁碟空間時，應優先針對以下 6 大元兇進行掃描：
+排查磁碟空間時，應優先針對以下 8 大元兇進行掃描：
 1. **Codex 批次作業暫存**：`<documents-root>/Codex/<date>/.../work` 下可能存在數百 GB 的中繼處理檔案（如 Takeout 批次修復、圖片暫存）。完成任務後應優先回收。
 2. **跨主機除錯與臨時 Clone**：`/private/var/tmp` 會長期殘留歷史多機測試、QMD 或 issue 除錯複本（如 `qmd-issue25-*`、`shared-memory-*`），重開機亦不會自動清除，單次可釋放數十 GB。
 3. **Cursor 專案快照**：`<remote-home>/Library/Application Support/Cursor/snapshots` 會隨 Agent/Composer 多專案操作累積 10~20+ GB 的 shadow codebase，可安全清空。
