@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-11 前程似錦與 TIS-100 兩場讀書會簡報實作；TIS-100 於 2026-11-17 實際報告完畢。
 created: 2026-11-17
-updated: 2026-11-21
+updated: 2026-11-24
 tags:
   - slides
   - artifact
@@ -34,6 +34,7 @@ tags:
 
 ## Slides artifact 機制
 
+- 一律黑底，配色與交付位置見 `global/preferences/slide-deck-style.md`。
 - 檔案：`project/deck.json`（order、sections）、`project/deck.css`、`project/slides/<id>.html`（一個 1920×1080 `<section>`，備註在 `<aside>`）。
 - 更新：publish 帶 `url`、`root`、`file_path`=deck.json、`files` 只放改到的 slide；圖片先用 `asset: true` 上傳，引用回傳的 `/_blob/<id>`。
 - 驗證：內建瀏覽器 viewport 1600×1000，導航後等約 18 秒；「This artifact didn't start」多等一下或按 Try again。逐張點縮圖看是否溢出，結束時 viewport 回 desktop。
