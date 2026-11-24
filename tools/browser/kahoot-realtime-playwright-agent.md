@@ -21,8 +21,9 @@ updated: 2026-11-24
 
 ## 實測可用的快速模型與 API 參數（2026-11）
 - **Anthropic (`ANTHROPIC_API_KEY`)**：
-  - `claude-haiku-5-5`：預設開啟 thinking 約 **1.61 s**；設 `thinking: {"type": "disabled"}` + `temperature: 0` 約 **1.18 s**（開啟 thinking 時不可傳 `temperature`）。
+  - `claude-haiku-5-5`：預設開啟 thinking 約 **1.61 s**（暖機 HTTP/2 長連線後約 **0.59–0.81 s**）；thinking 共用 `max_tokens`，建議設 `max_tokens >= 4096` 避免 JSON 被截斷。設 `thinking: {"type": "disabled"}` + `temperature: 0` 約 **1.18 s**（開啟 thinking 時不可傳 `temperature`）。
   - `claude-opus-5-5`：不支援 `thinking.type="disabled"`，須用 `thinking: {"type": "adaptive"}` + `output_config: {"effort": "low"}`，實測約 **1.09 s**。
   - `claude-sonnet-5-5`：關閉 thinking 須用 `thinking: {"type": "between_tools"}`，實測約 **1.57 s**。
+  - 傳輸層：`api.anthropic.com` 未開放 HTTP/3（無 `alt-svc: h3`）；`api.groq.com` 雖有 `alt-svc: h3`，但 `httpx` HTTP/2 長連線暖機後已貼近 RTT + TTFT 下限。
 - **Groq (`GROQ_API_KEY`)**：
   - `openai/gpt-oss-120b`（`reasoning_effort: "low"`，`response_format: {"type": "json_object"}`）：單題實測約 **0.65–0.77 s**（端到端 4 題平均 **657 ms**）。
