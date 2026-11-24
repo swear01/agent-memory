@@ -25,7 +25,7 @@ tags: [gups, ieda1, hang, 卡死, POST 76, ASMedia, ST2000DM008, BIOS, netconsol
 
 ## 下一步
 
-- 日誌存在同一顆系統碟上，所以硬碟一卡住，核心訊息就寫不下來。要留下證據，得用 netconsole 透過內網把核心訊息送到 ieda2（192.168.100.1）。
+- 2026-11-24 已設好 netconsole：ieda1 透過 `netconsole-service`（`/etc/sysconfig/netconsole` 的 SYSLOGADDR=192.168.100.1，SYSLOGPORT=514，原檔備份為 `.orig`），並用 `/etc/sysctl.d/90-netconsole-printk.conf` 設定 `kernel.printk = 7 4 1 7`，連 INFO 等級也送出。ieda2 由 `/etc/rsyslog.d/10-netconsole-ieda1.conf` 只在 192.168.100.1:514/udp 接收，寫進 `/var/log/netconsole-ieda1.log`（logrotate 每週一次、保留 12 份），firewalld internal 區開放 514/udp。用 `/dev/kmsg` 測試，端到端成功；重開機後是否仍生效尚未實測。下次卡死時先看這個檔案。ieda2 若在 ieda1 開機時沒開，netconsole 會因為查不到 MAC 而啟動失敗，要 `systemctl restart netconsole`。
 - 把 gups 的 BIOS 更新到 F12g，和 ieda2 一致；要到現場用 Q-Flash 更新。
 - 長期把系統碟換成 NVMe。IPA、/home NFS 和 EDA 暫存目前都放在同一顆 HDD 上。
 - 卡住時要完全斷電再開；只按 reset 可能會停在 POST 76。
