@@ -24,3 +24,10 @@ tags: [SSH, NTU, firewall, IDS, polling, ControlMaster, dvlab, gups, 封鎖, 輪
 - 輪詢間隔至少 2–3 分鐘；更好的是讓伺服器端寫完成標記，由單一迴圈檢查。
 - 開批次前估算所有背景工作（含其他 session）加起來每分鐘新開的 SSH 次數，控制在約 5 次以內。
 - 被封鎖時，使用者同意（2026-11-24）暫時用 Oracle VM 當跳板：只在 session 用的 `ssh -F` 設定裡讓 gups 走 `ProxyJump oracle`、dvlab 走 `ProxyJump gups`，不改 ~/.ssh/config，並保持 ControlMaster。
+
+## 別跟「主機本身卡死」搞混（2026-11-24 晚）
+
+- 封鎖的特徵：台大網站也連不上，TCP 直接逾時。
+- gups（ieda1，140.112.186.18）卡死的特徵：ping 通、22/80/443/389 TCP 都能建立，但 SSH 停在 banner exchange、HTTPS 回 000、LDAP 無回應；從 Mac、Oracle、zeus、ieda2 內網（192.168.100.254）看都一樣。代表核心還活著、使用者空間卡住，要現場或主控台處理，換跳板沒用。
+- ieda2（140.112.186.23）當時正常，可作為校內檢查點：`ssh root@140.112.186.23`。
+- 依賴 `ProxyJump gups` 的 dvlab 連線會一起掛；dvlab 主機可以從校外直連時就改用直連。
