@@ -2,12 +2,14 @@
 title: Athena 送修歸還與回機後狀態
 scope: machines/athena
 status: active
-updated: 2026-11-12
+updated: 2026-11-24
 ---
 
 # 目前狀態
 
 2026-10-17 至 2026-11-12 送修；2026-11-12 使用者確認修好歸還，已恢復一般 fleet 操作範圍，不再排除 SSH、探測、部署或同步。
+
+- **2026-11-24 更新**：送修期間主機板、CPU、記憶體並未更換（僅通過全核降頻 `stress-ng` 燒機），回機後跑 `innovus` 等部分核心負載仍會觸發 `SCHED_SOFTIRQ` `preempt_count` 異常並整機 freeze；目前已啟用 iTCO 硬體 watchdog、將 `P-Core 0`（`CPU 0–1`）移出排程並鎖定 `3.0 GHz` 基頻、修正時區為 `Asia/Taipei` 及啟用 `swear02` linger，詳見 [2026-10/11 反覆 freeze 與緩解紀錄](recurring-freeze-2026-11.md)。
 
 # 回機核對（2026-11-12）
 
