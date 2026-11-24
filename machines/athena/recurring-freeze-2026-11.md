@@ -19,4 +19,11 @@ tags: [kernel, freeze, bert, hardware, raptor-lake]
 - 11-24 的兩次開機都有 `BERT: [Hardware Error]: Skipped 1 error records`，代表韌體記下前一次 boot 的硬體錯誤（記錄 >1 KiB 所以 kernel 沒印內容）；更早的 boot 沒有 BERT 記錄。
 - 對照：Valkyrie、Cthulhu（同 i9-13900K、microcode `0x133`、kernel `7.0.0-43`）與 Mazu（14900K）自 10-01 起 `softirq: huh` 與 BERT 都是 0。證據指向 Athena 單機 CPU／RAM／主機板，Raptor Lake 已發生的 Vmin 退化最可疑（microcode 只能防止惡化，不會修復），但尚未經硬體交換確診。
 - 雜訊非根因：fusermount3 AppArmor DENIED 每 10 秒刷一次；earlyoom 顯示記憶體 99% 空閒，無 OOM、Xid、thermal。
-- 下一步沿用既定順序：離線 MemTest86 → 與 Valkyrie/Cthulhu 交換 CPU（或 Intel 保固 RMA）。freeze 時不會自動重開，可考慮 iTCO 硬體 watchdog + systemd `RuntimeWatchdogSec` 讓它自己 reset。
+- 下一步沿用既定順序：離線 MemTest86 → 與 Valkyrie/Cthulhu 交換 CPU（或 Intel 保固 RMA）。freeze 時不會自動重開。
+
+# 硬體 watchdog（2026-11-24 已啟用）
+
+- Athena 沒有 ACPI WDAT；Ubuntu `/lib/modprobe.d/blacklist_linux_*.conf` 封鎖 `iTCO_wdt` 的自動載入，但明確載入可用（Z790 PCH TCO v6，上限約 613 s）。
+- `/etc/modules-load.d/iTCO_wdt.conf` 開機載入模組；`/etc/systemd/system.conf.d/watchdog.conf` 設 `RuntimeWatchdogSec=5min`、`RebootWatchdogSec=10min`。用 `daemon-reload` 就生效，不需重開：`systemctl show -p WatchdogDevice` 為 `/dev/watchdog0`、`wdctl` timeout 300 s。
+- 選 5 分鐘而非 30 秒：kdump 的 capture kernel 不會載入被封鎖的 iTCO，也不會餵它；太短會在寫 vmcore 時被 reset。
+- 尚未驗證：重開後是否自動接管（下次開機看 `journalctl -b | grep "hardware watchdog"`），以及真的 freeze 時是否會 reset。回滾：刪掉這兩個檔案再 `daemon-reload`。
