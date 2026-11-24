@@ -36,3 +36,4 @@ updated: 2026-10-30
 - The Drive script `gups_accounts.sh` (in the GUPS TA folder) calls it over ssh and mails the password via himalaya. `--preview` sends nothing. It was tested end to end with a throwaway account on both servers, and that account was deleted.
 - The roughly 20 older student accounts on ieda1 are still local `/etc/passwd` users, not in IPA, so they cannot log in to ieda2. Migrating them is the user's call.
 - The handover doc 「GUPS伺服器交接資訊.md」 was rewritten on 2026-10-30. At the user's request it holds the IPA admin and Directory Manager passwords in plaintext (also in Bitwarden), plus the ieda1 root password.
+- 2026-11-24：ieda2 的 journald 改成持久化（`/etc/systemd/journald.conf.d/10-persistent.conf`，Storage=persistent，SystemMaxUse=4G）；ieda1 原本就是持久化。
