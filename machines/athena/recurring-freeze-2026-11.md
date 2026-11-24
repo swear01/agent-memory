@@ -34,3 +34,12 @@ tags: [kernel, freeze, bert, hardware, raptor-lake]
 
 - Zeus 每分鐘 `:01` 由 `glances_collect.py` 以 `swear02` SSH 輪詢各機；共用 NFS `<admin-home>/.config/systemd/user/` 下的 `dvlab-windows-enroll.service` 與 `ninfer-oracle-tunnel.service` 原缺 `ConditionHost=zeus`（另殘留 `timers.target.wants/snap.firmware-updater.firmware-notifier.timer`），且 Athena 未開 `swear02` linger，導致每分鐘反覆啟停 `user@1075`（UID 1075 user manager）並刷 `fusermount3` AppArmor DENIED。
 - 已在 Zeus 備份原 user units 至 `/var/backups/swear02-systemd-user-20261124/` 後為兩 unit 補上 `ConditionHost=zeus`、移除殘留 timer 連結並僅 `daemon-reload`（Zeus 四個運作中服務 `MainPID` 不變）；同步在 Valkyrie `daemon-reload` 與 `reset-failed` 清零失敗 unit；在 Athena 啟用 `loginctl enable-linger swear02` 並清理 user failed state，同時將 Athena 時區由 `Asia/Manila`（`PST`）改為 `Asia/Taipei`（`CST`）。驗證跨一輪 `:01`–`:15` 輪詢已無 `user@1075` 啟停、無 Zeus-only unit 失敗、無 `fusermount3` 拒絕紀錄，且 `overview.json`／`detail.json` 正常更新。
+
+# P-Core 0 隔離與基頻鎖定（2026-11-24 已啟用）
+
+- x86_64 Linux 7.0 無 `cpu0/online`（無法將 BSP `CPU 0` 下線）；且實測若將中間核心 `CPU 1` 設為 `online=0`，HAPI 內建的 Bun `v1.4.4` 執行 `os.cpus()[0].times` 會拋出 `ERR_SYSTEM_ERROR: Failed to get CPU information` 導致 `hapi-runner` 重啟迴圈。
+- 因此維持 `CPU 0–1` 在線，改以多層隔離將實體 `Core 0`（`CPU 0–1`）完全移出工作負載並鎖定無 Turbo 基頻，其餘 23 核 30 執行緒（`CPU 2–31`）維持全速：
+  1. `/etc/systemd/system.conf.d/pcore0-quarantine.conf`（`CPUAffinity=2-31`）及 `systemctl set-property` 於 `init.scope`、`system.slice`、`user.slice`、`machine.slice` 持久化設定 `AllowedCPUs=2-31`，所有 userspace 程序（含 `hapi`、`innovus`、SSH）僅能排程於 `CPU 2–31`。
+  2. `/etc/systemd/system/athena-pcore0-quarantine.service`（呼叫 `/usr/local/sbin/athena-pcore0-quarantine.sh`）：將 `CPU 0` 與 `CPU 1` 的 `scaling_max_freq` 鎖在 `3000000`（`3.0 GHz` 基頻）與 `EPP=power`，並將 `default_smp_affinity`（`fffffffc`）與可搬移 IRQ 導向 `CPU 2–31`。
+- 實測部分核心 `stress-ng` 壓測期間 `CPU 0–1` 維持基頻以下（約 `800 MHz`）、`CPU 2+` 正常 Boost（`5.3–5.42 GHz`）、`0` 筆 `softirq: huh`，且 `hapi-runner` 與 Dashboard 均正常運作。若後續仍重現 `softirq: huh` 或 freeze，代表第二顆 `5800 MHz` 偏好核 `Core 1`（`CPU 2–3`）亦退化，屆時再限制 `CPU 2–3` 最高頻率。
+- 回滾指令：`sudo systemctl disable --now athena-pcore0-quarantine.service && sudo rm -f /etc/systemd/system/athena-pcore0-quarantine.service /usr/local/sbin/athena-pcore0-quarantine.sh /etc/systemd/system.conf.d/pcore0-quarantine.conf && sudo systemctl set-property init.scope AllowedCPUs= && sudo systemctl set-property system.slice AllowedCPUs= && sudo systemctl set-property user.slice AllowedCPUs= && sudo systemctl set-property machine.slice AllowedCPUs= && sudo systemctl daemon-reload`。
