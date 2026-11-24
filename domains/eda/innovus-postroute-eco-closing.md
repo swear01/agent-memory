@@ -3,7 +3,7 @@ title: Closing the last few ps of post-route setup in Innovus — curated ecoCha
 scope: domains/eda
 tool: innovus
 status: active
-updated: 2026-11-24
+updated: 2026-11-25
 ---
 
 # Innovus post-route 收最後幾十 ps setup
@@ -23,3 +23,10 @@ CVSD 2026 期末 SCE（tsmc13，28 顆 SRAM macro，1.80 ns，margin-0 floorplan
 - On a `restoreDesign` of a post-route DB, both `update_constraint_mode -sdc_files ...` and a bare `set_propagated_clock [all_clocks]` wipe the I/O latency CCOpt set at CTS. Every in2reg/reg2out path then reads about -0.5 ns setup and hold (the `default` path group), while reg2reg stays correct.
 - To retime under a changed uncertainty, change only that value: `set_interactive_constraint_modes [all_constraint_modes -active]; set_clock_uncertainty -hold 0.1 [get_clocks clk]; set_interactive_constraint_modes {}`.
 - Curated single-path setup ECO (ecoChangeCell + refinePlace -eco + ecoRoute): upsizing a failing output flop to an HQ flop can move the miss to its D pin (larger setup). A same-family drive-up (DFFQX2 -> DFFQX4) plus upsizing the D-side high-fanout driver closed a -0.006 miss to 0.000.
+
+## Route-DRC loop and run-to-run spread (verified 2026-11-25, Innovus 25.x, CVSD final SCE at 1.791 ns)
+- A timing-gated DRC repair loop (`ecoRoute -fix_drc` + postRoute opt, up to 8 rounds) does not converge monotonically: later loops often trade DRC for -0.2 to -0.4 ns. Save a checkpoint (`saveDesign DBS/pr_best`) on every improvement, stop after 3 stalled loops, and restore the best before signoff. Rank loops as closed first, then hold ≥ 0, then WNS minus 5 ps per DRC marker; ranking "DRC 0 first" picked a -0.295 loop over a -0.071 / 2-DRC one.
+- At a marginal period the same flow swings 0.1-0.3 ns run to run. A single good run (-0.004) did not reproduce on rerun (-0.06 to -0.30). Judge a lever by several runs, not one.
+- Local M2/M3 short hotspots move with any placement perturbation. Shifting the M6 stripe start offset by 30 µm took one run from 114 to 10 DRC markers, but combining that with `place_global_cong_effort high` gave 45. Treat stripe offset, congestion effort and partial blockages as seed-like perturbations, not additive fixes.
+- Single-cell upsizing ECOs next to SRAM macros fail `refinePlace -eco` legalization (IMPSP-2021), and deleting plus ECO-rerouting marker nets clears the DRC but costs about 60 ps. Leave whitespace near macros if post-route ECOs are planned.
+- `reset_path_exception` on a restored DB needs interactive constraint mode, or it fails with TCLCMD-1048: `set_interactive_constraint_modes [all_constraint_modes -active]; reset_path_exception; set_interactive_constraint_modes {}`.
