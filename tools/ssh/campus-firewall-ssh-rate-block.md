@@ -31,3 +31,10 @@ tags: [SSH, NTU, firewall, IDS, polling, ControlMaster, dvlab, gups, 封鎖, 輪
 - gups（ieda1，140.112.186.18）卡死的特徵：ping 通、22/80/443/389 TCP 都能建立，但 SSH 停在 banner exchange、HTTPS 回 000、LDAP 無回應；從 Mac、Oracle、zeus、ieda2 內網（192.168.100.254）看都一樣。代表核心還活著、使用者空間卡住，要現場或主控台處理，換跳板沒用。
 - ieda2（140.112.186.23）當時正常，可作為校內檢查點：`ssh root@140.112.186.23`。
 - 依賴 `ProxyJump gups` 的 dvlab 連線會一起掛；dvlab 主機可以從校外直連時就改用直連。
+
+### 11-24 gups 卡死的時間軸與推測原因
+
+- ieda2 的 sssd 日誌：gups LDAP 在 10:57 還正常，11:12 開始逾時，11:14 判定離線；chrony 最後一次收到 gups 校時約在 10:59。CVSD agent 在 11:25 繞過跳板直連 gups，也是 banner 逾時。所以 gups 是 11:00 左右卡住的，不只是防火牆封鎖。
+- 卡住前：10:04 在 gups 上開了 6 個 Innovus（V21，每個 `setMultiCpuUsage -localCpu 8`，同款 run 的峰值約 18–32 GB）。gups 有 48 核、250 GB；10:03 用了 13 GB。推測是記憶體用光或 I/O 卡住，還沒看到 gups 本機的日誌，尚未證實。
+- gups 也是 ieda2 的 IPA 伺服器和 /home NFS 來源，它一卡死，ieda2 的使用者登入和 home 目錄都跟著失效。重開後看 `journalctl -b -1` 或 `/var/log/messages` 有沒有 OOM、`blocked for more than`、硬碟錯誤。
+- 同一天從 Mac 對 ieda2 連了約 10 次 SSH 之後，Mac 直連 ieda2 開始連到一半逾時，但 zeus 看 ieda2 正常；診斷時改走單一校內跳板，並重用連線。
