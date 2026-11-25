@@ -5,7 +5,7 @@ tool: itch.io
 status: active
 created: 2026-10-20
 updated: 2026-11-25
-tags: [itch.io, butler, Unity, WebGL, unityweb, Content-Encoding, browser-upload, jam]
+tags: [itch.io, butler, Unity, WebGL, WebGPU, unityweb, Content-Encoding, browser-upload, theme, jam]
 ---
 
 2026-10-20 發布 Gamejam1 PHASE 時實測的經驗；之後的 itch 介面或工具版本可能改變，仍需重新驗證。
@@ -15,7 +15,7 @@ tags: [itch.io, butler, Unity, WebGL, unityweb, Content-Encoding, browser-upload
 - Claude in Chrome 的 `file_upload` 單次總大小必須小於 10 MB，18 MB 的 Unity WebGL zip 無法用它上傳。
 - 內建瀏覽器（Claude desktop browser pane）沒有檔案上傳工具；從 `https://itch.io` 頁面 `fetch('http://127.0.0.1:…')` 會 `Failed to fetch`，iframe 也被擋；`window.open` 會在同一個 tab 導航，未存檔的表單內容會遺失。
 - 可行做法是 itch 官方 butler：`https://broth.itch.zone/butler/darwin-arm64/LATEST` 查版本，下載 `/<version>/archive/default`，解壓到 `~/.local/share/butler/<version>/`（需保留 `7z.so`、`libc7zip.dylib`），再把 `~/.local/bin/butler` 連到它。15.32.0 由 `Developer ID Application: itch corp. (AK2D34UDP2)` 簽章並經 notarize。Homebrew 的 `butler` cask 是 Many Tricks 的無關 App。
-- `butler login` 會開瀏覽器授權，由使用者本人執行；之後 `butler push <zip> <user>/<game>:html5 --userversion <commit>`。新 channel 的 upload 會自動勾「This file will be played in the browser」。`butler status` 的 `<` 代表仍在處理，API 也可能 timeout；以遊戲頁 iframe 出現 `html-classic.itch.zone/html/<upload>-<build>/` 判斷完成。
+- `butler login` 會開瀏覽器授權，由使用者本人執行；之後 `butler push <zip> <user>/<game>:html5 --userversion <commit>`。新 channel 的 upload 會自動勾「This file will be played in the browser」。`butler status` 的 `<` 代表仍在處理，API 也可能 timeout；以遊戲頁 iframe 出現 `html-classic.itch.zone/html/<upload>-<build>/` 判斷完成。2026-11-25 實測：四個 build 推完兩小時後 `butler status` 仍顯示 `<`，但公開頁已能下載、iframe 也能載入，所以別一直等 `<` 消失。
 
 ## itch CDN 對 Unity 壓縮檔的處理
 
@@ -33,3 +33,18 @@ tags: [itch.io, butler, Unity, WebGL, unityweb, Content-Encoding, browser-upload
 - 嵌入寬 960 時，主題 Layout → Screenshots 的 `Auto` 會解析成隱藏（`.view_game_page .right_col{display:none}`）。在 Edit theme 選 `Sidebar` 並存檔，截圖才會出現在說明旁。
 - Embed 寬高欄位由 widget 控制，直接設定 value 不生效；需真實點選並輸入。描述用 Redactor，可用 `$(textarea).redactor('code.set', html)`，再讀回具名 `game[description]` 確認。
 - Jam「Submit your project」對話框的專案 `<select>` 用一般 `form_input` 不會更新 React 狀態；用原生 `HTMLSelectElement.prototype.value` setter 設值並 dispatch `change`，確認 Requirements 顯示通過後再按 Submit。公開與投稿都要使用者逐項明確同意。
+
+## 多個 upload 與 embed（2026-11-25 驗證）
+
+- 同一專案有 mac／windows／html5 等多個 upload 時，「This file will be played in the browser」可能勾到錯的 upload（本次勾到 mac zip）。結果：公開頁顯示 "The developer has not uploaded a game yet..."，mac zip 也從下載清單消失。存檔後要逐一讀 `upload[<id>][embed]`，確認只有 html5 那個是 true。
+- embed 的 upload 不會渲染平台勾選框。取消 embed 後要先存檔、重新整理，`upload[<id>][p_osx]` 等勾選框才會出現，再勾平台並存檔。
+- Unity 預設 WebGL 模板在 canvas 下方有約 38px 的 footer（logo、標題、全螢幕鈕）；itch embed 高度設成 canvas 高度 +40（例如 960×600 的 canvas 設 960×640），footer 才不會被切掉。
+- 主題：banner 圖用 `POST /dashboard/upload-image?game_id=<id>`（流程同封面），主題欄位 `layout[bg_color]`、`layout[banner_image][image_id]` 等，整份表單 urlencoded 加 `X-Requested-With` POST 到 `https://<user>.itch.io/<game>/edit`，回 `{"success":true}`。
+- 編輯頁的 `game[type]` 是 selectize：`document.querySelector('[name="game[type]"]').selectize.setValue('html')`。
+
+## Unity WebGPU 網頁版
+
+- shader 用 StructuredBuffer 時 WebGL2 不行，Graphics API 只放 `WebGPU`（Unity 6.x）。目前只有桌面 Chrome／Edge、Safari 26+ 能跑。
+- 網頁版沒有系統中文字型，IMGUI 的中文會消失。要把 OFL 字型子集（`pyftsubset --text-file=`）放進 `Resources` 並設 `GUI.skin.font`；macOS 內建的 STHeiti 不能散布。
+- 效能：在 index.html 的 `createUnityInstance` 前插入 `config.devicePixelRatio = 1;`，Retina 螢幕的像素量少四倍。
+- 量效能別用隱藏的 browser pane（會降到 1 fps）。用 headless Playwright 加 Chromium（`--enable-unsafe-webgpu --ignore-gpu-blocklist`），看 console 的 `Unity WebGPU:` 與遊戲自己印的 frame time。
