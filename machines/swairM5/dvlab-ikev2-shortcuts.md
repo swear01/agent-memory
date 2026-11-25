@@ -3,8 +3,8 @@ title: SwairM5 DVLab IKEv2 VPN 原生捷徑與命令列控制
 scope: machines/swairM5
 status: active
 created: 2026-10-05
-updated: 2026-10-05
-tags: [DVLab, VPN, IKEv2, Apple-Shortcuts, shortcuts, macOS]
+updated: 2026-11-25
+tags: [DVLab, VPN, IKEv2, Apple-Shortcuts, shortcuts, macOS, Control-Center, ControlWidget, launchd]
 ---
 
 # DVLab VPN：連線與斷線
@@ -38,6 +38,21 @@ shortcuts run "DVLab 斷線"
 本機既有 profile 儲存在 NetworkExtension 設定，protocol 為 `NEVPNProtocolIKEv2`；`scutil --nc list` 走 SystemConfiguration 的 current network set，並非所有 NetworkExtension 設定的總表。本次名稱與 UUID 查詢都回報 `No service`，這不代表 VPN 不存在。
 
 診斷時只讀設定的名稱、protocol 等必要欄位，不匯出原始 VPN plist 或鑰匙圈資料。
+
+## 控制中心開關（2026-11-25，已驗證）
+
+需求：控制中心要有能顯示連線狀態的 DVLab 開關。Shortcut 控制項只是按鈕，不顯示狀態；系統內建的 `VPNAppIntentWidgetExtension` 不是控制中心控制項，搜不到。開源 VPN Bar 靠 `scutil --nc list`，看不到 DVLab。
+
+已安裝的做法（不常駐記憶體）：
+
+- `/Applications/DVLab VPN.app`：殼 app，含 WidgetKit `ControlWidgetToggle` 擴充。狀態在沙盒內用 `getifaddrs` 判斷：有 IPv4 位址的 `ipsec*` 介面即視為連線。
+- 按下開關時，擴充 `notify_post("local.dvlab.vpn.connect"/".disconnect")`。
+- `~/Library/LaunchAgents/local.dvlab.vpn.plist`：`LaunchEvents` → `com.apple.notifyd.matching`，收到上述通知或 `com.apple.system.config.network_change` 時，以 `--helper` 啟動 app 執行檔；它用 `xpc_set_event_stream_handler` 取走事件、執行上面兩個捷徑之一、`ControlCenter.shared.reloadAllControls()`，約 10 秒後結束。監聽 network_change 讓從系統設定切換時開關也會更新。
+- 以個人開發團隊簽署（Xcode 已登入 Apple ID）；app 改自 VPN Bar（無授權條款，僅自用），已移除 Sparkle、App Group、常駐背景 app。
+
+因此「DVLab 連線」「DVLab 斷線」兩個捷徑是開關的依賴，不可刪除或改名。重新建置後須以 `launchctl bootout`／`bootstrap gui/<uid>` 重新載入 LaunchAgent。
+
+驗證：以 `notifyutil -p local.dvlab.vpn.connect`／`.disconnect` 測得 `ipsec0` 出現／消失、helper exit 0 且無殘留程序；使用者確認從系統設定開關時控制中心狀態會跟著變。
 
 ## 相關紀錄與來源
 
