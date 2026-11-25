@@ -4,7 +4,7 @@ scope: tools/itch
 tool: itch.io
 status: active
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-11-25
 tags: [itch.io, butler, Unity, WebGL, unityweb, Content-Encoding, browser-upload, jam]
 ---
 
@@ -25,7 +25,8 @@ tags: [itch.io, butler, Unity, WebGL, unityweb, Content-Encoding, browser-upload
 
 ## 封面、截圖與頁面設定
 
-- itch 的封面與截圖按鈕在點擊時才建立 `<input type=file>`，沒有可供 `file_upload` 指定的常駐 input。使用者要求 agent 自己上傳時，可在已登入的內建瀏覽器中暫時覆寫 `HTMLInputElement.prototype.click`：對 file input 用 `DataTransfer` 填入 `File` 並 dispatch `change`，用完立即還原（拋錯也要還原，否則重新整理頁面）。圖片資料以 base64 傳入，並依下列方式驗證。
+- **首選做法（2026-11-25 驗證）：不經瀏覽器傳圖檔，改用 itch 自己的上傳流程 + shell curl**（跟 NTU COOL 同一招）。在已登入的編輯頁用頁面 JS：`POST /dashboard/upload-image?type=cover`，body（urlencoded）`csrf_token`（取 `input[name=csrf_token]` 的值；`meta[name=csrf_token]` 會回 `mismatched token`）、`filename`、`thumb_size=cover_big`、`action=prepare`、`width`、`height`。回傳 `action`（`https://itchio.commondatastorage.googleapis.com`）、`post_params`（`acl`、`key`、`GoogleAccessId`、`policy`、`signature`，一次性、約 2 小時到期，不寫進 memory）、`success_url`、`upload_id`。shell 端 `curl -X POST <action>`，每個 post_param 用 `--form-string`，最後 `-F "file=@<圖>;type=image/jpeg"`，回 204 即成功。再由頁面 JS 帶 `csrf_token` POST `success_url`，回 `{success:true, upload:{id}}`；把 `input[name="game[cover_image_id]"]` 設成該 id 後按 Save。圖檔大小不受 token 限制（上限 3 MB），可直接傳 630×500 原圖。驗證：公開 `data.json` 的 `cover_image` 換成新 id，並下載 `https://itchio.commondatastorage.googleapis.com/img/<id>.jpg` 與來源檔比對 SHA-256（本次完全相同）。截圖應可用同一流程（`type` 不同），尚未驗證。
+- 舊做法（只在上述流程不可用時）：itch 的封面與截圖按鈕在點擊時才建立 `<input type=file>`，沒有可供 `file_upload` 指定的常駐 input。使用者要求 agent 自己上傳時，可在已登入的內建瀏覽器中暫時覆寫 `HTMLInputElement.prototype.click`：對 file input 用 `DataTransfer` 填入 `File` 並 dispatch `change`，用完立即還原（拋錯也要還原，否則重新整理頁面）。圖片資料以 base64 傳入，並依下列方式驗證。
 - 手抄 base64 不可靠：把工具輸出的 base64 重打進 `javascript_tool`，4 KB 左右就可能抄錯（同一 session 中，一段 4.4 KB 字串被 `atob` 判為非法編碼）。PHASE 首次封面最可能就是這樣壞掉的：損壞的 PNG 讓 itch 縮圖回 500；把同一份資料交給瀏覽器部分解碼、再用 canvas `toBlob` 重新編碼後，雖然上傳成功、縮圖也載入了，實際發布的 630×500 原圖卻有 316 列空白，只有上方約 180 列有內容。做法：分成約 400 字元的區塊，每塊附 SHA-256 前綴，在頁面內驗證，不合格的區塊重送；組合後再比對整個檔案的 SHA-256，以及 RGBA 像素的 SHA-256。
 - 像素圖先縮成精確的原生解析度再傳，可大幅減少要抄的內容（例：630×500 封面是 315×250 的精確 2 倍，再用 105 色精確調色盤只剩 3.3 KB）。在頁面內放大時用 ImageData 迴圈逐像素複製；Chrome `drawImage` 搭配 `imageSmoothingEnabled=false` 做 10 倍放大並不精確。用 PIL 檢查「是否為精確放大」時要比對 `tobytes()`，因為 RGBA 影像的 `ImageChops.difference(...).getbbox()` 只看 alpha，會漏掉 RGB 差異。
 - `game[cover_image_id]` 有值、縮圖 `naturalWidth > 0` 都不足以證明圖片正確，壞掉的封面兩項都通過。存檔後要從公開頁 `og:image` 取得 `/original/` 原圖並下載，檢查尺寸，確認沒有全白或全透明的空白列，再和來源檔比對 RGBA 像素（例如 PIL `convert("RGBA").tobytes()` 完全相同）。截圖也用同樣方式逐張比對原始擷取圖。2026-10-20 換上新封面後，以此驗證：630×500、0 列空白、與 `cover.png` 像素完全相同；5 張截圖也全部相同。
