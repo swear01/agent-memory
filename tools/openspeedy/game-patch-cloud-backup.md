@@ -2,7 +2,7 @@
 title: 遊戲補丁雲端備份：SomethingWouldDisappear / Game Patches
 scope: tools/openspeedy
 status: active
-updated: 2026-11-18
+updated: 2026-11-26
 ---
 
 ## 保存位置與偏好
@@ -54,3 +54,11 @@ Particul、Max Manos、Unfair Flips。包含可安裝版本、原始修改工具
 
 本機原始來源可從 ZIP 內 `sources-and-sha256.json` 查回，
 不依賴 Codex 工作目錄仍存在才能找出雲端備份。
+
+## 2026-11-26 可重建的 Game Patch
+
+使用者指定兩邊都要保存，GitHub 專案公開。輕量版本名為 Game Patch，收錄 11 款遊戲的補丁原始碼、依賴版本、安裝或重建說明、驗證紀錄。以 [swear01/game-patch](https://github.com/swear01/game-patch) 為公開版本，Drive 在 `SomethingWouldDisappear/Game Patch`。Drive 的檔名與大小已讀回核對，本機同步副本與 Git 內容逐檔核對。原先複數的 Game Patches 及舊 ZIP 是私人歷史快照。
+
+遊戲安裝檔、生成的完整遊戲容器、私人存檔與機器憑證保留在私人來源；公開版本以安裝端原版檔案、輸入雜湊及可執行的組建工具重建。Idle Spiral 的既有歸檔 Release 由索引連結。Max Manos 和 Particul 的公開來源已由原版離線重建並對到歷史雜湊。
+
+某些封裝器會將 JavaScript 片段逐位元寫進遊戲容器。發行後應從乾淨 Git 封存再核對一次輸出，特別是 Windows 存檔、ZIP 和 Git 的 CRLF/LF 轉換可能改變結果。

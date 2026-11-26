@@ -2,7 +2,7 @@
 title: Max Manos 的 OpenSpeedy 加速受 VSync 限制
 scope: tools/openspeedy
 status: active
-updated: 2026-10-12
+updated: 2026-11-26
 ---
 
 Windows Steam 版 Max Manos 搭配 OpenSpeedy 3.3.8，使用者回報倍速沒有作用。本機唯讀檢查確認遊戲載入 speedpatch64.dll、每進程啟用旗標為 true、共享倍率為 10.0，且遊戲匯入的 QueryPerformanceCounter、Sleep、timeGetTime 等入口已被掛鉤。存檔設定 optVSync 為 1。
@@ -54,3 +54,9 @@ PresentMon CLI 在一般使用者權限下回報 failed to start trace session: 
 F7 診斷記錄核對：三種 stride 下 runTimer 扣減量等於完成的更新次數，繪圖次數符合 1/N；stride 10 移動游標後瞄準方向改變，擊破數由 240 增至 316、金錢由 560 增至 840。暫停期間 3265 次控制器更新中 runTimer 保持 330008，恢復後繼續扣減。手動結束回合顯示擊破 412、收集 1320、倍率 1.6、所得 2112，返回商店及寫入存檔符合結果。
 
 這是基本操作驗證，不能證明所有模式與升級的玩法完全等價；未重現使用者的後期連鎖爆炸，沒有確定性重播或函式級 profiler。可確認降低 Draw 工作量有部分收益，不能宣稱已突破至 10×，也不能把剩餘耗時全歸因於碰撞或 VM。測試補丁未永久安裝，原版 data.win 與本機及 Steam 快取存檔皆以測前備份還原並核對 SHA256。
+
+## 可重建的跳幀補丁
+
+公開 Game Patch 的 Max-Manos 目錄保存 Build-MaxManosPatch.ps1、臨時從原版 data.win 解出 Draw 事件的修改程式、End Step 片段與量測紀錄。UndertaleModCli 0.9.2.0 版從雜湊固定的原版重建，SHA-256 與歷史實驗版完全一致；輸入版本不合或輸出已存在會停止。原版檔案 49,067,590 bytes，新容器多 1,536 bytes，其中 CODE 多 944 bytes。AUDO 區段有 61 個音訊和 43,662,350 bytes，扣除容器重新定位的指標後，音訊資料完全相同。
+
+公開版可用使用者安裝中的對應原版重建，保留原版及整包產物的必要性取決於能否找回同一個遊戲版本。重建驗證在暫存副本進行。
