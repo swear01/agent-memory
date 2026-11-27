@@ -1,5 +1,5 @@
 ---
-title: swop SSH reachability: public IP flaps, Tailscale is the fallback
+title: "swop SSH reachability: public IP flaps, Tailscale is the fallback"
 scope: machines/swop
 machine: swop
 status: active

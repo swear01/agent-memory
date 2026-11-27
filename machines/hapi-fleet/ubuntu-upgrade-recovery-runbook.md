@@ -16,199 +16,27 @@ tags:
   - recovery
 ---
 
-# 已確認的證據界線
+# Ubuntu 升級復原與 NIS/SSSD 驗證
 
-- 最近一次 fleet upgrade 記錄是多個獨立 worker 同時執行：四台主機做
-  `22.04 → 24.04`，另一台做 `24.04 → 26.04`。因此後續同時出現的登入與
-  control-plane 問題不能直接歸因於 Zeus 單一主機。
-- 該記錄在 `24.04 → 26.04` 使用過 `do-release-upgrade -d`；`-d` 是 development
-  release 選項，穩定版本維護窗口不得使用。
-- 新的明確 TCP/22 探測顯示 Valkyrie、Athena、Cthulhu 可達；Mazu、Zeus
-  探測逾時。逾時只能證明該次探測失敗，不能證明主機斷電或整機 freeze。
-- 本機帳號互動式登入在 Valkyrie、Athena、Cthulhu 成功，且 `id -un` 與主機
-  帳號一致；同時中央管理帳號的 SSH 公鑰流程在這三台到達 authentication
-  boundary 後被拒絕。這把 host/network/SSH/local-auth 與中央 NIS/NFS/key path
-  問題分開，但尚未單靠遠端證據證明具體 host-side 根因。
-- Mazu 是 HAPI hub/tunnel 所在主機，Zeus 是 NIS master。兩者在同一事件窗口
-  不可達時，會同時影響遠端控制與中央登入依賴；這是架構上的共同依賴，不是
-  主機已關機的證明。
+- 一次只升一個支援中的 Ubuntu release，穩定維護別用 `do-release-upgrade -d`。先查 audit、pending reboot、NIS/NFS、GPU/DKMS、workload、SSHD socket 和 HAPI。Zeus 是唯一 NIS master，Mazu 是 Hub/Tunnel，分批保留本機備用入口。
+- 重開後分開驗本機帳號、TCP/22、SSH handshake、中央公鑰／密碼、NIS、NFS、GPU、HAPI。SSH socket enabled 而 service disabled 可正常。連線逾時不能當成斷電。若新 kernel 有 panic、mount root 失敗或 boot loop，先從 GRUB 退回 known-good kernel，保存 failed journal、initramfs、DKMS 和 dpkg 證據。Apt 交易修復不代表 post-reboot gate 通過。
+- Zeus 曾把 Gaia 的共享 home 又從本機 re-export，讓 `home.mount` 和 `nfs-server.service` 循環，修法停重複 re-export。Home automount 曾被 DNS/NTP 的 mount namespace 過早觸發，改用 `_netdev,auto,nofail`；未接線介面按驗證結果設 optional。RPC 111 可達仍須查 ypserv `100004`。增刪 NIS 帳號／群組要在 master 重建 maps；密碼更新有另外的 pwupdate 路徑。救援憑證從私有 DVLab MIS 文件取用。
+- Zeus 重開使用本機維護連線上的 `sudo /usr/local/sbin/zeus-safe-reboot`。先結束占用 `/apps` 和 `/home` 的工作，入口遇 busy／逾時／巢狀掛載會拒絕並還原掛載。直接 reboot 繞過檢查。腳本模擬、ShellCheck 和安裝驗證通過，當時未執行實機卸載或重開演練。
 
-# 下次升級的最小流程
+## 2026-11-19 Zeus 失聯與 NIS 查詢逾時
 
-1. 每台主機先做 read-only preflight：OS/kernel、`dpkg --audit`、pending reboot、
-   SSH enabled、network-online、`findmnt <remote-home>`、NIS/NFS readiness、GPU/DKMS、
-   HAPI runner 與 workload。不要把 active SQLite/WAL 或事件輸出寫回 NFS home。
-2. 對每台分別測試 TCP、SSH handshake、公鑰帳號與主機本機帳號；記錄邊界，不用
-   單一 ping 或 HAPI 狀態代替全部證據。
-3. Release upgrade 一次只跨一個受支援的 Ubuntu release；穩定窗口不用 `-d`。
-   Package transaction 完成後仍必須 reboot，並在 reboot barrier 後重做全部檢查。
-4. 若新 kernel panic、root filesystem mount 失敗或 boot loop，從 GRUB 選最後一個
-   known-good kernel，先保留它，收集 failed-boot journal、initramfs、DKMS 與
-   `dpkg` 證據，再修復；不要先 bulk remove kernel/driver。
-5. 若本機帳號成功而中央帳號失敗，優先檢查 NIS binding/server、NFS `<remote-home>`、
-   authorized-key 路徑與 SSH auth log；不要把它誤判成 GPU freeze 或斷電。
+NIS 斷線診斷與七天認證快取適用範圍如下。
 
-# 維運結論
+- Zeus 保持 NIS-only master。四台 GPU client 經 SSSD 代理 NIS，更新後 NSS 順序見下方 11/22。utux 有 SSSD identity gate，不能外推為同一 PAM 密碼修補。SSSD proxy/NIS 呼叫同步 libnsl RPC，底層可單次等 25 秒及重試；收到 UNAVAIL 才轉 offline。兩秒 offline retry 是恢復週期，不能保證首次 RPC 上限。NSS 先走 nis 時，本機帳號也可能卡在補充群組。
+- `offline_credentials_expiration = 7`、`cached_auth_timeout = 604800`。後者使 ypbind 返回 PAM_AUTH_ERR 時仍能用先前驗過的 password；在線也可能接受舊快取。需立即撤銷時逐台執行 `sss_cache -u <user>` 失效帳戶快取，並實際驗證舊密碼拒絕。Auth/account primary block 需有 pam_sss，本機用 pam_unix fallback；SSSD 不接 password change。驗離線公鑰前以 SSSD 限定 lookup 暖 identity，再用 `sssctl user-show` 確認。
+- 測離線保留本機管理連線和備份，對 Zeus LAN／公網 endpoint 做 DROP 並查計數，測未暖、已暖、過期帳號和新 SSH/sudo；解除後確認 `ypwhich`、即時線上資料。停 ypbind 只能快速 UNAVAIL，且反覆啟停可能耗盡 512–1023 來源埠，報 `bindresvport: Address already in use`。待認證流量安靜且 TIME_WAIT 消退後再啟一次 ypbind、確認綁定再啟依賴。
+- SSSD 套件可自行設 complain；保留 AppArmor enforce，local profile 先在單台驗 compile/restart、新登入和延遲 denial。11/19 各機備份有 `/var/backups/dvlab-nss-<timestamp>/restore`，先確認部署時間和 config 差異。utux Docker socket `216/GROUP` 曾來自 NIS-only group；local root group 建 socket 後以 numeric GID 恢復，核對 owner/mode 和 `/_ping`，中央 GID 改動需同步。
 
-升級的 package success、主機有電、TCP/22、SSH 認證、NIS/NFS、HAPI control
-plane 是不同 gate。只有 post-reboot 的全部必要 gate 都通過，才把該台標成完成。
-任何尚未在主機端 log 證明的根因都必須標為 hypothesis，並保留獨立 console/LAN/
-BMC/PDU 的下一步驗證。
+### 2026-11-19 部署與 DROP 驗收
 
-# 2026-08-23 Mazu 與 Zeus 現場恢復證據
+當日五台 client（四台 GPU 加 utux）改由 SSSD 查 NIS。人工 DROP 測試時，已緩存公鑰／群組／sudo 約半秒，未緩存身分離線時查無資料。於 `/etc/sssd/conf.d/90-dvlab-nis-retry.conf` 的 `[domain/dvlab-nis]` 設 `offline_timeout=2`、`offline_timeout_max=2`、`offline_timeout_random_offset=0` 後，解除 DROP 很快回到線上。四台 GPU 的 PAM/NSS 後來改為下節做法，當日離線測試不等於其後 11/22 修補的離線實測。
 
-- Mazu 從 GRUB recovery root 完成 `dpkg --configure -a`；之後 `dpkg --audit`
-  無輸出、`apt-get check` exit `0`，並完成 `update-initramfs -u -k all`、
-  `update-grub` 與 reboot。重開後 LAN `192.168.1.207` ping 及 TCP/22 可達，
-  但 hub port `3006` 無回應，公開 HAPI 仍為 HTTP `530`。因此 OS package recovery
-  有強證據，但 HAPI/NIS/NFS/GPU 等 post-reboot gate 尚未全部通過。
-- Zeus 的 `140.112.171.138` ping、TCP/22、RPC/111 均可達，證明主機與 sshd 已
-  上線；但 `rpcinfo -p 140.112.171.138` 只列出 RPC program `100000` (`rpcbind`)，
-  未列出 NIS `ypserv` program `100004`。這是 NIS master 服務尚未向 rpcbind 註冊
-  的直接證據，可解釋中央帳號驗證失敗；NFS `<remote-home>` 仍需獨立驗證，不得由此推定。
-- 本地救援帳號及其密碼由私有 DVLab MIS 文件管理（Google Drive）。HackMD
-  私有 note 已於 2026-09-11 進垃圾桶，不再當正式來源。記憶只保留帳號路徑
-  的存在與驗證結論，不保存或重述密碼。
-- 使用 MIS 私有文件管理的主機本地帳號重新做密碼 SSH 驗證後，Valkyrie、Athena、
-  Cthulhu 三台皆成功登入，`id -un` 分別與主機名一致。現場版本為：Valkyrie
-  Ubuntu `26.04` / kernel `7.0.0-30-generic`；Athena Ubuntu `24.04.4` / kernel
-  `6.8.0-106-generic`；Cthulhu Ubuntu `24.04.4` / kernel `6.8.0-138-generic`。
-  三台 `dpkg --audit` 均無輸出；但 `systemctl is-system-running` 分別為 Valkyrie
-  `degraded`、Athena `starting`、Cthulhu `starting`，因此只證明本地登入與套件
-  audit gate，尚未證明所有服務健康。
-
-# 2026-08-23 Zeus kernel 7.0 最終恢復
-
-- Zeus 掛載 Gaia 的 NFS `<remote-home>`，同時又從 Zeus 匯出相同 `<remote-home>`，使
-  `nfs-server-generator` 產生 `home.mount` 與 `nfs-server.service` ordering cycle。
-  已停用 Zeus 的 `<remote-home>` re-export 與 `nfs-server.service`；Zeus 保留 NIS master，
-  不再充當這份 `<remote-home>` 的 NFS server。
-- `<remote-home>` 的 `x-systemd.automount` 會被 `systemd-resolved`、`systemd-timesyncd` 的
-  mount namespace 提前觸發，網路尚未 ready 時造成 90 秒 timeout 與
-  `226/NAMESPACE`。移除 automount 後改由 `_netdev,auto,nofail` 正常掛載。
-- 未接線的 `enp5s0` 使 `systemd-networkd-wait-online` 額外等待約 120 秒；Netplan
-  只將該介面設為 `optional: true`，保留原 IP 設定。最終 kernel
-  `7.0.0-30-generic` 開機為 58.283 秒，wait-online 4.540 秒，failed units 與
-  `dpkg --audit` 均為空。
-- 最終重開後已實測本機 Zeus 帳號、中央 `swear02` SSH、公鑰、Gaia NFS `<remote-home>`、
-  `ypserv`、`ypbind`、`yppasswdd`、DNS、NTP 與 HAPI runner。HAPI runner PID 與
-  `/var/tmp/hapi-zeus/runner.state.json` 一致，版本 `0.29.0.1`，hub heartbeat 正常。
-- SSH 由 enabled `ssh.socket` 持久啟動；`ssh.service` 顯示 disabled 不能單獨判成
-  SSH 未持久啟用。NIS 三項服務均 enabled。`yppasswdd` 會在密碼更新後執行
-  `pwupdate` 重建 passwd/shadow maps；新增、刪除帳號或群組仍需在 master 執行
-  `make -C /var/yp`，目前沒有 cron、timer 或 path watcher 自動完成這一步。
-- 先前交接只規劃 SSSD 的 2–7 天離線憑證快取，當時確實尚未部署；以下新章節
-  記錄後續實際部署與驗證結果，不得再把這段舊盤點當成目前狀態。
-
-# 2026-08-23 NIS client 的 SSSD 七天離線快取
-
-- Zeus 保持唯一 NIS master，不安裝 SSSD。2026-08-23 最終 live readback 顯示
-  Valkyrie、Mazu、Cthulhu、Athena 都使用 Ubuntu 26.04 / SSSD `2.12.0`；四台 client
-  都已部署 proxy domain，`id_provider = proxy`、`proxy_lib_name = nis`、
-  `auth_provider = proxy`、`cache_credentials = true`。
-- 正式值為 `offline_credentials_expiration = 7`、`cached_auth_timeout = 604800`、
-  `offline_failed_login_attempts = 5`、`offline_failed_login_delay = 5`。NSS 的
-  2026-08-23 當時的 passwd/group 順序為 `files systemd nis sss`，並停用 nscd 的
-  passwd/group cache。2026-10-12 因 SpyGlass 2026.03 的 snpsmem／NSS 衝突，Mazu、
-  Cthulhu、Valkyrie 改為 `files nis sss systemd`；Zeus 保留 NIS-only 的
-  `files nis systemd`。Athena 於 2026-11-12 回機後同步為 `files nis sss systemd`；本次未修改 PAM 或 SSSD 快取政策。
-  四台帳號解析與 public-key SSH／sudo 已驗證，未重測密碼登入與 reboot；細節見
-  [SpyGlass NSS 修復](synopsys-spyglass-linux7-compatibility.md)。
-- PAM 必須讓 `pam_sss` 同時在 auth 與 account 的 Primary block、位於
-  `pam_deny` 前面，本機帳號再由 `pam_unix` fallback。SSSD 不加入 password stack，
-  `chpass_provider = none`；NIS 密碼變更仍走既有 yppasswd 流程。Athena 原本手動的
-  `pam_mkhomedir.so skel=/etc/skel umask=022` 已改用語意相同的系統 mkhomedir profile。
-- SSSD proxy/NIS 在 ypbind 中斷時會從 PAM proxy 得到 `PAM_AUTH_ERR`，不會自然進入
-  offline password path；`cached_auth_timeout` 是使七天快取可用的必要設定。它的
-  安全語意是：最後一次成功線上驗證後七天內，即使主機目前在線，也會先接受正確的
-  cached password；若 NIS 端剛改密碼，舊 cached password 最長仍可能被接受七天。
-  需要立即撤銷時，必須在各 client 執行 `sss_cache -u <user>`。
-- 實測流程為：臨時 NIS canary 在線密碼登入建立 cache，停止單一 client 的 ypbind，
-  再驗證集中密碼、本機管理帳號、已 warm identity 的集中公鑰與錯誤密碼拒絕；四台
-  均通過，且 reboot 後 cache 仍可登入。臨時帳號已從 Zeus 刪除、`make -C /var/yp`
-  已重建 maps，四台 client 的 canary cache 也已清除。
-- 2026-11-19 實際中斷發現：NSS 是 `files nis sss systemd` 時，zeus 斷線但 ypbind 還活著，每次查詢都會先卡在 NIS RPC 逾時，SSH 登入 77–130 秒以上，七天快取等於沒用上。測離線時要用防火牆 DROP 往 zeus 的封包，不要只 stop ypbind。見 [[machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118]]。
-- 公鑰登入本身不保證 SSSD identity 已 warm。要支援 NIS 離線時的公鑰登入，帳號必須
-  已有 SSSD identity cache；可在線執行 `getent -s sss passwd <user>` 驗證並建立，
-  然後用 `sssctl user-show <user>` 確認，不可用普通 `getent passwd`，避免輸出 NIS
-  passwd map 的敏感欄位。
-- 故障注入時不要反覆 stop/start ypbind。NIS 不可達期間的 RPC 查詢會讓大量 512–1023
-  保留來源埠進入 TCP `TIME_WAIT`，此時 ypbind 的 `bindresvport()` 會回報
-  `Address already in use`。2026-08-23 Mazu 實測的無重開機恢復流程是：停止 SSSD
-  與 nscd 讓認證流量安靜，等待約 60 秒，然後只啟動一次 ypbind；確認 `ypwhich`
-  回到 Zeus 後再依序啟動 nscd 與 SSSD。反覆 start 只會延長恢復；若仍無法安靜，
-  才在確認無工作負載後 reboot。
-- 最終四台 SSSD/ypbind/SSH active、Zeus ypserv/ypbind/rpcbind/SSH active，五台 HAPI
-  runner 都是 `0.29.0.1`、systemd MainPID 等於各自 runner state PID、沒有活動
-  `--started-by runner` session，`dpkg --audit` 與 client failed-unit 清單均無輸出。
-- `sssd-common 2.12.0-1ubuntu5.2` 的 package `preinst` 會在首次安裝時主動建立
-  `/etc/apparmor.d/force-complain/usr.sbin.sssd`，所以 complain 不是部署誤操作：該模式
-  允許原本會被拒絕的操作並記錄 audit，功能通常不受影響，但沒有 AppArmor 強制隔離。
-- DVLab 的 NIS proxy 使用情境在 complain audit 中確認 packaged profile 缺少 SSSD PID
-  檔、PAM stack、`/etc/login.defs` 與網卡 type。四台已用 packaged profile 預留的
-  `/etc/apparmor.d/local/usr.sbin.sssd` 加入以下最小規則，沒有直接修改 package conffile：
-
-  ```text
-  /{,var/}run/sssd/sssd.pid rw,
-  /etc/pam.d/{sssd-shadowutils,other,common-auth,common-account,common-password,common-session} r,
-  /etc/login.defs r,
-  /sys/devices/**/net/*/type r,
-  ```
-
-- Mazu 先做 canary，再逐台部署 Cthulhu、Athena、Valkyrie。四台現在都移除
-  `force-complain` symlink，live label 是 `/usr/sbin/sssd (enforce)`；profile compile、
-  SSSD restart、集中 NIS 密碼、本機管理密碼、已 warm 的集中公鑰、Mazu 七天離線快取、
-  delayed AppArmor denial、failed units、`dpkg --audit` 與 HAPI supervisor ownership
-  全部通過。測試 NIS canary、四台 cache 與 NAS 測試 home 都已清除。
-
-# 2026-11-19 Zeus 失聯與 NIS 查詢逾時
-
-- Zeus 同時是機群唯一的 NIS master 與 dashboard nginx。重開後，Zeus 公網 SSH
-  連不上，從 utux 同網段直連也沒有 ARP 回應。其他主機的 TCP/22 仍通。復原時
-  分別驗證主控台、NIS 綁定、實際 SSH 登入與 dashboard HTTP。
-- `files nis sss systemd` 先走直接 NIS RPC，SSSD 已有快取時仍可能卡住。
-  這次 Mazu、Valkyrie、Cthulhu 的中央 SSH 約 130 秒被中斷。utux 本機帳號
-  通過公鑰驗證，SSH 命令總共約 142 秒才完成。即使帳號在本機，補充群組與登入
-  階段仍可能查到 NIS。
-- SSSD 2.12 的 proxy/NIS 身分查詢是同步呼叫。Ubuntu 26.04 的 libnsl 1.3.0
-  對單次 RPC 使用固定 25 秒逾時，且可能重試。SSSD 收到 `UNAVAIL` 才標記離線。
-  `offline_timeout` 控制離線後重試，`entry_cache_timeout` 與
-  `entry_cache_nowait_percentage` 控制快取更新時機，domain `timeout` 是程序
-  watchdog 間隔，這些設定均無法為首次 NIS RPC
-  設 1–3 秒上限。`files sss systemd` 可避開直接查 NIS 的路徑，仍需解決 proxy
-  對相同 RPC 的等待。Zeus 保留 `files nis systemd`，七天 PAM 快取政策照舊。
-- 中斷期間在 utux 用私有 mount namespace 對照，只將 passwd/group 改成
-  `files sss systemd`。本機 `id -G` 從 5.093 秒降到 19 毫秒，已快取的中央帳號
-  `id -G` 為 16 毫秒，本機 sudo 為 28 毫秒。utux 已有 proxy/NIS SSSD。正式檔案
-  與 PAM 保持原狀，這次尚未驗證新 SSH、線上資料、過期帳號及恢復重綁。
-- 驗收先在一台 client 保留本機管理連線並備份兩份設定。確認 NIS 正常時能取到
-  線上資料，再暫時 DROP 往 Zeus 的所有綁定位址。Athena 用 FQDN 綁定，需同時涵蓋 LAN 與公網位址。測冷查詢、已暖及過期的帳號快取、
-  新 SSH 與 sudo。首次和後續查詢都需符合三秒目標。解除 DROP 後確認 `ypwhich`
-  與實際線上資料恢復。停 ypbind 只能驗證快速 `UNAVAIL`，無法代表封包黑洞。
-- 來源見 [libnsl 1.3.0 RPC](https://github.com/thkukuk/libnsl/blob/v1.3.0/src/do_ypcall.c)、
-  [SSSD 2.12.0 proxy](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_id.c)
-  與 [Ubuntu SSSD 設定手冊](https://manpages.ubuntu.com/manpages/resolute/man5/sssd.conf.5.html)。
-
-## 2026-11-19 部署與 DROP 驗收
-
-- Athena 通過 DROP 驗收後，依序部署到 Mazu、Cthulhu、Valkyrie、utux。五台在 `/etc/nsswitch.conf` 的 passwd／group 使用 `files sss systemd`，NIS 由 SSSD proxy 查詢。utux 原已裝 SSSD。四台 GPU client 皆以中央公鑰完成新 SSH、身分、補充群組及 sudo；utux 驗證本機帳號登入及 SSSD 中央身分查詢。
-- 每台保留 `/var/backups/dvlab-nss-<timestamp>/`，含原本的 NSS、SSSD 設定及 `restore`。若需還原，先確認對應部署時間及現行設定，再由本機管理帳號以 sudo 執行該份 `restore`。原本的 SSSD 主檔仍與備份一致。
-
-- 暫改 passwd／group 為 `files sss systemd`，以 nftables DROP 往 Zeus 的 LAN／公網封包，並追蹤計數器。SSSD 由 Online 轉 Offline，已建立身分快取的中央帳號以新 SSH 公鑰連線，含 `id`、完整群組及 sudo 約 0.56 秒。未快取的有效 NIS 帳號在離線時查無資料。預設重試設定下，解除 DROP 後仍觀察到 SSSD Offline。
-- 在 `/etc/sssd/conf.d/90-dvlab-nis-retry.conf` 的 `[domain/dvlab-nis]` 設 `offline_timeout = 2`、`offline_timeout_max = 2`、`offline_timeout_random_offset = 0` 後，第二次 DROP 共計 15 個封包，解除後約 0.19 秒就能查到先前未快取的有效身分。另一次約 32 秒 DROP 有 42 個命中，已標成過期的中央身分快取 `id` 為 16 毫秒，稍後重測為 192 毫秒，中央 SSH／群組／sudo 約 0.50 秒，解除後約 0.17 秒即取到未快取的線上資料。
-- 線上會使用仍有效的 SSSD 身分快取，在需要重新整理時查 NIS。兩秒是離線重試間隔，首次特定 RPC 的等待仍受 proxy 與底層 libnsl 影響。七天 PAM 原檔與政策維持。沒有身分快取的帳號仍需 Zeus 在線。Zeus 仍是唯一 master。
-
-## Zeus 計畫性重開
-
-- 11/19 上一輪開機的 journal 顯示，02:12 進入關機後 `/apps` 與 `/home` 出現卸載忙碌，網路停止後 NFS 還在重試。上一輪核心在重新開機前仍有紀錄，最後可見於 11:43。不能由該日誌追溯哪一個程序占用掛載。
-- 8/23 15:30 由本機管理帳號移除 `/home` 的 automount。9/14 10:05，Cursor 工作階段以中央管理帳號用 sudo 在 `/etc/fstab` 加入 `/apps` 的 NFS automount。9/15 與 10/22 即曾出現 `/home` 卸載忙碌，兩次仍完成重開。
-- 先結束使用掛載的工作，再從 Zeus 本機管理維護連線執行 `sudo /usr/local/sbin/zeus-safe-reboot`。入口先用一般卸載確認 `/apps` 與 `/home` 都已卸載。遇到 busy、逾時或巢狀掛載會拒絕重開，並嘗試還原先前的掛載與 automount。此入口無參數。排程或直接呼叫 `systemctl reboot` 不會走這個檢查。
-- 腳本已在 Zeus 安裝為 root 所有、模式 0750。六個模擬情境涵蓋 busy、還原及正常路徑，通過 Bash 語法與 ShellCheck。安裝後四個服務 `ypserv`、`ypbind`、`rpcbind`、`nginx` 均 active。實機尚未執行卸載或重開演練。
-
-## utux 的 Docker socket 群組
-
-- 11/19 開機時 `docker.socket` 嘗試解析 NIS-only 的 `docker` 群組，查詢失敗並以 216/GROUP 結束。`/etc/systemd/system/docker.socket.d/10-dvlab-socket-group.conf` 先以本機 root 群組建立 Unix socket，啟動完成前用 `chgrp +45000` 保留原本的 NIS Docker GID。無須更改任何群組成員或等 NIS 回線。
-- 實測 `docker.socket` 與 `docker.service` 均 active，`/run/docker.sock` 仍是 UID 0、GID 45000、權限 0660，Unix socket API `/_ping` 回 `OK`。後續若中央 Docker 群組改 GID，需同步核對這個 drop-in。
+早期從 complain 恢復 enforce 的本機 policy 記錄在 `/etc/apparmor.d/local/usr.sbin.sssd`，範圍包括 SSSD PID、專用 NSS PAM stack、`/etc/login.defs` 和網卡 type；未覆蓋套件公用 conffile。
 
 ## 2026-11-22 NIS 密碼登入修復：SSSD proxy_child、PAM 與 AppArmor
 
@@ -222,3 +50,5 @@ BMC/PDU 的下一步驗證。
 - 既有七天認證快取政策保留。在新密碼首次驗證成功前，舊快取密碼仍可能依原政策被接受。本輪未測 NIS 離線行為，尚無同學本人重登紀錄，`New Server Setup(private)` 仍暫停更新。
 
 原始碼參考：[proxy_child](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_child.c#L485-L537)、[server_setup](https://github.com/SSSD/sssd/blob/2.12.0/src/util/server.c#L456-L518)。
+
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/ubuntu-upgrade-recovery-runbook.md)

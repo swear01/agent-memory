@@ -20,26 +20,11 @@ redaction: passed
 generated_by: openai-codex/gpt-5.6-luna
 ---
 
-# What can be shared
+# Reuse a quiescent QMD snapshot across machines
 
-The Qwen3-Embedding-0.6B Q8_0 GGUF model can be copied between compatible machines when the file checksum matches. Copy the model file, not native `node_modules` or platform-specific runtime binaries.
+- GPU-generated vectors work on CPU destinations. The current fleet uses the same embeddinggemma-300M model URI and bytes. Match QMD and sqlite-vec compatibility and the Git content baseline. Copy the model file when needed, rather than platform-specific runtime files. Any change to bytes behind an unchanged model URI requires new embeddings.
+- Checkpoint and close the source database before copying. For a clean checkpoint there should be no pending WAL contents; if sidecars still carry data, establish a coherent snapshot first. Never copy only a live main SQLite file or mix its WAL/SHM with another index. Stop the destination's QMD writers and keep a recoverable old index set before replacement. Live databases and SQLite sidecars are local state.
+- Confirm that the snapshot contains only collections approved for the destination. The Mac's general index may include local notes beyond shared memory, even when the command used to produce embeddings specified `-c memory`. Check the collection inventory or build a separate shared-only index before transfer.
+- Keep destination-specific config and cache directory, update the destination collection paths, and verify with counts, indexed path probes and a semantic canary. A changed SQLite checksum after update is normal because local metadata may differ; integrity check or counts alone do not establish retrieval. Git retains the canonical notes; snapshots accelerate bulk embeddings and stay out of Git. See [Oracle CPU limitations](../../machines/oracle/qmd-vsearch-slow.md).
 
-A completed QMD SQLite index can also be copied as a **quiescent local snapshot**. QMD vectors are stored in SQLite/sqlite-vec and do not contain GPU, CUDA, Vulkan, Metal, or VRAM state. A CPU machine can search vectors produced on a GPU machine.
-
-# Snapshot requirements
-
-Only snapshot after all QMD processes have exited. If `index.sqlite-wal` or `index.sqlite-shm` exists, treat the main file and sidecars as one coherent snapshot; never copy only the main file from a live WAL database. Do not put one live QMD SQLite database on shared storage or sync multiple writers into it.
-
-The destination needs the same QMD/sqlite-vec compatibility, the exact embedding model URI and model bytes, and a matching Markdown corpus. Collection paths in `index.yml` are machine-specific; run the destination's `qmd update` so its local path is synchronized into the SQLite collection metadata.
-
-# Verification
-
-A GPU-generated baseline was copied to CPU-capable destinations. Each destination ran local `qmd update`, verified document/vector counts, and completed a CPU semantic retrieval query successfully.
-
-The destination SQLite checksum may change after `qmd update` because local collection metadata and timestamps are synchronized. Validate document/vector counts and retrieval, not byte-identical database hashes.
-
-# Operating policy
-
-Use snapshot distribution as a bulk-ingestion accelerator, not as the Git synchronization layer. GitHub synchronizes canonical Markdown; each machine keeps an independent local QMD database. After later Markdown changes, either distribute a new quiescent baseline or let each machine run `qmd update` and embed only its local delta.
-
-If the GGUF bytes change while the URI stays the same, force a full re-embed. Never commit QMD SQLite files, model caches, WAL/SHM files, or machine-local QMD state to `agent-memory`.
+[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/llm-inference/qmd-snapshot-portability.md)

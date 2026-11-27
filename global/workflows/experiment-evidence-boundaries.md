@@ -1,5 +1,5 @@
 ---
-title: Experiment evidence needs oracle, fresh artifacts, and fail-closed gates
+title: 實驗驗收容易誤判的證據界線
 scope: global
 status: active
 confidence: high
@@ -15,94 +15,15 @@ source_refs:
   - agent-memory:issue-13
   - agent-memory:issue-16
 created: 2026-08-20
-updated: 2026-09-07
+updated: 2026-11-28
 generated_by: openai-codex/gpt-5.6-luna
 ---
 
-# Claim boundary
+- **程式有輸出，不代表證明有效。** 由生成器產生的候選先查語法、型別和 SAT／SMT；invariant 須依原模型驗證 initiation、consecution 與目標性質，vector 則用對應的等價性。保留原 verifier 的狀態空間，未驗的猜測不能變成限制條件。
+- **Proxy 上升，不代表真實成果變好。** 用完整 oracle 驗證 outcome，列出跳過、不可達類別和分母。個別成功或 owner 回報只證明該次執行與結果，根因和泛化要有各自的對照。
+- **舊產物混進新的實驗。** 每次保存 immutable inputs、設定、穩定 task keys 與獨立輸出目錄，按規則記 solved、failed、unknown、timeout。只比較同 build、dataset、seed、solver、parallelism 與 timeout policy 的可比集合。重跑保留 timeout grace 與 dump 路徑，否則觀測條件會改。
+- **Smoke 零筆、parser 壞掉或 request 根本沒送，卻算 verifier outcome。** 把 provider、transport、parser、resource 和 telemetry failure 分開記錄。Fallback 如實標示。Dry run 只驗命令建構；replay miss 只驗路徑已到。兩組對照各自跑現行產物，確認 common base 的非實驗行為一致。
+- **IDs 與雜湊相同，但衍生 manifest 丟了欄位。** 若宣稱保留 row identity，就比較完整原始物件；另外證明集合互斥及聯集。對有損版本留證據、版本化修正。折疊同一 NFS 或 exact duplicate，衝突測量保留個別來源。
+- **掃程序或指令列拿到密鑰。** 發布前掃並就地替換敏感值，留範圍與前後 hash，驗證實驗語意、結果與負載數據未變。原始 snapshot 留在受控來源。
 
-An owner-attested execution establishes that a run was performed and that it
-emitted the reported result. It does not by itself establish the root cause,
-soundness, or generalization of that result. Treat exact measurements as G4
-until their method, scope, and configuration support a broader claim.
-
-# Candidate and verifier
-
-Generated suggestions are untrusted candidates, not verdicts. Keep the
-original verifier model intact and gate each candidate with the applicable
-syntax/type, satisfiability, initiation/consecution, inductiveness, or
-vector-equivalence checks before it can affect a result. A guessed invariant
-or constraint must never be injected as an unchecked model restriction.
-
-# Oracle and proxy
-
-A proxy such as structural coverage, a heuristic score, or an incomplete
-fault profile is not an exact outcome. Compare it with the complete oracle
-when one exists, account for skipped or unreachable classes, and label the
-result as a proxy when the oracle or denominator is incomplete.
-
-# Fresh, bounded run artifacts
-
-Keep task inventory, execution inventory, and outcome records distinct. Each
-run needs stable task or fault keys, an immutable input/configuration manifest,
-run-scoped output, and an explicit policy for solved, failed, unknown, and
-timeout states. Bound per-target work and clear stale artifacts before a run;
-a timeout remains a timeout until the current process emits valid evidence.
-
-Use fixed denominators and stable keys when comparing progressive or partial
-runs. Do not combine numbers from different builds, datasets, solver
-portfolios, seeds, time limits, parallelism, or timeout policies into one
-experiment.
-
-Process snapshots may capture unrelated command-line credentials. Before an
-artifact ledger or public harvest, scan snapshot arguments and redact only the
-secret value, retain an explicit marker, record the pre/post hashes and exact
-scope, and verify that no semantic input, output, verdict, or load sample was
-changed. Never publish the raw credential-bearing snapshot merely for
-provenance completeness.
-
-# Fail closed
-
-Provider, transport, configuration, parser, resource, and telemetry failures
-must be observable and separate from solver or model outcomes. A missing
-request, abnormal process exit, or zero-count smoke result is an environment
-failure until the run manifest proves otherwise. Fallback behavior must be
-explicit in the result; never silently replace an experimental path with a
-different implementation and call it equivalent.
-
-# Conflicts and duplicate views
-
-Collapse exact, normalized, semantic, and shared-filesystem views before
-counting evidence. Preserve conflicting configurations and measurements as
-separate runs with their provenance; deduplication must not select a winning
-number. Cross-project reuse applies to the acceptance rule or mechanism, not
-to a project-specific score.
-
-# Scope
-
-The rules above are G1 experimental-method boundaries. Tool or fleet
-implementation details are G2, project integrations are G3, and individual
-benchmark values or incidents remain G4 unless a later review establishes a
-broader scope.
-
-# Qualification must match the claimed stage
-
-A dry-run that emits a verifier command proves command construction, not runtime
-startup, response-cache compatibility, or evidence capture. A real fail-closed
-replay miss proves the request path was reached; it does not prove successful
-response replay, downstream consumer behavior, or a second experimental arm.
-Do not label a two-arm gate PASS from only the treatment runtime plus old
-synthetic control artifacts. A common-base context contrast needs evidence that
-non-context production behavior is identical; build/instrumentation differences
-remain separately accounted. Preserve timeout grace and output/dump paths in
-exact rerun commands, or promised comparisons and observability can change.
-
-
-# Derived manifests retain provenance
-
-A subset with the correct task IDs and source hashes can still lose canonical
-license, seed or provenance fields through a projection helper. When a derived
-manifest claims unchanged row identity, retain the complete source objects and
-compare every field; prove disjoint union separately. Preserve a frozen lossy
-version as dated evidence and issue a versioned correction with unchanged
-selection rather than silently overwriting its bytes.
+[整理前完整紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/global/workflows/experiment-evidence-boundaries.md)

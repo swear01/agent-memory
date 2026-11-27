@@ -22,94 +22,19 @@ source_refs:
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
-# Long-running process PATH
+# SWOP：舊環境、服務主體和 live 驗證
 
-`swop` 的 Node 24.19.0 是 WinGet portable install；Node、npm 與 npm-global commands（包含 QMD）位於 `<local-appdata>/Microsoft/WinGet/Packages/OpenJS.NodeJS.LTS_.../node-v24.19.0-win-x64`。GitHub CLI 位於 `<program-files>/GitHub CLI`。User `PATH` 已包含兩者，但既有 HAPI/Codex session 不會自動取得安裝後更新的 environment block。
+- 長時間存在的 HAPI/Codex process 不讀新的 User PATH。找不到 qmd/gh 時先查 User PATH、WinGet ownership 和實際執行檔，臨時 prepend 已確認目錄或重開新 session；Node portable 路徑會隨 WinGet 版本更動。在 Windows 驗 agent-memory 的 full-Git-history validator，PowerShell 設 `PYTHONUTF8=1`，以免 CP950 在未開始驗內容前失敗。
+- Git GCM OK 不代表 GitHub CLI 登入。需持久 `gh` 認證時走官方 device flow，`gh auth status`、repo API 和 Git transport 分開確認。Classic token scopes 不足會被 `gh auth login --with-token` 拒絕，臨時 CLI 授權不等同持久登入。不列印或手動搬運 GCM 憑證。
+- QMD 能 lexical search 不代表已有 embeddings。2026-09-04 的 CPU hang/zero-vector 證據已早於 [Windows GPU embed](qmd-windows-setup.md) 的成功，新增向量前讀當前 config/status。共享 Markdown 是 canonical，QMD 本機 config/cache 可重建。
+- `DeepSeek Gateway (SWOP)` 用 SYSTEM / AtStartup，監聽同機 `127.0.0.1:35001/v1`；AtLogOn interactive task 曾隨 SSH 以 0xc000013a 結束。Gateway、launcher 與 ACL 保護的 LocalMachine DPAPI 檔在 `<program-data>/DeepSeekGateway`，解密值只進 launcher Process 層。正式與 user-local exe 都核對。先 drain 連線並停原 task，只收核實 executable path 的 child，原子換檔後啟原 task。PowerShell `[IO.File]::Replace` 第三參數用明確備份路徑，`$null` 轉成空字串會報 illegal path。失敗恢復原檔和 task，不能用臨時 user process 冒充。看到 200 時另核 response upstream；見 [fleet routing](../../projects/deepseek-latch-gateway/fleet-routing-and-failback.md)。
+- PowerShell 5.1 native stderr redirect 搭 `$ErrorActionPreference = 'Stop'` 會把 provider 訊息當 NativeCommandError，Gateway 可在第一次失敗輸出就退出。DPAPI/secret 前置驗證保留 Stop，僅 native invocation 改 Continue 並保留 `exit $LASTEXITCODE`。需送實際請求後查同一 listener PID，startup health 成功不足。
+- 運行中的 HAPI exe 被鎖不能直接 Copy-Item 覆蓋；NTFS 可重新命名已核准舊檔，再放同名新檔。換 runner 前依 runbook 保留已知 backup、查 active session/PID，透過原 `HAPI Runner (SWOP)` Scheduled Task 恢復，確認 machine identity、Hub heartbeat 和實際 Agent canary。SSH 或 HAPI 可見性分別驗；不同 NAT 網段的歷史 LAN IP 不可直接當當前路由。
+- GitHub fetch 卡住時，若 LAN SSH 可達，來源可製作以對方 commit 為 prerequisite 的增量 bundle。兩端驗 bundle，目標 source clean 才 fetch/fast-forward，再 skillshare sync。不終止別人的 pull。SSH PowerShell 讀 junction 失敗時，以同機真實 HAPI Runner principal 的 list-directory RPC 核對；source 可讀或 SSH 單獨失敗不證明技能是否於 Runner 看得到。
 
-因此 `Get-Command qmd` 或 `Get-Command gh` 在長時間存活的 session 內回報 missing，不等於工具未安裝。重裝前先檢查 User `PATH`、WinGet package ownership 與預期 executable 的絕對路徑；目前 session 可暫時 prepend 已驗證的安裝目錄，新 session 才會自然繼承持久設定。Node 升級後也要重查 versioned WinGet 路徑。
+## WinGet portable 升級
 
-`agent-memory` 的 CI validator 會用 Python 讀取完整 Git history。Windows 預設 CP950 可能在內容檢查前先發生 `UnicodeDecodeError`；執行同一套 validator 時先設定 `PYTHONUTF8=1`。這是 verifier encoding 前置條件，不代表 Markdown 或 Git history 驗證失敗。
+- **登錄版本落後實際執行檔，WinGet 拒絕升級。** 用 `Get-Command` 找 live binary，查版本，將 `Get-FileHash -Algorithm SHA256` 與同版本的 `winget show -e --id Google.AntigravityCLI -v <installed-version> --source winget` 對照，再核 `Get-AuthenticodeSignature`。證明是官方套件版本漂移後才用 `winget upgrade -e --id Google.AntigravityCLI --version <target-version> --source winget --force`。用新 SSH 驗 `where agy`、版本和 WinGet 登錄。
+- **安裝器說新增 alias，新 SSH 卻找不到 claude。** 先查 WinGet Packages 中官方 `claude.exe`、WinGet Links 中的入口及 User PATH。已確認缺 Links 入口時，用 cmd.exe `mklink` 對確切版本的官方 binary 恢復原入口，再在新 SSH 核對 `where claude`、`claude --version`。不用重複新增 PATH。
 
-# WinGet portable 升級後的版本與命令入口
-
-2026-11-28 在 swop 從 SSH 更新。WinGet 的登錄版本、實際執行檔版本、`WinGet\Links` 的命令入口要分別核對。
-
-- `Google.AntigravityCLI` 的 `agy.exe` 曾自行更新到 1.5.12，WinGet 仍登錄為 1.5.9，正常升級拒絕覆寫。先用 `Get-Command agy.exe` 找到實際執行檔，讀出版本，並用 `Get-FileHash -Algorithm SHA256` 對上 `winget show -e --id Google.AntigravityCLI -v 1.5.12 --source winget` 的 Installer SHA256，再用 `Get-AuthenticodeSignature` 確認簽章有效。確認是官方套件的版本漂移後，以 `winget upgrade -e --id Google.AntigravityCLI --version 1.5.18 --source winget --force` 修復。WinGet 照常驗證新安裝檔雜湊。新 SSH 連線的 `where agy`、`agy --version` 與 `winget list -e --id Google.AntigravityCLI` 均核對成功。
-- `Anthropic.ClaudeCode` 升級後曾回報已新增 alias，但新 SSH 的 `where claude` 仍找不到。先確認 `%LOCALAPPDATA%\Microsoft\WinGet\Packages` 下對應套件的 `claude.exe` 存在，且 `%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe` 缺失。用 cmd.exe 的 `mklink "<WinGet Links>\claude.exe" "<Claude WinGet package directory>\claude.exe"` 恢復原入口，再從新 SSH 連線驗證 `where claude` 和 `claude --version`。實測原 User PATH 即可解析。
-
-# GitHub authentication layers
-
-Git Credential Manager 與 GitHub CLI 是兩個獨立的 credential consumer。GCM 已有 account、`git clone`／`git push` 成功，不代表 `gh auth status` 已登入。`gh auth login --with-token` 對 classic token 強制要求至少 `repo`、`read:org`、`gist`；若 GCM OAuth token 缺少 `read:org`，把它臨時設成 `GH_TOKEN` 可以完成有權限的 repo operation，但不會建立持久 `gh` login。
-
-不要列印、手動複製或明文保存 GCM token。需要持久 `gh` 登入時，使用官方 device flow：`gh auth login --hostname github.com --git-protocol https --web --skip-ssh-key`，讓 GitHub CLI 把新 token 存入 Windows credential store；完成後以 `gh auth status`、`gh repo view` 與 Git credential helper config 分別驗證 CLI API 與 Git transport。
-
-# QMD state and meaning
-
-QMD 2.8.3 已安裝，npm registry 的 `latest` 也是 2.8.3。Machine-local `memory` collection 使用 `<temp>/qmd-memory-<host>/config/qmd` 與同根 cache；2026-09-04 的 `qmd update` 成功索引 94 份 Markdown，`qmd search model_catalog_json -c memory` 能找回 Codex allowlist 筆記。
-
-QMD 不會自行「學習」聊天內容：canonical memory 是人工整理、驗證、commit 並同步的 Markdown，QMD 只負責 indexing／retrieval。此 Windows host 目前是 94 documents、0 vectors；lexical search 可用，但 vector／hybrid retrieval 尚不可宣稱健康。QMD 2.8.3 已是最新版，而 upstream Windows embed hang issue #679 仍 open；本機先前 CPU embed 長時間維持零 vectors，因此不要為了形式上的 closeout 再啟動相同長跑，直到 upstream 修正或有新的可驗證 workaround。
-
-# Local DeepSeek gateway
-
-`swop` 的 Pi `opencode-go` provider 指向同機 `127.0.0.1:35001/v1`，由 `DeepSeek Gateway (SWOP)` Scheduled Task 執行 Windows x64 gateway。Task 使用 `AtStartup` BootTrigger 與 `SYSTEM` service account，在使用者尚未登入時即可執行 `<program-data>/DeepSeekGateway/deepseek-gateway-system.ps1`；同時設有 `StartWhenAvailable`、每分鐘失敗重啟及無執行時間上限。不要使用 `AtLogOn` interactive task：2026-09-04 實測該版本會在部署 SSH session 結束後以 `0xc000013a` 停止。
-
-Gateway binary、設定、route、launcher、logs 與 active secret blobs 都位於 `<program-data>/DeepSeekGateway`。五組 upstream credential 以 LocalMachine DPAPI blob 保存，ACL 僅授權 `SYSTEM`、Administrators 與本機使用者；launcher 解密到自己的 Process environment 後啟動 gateway，User、Machine 與無關 Process environment 都維持 unset。Pi 的 `models.json` 只保存 `local-gateway` marker，不保存 upstream key。舊 CurrentUser DPAPI blobs 與 task XML backup 暫留作無重開機驗證前的 rollback。
-
-2026-09-04 的 live verification 為 Task `Running`、principal `SYSTEM`、trigger `MSFT_TaskBootTrigger`，gateway process owner 為 `NT AUTHORITY\SYSTEM`、`health=ok`、零 stderr；另一條 SSH connection 在部署程序退出後仍能讀到同一個 listener。HAPI machine `pi-models` 正好八筆，Pi 經 strict runtime allowlist 呼叫 `opencode-go/deepseek-v4-flash` 與 `opencode-go/deepseek-v4-pro` 都回傳 `OK`。HAPI Runner PID 與當時的一個 active Codex session 均保留，沒有重啟 Runner。為保留該 session，未做實機 reboot；BootTrigger、SYSTEM context 與斷線存活已驗證，首次真實開機後仍應再確認 task last-run 與 health。
-
-## PowerShell 5.1 native stderr 造成 Gateway 退出（2026-10-31）
-
-SYSTEM launcher 的 `$ErrorActionPreference = 'Stop'` 搭配 native stderr redirect，
-會把 Gateway 的 provider stderr 當成 `NativeCommandError`，導致服務在第一筆錯誤輸出後退出。
-隔離的 harmless `cmd` stderr self-check 已重現。DPAPI／secret 前置檢查維持 `Stop`；
-只在 `& $gatewayExe` 前設定 `$ErrorActionPreference = 'Continue'`，並保留 `exit $LASTEXITCODE`。
-原 SYSTEM principal 與排程 action 不變。正式請求驗證 HTTP 200、
-`X-Gateway-Active-Endpoint: opencode-go-3`、回答 `OK`，同一 listener PID 在請求後仍存活。
-只看 restart 後 health 成功不足以證明修復，必須再送一次真實請求確認程序未退出。
-
-## 2026-09-07 Gateway 更新驗證
-
-swop 是 Gateway fleet 的第八台，不能沿用只列七台的舊 Gateway 總覽。
-已補部署 PR #10 合併提交 `73f0fb5` 的 Windows x64 build；正式
-`<program-data>/DeepSeekGateway/deepseek-gateway.exe` 與 user-local
-`.local/bin/deepseek-gateway.exe` 副本一致。新程序、binary hash、health、
-原生 session header 封包測試均通過；真實推論 HTTP 200 走 CommandCode
-備援。SYSTEM 排程 XML 與 config/routing 未變，舊 binary 備份保留。
-
-Windows 替換流程：先驗證候選與舊版備份，等 port 35001 連線清空，停止
-原 Gateway task；若仍有 child，只停止 executable path 已核對的 Gateway。
-替換完成後啟動原 SYSTEM task 並驗證；失敗恢復備份，不改成臨時 user process。
-Windows PowerShell 呼叫 `[IO.File]::Replace` 時，第三參數應給明確備份
-路徑；實測 `$null` 被轉成空字串，導致 `The path is not of a legal form`。
-這個失敗可在未替換 binary 時恢復原 task，再以明確路徑重試。
-
-# Skillshare transport and junction verification (2026-09-06)
-
-GitHub SSH fetch 卡住不表示 Windows LAN SSH 或 source repository 不可用。已驗證替代方式：在來源建立以 Windows 已有 commit 為 prerequisite 的增量 Git bundle，兩端驗證 bundle，經 LAN SSH 傳送，確認 Windows source clean 後 fetch bundle 並 merge --ff-only，再 skillshare sync。只終止自己發起且已核實 process tree 的卡住 pull，不改憑證、不 force reset、不覆蓋 dirty source。最後核對 source SHA 與 targets。
-
-同一次部署中，OpenSSH PowerShell Get-Content 對 `.agents/skills/hapi/SKILL.md` 回報不存在，但 junction 指向正確 source，source 可直接讀取；實際 HAPI Runner 的 list-directory RPC 對 `.agents` 與 `.codex` junction 都成功看到最新版 SKILL.md。必須區分 SSH 與互動登入 Runner principal 的 filesystem 可見性，不要僅凭 SSH 失敗就重建 junction、重裝 skill 或宣稱 Runner 讀不到。使用實際 Runner RPC 加 junction target/source SHA 驗證。
-
-# 2026-09-25 Fleet 全面同步與 HAPI v0.30.7.2 升級
-
-## HAPI 執行檔鎖定與熱替換
-
-Windows 上運行中的 `hapi.exe` 會被作業系統檔案鎖保護，直接 `Copy-Item` 覆蓋會回報 `The process cannot access the file because it is being used by another process`。
-NTFS 允許對運行中的執行檔執行 rename / move：
-1. 先以 `cmd /c move /y <hapi-dir>\hapi.exe <hapi-dir>\hapi.exe.old` 將鎖定檔案移走；
-2. 再將新版二進位（`hapi-0.30.7.2.exe`，校驗 SHA-256 為 `9ad1f208e006c85b1d8c2928032f8cf419f8b72fcf5a64ca887b24ed9f5ad504`）複製為 `hapi.exe`；
-3. 終止舊 PID 後，透過排程任務 `HAPI Runner (SWOP)`（`Start-ScheduledTask`）重新啟動。
-新啟動之 Runner 子程序為 `0.30.7.2`，已確認向 Hub 重新完成 machine 註冊（`7b729650-084c-4690-9c35-50cd370baab1`）並持續送出心跳。
-
-## 外部穿透與雙重 NAT 拓撲
-
-Mac 本機 `~/.ssh/config` 補齊 `Host swop`（指向外網穿透 IP `118.150.242.12`、帳號 `stanl`）與 `Host swop-lan`（`192.168.0.236`）。
-雙重 NAT 環境下，Mac 處於外層網段（`192.168.1.0/24`），而 Windows swop 目前由內層路由器 Wi-Fi 配發 `192.168.0.236`（舊筆記的 `192.168.1.206` 為過期租約）；跨網段無法直連，因此由外部穿透埠進入為目前最穩定之連線方式。
-
-## Fleet 各專案與設定對齊
-
-- `agent-memory`：以 `git pull --ff-only` 更新 51 個 commit（至 `ac3458e`），並執行 `qmd update` 完成索引更新。
-- `shared-skills` 與 `transfer_MAC`：因遠端使用專用金鑰或認證存放庫限制，在 Mac 製作增量 Git bundle 傳送，以 `--no-recurse-submodules` 配合本地已更新之 skills repo 完成 fast-forward（skills 至 `40348d4`、transfer_MAC 至 `d66b359`）。
-- `AGENTS.md`：重新部署並正規化為 UTF-8 LF，5 個代理目標（`.agents`、`.codex`、`.claude`、`.config\opencode`、`.pi\agent`）全部一致共享 SHA-256 `df83287eb295e4d2a8a47d8d8f4a5027d05c33f30439c83ed53bf6b99f2e2fd9`。
-- Codex 模型白名單：對齊 GPT-6 陣容（`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.6-terra`、`gpt-daybreak-blue-latest`、`codex-auto-review`）。
-- Pi 設定：`enabledModels` 遷移為 `deepseek-pro` 與 `deepseek-flash` 並加入 `gpt-6-astra`；`models.json` 與 `strict-model-allowlist.ts` 全面同步。
-- MCP 清理：執行 `render-mcp` 清除舊有 Unity 與 Browser MCP。
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/swop/cli-path-auth-and-qmd.md) · [WinGet 修復的原始驗證](https://github.com/swear01/agent-memory/blob/c3368747fbc1fdde4c15d8fc3c82217500cf2286/machines/swop/cli-path-auth-and-qmd.md)

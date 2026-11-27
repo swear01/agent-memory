@@ -6,7 +6,7 @@ tool: Codex app-server
 status: active
 confidence: high
 created: 2026-09-03
-updated: 2026-11-19
+updated: 2026-11-28
 tags:
   - hapi
   - codex
@@ -21,62 +21,10 @@ source_refs:
 generated_by: openai-codex/gpt-5.6-sol
 ---
 
-# Configuration boundary
+- **改了預設模型，舊模型仍顯示。** HAPI 新 session picker 讀 Codex app-server 的 `model/list`；`model = "..."` 只改預設。每個獨立 home 同時需要絕對 `model_catalog_json` 和有效 `models.allowlist.json`。缺任一項時 client 曾 fail open 到內建 catalog。
+- **更新 JSON 還看不到新世代。** 查同帳號、同 client 的 live catalog 和 `minimal_client_version`。2026-11-19 對照，0.165.0 無 6.2，0.170.0 有，entry 最低值 0.166.0。桌面 app 自帶另一版 app-server。更新後重開 app-server，再查 `model/list` 或 HAPI machine API；舊程序會保留啟動時快照。存在於 catalog 和真實推論要分開寫。
+- 使用 transfer_MAC 的 canonical `render-codex-models`。共用 NFS home 只寫一次，各 host 各自讀回；既有 session 保留自己的模型。Windows 曾只修 live 檔卻在 restore 後缺 updater，因此 renderer 要同時驗 updater、catalog 結構、可見 slugs 和絕對路徑。缺依賴或無效 catalog 應停下。
+- 保留 Astra、Sol、Terra、Luna 四階最新一代，hidden `codex-auto-review` 例外；使用者已要求移除 Daybreak，updater／restore 不加回。以 generator policy 和 live 有效集合驗證，別用 JSON 筆數。2026-11-19 的快照是 6.2 Astra／Sol、6.1 Terra、6 Luna，預設 6.2 Sol。下次查當時 catalog。
+- Canonical generator 改動見 [shared-skills #67](https://github.com/swear01/shared-skills/pull/67) 和 [transfer_MAC #94](https://github.com/swear01/transfer_MAC/pull/94)。HAPI 手冊鏡像依 [canonical gist 規則](canonical-gist-sync.md) 核對。
 
-HAPI 的新 session 模型選單顯示 Codex app-server `model/list` 的有效可見 catalog。`model = "..."` 只指定預設模型，不會限制選單；限制必須由 `~/.codex/config.toml` 的絕對 `model_catalog_json` 路徑與實際存在的 `~/.codex/models.allowlist.json` 一起成立。
-
-設定行或檔案缺失、無效時，Codex 會 fail open 到完整內建 catalog，而不是回報 allowlist 錯誤。因此只看預設模型或設定檔存在不足以判定 HAPI 選單受限。
-
-# Fleet policy
-
-目前可見集合為 `gpt-6.2-astra`、`gpt-6.2-sol`、`gpt-6.1-terra`、`gpt-6-luna`，預設 `gpt-6.2-sol`。Astra / Sol / Terra / Luna 四階級各自保留最新世代；唯一固定例外為 hidden `codex-auto-review`。使用者已無 Daybreak 權限，明確要求移除舊 `gpt-daybreak-blue-latest`；不能讓 updater 或下次 restore 再加回。
-
-Canonical generator 的移除政策及測試已在 [shared-skills PR #67](https://github.com/swear01/shared-skills/pull/67) 合併（`be509d3ab53cec40242a895eaaabb5ea77a6ba4e`）；transfer_MAC 的 submodule pointer、policy fixture 與復原文件見 [PR #94](https://github.com/swear01/transfer_MAC/pull/94)。Renderer 保留既有 `model`，此次部署另外用 renderer 的 `update_toml_value` 設定新預設，不改既有聊天。
-
-## 2026-10-27 historical rollout
-
-每個獨立 home 都要保留 canonical allowlist，並讓 `model_catalog_json` 指向該 host 的絕對路徑。更新 catalog 後先比較各 host 檔案內容，再實際呼叫 app-server `model/list` 或 HAPI machine Codex-models API，比對可見 ID。
-
-2026-10-27 Mac、mazu、cthulhu、valkyrie、zeus、oracle 的新 app-server `model/list` 驗證的可見集合為：
-
-- `gpt-6-astra`
-- `gpt-6.1-sol`
-- `gpt-6-luna`
-- `gpt-6.1-terra`（顯示名稱 `GPT-6.1 Terra`）
-- `gpt-daybreak-blue-latest`
-
-固定例外 `codex-auto-review` 保持 hidden。使用者明確要求只更新模型選單；六台預設均維持 `gpt-6.1-sol`，Terra 的 `isDefault` 為 false。Mac 使用 canonical `scripts/sync-ai-agent-configs.py render-codex-models`；Linux 各獨立 home 執行既有 `~/.codex/scripts/update-model-catalog.py`，共用 NFS home 只寫一次，再逐台驗證。既有 tier retention 自動以 6.1 Terra 取代 5.6 Terra，無需更動程式或政策。
-
-這次證據是六台新 app-server 的有效模型清單，沒有逐台 Terra 推論或 HAPI Web 選單目視驗證，也沒有變更既有聊天或預設模型。swop SSH 重試仍逾時，當時 HAPI 線上 machines 也沒有它，未更新；Athena 送修，未連線、未驗證。共用 NFS 檔案可能隨 mazu 更新，不代表 Athena 已驗證。舊 app-server 需重開才能載入新 catalog。
-
-歷史：2026-09-30 曾完成八台 6.1 Sol catalog／HAPI 預設驗證，並把預設改為 Sol；該次在線與版本狀態只屬當日快照，不代表本次八台均已完成。
-
-# Client-version gate
-
-2026-11-19 本機同帳號比較：CLI `0.165.0` 的 live catalog 不含 6.2；升到 `0.170.0` 後出現 `gpt-6.2-astra` / `gpt-6.2-sol`，兩個 entry 的 `minimal_client_version` 都是 `0.166.0`。不可只更新 allowlist generator 卻沿用舊 CLI 查詢版本，也不可複製舊模型 metadata 改 slug。
-
-本機桌面 app 位於 `/Applications/ChatGPT.app`（bundle ID `com.openai.codex`），版本 `26.1111.21308`，內含 CLI `0.169.0-alpha.11.1`；該內建 app-server 已實測可見最新四項、預設 6.2 Sol、auto-review 隱藏且無 Daybreak。同一桌面 app 內建執行程序另以 `gpt-6.2-sol` 完成一次真實推論，精確回覆 `SOL62_OK`；此證據不代表每台或 Astra 都做過推論。全域 CLI 與桌面 app 內建 CLI 是不同版本；不要從 `/Applications/Codex.app` 不存在推斷未安裝。重新開啟 app 才載入新目錄，原聊天仍保留自己的模型。
-
-2026-09-30 在同一台 Mac、同一帳號實測：CLI `0.157.1` 連 live endpoint 只取得 10 個模型，沒有 `gpt-6.1-sol`；升至 `0.159.2` 後取得 11 個模型，出現 6.1 Sol。這是已驗證的版本比較，尚未測出最早支援版本。只重跑舊 CLI 的 updater 不會解決此問題，也不能因公開 API 文件列出模型就假設該 client 的帳號 catalog 已提供。
-
-使用 transfer_MAC canonical `scripts/sync-ai-agent-configs.py render-codex-models` 的現有流程重建每個獨立 home；階級保留規則自動以 6.1 Sol 取代 6 Sol，無需修改 updater 政策或複製其他帳號的 catalog。更新後以新 app-server `model/list` 及 HAPI machine API 驗證，不能只看 JSON。舊 app-server 會保留啟動時的 catalog；相關限制見 `tools/hapi/codex-model-list-cold-path.md`。
-
-本機以 `codex exec --model gpt-6.1-sol --ephemeral --skip-git-repo-check --sandbox read-only` 完成真實推論，回覆 `FLEET_SOL61_OK`。其他七台驗證模型清單與 HAPI 預設，未各自執行推論；不要把 8/8 目錄驗證表述成 8/8 推論驗證。
-
-不要用 allowlist JSON 的 entry 數量代替有效驗證；canonical 檔案也可包含不會出現在一般選單的 hidden/internal models。
-
-# Documentation mirrors
-
-Durable HAPI changes must keep the canonical Gist `hapi-readme.md`, `<project-root>/hapi-handover.md`, and the Skillshare `references/gist-latest.md` plus `references/hapi-readme.md` byte-identical. QMD indexes this shared-memory pointer, not the full playground handover.
-
-# Zeus incident
-
-Zeus 曾同時缺少 `model_catalog_json` 與 allowlist 檔案，`model/list` 因而額外顯示 `gpt-5.5`、`gpt-5.4`、`gpt-5.4-mini`、`gpt-5.3-codex-spark`。保留 `config.toml` 備份、補回 canonical 檔案與絕對設定行後，不需重啟 HAPI runner，新的 `model/list` 即恢復四個可見模型；runner PID 與 restart count 未變。
-
-# Windows restore incident
-
-2026-09-04，`swop` 也因為本機缺少 `model_catalog_json` 與 `models.allowlist.json` 而顯示舊模型。根因不在 updater policy：updater 已存在於 shared-skills shelf，但 `transfer_MAC` 的 canonical `sync-ai-agent-configs.py render` 沒有安裝或呼叫它，Windows restore 因而漏掉手動步驟。
-
-`transfer_MAC` PR #38（merge commit `a1b63ec`）把這個缺口納入 canonical renderer：完整 `render` 與 Windows 專用 `render-codex-models` 都會安裝並執行 updater、驗證 catalog root／model entries／visible slugs、保留既有 TOML newline，再寫入絕對 `model_catalog_json`。缺少 skills submodule、updater 執行失敗或 catalog 無效時必須 fail closed；不要把 model 更新改成 optional，否則會重現本次 silent fail-open。
-
-Live app-server `model/list` 驗證只剩四個可見模型，`gpt-5.5` 與 `gpt-5.4*` 的可見數量為零。這類修復要同時更新目前 host 與 canonical restore path；只修 live file 仍會在下一次重建時復發。
+[整理前完整證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/codex-model-catalog-allowlist.md)

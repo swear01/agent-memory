@@ -1,5 +1,5 @@
 ---
-title: DVLab Windows laptop LAPTOP-U5DAT43H: auto logon and 26H2
+title: "DVLab Windows laptop LAPTOP-U5DAT43H: auto logon and 26H2"
 scope: machines/laptop-u5dat43h
 machine: laptop-u5dat43h
 status: active

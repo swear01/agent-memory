@@ -5,110 +5,30 @@ status: active
 updated: 2026-11-19
 ---
 
-Steam Minutescape（App 3327170，build 25433331，NW.js 0.100.1／Construct 3）搭配 OpenSpeedy 3.3.20。已驗證 stock package.nw SHA-256 BE9F864E19141B337B2F43CD1E4F54A7632BACDA5BB310E86850A986AAF43119。DLL 載入和 OpenSpeedy.<pid> mapping byte 1 只證明原生加速開啟；到 OpenSpeedy 安裝目錄執行 bridge64.exe GETSPEED 的 stdout 可確認共享倍率，不能代替玩法量測。CLI ISENABLED／STATUS 不是可靠的程序啟用查詢。
+Steam Minutescape App 3327170、build 25433331，NW.js 0.100.1／Construct 3，實測 OpenSpeedy 3.3.20。原版 `package.nw` SHA-256 為 `BE9F864E19141B337B2F43CD1E4F54A7632BACDA5BB310E86850A986AAF43119`。
 
-## 計時根因及實測
+## 先區分注入與實速
 
-安裝版 package.nw 的 data.json project[37] 是 vsync。scripts/c3runtime.js 將 requestAnimationFrame (rAF) 的 timestamp 送給 Tick 和 _MeasureDt。非影片匯出模式把超過 0.5 秒的差值歸零，其餘夾在 0 與 1/30 秒之間，再乘遊戲的 _timeScale。Dodge 事件 #34 把 System.Exps.dt 累加到 levelTime，#82 存入 recordTime。遊戲本身的閃避慢動作及子彈碰撞需要保留，不能只把 dt 上限放大。
+- `speedpatch64.dll` 的完整路徑、`OpenSpeedy.<pid>` enable byte 和官方 `bridge64.exe GETSPEED` 分別證明注入、啟用與共享倍率，不直接證明玩法實速。以原生 perf、獨立 CLI Stopwatch／GetWallTime、實際 levelTime 及遊戲受擊 timeScale 交叉量測。`ISENABLED`／`STATUS` 不足以確認該程序狀態。
+- OpenSpeedy NAME 每秒重套同名程序，單獨 DISABLE PID 可能立即被覆蓋。使用者要求以真實 OpenSpeedy 程序開關控制，單獨把倍率寫進遊戲不能代替。測不同倍率可用獨立的一套官方 bridge 與 DLL、限定 fixture PID，檢查正式倍率和 DLL 沒有被換掉。
+- rAF 在 renderer-only 場景可能 1×，而 `performance.now()` 約 10×；六程序 NAME 場景兩個時鐘皆加速。用固定原始時間差當成中斷門檻會誤判，例如 25× 時 300 ms 真實畫格間隔是 7500 ms。舊版 6000 ms reset 會讓兩個 native clocks 同倍率的冷啟動反覆停在原點。
+- Construct 由 rAF timestamp 計 `_MeasureDt`，丟棄大於 0.5 秒，將其餘值限制至 1/30 秒再乘原 `_timeScale`。Dodge #34 將 dt 累加到 `levelTime`，#82 寫 `recordTime`。修正用原始時間差一次、有限預算分多個 stock 步進、只繪製一次，不加大 stock dt 或改標準碰撞／慢動作。
 
-- renderer-only：獨立 NW.js clock probe 用外部 Stopwatch 驗證 10× 時 rAF 仍是約 1×，performance.now()／Date.now() 約 10×；實際完整隔離 Dodge 也證實 stock levelTime 約 1×。初版相容排程用 performance.now() 加短步，在這條路徑得到 9.994×。
-- 六程序 NAME：正式 Steam 試用有進 Dodge 後明顯卡頓；隔離完整遊戲重現停在接近首幀。兩個時鐘每回呼的中位差值都約 156 ms，而初版相容排程錯把原始 rAF 差值大於 125 ms 當成失焦中斷，持續歸零。保持隔離 fixture 其餘五程序不變，只停用主程序，rAF 立即回到 16.7 ms，關卡恢復。主程序使用 in-process GPU；未有證據把 Minutescape 的這次卡頓歸因於 Steam 原生等待。單一隱藏 stock fixture 在每真實秒約 539 影格的另一場景也量到約 9.44×；不能把 stock 有效倍率當成固定。
-- OpenSpeedy NAME 每秒重套同名程序。直接對各 PID 執行 DISABLE 後，保存的 NAME 規則會重新啟用，這是設計行為。單以 OpenSpeedy 設定倍率作為遊戲控制（不使用原生注入）雖可行，但使用者明確要求由真實 OpenSpeedy 的程序開關套用，不能拿純倍率模式交付。
+## 排程與恢復
 
-## 實裝
+- 可信 WebAudio 時鐘可作真實時間交叉驗證，但也可能停頓後跳動，或和變速 perf 同斜率。保持有效校準，對中等慢畫格確認相容時鐘後做有界步進，真正長暫停不追回積壓。正式版在 3–15× 用 GUI 設定提供步進預算提示，只在正向、相容且 ≤500 ms 的原生差值使用，dt 仍由原生差值計算。
+- 定時 FPS 與隱藏高頻 callback 的數字不能混比。約 0.59 ms 一次完整 Tick 時，100× 需要每秒 3,000 個 stock 1/30 秒 Tick，超過單線程能力。背景粒子可只在批次首步更新並合計 dt，關鍵事件、技能與碰撞仍逐步。隔離原生 100× 在固定回呼條件曾量到約 42× 有效值。
+- Construct 啟動隱藏、visibility 切換與 Chromium 停止 rAF 要分別處理。`minutescape_background.js` 在桌面 NW.js vsync 背景用單一有界 timeout，完成才排下個，略渲染、尊重暫停與 context loss，切換時清時計及 `_dt1`。正式 10× 背景失焦可見實測約 9.95× 基礎模擬，沒有驗證真機最小化。
+- OpenSpeedy `second instance exiting (window stays hidden)` 表示已有實例，第二次啟動不會喚回。先用托盤顯示或退出舊實例；補回磁碟 bridge 不會讓既有程序重生 child。遇 `WinError 225` 或 `Not Injected` 先分開確認 bridge、GUI、DLL 映射與遊戲，檔案恢復不代表注入恢復。
 
-最終直接套用補丁只修改 c3runtime.js：在 Dodge 對已變速的原生時間差做序列 Tick，每步不超過 25 ms、每幀最多 24 步且盡量在 8 ms 真實時間的工作預算內，最後只繪製一次。分辨 renderer-only 與兩個 clock 同加速；有可用的 WebAudio currentTime 時用它驗證真實間隔與預算。用原始倍率時間一次，不再乘全域值。保留原 _timeScale、原版 delta cap、關卡切換與暫停時的中斷。超出預算的時間不排進積壓。
+## 操作與挑戰
 
-最終 SHA-256 29E2993AD2166413A58C905961B727955CE8DDADB73A40FFDBBEF7312B572593。無 Steam 整合的 NW.js 完整隔離遊戲，在約 63–64 個真實 gameplay callback／秒時，六程序實際注入啟用、關閉、再啟用皆成功。10× 兩輪有效 levelTime 量到 7.177×／8.122×，關閉時 1.000×；未停住或出現未處理 JS 錯誤。不要宣稱正式存檔或重場景已量到完整 10×。正式 Steam 重開驗證：載入相同修改 runtime、六程序均實際注入啟用、NAME 恢復、設定仍是 10×，視窗回應。只有 package.nw 被修改，保留原版備份；未修改存檔。
+- F8 控自動巡走與技能，F9 控自動刷分。讀實際 `spr_box` 邊界與角色尺寸，不用固定 layout 尺寸；牆改動後先回到同側再轉角。F9 沿用原版 Play、結算、Upgrade 和存檔，布林用 `GetTypedValue()`。前端拖曳使用 canvas CSS 座標差轉成同一世界座標，避免 `Touch.SpeedAt(0)×dt` 兩時鐘倍率失配。
+- 四技能以現裝備的 `singleLeft`／`singleRight` native held 觸發，死亡、換場或換裝清除計畫。Shrink 判定把原版碰撞先於縮放的兩步算入。Shockwave 要按住 2.5 遊戲秒才清半徑 400，Zap 要閃避。Shield 是方向扇形，原版預付 drain×0.4；從 native upfront 事件起計，避免合成 held 在首 0.4 秒多扣一次。手動按住時不接管。
+- 零橘色先用 100 紫色購買 `shield give orange`，再用 Shield 擋彈；`shrink give orange` 本身需 30 橘色。藍色在 Dodge `levelTime >= 150` 且存活時生成。
+- Stuck 原地做彈道預測，不能發 MoveTo。Broken L.A.B.（`noAbilities`）禁止技能，須清除殘留自動計畫。紫彈按原轉向限制逐步預測，藍彈按 native wait／當前速度判定階段。用原版 Play／Challenge／Simulate 與結算的本機 CLI marker，沒有任意 eval 或網路監聽；以 app Init 及真實 Tick 回報為準，完成即移除 marker。
+- 正式封包 10× 驗收中，Stuck 到原版 5:00，Broken L.A.B. 最佳約 4:54 且未用技能。樣本受初始血量、彈幕與受擊影響。這些是正式驗收樣本，隔離的 85 個技能案例與原生 100× fixture 則證明各自的行為。
 
+## 重建與還原
 
-## 遊戲內沿邊巡走
-
-同一 build 新增巡走時，只攔 Dodge 的 Player Movement 事件 #38（SID 944808599577142）的三個原生手動移動子事件；其他事件、Dodge 啟動與死亡照常。spr_player SID 971355649700802 實例使用原生 MoveTo 速度和 Tick，先向最近邊投影，再順時針走四角。場地不一定是 layout 的 1920×1080：實測初始 spr_box 牆為 200×200；以 spr_box SID 253185647818588 的 left、right、up、down 活實例中心位置計算可走矩形，再加半個角色寬高、像素邊距。這比讀固定畫面座標或無箱時都取同一矩形可靠。F8 只改本次程式的模式偏好，關閉時清掉巡走 waypoint，再放回原生滑鼠／手把事件；不開始、重開或編輯存檔。
-
-隔離完整遊戲經 Main Menu 到 Dodge 的 test-only 轉場驗證全四邊、F8 關閉後滑鼠可移到中心、再開啟、離開關卡停止；全圈測試為避隨機死亡只在隔離 fixture 停用碰撞，正式補丁保留碰撞。安裝仍只改 c3runtime.js（package.nw），SHA-256 C759BB370C0A43FA1D742409F6EFA571D4E3D1946E4A992B49A699BCF9E8BDE6。備份 package.nw.before-patrol 是原本的直接套用 OpenSpeedy 版本；測試還原不移除 OpenSpeedy 修正。Steam 重開已確認載入同一修正版與原有六程序 OpenSpeedy NAME 掛鉤，沒有寫入倍率或存檔。
-同一隔離版另以 OpenSpeedy 當時的 25× 設定、六程序原生注入，短樣本實測關卡約 19.126× 且連續巡走至少三圈；未變更共享倍率。
-
-## 100× 原生隔離測試、巡邊及天賦樹
-
-- OpenSpeedy v3.3.20 的倍率是 `speedpatch64.dll` 的共享 PE 資料段；`OpenSpeedy.<pid>` mapping 是啟用位元。要量不同倍率而不碰正式遊戲，可以實體複製官方 `bridge64.exe` 和 DLL 至隔離目錄，保持同一份複本 DLL 映射，使用同目錄的 bridge 只注入已核對路徑的 fixture PID。核對每個 fixture 的 DLL 完整路徑和 flag；同時驗證官方裝置的 GETSPEED 沒變。實測複本 100×、正式 25×，兩者獨立；不用改 DLL 或正式 GUI。
-- 舊排程 600 ms 分類上限和 24×25 ms 步進在 100×、60 個 callback/s 時無法接收約 1667 ms 的正常加速間隔。新版放寬原始時鐘範圍、有可用 WebAudio 時優先用它判斷，100× 高速用原版 1/30 秒 dt 上限和約 11 ms 真實工作預算，不讓補算積壓。實際 100× 六程序測試約 29× 有效 Dodge 計時、63–64 個畫面 callback/s；每個完整 Tick 約 0.9 ms，事件/碰撞階段花了約八成。不能拿 GUI 設定說已實跑滿 100×，也不能把隱藏視窗高頻 callback 與固定 60Hz 的數據直接比較。
-- 升級介面 #369 / #370（SID 226392173888185、874634095954579）原用 Touch.SpeedAt(0)×dt 算右鍵拖曳。加速使兩者時鐘比例失配。改用 Mouse canvas CSS 座標的相鄰位移，在同一畫面轉換至世界座標；僅替換 #370 的 Scroll 動作。完整隔離版 25× 同一掃動距離在 zoom=.8 為約 768 layout px，與不掛鉤一致；100× 亦一致，原滾輪仍生效。
-- 巡邊仍每 Tick 讀 spr_box 活實例。重算新矩形後要先檢查角色到所走邊的垂直距離，大於 8 px 就沿原側重新貼回、進入 4 px 內才再朝角落走。否則即使牆座標更新了，角色仍會斜切向新轉角。真實 100× 注入的隔離副本放大牆 120 px 已驗證回同一邊後繼續轉角。
-
-F9 自動刷分使用原始 UI 事件：Main Menu Play（有存檔走原版讀檔，否則等 Startup 提示）、Dodge 死亡結算完成後 OnAnyClick 進 Upgrade、等 Upgrade 的原生 IO / 存檔完成再送原版 Enter 並傳回 Dodge。不要直接切 layout 或寫分數。Construct 事件變數需要 `GetTypedValue()` 讀 boolean，`GetValue()` 讀到的是 0／1。獨立實機存檔在正常碰撞下累積紅分到 36，重開載回相同存檔後繼續增加到 39。F9 初始關、開啟時自動打開沿邊巡走；F8 可手動控制沿邊巡走。
-
-100× 進一步取樣顯示 `[M] Background Effects`（群組 SID 799488624751281，每步約 .32 ms）是最大的單一耗時項；只讀寫背景粒子類別 94。在高倍速批次的首個步驟跑該群組，累積額外步驟的遊戲 dt 給下個畫面的背景移動與淡化，並在這個群組執行後還原原 dt。粒子生成與亂數取樣頻率會改變；計分、技能、彈幕及碰撞事件仍照算。實體隔離 native 100×、15 ms 真實影格間隔下限下，最終 42.14× 實速與 63.18 畫面更新/s（背景優化前 28.86×、62.91/s）；每個 Tick 約 .593 ms。最終封包 SHA-256 B00CAF0B4918C97A41A5B5568CA6F0DA0061BB1F6EC86D82ACD8F5E4F2DA6B4A，還原備份 `package.nw.before-layout-fixes` 是上一版巡邊。正式 Steam 安裝只置換 `package.nw`。
-
-100× 容量對照：兩個 native clocks 實測都約 100×。用 stock 最大 dt 1/30，需要每實秒 3,000 次完整的循序 Tick；此機平均約 0.59ms/Tick（約 80% 在事件階段），相當於每實秒 1.77 秒的單線程工作，尚未計入繪圖。11ms 預算配 15ms callback 下限約 31–42× / 60–63 FPS；25ms 預算約 54× / 38–40 FPS；完全省略 Render 在較低回呼頻率仍只有約 55–57×。延長 dt 會改變 stock 離散碰撞與 `Every` 觸發，不是單純的效能修復。實測 WebAudio 在主線程忙碌時可能停頓後跳超過 500ms；若兩個 native clock 仍一致且依上一倍率推算沒有真停頓，不能把這個跳值直接當成背景中斷。
-
-Upgrade 購買只在前端更新購買與完整樹，普通購買不直接存檔。#265 SID 399782854691094 每次刷新 83 個節點，#346 SID 609015691615495 為每節點用全部候選以距離 300 搜尋，等同最多約 6,889 次比較。確認座標真為唯一 300 px 方格才用每次刷新重新建立的索引和四個鄰居的目前 rank，否則回原條件。高倍率時約 60 ms 的真實慢影格會觸發舊排程 6000 ms reset，動畫 dt 變為 0；Upgrade 應先使用獨立的真實間隔並保留 stock dt cap。原生 100×、真正遊戲點擊、控制版加一次 ~99ms 人工 stall 後兩個取樣 Tick dt=0，修正版第一個取樣 Tick dt=1/30。連續五次購買後，比對 83 節點的等級、鄰居總和、解鎖和顯示完全一致，未重現長時間卡死，也未量到整體畫面 FPS 改善。
-
-躲彈巡邊仍用 MoveTo 和 stock 碰撞、根據約 0.30 模擬秒的原速彈道及約 0.075 模擬秒的掃描間隔，綠色資源不當成威脅，密集彈幕有限制。隔離完整 NW.js、實際 Red 子彈 500 px/s、碰撞開啟：安全時維持貼邊，危險時偏離約 25 px，HP 維持 3，再回到巡邊。F9 與正常計分、結算無變更。
-
-## 自動縮小與後兩種資源
-
-自動縮小版本 SHA-256 1295C9AA5F9AA9E2A5A51B5D1C0F82CAD3031A964820E392E6542D7E603DD4FF；上一版 290B26F63FECFC13A7F2C3A7B02F516DDB6957893E0DDDF37E05EF135B9D7388 保存在 `package.nw.before-auto-shrink`。正式 Steam 重開後已比對解壓載入的 runtime 與封包完全一致。該次重開 OpenSpeedy 程序未執行、遊戲無原生注入；100× 驗證是在獨立原生副本完成，不能混稱正式遊戲已在 100× 運轉。
-
-縮小沿用原版技能流程：僅對 `singleLeft` SID 608732816899725 和 `singleRight` SID 287501796200871 的 `CompareBoolVar` 加入合成 held 判斷，原手動布林為真時仍照常。需在 Dodge、存活、Shrink 群組有效、已裝備 shrink 且能量足夠，先嘗試正常移動，再確認縮小能避過預測碰撞才請求約 0.12 模擬秒，持續重評估。原版碰撞 #184 早於縮放 #239，所以預測納入兩個步進的啟動延遲；F8、死亡、場景與路線失效會解除。沒有直接寫尺寸、能量、血量或存檔。
-
-真實完整 NW.js、碰撞開啟、相同四顆 Red 子彈的 1× A/B：舊版 HP 3→1，尺寸維持 75、能量 100；新版 HP 維持 3，尺寸 75→37.5→75，最低能量約 85 並回充。獨立 OpenSpeedy 原生 100× 的逐 Tick trace 也見相同啟動、解除與回充，180 步測試彈幕期間血量不變且無未處理錯誤；這是控制彈幕驗證，不保證所有密集彈幕都不受傷。
-
-第四種橘色不是普通刷出或單純閃避所得。零橘色起步需先滿足原版前置條件，購買 `shield give orange`（100 紫色）後以 Shield 實際擋彈；`shrink give orange` 本身花 30 橘色，不能從零起步。第五種藍色的 Dodge 生成門檻為 `levelTime >= 150` 秒且存活，與 240 秒 Boss、300 秒 break box 無關。加速縮短真實等待時間，不降低這個關卡計時門檻。
-
-## 依裝備自動使用四種技能
-
-四技能版本 SHA-256 7BF4B4724051A7AACC7CFC036622A391BA3E235B078DDAF694E01074D7DC13F7；回滾 `package.nw.before-auto-skills` 是上述 1295C9AA 自動縮小版。沿用 singleLeft/singleRight 的原生按住輸入，僅自動使用目前裝備的兩種，換裝字串與 live player identity 防止沿用舊計畫。F8 控制自動移動和技能；F9 開自動刷分時同時開巡邊。原版 Upgrade #483/#489 在兩槽技能相同時清空另一槽，不需補丁支援重複裝備。
-
-- 技能字串為 `shrink`、`slow`、`shield`、`shockwave`，各有獨立充能。Slow CurrentCharge SID 990876506082785、drain 985590669122070；Shield charge 468190106749655、drain 757548987014003；Shockwave charge 955318864596436、charging timer 708128531638183、charging duration 719031418869378。
-- Shrink 仍以縮小後可通過的預測路徑為前提。Slow 保留原版 global 與玩家倍率差別；短請求自然到期，避免效果讓下一次掃描安全就立即開關。Shockwave 預設先花 1 次，持續按住 2.5 遊戲秒才清除半徑 400 內的 bullet，不能當作即時保命；附近至少三顆進入範圍的來彈才預先蓄力，已付費則持續至原版施放或合法失效。
-- Shield 是階層子物件 SID 377362559195784 的方向扇形，MoveTo maxSpeed=0 只旋轉、不移動中心。自動瞄準僅替換 #284/#285 的唯一 aiming action，跟隨來彈方向。Zap 是獨立類別，Shield 不能擋，Shockwave 不能清，仍需移動閃避。
-- 自動 held 並不重設實體滑鼠的 timeSinceClick。Shield 原版先收 drain×0.4 的預付費；若不處理，舊滑鼠計時會讓初始 0.4 秒額外持續扣款。只在原版 upfront TriggerOnce 成功的 #274/#279 記自動專屬 GetGameTime；#275/#280 唯一 ongoing drain action 在該預付窗內略過。其餘原版扣能／顯示／解除／回充照常；不寫真滑鼠計時器或充能。手動按住時不接管 aiming 或預付窗。
-
-最小驗證：85 個獨立行為案例、封包 runtime 語法、ZIP 解壓後重建同 hash、testcopy upgrade/restore 還原同 hash。真實 native 100× 的前一候選完成 12 左右排列×gap/ring/safe 共 36 案例；最後僅修正 Shield 預付窗後，重驗 Shield+Slow／Shield+Shockwave 左右交換共 8 個 ring/safe 案例。實測 upfront 恰為 12、首 0.4 遊戲秒不再重扣、之後正常扣，解除回到 100；原版 shield 擋彈／銷毀 callback、shockwave #312 完成蓄力施放均有實際記錄。碰撞保持開啟，為觀察完整效果使用 fixture HP 100，不能宣稱正常血量存活率改善或完整實速 100×。正式 Steam 安裝重開已比對載入 runtime 完全相同、六程序官方 DLL 和 enable byte 均為 1，官方共享倍率前後不變。
-
-## 慢畫格後的時鐘恢復
-
-2026-11-19 修正版封包 SHA-256 7441E4DB3B349084D2BDDF559FF8AEA29287D56E28782907DD9B81D54975BBE7；`package.nw.before-clock-recovery` 為上述四技能 7BF4B472 版。新增 `minutescape_speed_resilient.js`、`minutescape_recovery_packager.py`、安裝器 `-ClockRecovery` 與對應 ZIP／說明；技能策略不變。正式安裝前正常關閉並備份存檔，重開後比對載入 runtime 與驗證封包完全相同，主選單正常顯示。
-
-舊版原始時鐘間隔超過 6000 ms 會清空 dt、clock kind 和倍率校準。控制測試在 100×、61/75 ms 真實畫格或 25×、300 ms 畫格反覆歸零，完整遊戲副本也重現。新版保留有效校準，優先依可信 WebAudio／原生倍率推算真實時間；85–500 ms 中等慢畫格第一次保守略過，相同 clock/layout 連續第二次允許有上限的步進；連續穩定樣本可重新校準倍率。真正長暫停仍不追補積壓，保留 stock dt cap、約 11 ms 真實預算與每畫面一次 Render。沒有可用 audio 或先前校準的冷啟動仍採保守判斷。
-
-最小驗證：30 個恢復案例、35 個獨立邊界案例及原有時鐘測試通過；封包語法、ZIP 重建、testcopy 升級／回滾 hash 一致。完整遊戲使用明確標記的合成一致 perf/rAF 倍率與真實影格間隔下限，保持碰撞和原技能流程；25×／300 ms 暖啟動舊版停在約 5.983 遊戲秒，新版八秒觀察到 17.893 秒；單次 1.25 秒真暫停首幀不推進，後續恢復，無未處理錯誤。這批不能稱作原生 OpenSpeedy 100× 驗證。
-
-本次原生測試受另一外部條件阻擋：官方與獨立複本 bridge64.exe 均回 WinError 225，之後官方 bridge64.exe 路徑已不存在；OpenSpeedy GUI B64 紅色錯誤、正式重開的六程序皆無 DLL／enable mapping，選取主程序顯示 Not Injected。官方 GUI 倍率仍為 25×。未還原或重建被攔截的二進位、未更動防毒設定；不能因為修正版載入且視窗回應就宣稱原生加速已恢復。
-
-同日使用者要求找回誤按 Remove 的檔案。唯讀 Defender 紀錄確認正式安裝目錄 bridge64.exe 的 ThreatStatusID=8，而 events-native 測試副本為 7 且檔案仍存在，兩者不能混認。從 [官方 3.3.20 發行頁](https://github.com/game1024/OpenSpeedy/releases/tag/3.3.20) 重新取得 `OpenSpeedy-3.3.20-portable-signed.zip`，核對 GitHub asset SHA-256 `0C9BBC0F305583AAB264723EA5E6B8764CB3B41B718F02C5ECD561479C3CBF0E`；其中五個交付檔均驗得有效 SignPath Foundation Authenticode 簽章。bridge64.exe SHA-256 `75EC196D60DD51DBCFDF50E197976E749E14A6E0C062B64926C5977ACD5B9F64`。官方 README 的未簽署誤判概述不能代替對實際發行檔的驗證。
-
-一般權限寫入 Program Files 被 ACL 拒絕；使用者親自接受 UAC 後，以重新驗簽、核對 SHA 並拒絕覆寫既有目標的最小複製操作，補回正式 bridge64.exe。最後唯讀核對檔案存在、雜湊正確、簽章 Valid；未調整防毒設定或排除項，未修改遊戲封包及存檔。執行 bridge 讀倍率的後續驗證被工具自動審查拒絕（僅回 blocked by policy），不重試執行；最後觀察六個遊戲程序仍無 speedpatch64.dll，不能把檔案找回宣稱為原生加速恢復。
-
-## OpenSpeedy 留在背景時無法再次顯示
-
-同日後續「打不開」另有已核對根因：舊實例仍活、沒有可取得的可見主視窗；多次啟動日誌皆寫 `second instance exiting (window stays hidden)`。3.3.20 [main.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/main.rs#L13-L23) 固定單一實例 mutex，第二份直接退出，不喚回舊視窗。[useTray.ts](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src/hooks/useTray.ts#L29-L70) 的托盤左鍵才執行 unminimize/show/setFocus；X 預設 hideToTray，托盤 Quit 才 destroy。不能把再次點開無反應直接判作啟動崩潰或防毒又刪檔。
-
-補回磁碟 bridge 也不會讓舊實例重生已退出的子程序：[lib.rs](https://github.com/game1024/OpenSpeedy/blob/3.3.20/src-tauri/src/lib.rs#L35-L104) 只在 setup ensure_bridges 啟動，已有 child collection 就略過。當次備份 settings.json／process.json 後，核對完整路徑並結束原 OpenSpeedy 和其擁有的 bridge32，正常開啟原本已安裝的 GUI；新日誌 startup complete、bridge64/32 ready，兩個元件與主程序均存活，前景 UI B64/B32 均綠色、倍率仍 25。兩份設定與備份 SHA 完全一致，未編輯程式或防毒設定。此結果證明 GUI 及橋接連線恢復，沒有另外量測正式遊戲實速，不能稱滿速 100×。
-
-後續在正式遊戲（同一 7441E4DB 封包）做倍率對照。由 1× 換到 25× 後，畫面與彈幕停在 02:04，切回 1× 後同一局繼續至 02:10。尚未取得卡住瞬間的執行期時鐘。以相同 scheduler 獨立重現：冷啟動、兩個原生時鐘皆 25×、每 300 ms 一個 callback、音訊時鐘停住時，六次 Tick／繪製合計推進 0 ms，沒有建立校準；先以正常音訊暖機或讓音訊以真實速率前進則持續有步進。每次 7500 ms 的原始間隔落入未校準的 6000 ms 重設門檻。這確認前版測試未涵蓋的缺陷，未證實為正式卡住的唯一根因。
-
-使用者後續把驗收倍率指定為 OpenSpeedy 5×。讀到 GUI 保存倍率 5、正式遊戲主程序載入安裝目錄的 speedpatch64.dll，畫面觀察同一關卡從 04:09 前進至 04:29、角色與彈幕更新，之後回到升級介面的 Market。這是已存在補丁下的短段正式遊玩驗收，未另行量測滑鼠輸入延遲或絕對實速；該輪未改遊戲封包或倍率。
-
-## 正式存檔、背景步進與挑戰資源
-
-後續實速驗收證明 GUI 5× 與 enable byte=1 仍不等於玩法 5×：Broken L.A.B. 同局走 12 顯示秒需約 9.38 真實秒。音訊 `currentTime` 在正式遊戲有時和已變速 perf 同斜率，舊版依 WebAudio 判斷會降回單步。新版在 3–15× 從 OpenSpeedy 設定讀預算提示，只有正向、相容形狀且 <=500 ms 的原生間隔才啟用該提示。遊戲 dt 一直來自原生時間差，沒有用設定值乘時間。使用 `GetWallTime` 與外部 CLI Stopwatch 比較，另記 levelTime 和原版受擊 timeScale。10× 的 Stuck 前景取樣約 9.77–9.88× 基礎模擬，原生 perf 約 10×。
-
-背景需同時處理 Construct 啟動隱藏暫停、後續 visibility change 與 Chromium 不再發 rAF。`minutescape_background.js` 只在桌面 NW.js vsync 背景採單一 bounded timeout，等步進完成才排下一個，略過渲染；保留明確 suspension 與 context loss，切換 mode 清空計時基準與 `_dt1`。封包 manifest 套用遊戲範圍的背景旗標。正式 10× 普通 Dodge 持續回報 focused=false、background=true，從 0.56 到 299.59 關卡秒的 19.58 真實秒內，基礎模擬 9.953×、原生 perf 9.996×，到 300.027 原版勝利。這次樣本為失焦而仍 visible，不能等同真機最小化測試。
-
-`minutescape_patrol_challenges.js` 使用八段切角巡走及共用的切角閃躲範圍；遇擁擠選安全餘裕較多的短期逃離目標，每次掃描重新驗證。原版 Red/Purple/Blue 基礎傷害 1/2/5；第一順位完全避碰，無全避選項才用紫藍碰撞數優先。Purple 以實際速度和 `25° × bulletSpeed / 400` 轉向限制逐段預測。Blue stage 1 仍追瞄，stage>=2 且未加速才讀 #182 SID 935658439976762 的 native scheduled wait `_time` 及對應 SOL；倒數過後使用 `bulletSpeed*2.5`，已發射則以實際 `_dx/_dy` 為準。沒有改寫原版 wait。
-
-Stuck 的原版零速度曾讓技能規劃提前返回。新版原地預測，可施放但不送玩家 MoveTo。Broken L.A.B. (`noAbilities`) 額外擋掉殘留自動計畫。Shield 的 90% 用 `shieldMaxCharge` 乘原版 Broken L.A.B. 獎勵；普通紅彈只有躲不掉且近滿才開，紫藍保留優先，Fragile 紅彈可致命。用 native upfront 付款的 0.4 遊戲秒區間避免重扣；縮短預判開盾區間，過後釋放才依原版回充。震波不直接充盾，成對裝備時在護盾低量或難覆蓋多方向才依實際蓄力準備。Stuck 血量健康時保留震波給後段藍彈，紫彈只在血量較低、盾不足才動用。正式 10×、Shield/Wave、碰撞開啟：Stuck 1:18→3:23→3:54.804，標準結算移速 1.431273；Fragile 0:18→2:44→4:22.783，標準結算生命 1.592296。Stuck 3:23 局在 110–150 秒間用掉多數震波；保留版在 157 秒仍約 6.5 發且接近滿血。不能從這些樣本承諾每局。Dodge 原版 levelTime 在 300 秒封頂，並非十分鐘模式。
-
-使用者要求正式存檔、CLI、禁止控制桌面滑鼠。接下來的 production 測試透過有效 session marker 讓 `minutescape_challenge_cli.js` 只呼叫原版 Play / Challenge / Simulate / 結算事件，沒有任意 eval、網路監聽或寫入紀錄/數值。以 app `Init` 回報握手再於真實 Tick 消費，否則沒有 rAF 時即無任何回報。測試結束移走 marker。最終安裝 SHA `05DEA2D09A39B056C1EF4E2C7F66A67BA49D0CFFEF5B496EA53C8FC2A78DCF8C`，保留 `package.nw.before-story-cli`（eea5abf3 起首）及正式 IndexedDB/Local Storage 備份。OpenSpeedy 倍率保留使用者選的 10×；驗證既有 85 技能案例、模式規則、四側切角、藍彈階段、加速與背景排程、封包 CRC/語法與 ZIP 解壓重建相同 hash。
-
-### 兩項挑戰後續驗收
-
-Stuck 的成對防禦以藍彈優先、短時間開盾；在護盾低量或難覆蓋多方向時，還要預測彈群可能帶來的傷害，血量已下降或預估連擊夠重才動用震波。新版首局在 246.869 遊戲秒才首次低於一發震波（舊 3:54 局為 196.652 秒），最後結算 4:32；第二局到原版上限 5:00，原版移速獎勵 ×1.515769。新版起始血量較高，兩局的彈幕和後段受擊也不同，不能將改善全歸因於震波策略。通關前最後有效戰鬥樣本為 299.809 秒、血量 22.807；跨過 300 秒的滿血樣本是結算重置。
-
-Broken L.A.B. 走同一套藍彈預判、切角與離開密集區的路線，保持 stock 禁技能。正式三局 292.122、293.809、294.761 秒，最佳從 3:36 到 4:54，盾與震波未啟動，原版護盾容量獎勵 ×1.637419。用選定的 OpenSpeedy 10× 設定驗證，失焦 Stuck 通關局的基礎模擬約 9.85×。本機測試請求可用 `mode: "noAbilities"`，並可選 `nextMode: "stuck"` 串接；結束後移走請求。正式封包 SHA-256 `91EE7782B80199AB54660F6FA3D2E7544C06538A59075C0F53979F4852041C88`，上一版為 `package.nw.before-late-wave`。封包 CRC、語法、解壓重建雜湊及 85 項既有技能案例通過。
-
-### 最終封存
-
-可重建的最終原始碼 ZIP 和 README 已存至私人 Google Drive 的 Game Patches/Minutescape。以 ZIP SHA-256 `96EE5A78416AE216473001CFE289E5DA810C91555FD8C7A2EA10560DE4690DFF` 辨識該封存。以 ZIP 解壓重建並核對正式封包雜湊，亦核對 G 槽同步的兩個檔案與總索引。封存只需補丁原始碼和說明，重建時另需對應的原版封包。這版 `minutescape_background_packager.py restore` 驗證現用封包後，回退至 `package.nw.before-late-wave` 的上一個補丁版；`package.nw.openspeedy-stock-direct` 是另外保存的原版。
+見 [Game Patch 保存與輸入版本](game-patch-cloud-backup.md)。最終 `package.nw` 經 ZIP 重建得到 `91EE7782B80199AB54660F6FA3D2E7544C06538A59075C0F53979F4852041C88`，`package.nw.before-late-wave` 是還原的上一補丁版，`package.nw.openspeedy-stock-direct` 是另外保存的原版。原始碼 ZIP SHA-256 為 `96EE5A78416AE216473001CFE289E5DA810C91555FD8C7A2EA10560DE4690DFF`。詳細版次、SID、指令、控制測試與證據可用 `git show 06f50e3:tools/openspeedy/minutescape-construct3-delta-cap.md` 查回。

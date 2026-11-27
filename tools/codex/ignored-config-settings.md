@@ -9,7 +9,7 @@ updated: 2026-10-03
 
 Codex CLI 0.159.2 and the Mac app-bundled 0.159.0-alpha.12.1 ignore `features.rmcp_client` and `mcp_servers.context7.type`. Remove the former legacy feature entry. Codex selects MCP transport from `command` or `url`, so its TOML adapter must omit the canonical `type` discriminator. Retain `type` in shared `servers.json` and other clients that use it.
 
-The canonical `transfer_MAC` renderer is `scripts/sync-ai-agent-configs.py`. PR 56 merged as `dc6bd635d1d8af15a4a0b340a2a85caa25861aa8`; the renderer SHA-256 is `3fe9ec1b197224986ba94efe83f392011540249fe5a56768930a5e9758150d93`. Regression coverage checks that the rendered Context7 table has no `type`, preserves unrelated settings, supports dry-run, and is idempotent. All 115 repository tests and CI passed; Swear Review found no issues for the PR head.
+The canonical `transfer_MAC` renderer is `scripts/sync-ai-agent-configs.py`. See transfer_MAC PR #56 for the renderer change. Regression coverage checks that the rendered Context7 table has no `type`, preserves unrelated settings, supports dry-run, and is idempotent.
 
 The reported `[features.guardianv2].thread_context` deprecation was absent from the live configuration and effective config layers. Fresh app-server initialization did not reproduce it. Do not claim to have removed a field that was not present or infer that an already-open app has refreshed its displayed warning.
 
@@ -29,6 +29,5 @@ The deployment backed up `config.toml` under `<home>/.cache/codex-config-2026100
 
 Windows `swop` remains pending. It was absent from the current HAPI online machine list; external SSH attempts timed out and the known internal SSH endpoint was unreachable from mazu. Do not reuse the older eight-host success snapshot as evidence for this rollout.
 
-## Memory and QMD completion rule
 
-Publish the portable Markdown note to shared memory, synchronize each independent checkout once, and refresh each host's local QMD index separately. Keep `QMD_CONFIG_DIR` and `XDG_CACHE_HOME` host-specific even when memory lives on NFS. Verify lexical retrieval and indexed-content readback after `qmd update` and `qmd embed`; Git sync or an index counter alone does not prove retrieval. Use GPU defaults first and apply a CPU fallback only after an actual embedding-context failure.
+Deployment hashes and the complete 2026-10-03 verification are available with `git show 06f50e3:tools/codex/ignored-config-settings.md`. For publishing and refreshing shared memory, see [shared-memory workflow](../../global/workflows/shared-memory.md).

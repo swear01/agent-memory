@@ -26,6 +26,11 @@ tags:
 - 新檔先 `git add` 再執行 `.githooks/pre-push`，check 基於 `git ls-files`，也檢查 Git 歷史。工作樹和 staged 都跑 `git diff --check`。設定 `core.hooksPath .githooks` 可在 push 時重跑檢查。既有無關失敗須在基準重現；本次新增的問題要先修。
 - CI 用 regex 掃私人路徑、信箱和憑證樣式，Markdown 反引號也會命中。範例路徑用 `<remote-home>` 等 placeholder，憑證只寫 `Bearer <api-key>` 等佔位符，個人帳號用角色描述。
 
+## 從歷史 session 提取記憶
+
+- 只在本次授權的範圍讀取已結束或封存的 session，保存分頁、涵蓋範圍與來源雜湊。先移除憑證、PII、private context 和 runtime identifiers，再交付必要的去識別上下文；原始 logs、私密資料和暫存清冊不提交、不索引。找到同一經驗先合併，新的執行結果經獨立查證才寫入。單純沒有找到新教訓，留在批次紀錄即可。
+- 以 `active` 記已驗證的長期知識；執行結果待驗的候選應明寫 `needs-review` 以及缺的證據。QMD 快照須來自沒有寫入中的資料庫，並核對嵌入模型相容。原始批次紀錄見 [ingestion ledger](../../archive/global/workflows/memory-ingestion-ledger.txt)。
+
 ## 遠端歷史仍含私人資料
 
 覆蓋檔案只能清 working tree。經明確授權做歷史清理時，先備份 refs 和未提交差異到私有且未索引的位置，隔離重寫並逐筆核對受影響的 commit、目標 tree、最新遠端 SHA 與完整 CI。僅更新指定 branch 並以舊 SHA 作 lease。若只改 metadata，先確認工具會否重寫早期簽章；`git filter-branch --env-filter` 曾擴大受影響範圍。

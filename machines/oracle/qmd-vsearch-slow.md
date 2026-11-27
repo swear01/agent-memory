@@ -13,25 +13,11 @@ tags:
   - performance
 ---
 
-- `qmd vsearch` 不是純向量搜尋。它會先用 `qmd-query-expansion-1.7B-q4_k_m`（Qwen3 微調、grammar 限制、maxTokens 600）生成 lex/vec/hyde 擴展查詢，再把原始查詢加上每條 vec/hyde 擴展依序各做一次 embedding，最後才用 sqlite-vec 比對。
-- 實測（load average 約 15–18，swap 已用 4 GB）。注意：這組數字是誤用「沒加 shared-memory env 前綴的 `qmd`」量的，所以 embedding 用的是預設的 embeddinggemma-300M。當時 canonical 設定曾改成 Qwen3-Embedding-0.6B，比 Gemma 大一倍，會更慢。2026-11-27 起這台改回 Gemma，與 Mac 的向量同一組模型。expansion 模型兩邊相同，都是 1.7B，所以查詢擴展仍然慢：
-  - embedding 冷啟動（runtime 加 300M 模型）25 秒，之後每次 0.95 秒。
-  - expansion 一次 836 秒；模型已載入的第二次也超過 14 分鐘沒跑完。
-  - 向量比對：1,498 個 chunk × 768 維，可以忽略。
-- 擴展結果只在成功時寫進 `llm_cache`，所以超時被殺的查詢下次會整個重跑。
-- 在 oracle 上的替代做法：
-  - `qmd search`：BM25，不用 LLM，秒級。所有指令都要加 shared-memory skill 的 env 前綴；沒加前綴的 `qmd` 會打到空的預設索引並回報 "No collections"，這時不要在預設位置 `collection add`。
-  - `qmd query $'vec: <查詢>' --no-rerank`：跳過擴展和重排，用預設 300M embedding 實測 46 秒，大半是冷啟動。
-  - 需要完整的 `qmd query` / `vsearch` 時，到有 GPU 的 Mac 上跑。
-  - `qmd embed -c memory` 也一樣：2026-11-14 在 oracle 跑了 20 分鐘還沒完成就停掉了。在 oracle 寫記憶後只跑 `qmd update`。
-- 中文查詢用純 vec 時排序不可靠：「Claude 遠端 session 能不能在 turn 中途插話」沒有把 hapi-claude-midturn-steer 排進前 3。關鍵字比較明確時，`qmd search` 反而比較準。
+# Oracle 的 QMD 卡在 CPU query expansion
 
-## 2026-11-27 向量從 swairM5 複製，不要在 oracle 重算
+- Oracle 用 `shared-memory` skill 的 config/cache/model 前綴；漏前綴出現 `No collections` 時不要往預設 index 新增 collection。Vsearch 在 QMD 2.8.3 先跑 1.7B expansion，再對原始和 vec/hyde 變體依序 embed，最後才比對 sqlite-vec。SwairM5 的 2.9.0 本機 `vectorSearchQuery` 還有這個 expansion。CLI 名稱和向量比對耗時不能解釋整個 query latency。Expansion 沒成功就不會留下 cache，下次 timeout 重試仍得重算。
+- 明確關鍵字用 `qmd search -c memory`，在 Oracle 是秒級，無需 embedding。需要 pure authored vector 可用 `qmd query 'vec: <查詢>' --no-rerank` 避開 expansion；短中文問題仍可能排序差。Oracle 冷啟 embed 有成本，完整 hybrid 用有 GPU 的 Mac。Oracle 例行只 update；大批 embed 給 GPU 主機。
+- Mac 和 Oracle 用同一 embeddinggemma-300M URI 和 bytes，實際 `models.embed` 設定可覆蓋環境變數。來源用只含應分享 collections 的 quiescent index，不混入額外本機 collections；目的端以 repo 內容重新 update，驗 memory 文件、vectors 和 pending。全索引 pending 可包含其他 collections，不等於 memory 全部待補。見 [通用 snapshot 規則](../../domains/llm-inference/qmd-snapshot-portability.md)。
+- 無法 Mac SSH 時，曾用 Tailscale file 送已停寫的 SQLite；接收端 access denied 需核對 Tailscale operator，再 `tailscale file get`。安裝前確認無 writer、保存舊 index set，來源主檔與 WAL/SHM 不可混配，裝入後依本機路徑驗一次 update 和 retrieval。舊快照的副本不與活 DB 共用，不在 Oracle 重跑全體向量作為修復。
 
-oracle 沒有 GPU。`qmd embed -c memory` 會停在 CPU，應直接停掉。swairM5 的 SSH 22 拒絕連線時，改由那台把安靜的 `index.sqlite` 用 Tailscale file 送到 swever。接收端若出現 file access denied，先 `sudo tailscale set --operator=$USER`，再 `tailscale file get`。不要傳模型、WAL 或 SHM。
-
-裝上前確認本機沒有寫入同一顆資料庫的 qmd，把舊檔移開，刪掉殘留的 WAL/SHM，再放入新主檔。之後只跑 `qmd update`，讓本機 collection 路徑對上。`qmd search` 不需要向量。
-
-第一份 Mac 快照是 1340 份文件、2187 條向量。第二份是 2198 條。第三份（2026-11-27，integrity ok，2199 條，模型全部是 embeddinggemma-300M）裝上並 `qmd update` 之後，memory 914 份的待嵌入數是 0，914 份都沒有改內容。oracle 的 `index.yml` `models.embed` 已是同一組 Gemma。設定檔優先於環境變數，所以就算指令還帶著舊的 Qwen URI，`qmd status` 仍用 Gemma。`qmd status` 仍可能顯示約 426 個待嵌入雜湊，那是快照裡的 `codex-memory-notes`，不是這台的 collection，不要在 oracle 補算。這台自己的 `codex-college-money` 有 4 份，雜湊已在那 426 裡面。改這份筆記會讓 memory 再多一個新雜湊，下一輪複製前先在 Mac `git pull`。
-
-各機向量應使用同一組 embeddinggemma-300M。Qwen3-Embedding-0.6B 比較大，在這台沒有 GPU 的機器上不該再當嵌入模型。
+[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/oracle/qmd-vsearch-slow.md)

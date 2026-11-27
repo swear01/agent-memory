@@ -6,108 +6,24 @@ status: active
 updated: 2026-10-24
 ---
 
-# 已驗證線索；根因尚未確認
+# Windows TCP／UDP 連接埠分配失敗與音訊句柄累積
 
-## 10/12：Discord 通話時累積音訊裝置登錄機碼句柄
+## 先保住事件證據
 
-- 使用者確認 10/11 約 23:00 起持續語音通話。Discord 1.0.9261 的同一 renderer 行程在 23:04 至 10/12 00:34 共 90 分鐘，句柄 1875→14648，PrivateMB 513→620；TCP1、UDP1，不能將句柄數當成 endpoint 數。
-- 00:35:45 與 00:37:00 的兩份 Handle CSV 相隔約 75 秒，Key 13527→13698。以 trim 後的 Handle+Name 比對，原有 13527 個全數仍在，新增 171、未觀察到釋放；三個 Render/Properties 各增加 57，對應 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 USB Microphone。選用中的 PHL 276E8V / NVIDIA 播放端 Properties 只有 2 個句柄。
-- WebRTC 日誌於 23:02:39 記錄成功開啟 PHL 播放及 AM310 錄音，早於取樣首次增長。settings.json 的 audioSubsystem=experimental、useLegacyAudioDevice=false；日誌也顯示 win_audio_device::play/record。這縮小到 Discord 通話音訊裝置處理路徑，尚未取得呼叫堆疊，不能指認特定函式、驅動或 Experimental 設定為根因。
-- Handle 有 305 個 Unknown type，部分類型不可辨識；大量 Key 及其路徑可讀，不應宣稱所有句柄已完整分類。audiodg 同時 Key29 維持約 90 分鐘平台，與 Discord 的持續增長不同。當時無新 Tcpip 4231/4266，非分頁池約 702MB、提交約 53–54%；尚未建立這次音訊累積與 Port 耗盡的因果關係。
-- 低影響對照順序：先由使用者方便時結束通話但保持 Discord 存活，記錄時間並比較至少 30 分鐘增長率；需要時再獨立測試 Standard 音訊子系統。切換可能需重新啟動 Discord，不在通話中自動改動。不能因既有句柄未立即下降便判無改善，也不能一次停用多個音訊裝置而失去可比性。
-- 原有每小時 heartbeat 已加入 Discord 行程身份、Key 明細與停止增長的對照追蹤；五分鐘一般快照繼續。AFD 追蹤仍維持到期停止，未因此延長。證據存於 <workspace>/outputs/port-monitor/discord-investigation-20261012.json 與兩份 discord-22908-*.csv；原始私人日誌不入記憶庫。
-- 10/12 公開資料比對：WebRTC 官方 issue 42222526（2021-01-22 回報，狀態 Fixed）記錄通話後 MMDevices 登錄句柄增加，報告與修補範例指出 `_GetListDevice` 成功取得 `IMMDeviceCollection` 後漏掉 `SAFE_RELEASE(pCollection)`。這是與本機現象相似的歷史機制，未查得目前 Discord 1.0.9261 對應的呼叫堆疊或修復版本，不能宣稱同一缺陷仍存在。來源：https://issues.webrtc.org/42222526 。Discord 官方排查建議比較 Standard/Legacy 子系統，但沒有確認 Experimental 是本機累積原因；來源：https://support.discord.com/hc/en-us/articles/31623498041623-Discord-Troubleshooting-Guide 。
-- 10/12 使用者要求切換 Standard。實際新版 Voice & Video UI（含展開進階語音與診斷）未見子系統選單；本機 `modules/discord_voice-2/discord_voice/index.js` 確認 Windows 預設為 experimental，啟動時讀取 settings.json 的 audioSubsystem。00:55 已備份並只改為 standard、核對其他欄位相同；取得使用者同意後於 01:00:46 重啟 Discord。新 WebRTC 日誌 01:00:49.118 明確記錄 `Creating audio engine: standard`，證明本次引擎已切換；01:00:50.416 renderer 又記錄 `Deferring audio subsystem switch to experimental until next restart`，儲存設定隨即改回 experimental。因此本次 Standard 對照成立，但切換不會自動跨下次重啟維持；不可宣稱永久修復，也不應鎖定設定檔或修改程式來強制保留。
-- 新 renderer 於 01:02:20 基準總句柄 1218、Key86、PrivateMB418.7；枚舉總數相符但 279 個為 Unknown type，分類仍有限制。記錄於 <workspace>/outputs/port-monitor/discord-intervention.json 與對應 baseline CSV，heartbeat 已更新。重啟清除舊累積不代表 Standard 修好；須確認重新通話後至少 30–60 分鐘的同一行程增長率。每次重啟應以 WebRTC 的 `Creating audio engine` 驗證實際值，再與 renderer 的 `Deferring`、儲存檔分開判讀；不能只查不存在的 Initializing 訊息，也不能因名稱 experimental 就假設使用者自行選了測試版。
-- 10/12 追查持續設定：當日 Discord 官方公開 web bundle 的 MediaEngineStore 在 CONNECTION_OPEN、支援 automatic/deferred/bypass 功能時，會選 AUTOMATIC，再 queue Experimental；本機 native 模組確實宣告這三個功能，與已觀察到的改回行為一致。但未比對目前桌面載入的 web bundle 雜湊，故屬一致的機制線索，不能宣稱已證實完全同版。該分支檢查的是功能支援，並非使用者的 bypassSystemInputProcessing 開關；單改 automaticAudioSubsystem=false 也未能繞過這個分支。不應把關閉該音訊開關當成已驗證的永久解法；目前未找到已驗證的官方持續覆寫設定。公開原始碼與摘要存於 <workspace>/work/discord-audio-public 與 discord-intervention.json 的 PermanenceResearch；不需將完整 bundle 存入記憶庫。
-- 10/12 再次實際檢查 stable 634304、桌面 1.0.9261 的 Voice & Video：展開 Advanced Voice Settings 與 Diagnostic Settings 均無 Audio Subsystem 選單；設定搜尋 `subsystem`、`standard` 皆回傳 No search results found。此結論限於當時本機介面，尚未確認是版本調整或帳號分批推出，不能推論所有 Discord 版本都移除了選單。
-- 使用者最新決定：暫停處理永久固定 Standard，不建立強制啟動捷徑、不反覆改寫設定或修改 Discord 程式；保留既有 Port 與音訊句柄監測。只有新的可處理異常或有效對照結論才通知，不因下次設定仍是 Experimental 重複提醒。
-- 10/12 晚間的新行程再次重現累積：23:01:43 WebRTC 明確記錄 `Creating audio engine: experimental`，23:02:35 開啟 PHL 播放及 AM310 錄音；同一 renderer 在 23:04–10/13 00:39 共 95 分鐘，句柄 1737→8525，TCP1/UDP1，PrivateMB503.7–584.8 有波動。23:44:21 與 23:46:59 的兩份 CSV 相隔 157.7 秒，Key3387→3537，新增 150 個 trim 後 Handle+Name 配對；再到 00:40:41 約 53.7 分鐘，Key3537→7233，新增 3696 對，兩次比較均未觀察到舊配對移除，仍集中 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 三組 Render/Properties，後段各增 1232。最後枚舉 8574、鄰近行程讀值 8573，相差 1，且 298 個 Unknown type，不能宣稱同一瞬間所有句柄均可見或已完整分類。audiodg 新行程 Key29 持續約 95 分鐘平台，FxProperties 自首次基準即有 4 個且未新增；沒有新 Tcpip 耗盡。這確認換新行程後相同現象復發；前次 Standard 的持續通話未驗證，本次通話連續性亦未獨立核實，不能做有效 Standard/Experimental 因果比較、指認驅動或連到 Port 根因。證據存於 <workspace>/outputs/port-monitor/discord-recurrence-20261012-230141.json 與帶時間的 discord-26912-*.csv；不自動重啟或改設定，後續僅通知實質惡化或有效對照結論。
+- Tcpip 4231／4266 證明 TCP／UDP ephemeral port allocation failure，System XML 的 Execution PID 4 是記錄者。透過當下 Get-NetTCPConnection（含 Bound、CloseWait、TimeWait）、Get-NetUDPEndpoint、PID＋StartTime、service、nonpaged pool、commit 和 AFD 交叉驗。快照在事件後數秒且各項非同時，低 endpoint 數不能排除瞬間尖峰或 allocator 狀態。AFD handles、總句柄、已綁定 port 數不可互換。
+- 核對 IPv4/IPv6 TCP/UDP 動態範圍和 excluded ports。歷史觀察皆 49152–65535、只 60 個預留，未發現大幅縮小。TCP TIME_WAIT 不能直接解釋 UDP。完整 BootType 0 後和一般運行中均有失敗；Fast Startup 的 BootType 1 不等同重建核心。用 Kernel-Boot 27 / Power 42、107 / Power-Troubleshooter 1 分類，不能一律歸因於休眠。
+- Sysinternals Handle 用 `handle.exe -accepteula -nobanner -a -v Afd`，trim CSV 欄名和文字，只計 `Type=File`、Name 前綴 `\Device\Afd`。比較音訊用相同 PID/StartTime 與 trim 後 Type/Handle/Name；枚舉列數等於總句柄仍可全部 Unknown，須另外驗分類。一般與提升權限的分類差不能當成新增／釋放。Store 更新後用目前 AppxPackage InstallLocation 解出 `Tools\handle.exe`，不要釘版本目錄。
+- `Port Resource Monitor` 每五分鐘從 Interactive/Highest 取樣，`Port Exhaustion Capture` 訂閱事件。用 `wscript.exe //B //NoLogo` 的 hidden launcher，避免 PowerShell 窗口打斷使用者。登出、睡眠、開機早期可能無資料，主排程 `LastTaskResult=0` 不代表 audio 子收集成功；核對 errors.jsonl、CSV 檔大小和時間。手動擷取測試不能算自然復發證據。
 
-- 10/15 取得同一行程的自然對照：renderer PID13856 / StartTime00:19:08（實際引擎 experimental）在 00:44–01:34 的 50 分鐘，總句柄1475→6569，約101.9個/分鐘。renderer 日誌於01:37:43明確記錄語音 RTC_CONNECTED→DISCONNECTED；WebRTC同時完成錄音、播放與loopback停止，確認當時語音連線與音訊處理均已停止；使用者操作來源未核實。隨後01:39–02:19連續醒後40分鐘，總句柄6781→6866，範圍6769–6880，約2.1個/分鐘，UDP0。02:21:59 CSV列數與擷取前後總數均6866，Key5550，仍有289個Unknown type；三組既有Render/Properties分別1830/1830/1829個，與01:25相比各新增455且既有配對未移除，所選PHL播放及AM310錄音Properties的3個句柄則已移除。這支持句柄快速累積與Discord語音/音訊活動相關，並顯示斷線後既有累積尚保留；不能宣稱特定驅動、Experimental因果、永久修復或Port耗盡根因。40分鐘平台證據屬總句柄，Key分類僅有斷線後單份快照，不能稱Key已驗證30分鐘平台。後續以02:21:59快照追蹤；不重複通知此結論或自行重啟。證據：<workspace>/outputs/port-monitor/discord-control-20261015-013743.json、discord-passive-20261015-022159.json及其CSV。audiodg同PID/StartTime Key有釋放與32–44波動，FxProperties回到0；無新Tcpip事件。
-- 2026-08-01 至 09-26 的 System 日誌有 Tcpip 4231 共 16 筆、4266 共 19 筆。事件 XML 的 Execution ProcessID=4 是記錄事件的系統行程，不能當成洩漏來源 PID。
-- IPv4/IPv6 TCP/UDP 動態範圍均為 49152–65535；IPv4 只有 50000–50059 的 60 個動態埠被預留，沒有發現大量預留或縮小範圍。
-- 09-04 23:15:17 完整啟動（Kernel-Boot 27=0x0）後，23:29:33 即出現 UDP 耗盡；當晚另一次完整啟動後約 17 分鐘出現 TCP 耗盡。不能將問題歸結成「只有連續開機十天才發生」。
-- 啟用 Fast Startup；09-17 至 09-24 有八次 Kernel-Boot 27=0x1。關機後開機並不代表完整重建核心；排查驅動累積資源時應分辨完整啟動和快速啟動。
-- 09-28 重啟後三次短時取樣，TCP 動態本機埠 62–65、UDP 40–41。完整 AFD 句柄快照約 279；WARP 1、ZeroTier 16、Radmin 7、RustDesk 4。這是正常時的基準，不能排除故障期間的洩漏。
+## ETW 與故障指認
 
-## 10/24：同一 Discord 行程先低增長，數小時後再現大量 Key 累積
+- 臨時 logman Winsock-AFD ETW 使用 256 MB circular buffer，事件觸發才凍結，沒有封包內容但含 PID/位址等中繼資料；跟原七天期限，不擅自延長。Session 不跨重開，Interactive 任務無法保證覆蓋開機第一分鐘。Freeze 在 trace 已停止時不可改 Captured 時間，核對實體 ETL 的時間與事件。記錄保存在原工作區 `outputs/port-monitor`，原私人 log 不進共享 repo。
+- Bind 1029 的 `0xC0000209` 是 STATUS_TOO_MANY_ADDRESSES，`0xC0000043` 重複綁定對照不算。Payload Process 是 pointer，可能跨 socket 重用。用實際時間、HeaderPID、相對 endpoint 建立事件 1000 的 ProcessId 和行程起始時間比對。Brave network service 曾被證明是分配失敗的 caller；caller 不等於所有資源的消耗來源。觀察到的建立/關閉呼叫只是嘗試次數，不能當成功生命周期淨額。
+- WARP 手動斷線仍可記 network-change reconnect，許多事件只重排 DNS/interface 列表。WARP 更新後 4231/4266 仍重現，和 Wi-Fi／resume 的時間相關不足以建立根因。事件快照未支持持續數萬 sockets 或整機耗盡；歷史存儲驅動分配失敗也無直接因果證據。未授權時保留現有 VPN 和監測。
 
-- Discord 1.0.9265 同一 renderer 在 10/23 18:44:38 啟動，18:44:40 日誌明確記錄 `Creating audio engine: experimental`。20:45 接通語音後，20:52–21:54 的 62.65 分鐘，句柄 1316→1329、Key72→78；這個已通知的低增長觀察只適用於該視窗，不能外推為永久改善。
-- 同一行程於 10/24 00:59–02:04 的 14 筆五分鐘樣本，句柄 1536→8678，13 個相鄰區間全增加；PrivateMB738.8→777.8 有波動，TCP1/UDP1 固定。00:56 與 02:03 的明細 Key113→7356，三組既有 Render/Properties 各增2422。02:03:28 與 02:05:53 再取樣，相隔145.43秒，Key7356→7554，新增198個 trim 後的 Type/Handle/Name 配對、舊 Key 配對移除0，三組各增66；裝置名稱重新讀取登錄確認仍為 Steam Streaming Microphone、Steam Streaming Speakers、AVerMedia AM310 USB Microphone。可見同一行程在先前穩定後仍會恢復累積，判讀應分時窗並持續追蹤。
-- 保留的 WebRTC 日誌於01:01–02:04有超過62分鐘的 PLAY/REC，每約10秒一筆，未見停止或切換；較早日誌已輪替，不補推未覆蓋時段。兩次明細列數分別8646及8840，均與擷取前後總句柄相符，但各有283個 Unknown type，完整枚舉不等於完整分類。audiodg 同一行程 Key34、FxProperties4 穩定；本次檢查沒有新 Tcpip4231/4266。這支持 Discord 音訊裝置處理路徑的累積復發，仍不能證明特定驅動、Experimental 因果或 Port 耗盡來源。建議使用者方便時自然結束通話但保持 Discord 存活，記錄時間並比較至少30分鐘增長率；未自動中斷、重啟、改設定或延長 AFD。證據：<workspace>/outputs/port-monitor/discord-observation-20261024-0200.json、discord-recurrence-20261024-0200.json 及兩份帶時間 CSV；原始私人日誌不入記憶庫。
+## Discord／Audiodg 對照
 
-## WARP 的具體異常
+- 同一 Discord renderer 在通話時重複累積 MMDevices Render/Properties Registry Key，集中 Steam Streaming Mic/Speakers 和 AM310。自然斷線後同一 renderer 的增長降到接近零，既有句柄未立即釋放。短期低增長之後仍曾再現；尚無 stack 證明特定音訊驅動、Experimental 或 port 耗盡因果。Audiodg 曾在既有授權關閉單一 endpoint 的全部 enhancements 後暫停增長，不能外推 Discord/系統根因。
+- 使用者暫停永久固定 Standard，保留監測。當次手動 settings.json 後重啟，WebRTC `Creating audio engine: standard` 證明當次切換，但 renderer `Deferring` 及後續切回需要重新讀 log。官方 web bundle 的 automatic branch 屬機制線索，未核桌面同版，不能宣稱某個開關是持久解。需要對照就自然結束通話但保留 Discord 行程，比較至少 30 分鐘；不要中斷通話或同時改多個裝置。只通知新的可處理異常或有效對照。
 
-調查前版本 2025.10.186.0；daemon 運行但 tunnel 為 Manual Disconnection。歷史日誌仍反覆進入 `Reconnecting on network change`，不能把這行直接解讀成成功建立了新 tunnel 或新 socket。
-
-對保存的四個輪替日誌比較 old_info/new_info 共 1,210 組，有 1,161 組顯示的網卡資料、DNS 集合和其他欄位相同，只改變網卡/DNS 清單順序。例如 09-26 10:35:28 發生此類處理，22 秒後記錄 UDP 耗盡。這是時間相關線索，尚不是因果證明。
-
-09-27 01 時段有 145 次重連處理訊息；04:18、04:36 有 socket error 10055，04:41–04:42 daemon watchdog 終止。需優先追蹤 WARP 網路變更處理及其與虛擬網卡的互動，同時保留「它只是系統資源不足受害者」的可能。
-
-Cloudflare 官方 2026-08-19 的 Windows GA 2026.7.1343.0 版本說明包含修復 GUI 在 IPC client 建立失敗時造成的 process leak／system resource exhaustion。沒有證據確認本機就是該 bug；不可宣稱更新已證明可修復本機 TCP/UDP 耗盡。
-
-## 診斷方法與界限
-
-- 組合 Get-NetTCPConnection（包括 Bound/CloseWait/TimeWait）、Get-NetUDPEndpoint、行程 PID/啟動時間/句柄、服務對應、記憶體池指標；在重現時保存，才能指認來源。
-- Sysinternals Handle 枚舉 socket 要使用 `handle.exe -accepteula -nobanner -a -v Afd`，再篩 `Type=File` 且 `Name` 以 `\Device\Afd` 開頭。只執行預設檔案搜尋曾回傳 No matching handles；`-a` 後能讀取 socket。Afd 搜尋也可能命中登錄鍵名稱，必須篩掉。
-- TCP TIME_WAIT 的說明不能單獨解釋 UDP 耗盡。擴大動態埠範圍或縮短等待時間只適用於經確認的負載模式，不能當作已找到洩漏根因。
-- 09-28 已依使用者要求將 WARP 更新為 2026.7.1376.0；GUI/CLI 版本一致、CloudflareWARP Running/Auto，保留 Manual Disconnection。安裝 MSI 紀錄與 winget 均成功；不能當作根因已證明解決。
-- 已建立 Windows 排程工作 `Port Resource Monitor`：每 5 分鐘以目前使用者 Interactive/Highest 取樣，日誌位於 `<user-home>/Documents/Codex/2026-09-28/no-more-older-messages-conversation-log/outputs/port-monitor`，每日資料保留 30 天；實際兩次執行成功，LastTaskResult=0。登出/睡眠不取樣。Codex heartbeat 每小時檢查，只通知新的可處理異常。
-- 使用者回報直接啟動 PowerShell 的排程每五分鐘跳出視窗。已改由 `wscript.exe //B //NoLogo` 執行 `launch-hidden.vbs`，使用 `WScript.Shell.Run(command, 0, True)` 隱藏子行程並傳回退出碼；更新後排程實際取樣成功、LastTaskResult=0。排程动作不要直接啟動帶主控台視窗的 PowerShell。
-
-## 更新後仍重現的證據
-
-- 09-28 更新 WARP 後，21:56:20 又記錄 Tcpip 4231、22:18:30 又記錄 4266。已核對事件訊息明確為 global TCP/UDP ephemeral port allocation failure；不能宣稱更新 WARP 已解決耗盡。
-- 21:32 至 23:07 的 22 筆五分鐘取樣，TCP 不同動態本機 port 約 66–210、UDP 32–45。事件後 AFD 快照也未見數萬 socket。這種取樣只能證明取樣當下數量低，不能排除短暫尖峰或未呈現在 endpoint 表中的分配問題。
-- 此期間新版 warp-svc、WARP GUI、ZeroTier、Radmin、RustDesk 未顯示持續增加的 endpoint/句柄。音訊 audiodg 同一 PID 的句柄從 1022 持續升至 2507，值得另外追蹤資源釋放；其 TCP/UDP 均為 0，沒有證據將它直接連結到 port 耗盡。
-- PrismLauncher 的 javaw 約 8.3 GB 私有記憶體、AFD 句柄 101 且兩次快照相同。記憶體高不等於已證實洩漏；AFD 數量不等於已綁定 port 數量。
-- 23:21 起已在既有五分鐘排程加入音訊句柄類型統計，完整明細保留 baseline 與 latest；實際捕獲 audiodg 2652 個句柄（與行程總數一致），其中 Key 2206、Event 137。Key 中 1809 個集中在 Render/FxProperties 設定；登錄裝置屬性對應 PHL 276E8V / NVIDIA High Definition Audio。下一次取樣 Key 增至 2227，值得追蹤未釋放的音訊設定資源，但不等於已證明 NVIDIA 驅動錯誤或 port 耗盡原因。已讀取 audiodg 模組快照，當時未見非 Microsoft 公司模組。
-- 訂閱 Tcpip 4231/4266 的 `Port Exhaustion Capture` 已於 09-28 23:53 經使用者重新確認 Windows UAC 後完成登記。語法與 XPath 匹配歷史事件驗證通過；手動執行成功保存 TCP/UDP/行程/AFD 明細，LastTaskResult=0。此次 RecentExhaustionEvents=0，不能當作耗盡重現；仍需等自然事件驗證自動觸發。原有五分鐘取樣及新增 audiodg 統計也已實際運行成功。
-- Handle 全類型 CSV 的 `Name ` 欄名及部分文字有尾端空白；讀取名稱時應 trim 欄名和文字，避免誤判無名稱。部分 AFD 搜尋模式 CSV 欄名則沒有尾端空白。
-- 09-29 約 00:08 使用者手動勾選 PHL 276E8V 的 Disable all enhancements；已核實該裝置 FxProperties 的 PKEY_AudioEndpoint_Disable_SysFx=1。個別音效原本均未勾選，不能將此當作總開關已停用。對照試驗基準與結果記在本機 audio-intervention.json。試驗期間 heartbeat 改為每 30 分鐘，回報初步結果後已恢復每小時。
-- 09-29 00:39 完成初步對照：同一 audiodg PID/StartTime 在 00:08:41 至 00:39:08 的七筆後續取樣中，Key 固定 2719，30.4 分鐘增量 0；相較調整前約每五分鐘增加 50，累積已在該觀察窗停止。此結果支持音訊句柄累積初步改善，不能證明 TCP/UDP 耗盡或整機死機已根治。結果已記錄並將 heartbeat 恢復每小時，繼續檢查是否復發。
-- 09-29 01:29 的延長觀察：調整後約 80.4 分鐘、18 筆取樣，同一 audiodg PID/StartTime 的 Key 在 2719–2725 間小幅波動，最新 2720，淨增 1；改善在這段觀察窗仍維持。調整後未出現新的 Tcpip 4231/4266，非分頁池約 826–848 MB。這些結果不足以將音訊問題與先前 port 耗盡建立因果關係，也不能保證更長時間不復發。
-
-## 10/3 事件捕捉與循環追蹤
-
-- 10/1 00:25 UDP 4266（RecordId 89067）、10/2 13:19 TCP 4231（89305）真實復發。事件排程自動觸發已驗證成功，分別約 1.4 / 3.1 秒後取得快照：TCP 169 / 155、UDP 82 / 92、AFD 358 / 192，可用記憶體約 13 / 22 GB。取樣沒有顯示大規模 socket 累積；根因仍未知，不能證實網路耗盡造成全機記憶體枯竭。
-- 10/2 WakeTime 13:18:39，TCP 耗盡在恢復後約 24 秒；同時有 Wi-Fi 初始化與 WARP 介面變更。WARP 保留日誌在兩次事件當秒未找到 bind/socket/10055 錯誤；這些時間關聯不足以指認 WARP 或 Wi-Fi 驅動。10/1 UDP 事件前後兩分鐘未見相同恢復事件，不能將所有復發歸因睡眠恢復。
-- audiodg 已重啟；10/3 約 54 分鐘 Key 50–51 穩定。新行程初始 CSV Key19/Fx0、目前 Key51/Fx4；跨日增量不能證明持續洩漏，且不可直接比較舊行程試驗基準。
-- 在本機監測目錄新增 trace-control.ps1，以 logman 的 PortExhaustionAFD ETW session 記錄 Microsoft-Windows-Winsock-AFD（keyword 0x8000000000000000、level5）。bincirc 256 MB、64 KB buffers（4–16）、每五秒 flush；沒有啟用封包擷取，仍含位址與行程中繼資料。由既有隱藏五分鐘排程維護，重啟後可重建；真實 Tcpip 事件時停止並保留 port-afd.etl，停止後不自動重啟。七天期限記在 trace-config.json；到期由下一次排程停用。
-- 實際測試成功記錄 loopback bind 事件1030及對應 HeaderPID；重複綁定測試記錄事件1029、NTStatus 0xC0000043，analyze-trace.ps1 能解析且不誤標為 0xC0000209 耗盡。trace-probe 檔案是測試，不能算新耗盡。正式 trace-state=Running，排程 LastTaskResult=0。測試時 DateTime 與 DateTimeOffset 比較錯誤已修正，以 DateTimeOffset.Now 比較期限。
-- 後續查 bind 失敗 0xC0000209（STATUS_TOO_MANY_ADDRESSES），結合 endpoint建立事件與快照行程啟動時間；payload Process 是指標，不能直接當 PID，HeaderPID 也需相關事件佐證。失敗呼叫者未必是消耗資源的來源。沒有匹配失敗不代表保留窗之外從未耗盡。
-- 10/4 01:11:35 的新 TCP4231（RecordId89597）已成功觸發凍結循環 ETL。AFD事件1029在同一時間回傳 0xC0000209，HeaderPID與同一endpoint建立事件1000的payload ProcessId相符，均指向 Brave network.mojom.NetworkService；快照啟動時間確認是同一行程。這證實 Brave 網路服務是本次分配失敗的呼叫者，不能證明它消耗所有port；當下 TCP238、UDP90、AFD最高javaw102/Brave51、可用記憶體約11GB，audiodg Key51仍穩定。追蹤狀態Captured且Enabled=false，保留檔案未重啟。失敗前同一指標曾用於UDP，後來重新建立TCP；指標會重用，必須以時間與建立事件判讀，不能混算endpoint生命周期。低影響下一步是使用者方便時保存工作、重啟Brave做對照，不能直接停用VPN或宣稱Brave是耗盡根因。
-- 10/4 使用者要求繼續追蹤後，已封存該次256MB ETL，01:42重新啟動下一輪循環檔，仍維持原七天期限。後續分析：保留窗00:55:33–01:11:36約16.05分鐘，Brave socket建立與關閉呼叫各1716（建立TCP703、UDP1013）；這些是進入事件的呼叫次數，不能當成功數或精確生命周期結餘。三小時同一行程取樣TCP27–58、UDP9–27、句柄548–769、PrivateMB32.2–38.1，未支持簡單持續累積未關閉socket的解釋。動態範圍重查仍16384、動態區間預留僅60，不是範圍被縮小。下一步比較新事件失敗呼叫者是否仍為Brave，暫未改其設定。
-- 10/8 再檢查捕獲三筆未通知事件：10/7 00:32 UDP90106、01:52 TCP90115、10/8 21:45 TCP90548。實際ETL停在10/7 00:32，AFD1029 0xC0000209對應新Brave行程，啟動時間10/6 23:18；相同endpoint建立事件1000確認UDP與PID相符。瀏覽器網路行程換新後仍復發，單純重啟不足以防止復發，但仍只證明失敗呼叫者，未證明資源消耗根因。三次快照TCP196/192/571、UDP116/89/95，記憶體仍充足。
-- 發現Freeze在session已停止時仍覆寫Captured時間，後續事件使state表面日期比ETL新，會誤判追蹤歸屬。已改為Freeze且未running直接return，以不存在session模擬驗證state hash保持不變，語法通過；更正state時間為ETL LastWriteTime並標記來源。不能僅憑Captured時間認定ETL覆蓋當次事件。後續90115/90548只有incident快照，沒有對應ETL。維持追蹤停用並保留證據，原五分鐘監測正常。
-- 10/9 彙整目前保留的System日誌（8/1起）共45次耗盡：TCP21、UDP24；9/28開始監測後10次（TCP/UDP各5）。423筆定期取樣到10/9 01:24，最高不同動態本機port TCP258/UDP79、非分頁池865.3MB、commit79%。八次事件後快照延遲1.4–3.1秒，TCP155–571/UDP82–130、commit27.7–67.2%，皆未顯示全機記憶體耗盡；不能排除更短瞬間峰值或分配器狀態。
-- 全45次中僅兩次距最後Wake事件不超過120秒（10/2約23秒、10/8約111秒）；最新10次另有多次醒後約65–177分鐘發生，不能判為僅睡眠恢復觸發。9/4完整BootType0後約14.3/17.3分鐘已分別UDP/TCP失敗，反駁只有開機十天才出問題。power事件是否完整及時間校正仍限制相關性解讀。
-- 9/27 09:24存儲驅動stornvme/storahci共5個Event56無法分配記憶體重新核對成立；這支持當天確有嚴重資源問題，但沒有記憶體dump或allocator證據將其連到之後反覆port分配失敗。音訊改善後port仍多次復發，也不能將音訊句柄累積直接當成port根因。
-- 10/10補查10/9 18:48:44 UDP4266 Record91057，距完整BootType0 18:46:46約118秒，非快速啟動必要條件。事件後1.5秒TCP290/UDP117、非分頁池413MB、commit約30%、可用21811MB。Brave11448、Steam15028、SteamWebHelper17636分別在錯誤前約10/11/7秒啟動，端點97/57/22；AFD可見Steam78、Brave73。僅支持啟動集中連網時間相關，不能指認消耗根因或失敗呼叫者。
-- 已確認監測缺口：logman -ets session不跨重啟，既有Interactive五分鐘排程不能保證開機第一分鐘有AFD；91057沒有覆蓋ETL。10/10 14:35 trace-state Running是後續重建，不能分析現ETL來指認91057。舊ETL封存89597與90106；第三輪仍原期限10/10 23:25，不自動延長。
-- HiberbootEnabled=1；9/30至10/8十筆Kernel-Boot27 BootType1，先前稱Wake不可一律視為一般S3睡眠；須結合Boot27/Power42/107/Power-Troubleshooter1分類。10/10重查IPv4/IPv6 TCP/UDP動態範圍49152起16384個；動態區預留50000–50059僅60個，無大規模範圍縮小證據。
-
-## 10/16：一般運行期間再現 TCP／UDP 分配失敗
-
-- 10/15 23:58:26.601（+08）真實 Tcpip4266 / Record92982 自動觸發事件收集，排程結果0，collector於2.331秒後開始。TCP182、UDP127，不同動態本機port TCP105/UDP75，非分頁池602.8MB、提交63.3%、可用16196MB。trim欄名/文字後，AFD CSV須限定Type=File且Name以\Device\Afd開頭：394個；原408列另含不符合AFD檔案篩選的項目，不能直接全算socket。最高可見AFD Steam60、Valheim41、Discord34、Brave33；單一存活程式最高endpoint40。各子項是先後/非同步取樣，collector時間不代表所有資料在錯誤後2.331秒同時取得；低數量仍不能排除更短瞬間峰值或分配狀態問題，不能依排名指認來源。
-- 最近Kernel-Boot27為10/15 22:25:33、BootType0，距失敗92.88分鐘；23:56–00:01未見鄰近電源恢復或Wi-Fi變更紀錄。這次再支持完整開機後一般運行也會復發，不能限縮成只有快速啟動或喚醒觸發。AFD ETW仍為原期限到期停用，ETL最後寫入10/10 23:29:06；本次沒有ETW，無法定位分配失敗呼叫者，不得沿用舊Brave歸屬。分析保存於<workspace>/outputs/port-monitor/incident-analysis-92982.json；不自動延長、重啟程式或改網路設定。
-- 同一Discord renderer於23:31:56–00:30:59約59.05分鐘，總句柄6445→11487，Key5199→10239，新增5040個Handle+Name配對、舊Key配對未移除，三組既有Render/Properties各增1680；289個Unknown type仍無法完整分類。語音日誌於22:27:48連線/開始播放且未見後續停止，五分鐘TCP1/UDP1。audiodg同一行程Key39/FxProperties5維持約兩小時，基準/最新Key配對新增及移除均0。Discord屬已通知累積模式持續，仍無本次UDP耗盡的因果證據；證據為discord-passive-20261016-003059.json及帶時間CSV。
-
-- 同次完整開機期間，10/16 01:24:08.759又發生TCP4231 / Record92989，距UDP92982約85.70分鐘、距BootType0約178.58分鐘；01:22–01:27同樣未見鄰近電源/Wi-Fi事件。事件收集成功、2.370秒後開始，TCP158/UDP122、不同動態port TCP87/UDP70、可見AFD384、非分頁池679MB、提交66.4%、可用15283MB。兩次快照Steam AFD60、Valheim41、Discord34均相同，Discord總句柄則8066→16173，仍無法把其Key增長連到Port根因。ETW仍無覆蓋；分析incident-analysis-92989.json。01:26:40日誌顯示語音停止，之後首次CSV僅10.48分鐘，Key15150、Unknown290，尚不能宣稱停止增長；Valheim也在01:24–01:29間退出，不將整機記憶體下降單獨歸因語音。
-
-- 10/16 02:43補齊上述語音停止後的同一renderer對照：01:37:09與02:43:07兩份CSV相隔65.97分鐘，Key均15150，Handle+Name配對新增0、移除0；三組Render/Properties各5030/5030/5029，既有配對全保留。01:29–02:44的16筆五分鐘快照總句柄16351→16354，範圍16341–16354；此前50分鐘11833→16167。這比單次斷線後快照更支持持續累積隨語音活動停止，但僅兩端Key快照，不能排除中間短暫開關；既有句柄未釋放，不能稱修好，也未建立Experimental、驅動或Port耗盡因果。Unknown type仍290，分類可見度有限。分析為<workspace>/outputs/port-monitor/discord-control-20261016-012640.json，已通知一次，不因後續平台重複通知。
-- 此輪02:38的Handle取樣雖退出碼0且16354列與總數相符，卻全部Unknown type、Registry名稱呈原始格式；不能把可分類Key數0當成資源釋放。相同參數重試02:43後恢復Key15150/Unknown290，使用重試資料做配對比較，保留首次檔並標記分類不可用；暫無證據確定工具異常原因。解析應同時檢查枚舉數與類型可見度，不能只看退出碼。
-
-## 10/18：Store 工具更新造成音訊子收集器失效
-
-- SysinternalsSuite Store 套件從 2026.9.0.0 更新為 2026.10.0.0 後，原本寫死版本目錄的 `Tools/handle.exe` 已不存在。10/18 01:54 的 Audio 子收集器記錄 `The system cannot find the file specified`，重導向曾將 audiodg latest CSV 留成 0 bytes；主排程仍回報 LastTaskResult=0。監測健康檢查須一起讀 errors.jsonl、音訊取樣時間與 CSV 完整度，不能只看排程退出碼。
-- 已備份並修正 audio-handles.ps1 與 collect.ps1，改用 `Join-Path (Get-AppxPackage -Name Microsoft.SysinternalsSuite -ErrorAction Stop).InstallLocation 'Tools\handle.exe'` 解析目前使用者已安裝套件。incident-collect.ps1 會載入同一 audio-handles.ps1，因此事件 AFD 擷取也使用更新後路徑；未修改排程設定。
-- PowerShell 語法檢查通過，既有 Interactive/Highest 隱藏排程於 14:03 手動驗證成功：一般任務與事件擷取任務均結果 0，音訊可枚舉 269/269 個句柄、Key24、Unknown0；事件擷取成功保存 AFD CSV，RecentExhaustionEvents=0。14:05:58 未再手動啟動即由排程自動補跑，一般快照恢復更新。這些是修復驗證，不能當作新的自然耗盡事件。證據保存在 <workspace>/outputs/port-monitor/handle-path-repair-20261018.json 與 handle-path-scheduled-verification-20261018.json。
-- 同一 audiodg 的一般權限驗證可枚舉 270/270，但有 103 個 Unknown type；隨後高權限樣本將 103 個辨識為 EtwRegistration。需分開檢查列數完整度與類型可見度，不能將權限不同造成的分類差異當成句柄新增或釋放。
-
-## 官方參考
-
-- Microsoft Learn: TCP/IP port exhaustion troubleshooting
-- Microsoft Learn: Delivering a great startup and shutdown experience
-- Cloudflare One Client Changelog: Windows GA 2026.7.1343.0, 2026-08-19
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/swear01-pc/windows-port-exhaustion-investigation.md)

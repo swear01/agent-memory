@@ -1,32 +1,14 @@
 ---
-title: Claude Code 強制 subagent 用 Sonnet（Opus 主 agent）
+title: Claude Code subagent model fallback、FORCE 與獨立 session
 scope: tools/claude-code
 tags: [subagent, model, settings, claude-desktop, env]
 status: active
 updated: 2026-10-24
 ---
 
-目標：主 agent 維持 Opus，所有 subagent 固定跑 Sonnet，省 Opus 額度且不必進 Plan Mode。2026-10-24 起 Mac 已拿掉 FORCE，見下方「改回」。
+2026-10-24 使用者要求保留內建 Haiku 等選擇。Mac 的 `~/.claude/settings.json` 已移除 `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`，保留 `CLAUDE_CODE_SUBAGENT_MODEL=sonnet`。其他主機未隨此修改同步，當時未用新 session 重驗。
 
-## 設定
-
-`~/.claude/settings.json`：
-
-```json
-"env": {
-  "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-  "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
-}
-```
-
-`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` 會忽略 agent 定義的 `model:` 和 spawn 時指定的 model。只寫 agent frontmatter 的 `model: sonnet` 不可靠，曾有 regression 讓它實際跑 parent 的 Opus。
-
-另在全域 AGENTS.md 加一條輕量 delegation 規則（探索、實作、測試、重複修改交給 subagent；架構決策與困難 debug 留在主 agent）。Opus 不一定會主動 delegate，沒有這條規則時 Sonnet worker 可能根本不出場。
-
-## 2026-10-21 驗證
-
-- CLI 2.1.302：`claude -p --model opus --output-format json`，要求 spawn `model: opus` 的 subagent；`modelUsage` 顯示 `claude-opus-5-5`（主）與 `claude-sonnet-5-5`（subagent）。
-- Claude Desktop Code 分頁 2.1.304：subagent 指定 `model: opus`，回報自己是 `claude-sonnet-5-5`。
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` 會覆蓋 agent frontmatter 與 spawn 中的 model。CLI 2.1.302 的 `modelUsage` 曾驗證指定 Opus 的 subagent 實際跑 Sonnet，而主 agent 仍用 Opus。此項為舊版 FORCE 行為的證據。
 
 ## Desktop 與 CLI 的關係
 
@@ -42,9 +24,7 @@ Desktop 的 `start_session`（linked/side session）開的是獨立 session，�
 - 事後補救：`set_session_model` 只從下一個 turn 生效，當前 turn 仍跑 Opus。
 - 現行做法：全域 AGENTS.md 一行規則 `New sessions (start_session) use Sonnet.`，屬指示而非硬鎖。
 
-## 2026-10-24 改回：拿掉 FORCE
-
-使用者要讓官方預設用 Haiku 的地方恢復原狀，Mac 的 `~/.claude/settings.json` 已移除 `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`，保留 `CLAUDE_CODE_SUBAGENT_MODEL=sonnet`（備份 `settings.json.bak-20261024`）。fleet 其他主機未同步，也還沒在新 session 實測。
+## model 解析順序
 
 官方文件（sub-agents.md、model-config.md、env-vars.md，2026-10-24 查）：
 
@@ -57,3 +37,5 @@ Desktop 的 `start_session`（linked/side session）開的是獨立 session，�
 
 - subagent 的 effort 預設值：Desktop binary 有 `subagentEffort` 字串，但未追到預設來源；不要假設一定是 medium。
 - CLI 無 `effortLevel` 時的預設 effort：GrowthBook 快取同時有「Opus 建議 medium」與「high 為預設」兩種提示，未實測確認。
+
+舊配置、Desktop 實驗及設定備份見 `git show 06f50e3:tools/claude-code/subagent-model-force.md`。

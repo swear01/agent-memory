@@ -21,9 +21,9 @@ tags: [llm, reasoning, deepseek, token-budget, openai-compat]
 ## 處置準則
 
 1. **預算分配下限**：
-   - 在啟用思考鏈的模型呼叫中，即使最終預期內容僅有 2～5 個字（如類別名稱），客戶端 request 的 `max_tokens`（或 `max_completion_tokens`）至少應給予 `500` 到 `1000`。
+   - 在啟用思考鏈的模型呼叫中，即使最終預期內容僅有 2～5 個字（如類別名稱），客戶端 request 的 `max_tokens`（或 `max_completion_tokens`）可先以 `500` 到 `1000` 測試，實際下限依 provider、模型與回應而定。
 2. **區分截斷與零候選**：
    - 收到空字串或格式解析失敗時，優先檢查 `finish_reason` 是否為 `"length"` 以及 `usage.completion_tokens_details.reasoning_tokens`。
-   - 不應在未排查 token budget 的情況下直接判定為 prompt 理解失敗或模型能力不足。
+   - 保存原始結構化回應，將截斷與 JSON 解析錯誤、模型正常回傳零候選分開。只靠延遲改善或提交訊息不能證明修好，尤其驗證腳本本身找不到時。原始失敗見 `git show 06f50e3:tools/llm/structured-output-budget-boundary.md`。
 3. **低延遲純文字提取**：
    - 若任務屬於高吞吐、確定性高的純文字提取或代碼標記，且不需要推理，應在 Gateway 設定或請求參數中關閉 reasoning，或選用非 reasoning 的 direct-completion 模型。

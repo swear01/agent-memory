@@ -17,7 +17,7 @@ exec /usr/bin/env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE
 
 `~/.local/lib/claude-code` 指向原 npm package 的 `bin/claude.exe`；npm prefix 的 `bin/claude` 也連回入口。Oracle 舊 `/usr/local/bin/claude` 同樣連回受管理帳號入口。這涵蓋標準命令與原 npm 命令路徑，不能只設互動 shell alias。
 
-使用者要求直接更新既有安裝；這次不保留另一套版本目錄。2026-10-21 起依使用者要求移除 `DISABLE_UPDATES=1`，讓 Claude 自動更新；代價是自動更新或 native installer 可能改寫 `~/.local/bin/claude`，使 API key 排除失效。發現入口不再連到 Stow 時，從 npm 更新再重接：
+直接更新既有安裝並重接入口。native installer 可能另裝執行檔並移除 npm 套件。發現入口不再連到 Stow 時，從 npm 更新再重接：
 
 ```sh
 npm install -g @anthropic-ai/claude-code@latest
@@ -28,37 +28,15 @@ claude --version
 claude auth status
 ```
 
-# 2026-10-17 已驗證範圍
+## 更新後入口被覆寫
 
-- Mac、Mazu、Cthulhu、Valkyrie、Zeus、Oracle 原安裝為 `2.1.302`。用假 API key、token、endpoint 測一般入口與原 npm 命令路徑，六台皆為 `claude.ai` / `pro`，沒有 API key 來源；實際 HAPI Runner 的 PATH 也解析到入口。
-- Mac、Mazu、Zeus、Oracle 實際 `--model opus` 請求使用 `claude-opus-5-5`。其餘兩台只驗證入口、版本與認證；不要擴大為六台皆完成模型請求。
-- Zeus、Oracle 由使用者本人 `claude auth login --claudeai` 重新登入後驗證成功；未複製其他機器憑證。Oracle 先前未登入的結果已過時。
-- Mazu／Cthulhu／Valkyrie／Athena 共用 home，安裝只從 Mazu 更新一次。Athena 已送修，依[排除規則](../../machines/athena/repair-status.md)不連線；共用磁碟更新不代表 Athena runtime 已驗證。Windows swop 連線不可用，使用者指示略過，未更新。
-- 原程序不會隨磁碟更新切換版本，需重開。直接 HTTP／SDK、套件內 binary 或 settings 重新注入認證仍可繞過入口；這不是全域 API key 封鎖。
+- 在 Mac，`com.swear.claude-relink` LaunchAgent 監看 npm bin，修復 npm 自動更新重寫的 symlink。來源在 transfer_MAC `config/snapshot/home/Library/LaunchAgents/`。若 `claude update` 回 `Couldn't install the update`，也避免改跑 `claude install`。若 npm 遇 `EEXIST <npm-prefix>/bin/claude` 且確認是 relink 競態，可用 `npm install -g --force @anthropic-ai/claude-code@latest` 更新該既有 package，讀回 symlink 與認證。
+- Claude Code 2.1.314 的 “Multiple installations found” 可能只因 npm 套件和 `~/.local/bin/claude` wrapper 同時存在。先核對 symlink 的真正 binary，勿直接 uninstall npm 套件。
+- Linux 的 transfer_MAC `scripts/claude-relink.sh` 由本機 cron 定期把 nvm npm 的 bin 連回入口；Oracle 用 systemd user timer。共用 NFS 上的安裝只更新一次，relink 仍需逐台確認。別從多台主機同時更新同一份 npm 安裝。
+- 自動更新要同時核對 wrapper 與 `~/.claude.json`。`DISABLE_UPDATES`、`DISABLE_AUTOUPDATER` 或 unprotected global 安裝的 `autoUpdates: false` 均會停用。2026-10-31 採用 Mazu 單機更新共用 home 的設計，其他 Linux wrapper 帶 `DISABLE_AUTOUPDATER=1`。Mac 用原設定。核對現行實際配置再更新。
 
-來源：transfer_MAC PR #64（merge `8460f976bce1e9c192f46d4acebd24c5afd94c65`），120 項測試與 CI 通過；完整部署記錄位於該 repo `docs/claude-subscription-fleet.md`。
+## 驗證
 
-# 2026-10-31 Mac 的 npm 入口被自動更新覆寫與 "Multiple installations" 警告
+沿標準入口與原 npm bin 驗證版本、symlink、`claude auth status`（應見 `claude.ai`，以及預期的帳戶方案）；HAPI 應另用 runner 的 PATH 核對。用已取得授權的實際請求驗證指定模型，不能將登入和版本讀回當成所有主機的請求驗證。更新 binary 後舊程序不會換版，SDK、直接 HTTP 與原 binary 不受 wrapper 認證清除影響。
 
-- Claude 自動更新用 npm 重裝，會把 `<npm-prefix>/bin/claude` 重寫成直接指向 `claude.exe`，跳過入口，API key 排除失效。Mac 已加 LaunchAgent `com.swear.claude-relink`（`WatchPaths` 監看 `~/.npm-global/bin`，已連對時為 no-op；實測手動改壞後 12 秒內連回）。來源 plist 在 transfer_MAC `config/snapshot/home/Library/LaunchAgents/`。其他機器沒有此保護，仍靠手動重接。
-- `claude update`／`/doctor` 的 “Multiple installations found” 是誤報：2.1.314 的偵測只看 `<npm-prefix>/bin/claude` 加 npm 套件存在，且 `~/.local/bin/claude` 存在就標 "native"，沒有設定可關。`~/.local/bin/claude` 其實是入口 wrapper，真正的程式只有 npm 那份；不要照警告 `npm uninstall -g @anthropic-ai/claude-code`，會讓入口失效。要消除警告只能把入口搬離 `~/.local/bin`，影響整個機群 PATH，判斷不值得。
-
-# 2026-10-31 機群部署：自動更新開啟與 relink
-
-- 機群入口改為不含 `DISABLE_UPDATES=1` 的新版（131 bytes），之前只有 Mac 是新版，其他主機仍是 10-17 版（149 bytes，自動更新被關）。Mazu／Zeus 共用 NAS `.200` 的 home，Cthulhu／Valkyrie 共用 NAS `.199`，所以同一份安裝與入口各只有兩份；Oracle 獨立。
-- Linux 用 transfer_MAC `scripts/claude-relink.sh`：每分鐘把 `~/.nvm/versions/node/*/bin/claude` 連回入口，目標入口不存在時不動作（避免產生 dangling link）。cron 是每台主機本機的，所以 Mazu／Zeus／Cthulhu／Valkyrie 各裝一次；Oracle 沒有 `crontab`，自動改用 systemd user timer（linger 已開）。實測在 Mazu、Cthulhu、Oracle 手動改壞 symlink，75 秒內全部連回。
-- 未涵蓋：Athena（送修，與 Mazu 共用 home，入口檔已隨共用 home 更新，但沒有裝它自己的 cron）、Windows swop（離線）、Zeus 的 swear02 帳號（先前依指示排除）。
-- 風險：同一 NAS home 的多台主機各自自動更新可能同時寫同一份 npm 安裝，未驗證 Claude 是否有跨主機鎖；若安裝損毀，在入口加回 `DISABLE_UPDATES=1` 並只從 Mazu 手動更新。
-- 順帶觀察：Zeus 的 `hapi-runner.service` 當時是 `activating`，未處理。
-
-# 2026-10-31 修正：自動更新只留 Mazu
-
-- 上一節的「機群自動更新開啟」並未真的生效：共用 NAS home 的 `~/.claude.json` 有 `autoUpdates: false` 且 `installMethod: global`，Claude 的判斷是 `DISABLE_UPDATES`／`DISABLE_AUTOUPDATER` 環境變數，或 `autoUpdates === false` 且不是受保護的 native 安裝，任一成立就停用 npm 自動更新。只有沒有該設定的 Mac 與 Oracle 實際會更新。
-- 現行設計：入口在 Linux 上、主機不是 Mazu 時 `export DISABLE_AUTOUPDATER=1`（Mac 不動，手動 `claude update` 仍可用，不用 `DISABLE_UPDATES`）。Mazu 的 `~/.claude.json` 改成 `autoUpdates: true`（`claude config set` 已不存在，直接改檔第 4 行，備份在 `.claude.json.bak-autoupd`），Zeus／Athena 共用該 home 靠入口停用。Cthulhu／Valkyrie（另一個 NAS）與 Oracle 要更新時手動用 npm。
-- 原因：同一 NAS home 共用一份 npm 安裝，多台同時自動更新可能互相覆寫。
-
-# 2026-11-19 機群手動更新到 2.1.328
-
-- Mac 的 `claude update` 回 "Couldn't install the update"。不要改跑 `claude install`：它會另裝 native 版到 `~/.local/share/claude/versions/`，而且裝的過程中 npm 套件已被移除，入口指向的 `claude.exe` 不見，`claude` 直接壞掉。
-- 這時 `npm install -g @anthropic-ai/claude-code@latest` 會 `EEXIST <npm-prefix>/bin/claude`，因為 `com.swear.claude-relink` 會馬上把它連回入口。用 `npm install -g --force @anthropic-ai/claude-code@latest`，裝完 LaunchAgent 會自己重接。
-- Linux（mazu、cthulhu、athena、valkyrie、zeus、oracle）用 nvm 的 npm 更新後，照上面的 `ln -sfn` 兩行重接，最後用 `"$(npm prefix -g)/bin/claude" --version` 確認還是走入口。
+歷次 fleet 明細、範圍與異常見 `git show 06f50e3:tools/anthropic/claude-subscription-launcher.md`。來源是 transfer_MAC PR #64 和 `docs/claude-subscription-fleet.md`。

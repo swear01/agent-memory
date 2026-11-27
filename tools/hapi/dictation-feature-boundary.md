@@ -1,13 +1,12 @@
 ---
-title: "查聽寫問題先辨識 Dictation 的實際路徑"
+title: HAPI Dictation 語言或送出失敗，先核對實際觸發路徑
 scope: tools/hapi
 status: active
-updated: 2026-09-16
-evidence_digest: b32621b38304c8379e7978bd6517e9ffed8d9ee8e573d2e3f14794cb279f64f0
+updated: 2026-11-28
 ---
 
-# 查聽寫問題先辨識 Dictation 的實際路徑
+聽寫語言不符或控制停用時，先辨認是 Dictation 還是 Voice Assistant，再核對 provider、標準／即時模式、hook、route、送出的語言欄位與回傳文字。已核對的 Voice Assistant `isSending` lock 沒在當時的 `useDictation` 設定。只在 Voice Assistant 重現的結果無法驗證 Dictation。語言提示與繁簡輸出要用實際請求及回覆驗證。
 
-使用者詢問語音語言設定，歷史助手承認先誤查完整語音助理，改讀 Dictation 的 hook 與 route；隨後列出不同 provider 的語言碼處理與輸出直接插入方式。
+Connected Dictation 的鍵盤 Enter、滑鼠與觸控應能執行已定義的 Send。保留 Stop 原有語意，驗證每種輸入各自能完成 Stop／Send。原始紀錄涵蓋診斷與 finding，相關提案的修復結果須另查。
 
-先確認使用者選的功能、provider、標準或即時模式，再追傳送欄位與回傳文字。不要拿另一套語音功能解釋此問題，也不要把語言提示直接當強制字體保證。來源只有助手閱讀回報，沒有 wire capture；列出的 API 欄位、地域碼支援與繁簡成因仍需獨立查證，本筆不採用為確定規格。
+[原始路徑診斷](../../archive/tools/hapi/dictation-trigger-path.txt) · [輸入方式 finding](../../archive/tools/hapi/dictation-send-input-parity.txt)

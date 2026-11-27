@@ -13,92 +13,22 @@ tags:
   - built-in-browser
 ---
 
-# NTU COOL（Canvas）API 存取與隱藏權杖 UI
+# NTU COOL API 和檔案操作陷阱
 
-## 帳號
+- 研究所與大學部帳號、課程和 token 狀態獨立，數位系統設計用大學部帳號。先用現有授權的 `https://cool.ntu.edu.tw/api/v1` 核對 `users/self/profile`，再選課程／作業。不要假定任何主機已存 token；舊部署筆記不能當 live 憑證來源。API 不可用再走 Codex 內建瀏覽器；Brave 等外部瀏覽器只在使用者指定或授權時使用。COOL API 不靠 VPN；校內 ADFS 等入口依當時連線設定。
+- 以授權介面申請或撤銷 token，不存正文、log 或截圖。頁面同源的 API request 可使用現有登入，Canvas 的 JSON 有時以 `while(1);` 前綴。HttpOnly cookie 無法從 JS 讀取，也不應移到另一台。頁面 API helper 以 `startsWith('/api')` 判斷完整 API path，避免把課程相對 `/assignments` 打到站根路徑。SSO 的真實欄位是頂層頁面，公告 iframe 和過期 snapshot ref 勿混用。
+- 課程 Files 為空也可能有教材。查 `/courses/<id>/modules?include[]=items` 的 ExternalUrl 和 `external_url`，一般 `url`／`html_url` 可能只是 Canvas redirect。授權下載用登入分頁或 API；若以 API 為該檔取得帶 verifier 的臨時下載連結，也當成私有資料，不留 log。PDF 章節頁序應由渲染或原文確認。
 
-研究所與大學部 COOL 帳號由同一人持有，課程與權杖彼此獨立；數位系統設計使用大學部帳號。
+2026 年數位系統設計的 course id 是 `45284`，大學部帳號。已下載教材存於 `gdrive:document/學校講義/大二/數位系統設計`。API 404 的舊檔曾標記 hidden_for_user，未下載不能說全量；Box 傳檔失聯時曾改核准 Drive 中繼再 rclone 拉取。[2026-09-29 個別教材、下載排除及傳檔收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/other/ntu-cool-dsd-45284-materials.md)
 
-## API
+## 上傳和繳交
 
-- Base：`https://cool.ntu.edu.tw/api/v1`
-- 認證：`Authorization: Bearer <personal access token>`
-- 不需 VPN 即可打 COOL API；ADFS 與其他校內站點才需要本機 VPN 設定。
+1. 驗課程、作業、檔案與既有回執。Browser 缺 file chooser 時用 Canvas 官方三步檔案上傳：先 POST 至作業 `submissions/self/files` 取得 `upload_url`、`upload_params`，再用核准本機上傳介面送 multipart。Upload fields 放在 file 前，實際欄位名依回傳確認；`on_duplicate: rename` 可能在 display name 加 `-1`，不等同檔案內容改變。
+2. 若返回 302，GET `create_success` Location 才完成，拿到 file ID、大小與 `upload_status: success`。漏 GET 時，file ID 可一直 404；舊簽名 policy 重 POST 可 400，從第一步重建。在獲准登入的路徑完整下載對本機 SHA-256。簽名參數和重導向 URL 不落共享記憶。
+3. 上傳和繳交是不同操作。已明確要求繳交該次作業時，以 `POST /courses/<c>/assignments/<a>/submissions` 提交 `online_upload` 和 file_ids，驗 201、submitted、late 欄及回讀原附件。不要以按鈕變化或已存在 file ID 當作繳交證據。發文、寄信、發布作業或改設定依各寫入授權。
 
-## 權杖存放
+## 助教評分及留言
 
-權杖不一定存在本機：2026-11-10 查過，本機 `~/.secrets` 與 `~/.config` 都沒有 COOL 權杖，要用就重新產生。公開記憶不記錄帳號、具體路徑或權杖。權杖用途名稱可在 COOL 設定頁辨識與撤銷。
+- 對學生用該作業 `submissions/<user_id>/comments/files` 上傳留言附件，再 PUT submission comment 的 `file_ids`。GET 帶 `include[]=submission_comments` 驗附件。輸入 `posted_grade` 後讀回 score，`post_manually` 下 `posted_at` 仍可為 null，學生還看不到。未發布作業曾拒絕打分 403；正式發布會讓學生看到、可能通知，不能為測試寫入私自打開。區分已儲存分數、已發布分數、留言附件和學期正式成績。
 
-2026-11-10：研究所權杖（用途 `mazu-agent`）已產生並放到 mazu 的 `~/.config/ntu-cool/`（`tokens.env`，變數 `NTU_COOL_TOKEN_GRAD`，目錄 700／檔案 600）；大學部權杖（`NTU_COOL_TOKEN_UG`）尚未產生，需先在 Brave 切換登入大學部帳號。
-
-2026-11-10 實查：swairM5 與 mazu 的 `~/.secrets`、`~/.config` 都**沒有** COOL 權杖，上面這句不可當成權杖一定存在。swairM5 現行可用的存取方式是 `~/IEDA/tools/cool.sh <api-path>`：用 `osascript` 在 Brave 網址剛好為 `https://cool.ntu.edu.tw/courses` 的分頁內跑同步 XHR（靠瀏覽器登入狀態），並去掉 `while(1);`。session cookie 是 HttpOnly，`document.cookie` 拿不到，無法把它搬到別台機器給 curl 用。要在其他機器處理 COOL 資料，最快的做法是在 Mac 用 cool.sh 下載後 `rsync -a ~/IEDA/ mazu:IEDA/`（Mac 的 `~/.ssh/config` 可直接解析 `mazu`）。
-
-IEDA（EDA 課）course id `64904`；HW2「Logic synthesis and verification with Berkeley ABC」assignment id `422755`（online_upload）。
-
-寫入成績（2026-11-10 驗證，IEDA HW2）：swairM5 的 `~/IEDA/tools/cool_put.sh` 在同一個 Brave 分頁送 `PUT /api/v1/courses/<c>/assignments/<a>/submissions/<user_id>`，body `{"submission":{"posted_grade":"<分數>"}}`，`X-CSRF-Token` 取 `_csrf_token` cookie 並 decodeURIComponent；回 200 後用 GET 讀回核對 score。該作業是 `post_manually`，寫入後 `posted_at` 仍為 null，學生看不到，要另按 Post grades（API：`POST /api/graphql` `mutation{postAssignmentGrades(input:{assignmentId:"<a>",gradedOnly:true}){progress{_id state} errors{message}}}`，回 progress 後輪詢 `/api/v1/progress/<id>` 到 completed，再讀回 `posted_at`；2026-11-10 IEDA HW2／期中驗證。auto mode 會擋，須使用者明確說要公布；課程公告用 `POST /courses/<c>/discussion_topics` `is_announcement:true`）。改成績須使用者明確授權；先送一筆讀回確認再送其餘。
-
-## 產生權杖：UI 被 CSS 隱藏，不是沒有
-
-NTU 在 `https://cool.ntu.edu.tw/profile/settings` 把「已核准的整合」藏起來：
-
-1. DOM 仍有標題「已核准的整合」與 `a.btn.btn-primary.add_access_token_link`（文字「新訪問令牌」）。
-2. 父層 `.approved_integration_content` 設了 `display: none`，所以畫面上看不到。
-3. 用頁面腳本把 `.approved_integration_content` 改成 `display: block`。
-4. 點「新訪問令牌」→ 填用途 → 到期留空 → 產生。
-5. 權杖只寫入 secrets 檔（mode 600），絕不截圖、不寫進對話或 memory 正文。
-
-### 用 Brave 分頁自動產生（2026-11-10 驗證）
-
-- `POST /profile/tokens` 回 404，API 路徑不可用；新版 UI 是 React 對話框，得走頁面。
-- 在已登入的 `https://cool.ntu.edu.tw/courses` 分頁（同 `cool.sh` 的 osascript）用 JS 插入隱藏 iframe 載入 `/profile/settings`，等 6 秒後：`.approved_integration_content` 設 `display:block`，點 `a.add_access_token_link`；用原生 `HTMLInputElement.prototype.value` setter 加 `input` 事件填 `#TextInput_2`（用途）；點對話框內 `type=submit` 的「產生憑證」。
-- 權杖只顯示一次，在 iframe 的 `body.innerText` 用 `/[A-Za-z0-9~]{30,}/` 取出（64 字元，不一定有 `數字~` 前綴），經 `umask 077` 的暫存檔寫入，不印出；用權杖打 `/api/v1/users/self/profile`（Bearer 標頭）回 200 驗證，之後移除 iframe、`shred` 暫存檔。
-- 目前 Brave 登入哪個帳號可看 `/api/v1/users/self/profile` 的 `login_id`（研究所為 `r14…`）。
-- 寫到遠端：`ssh mazu 'umask 077; mkdir -p …; cat > …' < 暫存檔`，權杖不進命令列。
-
-## 台大單一登入（ADFS）表單填寫
-
-- 入口：`https://cool.ntu.edu.tw/login/saml`
-- 欄位用 CSS selector（snapshot ref 會過期）：
-  - `#ContentPlaceHolder1_UsernameTextBox`
-  - `#ContentPlaceHolder1_PasswordTextBox`
-  - 送出：`#ContentPlaceHolder1_SubmitButton`
-- 欄位在頂層頁面，不在公告 iframe 內。
-
-## 讀寫原則
-
-NTU COOL 的預設順序：先試現有授權的 API；API 回 401、不可用或沒有該功能，再用 Codex 內建瀏覽器。不要因本頁保留 Brave 歷史做法而先開 Brave；外部瀏覽器僅在使用者指定或授權時使用。繳交前核對課程、作業、附件與是否已有回執；使用者明確要求這次繳交後，確認資料即可直接送出，不重問。討論區發文、寄信、改設定也須明確授權。
-
-不想動權杖時，可在內建瀏覽器已登入的 COOL 分頁用頁面 JS `fetch('/api/v1/...', {headers:{Accept:'application/json'}})`，靠同源 cookie 認證；回應前綴有 `while(1);`，要先去掉才能 `JSON.parse`。
-
-找教材時不要只看 Files：有些老師的 `/folders` 只有空的 `course files`，教材放在模組的 `ExternalUrl` 項目（例如 GitHub）。用 `/api/v1/courses/<id>/modules?include[]=items`，讀每個 item 的 `external_url`（`url`／`html_url` 只是 `module_item_redirect`）。
-
-## 檔案作業繳交：內建瀏覽器沒有 file_upload 時的作法（2026-10-19 驗證）
-
-Claude 桌面 app 的內建瀏覽器（`mcp__Claude_Browser__*`）沒有 file chooser／`setFiles` 能力：點 `input[type=file]` 後用 `cmd+shift+g`、輸入路徑、Enter 都到不了原生對話框；從 `file://` 分頁 `window.open`、`cmd+c/v` 剪貼簿、`navigator.clipboard.readText`、本機 `127.0.0.1` server（Private Network Access 擋下）也都無法把本機 bytes 帶進 COOL 頁面。Codex 是用 Playwright 的 `waitForEvent('filechooser')` + `setFiles` 成功，那是它瀏覽器工具的能力，內建瀏覽器沒有。
-
-可行作法是 Canvas 三步上傳 API，第 2 步改由 shell 的 `curl` 送本機檔：
-
-1. 在已登入的 COOL 分頁用頁面 JS（同源 cookie；`X-CSRF-Token` 取自 `_csrf_token` cookie 並 `decodeURIComponent`）：
-   `POST /api/v1/courses/<course>/assignments/<assignment>/submissions/self/files`，body `{name, size, content_type, on_duplicate:"rename"}`。回傳 `upload_url`（NTU COOL 是本站 `https://cool.ntu.edu.tw/files_api?...`）與 `upload_params`（`Filename`、`key`、`acl`、`Policy`、`Signature`、`content-type`），`file_param` 是 `attachment[uploaded_data]`。Policy 約 30 分鐘到期，屬一次性上傳憑證，不寫進 memory。
-2. shell：`curl -X POST '<upload_url>' -F 'Filename=…' -F 'key=…' -F 'acl=private' -F 'Policy=…' -F 'Signature=…' -F 'content-type=application/pdf' -F 'attachment[uploaded_data]=@<file>;type=application/pdf'`，參數欄位放在檔案前。不需 cookie。
-   2026-10-27 CVSD Lab4 驗證：檔案欄位用 `file=@<file>` 也被 `files_api` 接受（放在最後一個欄位）。
-3. 回 302，`Location` 是 `/api/v1/files/<id>/create_success?...&uuid=…`；**必須 GET 這個 URL**（uuid 即授權，不需 cookie）才會完成，回 JSON 帶 `id`、`size`、`upload_status: success`。務必用 `-w '%{redirect_url}'` 存下 Location；漏掉這步檔案會一直 404，且同一組 Policy 再 POST 會回 400，只能從第 1 步重新申請。
-4. 驗證：頁面 JS 取 `/api/v1/files/<id>` 的 `url` 下載並算 SHA-256，與本機 `shasum -a 256` 比對。
-5. 繳交（須使用者明確要求）：`POST /api/v1/courses/<course>/assignments/<assignment>/submissions`，body `{submission:{submission_type:"online_upload", file_ids:[<id>]}}`，回 201、`workflow_state: submitted`、`late` 欄位；頁面按鈕變成「重新繳交作業」。
-
-auto mode 的安全分類器會把「頁面 JS 把本機檔 bytes 搬進另一站」判成 Browser JS Exfil 而擋下；改用上面 curl 路線，或先取得使用者同意。Claude in Chrome 的 `file_upload` 也可用，但需使用者同意切換瀏覽器。
-
-## 留言附件與未發布作業（2026-11-10 驗證，IEDA 期中考）
-
-- **本機 server 加 PNA 標頭就能用**：內建瀏覽器 COOL 頁面 JS 可以 `fetch('http://127.0.0.1:<port>/x.pdf')`，只要 server 回 `Access-Control-Allow-Origin: https://cool.ntu.edu.tw`、`Access-Control-Allow-Private-Network: true`，且 `OPTIONS` 回 204（上面 2026-10-19 失敗的是沒加這些標頭的 server）。拿到 blob 後整個三步上傳都能在頁面內做：`files_api` 回 JSON 直接帶 `id`。使用者明確同意上傳時 auto mode 未擋。
-- 助教替學生加留言附件：`POST /api/v1/courses/<c>/assignments/<a>/submissions/<user_id>/comments/files`（`name`、`size`、`content_type`）→ 上傳 → `PUT .../submissions/<user_id>`，body `{comment:{text_comment, file_ids:[id]}, submission:{posted_grade}}`。讀回用 `include[]=submission_comments` 核對附件 `size`。
-- **未發布的作業不能打分**：PUT submissions 回 403 `user not authorized to perform that action`。先建立未發布作業 → GraphQL `POST /api/graphql` 送 `mutation{setAssignmentPostPolicy(input:{assignmentId:"<a>",postManually:true}){postPolicy{postManually} errors{message}}}` → 再 `PUT /assignments/<a>` `{assignment:{published:true}}`。發布會讓學生看到作業（可能有通知），auto mode 會擋，須使用者明確同意；手動公布下寫入後 `posted_at` 仍為 null。
-- 頁面 helper 判斷路徑時注意：`/assignments` 也以 `/` 開頭，要用 `startsWith('/api')` 區分完整路徑與課程相對路徑，否則打到 `/assignments` 回 404。
-
-## 下載課程檔到本機（2026-10-25 驗證）
-
-`/api/v1/files/<id>` 的 `url` 與 `/files/<id>/download` 都要 cookie，shell `curl` 拿不到。在已登入分頁用頁面 JS 取 `/api/v1/files/<id>/public_url`，回傳帶 `verifier=` 的連結，shell `curl -L` 可直接下載，不需權杖。日文二上課程 id 64097，練習題 L13–L18 PDF 中第 15 課是第 9–12 頁（頁序不是依課排列，需渲染縮圖確認）。
-
-## CLI 環境沒有瀏覽器工具時：AppleScript 進 Brave 分頁（2026-10-31 驗證）
-
-Claude Code CLI 沒有內建瀏覽器，但使用者 Brave 已登入 COOL 時，可用 `osascript` 對該分頁 `execute t javascript "<js>"`（找 URL 含目標路徑的 tab）。只回傳同步結果，所以用同步 `XMLHttpRequest`（`x.open(...,false)`）而不是 `fetch`。上面三步上傳、`public_url` 下載驗證、繳交都照用，不需權杖。同名檔重交時 `on_duplicate:"rename"` 會讓 COOL 顯示名變成 `<name>-1.pdf`，內容不變。
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/other/ntu-cool-api-access.md)

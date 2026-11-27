@@ -7,7 +7,7 @@ status: active
 confidence: high
 evidence: HAPI source review plus a read-only local hub smoke test.
 created: 2026-08-19
-updated: 2026-11-12
+updated: 2026-11-28
 tags:
   - hapi
   - hub
@@ -55,7 +55,7 @@ The export endpoint has a 20,000 visible-message limit. When a session exceeds i
 
 1. Query session summaries and select closed/inactive sessions first.
 2. Fetch message pages with stable `(beforeAt, beforeSeq)` cursors.
-3. Record page boundaries and verify that pages cover the complete source without gaps or repeated cursor progress.
+3. Record page boundaries and page checksums. Verify complete source coverage without gaps or repeated cursor progress.
 4. Redact each complete message before handing overlapping chunks to subagents.
 5. Keep only durable lessons and redacted evidence in Markdown; never store the JWT or raw API payload.
 
@@ -68,3 +68,5 @@ Do not use an unfiltered service-status command as an export method. Supervisor 
 # 用名稱找 session ID（2026-11-12 實測）
 
 CLI 沒有 list 指令。從 Mac 打公網的 `HAPI_API_URL` `/api/auth` 會回 403，要改從 hub 主機 mazu 走 loopback：`ssh mazu python3 -`，在遠端讀 `~/.hapi/settings.json` 的 `cliApiToken`，換 JWT，再呼叫 `GET http://127.0.0.1:3006/api/sessions`，比對 `metadata.name`。token 和 JWT 都不要印出來。只有使用者明確要你自己找時才這樣做；hapi-session-control 預設要求使用者提供確切 ID。同一個 API 的 `GET /api/sessions/:id` 會回傳 `permissionMode` 和 `agentState.requests`，可以用來判斷 session 是否卡在等批准。
+
+[Historical closed-session pilot and redaction receipts](../../archive/tools/hapi/mazu-closed-session-ingestion-pilot.txt)

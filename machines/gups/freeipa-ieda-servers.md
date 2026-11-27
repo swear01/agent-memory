@@ -1,5 +1,5 @@
 ---
-title: ieda1/ieda2 lab servers: FreeIPA, network, hardening
+title: "ieda1/ieda2 lab servers: FreeIPA, network, hardening"
 scope: machines/gups
 machine: gups
 status: active

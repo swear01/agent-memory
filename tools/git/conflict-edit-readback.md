@@ -33,3 +33,5 @@ redaction: passed
 ## Negative result
 
 This memory preserves a verified negative result.
+
+合併或 rebase 後也檢查受影響檔案的殘留衝突標記，例如 README 裡不小心留著 `>>>>>>>`。區分文件刻意引用與未清完的標記；當時只證明殘留，沒有驗證已移除。見 `git show 06f50e3:tools/git/conflict-marker-residual.md`。

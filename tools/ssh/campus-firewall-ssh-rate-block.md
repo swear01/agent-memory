@@ -34,4 +34,4 @@ tags: [SSH, NTU, firewall, IDS, polling, ControlMaster, dvlab, gups, 封鎖, 輪
 
 ### gups 卡死的原因調查
 
-見 [[recurring-hang]]：先前「Innovus 用光記憶體」的推測已被推翻，前兩次卡死時機器是閒置的。
+見 [gups recurring hang](../../machines/gups/recurring-hang.md)：先前「Innovus 用光記憶體」的推測已被推翻，前兩次卡死時機器是閒置的。
