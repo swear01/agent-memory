@@ -48,3 +48,26 @@ completion event identity. ACP `_meta` is one possible way to carry that
 information if Cursor adds it. Keep first success and failure notifications,
 new results for the same task, and replies to a soft-steer. Prompt state,
 shell-exit timing, and text similarity alone can suppress real replies.
+
+## Foreground observation and the notification queue
+
+In the incident, a foreground Read of the managed terminal transcript returned
+the shell's successful terminal state and exit code. The assistant then checked
+the artifact and reported completion. The visible tool sequence in that turn
+used Read and shell commands. An Await-only fix would miss this path.
+
+In the 2026-11-22 Cursor bundle, the interactive CLI calls the background work
+registry's suppress method when a completed Await names a task. The ACP
+interaction-update callback routes the tool call to the presenter without the
+same TUI check. Shell progress and terminal completion have separate wakeup IDs.
+Both inspected builds batch queued completions into a single follow-up and
+acknowledge its IDs after it returns. Isolated probes of the packaged drain
+with a simulated registry verified the batch and failure/requeue paths on
+both builds. Queue acknowledgement does not establish Hub message persistence.
+
+A proposed upstream fix can associate a foreground Await or a read of a
+managed terminal's confirmed final state with the exact execution and terminal
+event. Keep the completion pending until a user-visible report explicitly
+covers it or a structured terminal result is committed to the transcript.
+An arbitrary file path, terminal-like output, or an unrelated successful
+assistant reply cannot establish this relationship.
