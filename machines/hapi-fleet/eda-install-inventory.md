@@ -5,7 +5,7 @@ project: dvlab-mis
 status: active
 confidence: high
 created: 2026-09-11
-updated: 2026-11-12
+updated: 2026-11-28
 tags:
   - eda
   - abc
@@ -215,6 +215,7 @@ source /apps/eda/cadence/xcelium.sh 25.03.005
 
 # License 環境變數
 
+- 2026-11-28 在 Athena 以 `/apps/eda/cadence/IC/cur/tools.lnx86/bin/lmstat -c "$SNPSLMD_LICENSE_FILE" -f Design-Compiler` 查到 Synopsys 席位，`-f DC-Ultra-Opt` 也通過。Calibre 自帶的 Siemens `lmstat` 對同一 pointer 回報 socket error。遇到此錯誤先用上述 FlexNet binary 複查，再用實際工具啟動結果確認 checkout。
 - 共用 `license.sh` 只 `export` FlexLM 指向變數，不呼叫 `lmstat`、不連授權伺服器、不 checkout。Synopsys SCL 文件把這種變數稱為 pointer，並允許寫進 `.bashrc`；實際 feature checkout 發生在工具啟動時。
 - 現行工具腳本會載入各 vendor 的 `license.sh`；license-only 入口仍保留。載入 pointer 不等於 checkout，實際授權成功需執行工具驗證。
 - 不要把完整 `vcs.sh`／`verdi.sh` 寫進 login profile：那會改 PATH、`LD_LIBRARY_PATH` 與 VCS GCC shim。若其他 FlexLM 軟體也用 `LM_LICENSE_FILE`，它們可能先去問 TSRI 伺服器而 timeout；Synopsys 偏好 `SNPSLMD_LICENSE_FILE` 以降低這種混用。授權伺服器位址不寫入 memory。
