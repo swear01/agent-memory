@@ -15,3 +15,5 @@ tags: [sce, seam, segment, sram, traceback]
 PAT2／PAT5 各重數 28,448 個差值，seed41、全零空段和最左平手亦通過。原工作及重跑腳本見 [SCE-41](https://github.com/swear01/cvsd-final-sce/blob/d15f9f8ec08f823ac44802340473a66dca5ade6d/exp/area/segmented-overlap/sce41.md)。
 
 - 兩個 admitted scan rows 要分配可重用的空 slot ID，並保留各 slot 的絕對 row。兩個 active rows 可以同 parity，且 t+2 Q 歸屬需要用完整地址核版本。量本地 scan 讀寫要看真正接受的 DP vector、halo、hit-W 來源及舊帶移交。SRAM bank 單埠並不限制 local scan 埠數，SCE-51 曾在同一 bank 同拍看到三個 resident 讀與兩個新寫，五址互異。即使 slot 容量足夠也要付這些埠，或用實際仲裁停拍重驗。採 first-hole 搬出 rank low byte 時，把歸還到最後使用的持有狀態、版本和移交都計回。[SCE-51](https://github.com/swear01/cvsd-final-sce/blob/83d3d869c6335779aea914f39e98e811d4c2e4c6/exp/area/segmented-overlap/sce51-two-row-budget.md)。
+
+- 撤掉整帶舊像素並嚴格分相時，先用舊列 issue 到 path release 的最短遞推，再加上必須重讀的存活 bytes／bank 和 I/O。這個界不需要實作仲裁。固定 K13 的 old feedback 加嚴格下一拍取用為四拍；即使新讀打滿 24 banks、跨列／帶理想合併且寫回免費，PAT2＋PAT5 仍需至少 110,388 拍。這只淘汰不允許新讀預取或共用舊像素的嚴格串化，與單純關閉後帶 lookahead 不同。[SCE-56](https://github.com/swear01/cvsd-final-sce/blob/342176bb4cf3a4b4d9cb027a9bfa453ef5c5b5f5/exp/area/segmented-overlap/sce56-band-memory-tradeoff.md)。
