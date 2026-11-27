@@ -1,18 +1,25 @@
 ---
-title: Claude Code stream-json 現在支援 mid-turn steer，HAPI 仍把 Claude 排除在 Steer 之外
+title: HAPI 的 Claude 手動 Steer 與一般送出的排隊行為
 scope: projects/hapi-claude-midturn-steer
 project: hapi
 status: active
 confidence: high
-evidence: 2026-10-21 用 claude 2.1.302 (--input-format stream-json, haiku) 實測；第一個 tool_use 後注入 user message，turn 在下一個 tool boundary 轉向、跳過後續步驟、只產生一個 result。
+evidence: HAPI v0.36.7 與 upstream/main 6f7420aa6 原始碼、web 與 hub 定向測試、Claude Code 官方互動模式文件，以及 2026-10-21 的 Claude 2.1.302 stream-json 實測。
 created: 2026-10-21
-updated: 2026-10-28
+updated: 2026-11-27
 tags:
   - hapi
   - claude
   - steer
   - stream-json
 ---
+
+## 2026-11-27 確認
+
+- [HAPI #2259](https://github.com/tiann/hapi/pull/2259) 已替 Claude remote session 加入手動 Steer。[HAPI v0.36.7 的一般 Send](https://github.com/tiann/hapi/blob/v0.36.7/web/src/lib/messageDelivery.ts#L43-L63) 仍一律先排隊，忙碌時等本輪結束。Claude 和 Codex 的逐則 Steer 走既有 RPC。直接把 Send 的 `deliveryMode` 改成 `steer`，在這版 Hub 對兩者都會正規化為 `queue`。
+- Claude Code CLI 的一般 Enter 先收下訊息，工具呼叫結束後可在同一輪讀到。Codex CLI 的 Enter 走 Steer，Tab 才排到下一輪。對 HAPI 而言，Hub 收到訊息、Steer 已轉送、agent 已讀入是不同事件。UI 的 `Steered` 以 agent 確認為準，未確認的送出避免自動重播。[Claude Code](https://code.claude.com/docs/en/interactive-mode#when-claude-code-sends-what-you-queued) [Codex CLI](https://learn.chatgpt.com/docs/developer-commands?surface=cli#interactive-shortcuts)
+
+## 2026-10 歷史紀錄
 
 - tiann/hapi #888 的結論「stream-json mid-turn stdin 會被忽略」是在 claude 2.1.175 驗證的，已過時。
 - 2.1.302：turn 進行中寫進 stdin 的 user message，只要後面還有 tool boundary，就會在那裡被吃進「同一個 turn」（不會多一個 `result`，stream 也不會 echo 這則 user message）。如果送進去時 Claude 已經在寫最後的回覆、後面沒有工具呼叫了，它會在原本的 `result` 之後另開一個 follow-up turn（先 `system init`，再多一個 `result`）處理。訊息不會丟，但 wrapper 在第一個 `result` 送出的 ready 會太早。
