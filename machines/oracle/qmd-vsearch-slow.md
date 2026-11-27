@@ -32,6 +32,6 @@ oracle 沒有 GPU。`qmd embed -c memory` 會停在 CPU，應直接停掉。swai
 
 裝上前確認本機沒有寫入同一顆資料庫的 qmd，把舊檔移開，刪掉殘留的 WAL/SHM，再放入新主檔。之後只跑 `qmd update`，讓本機 collection 路徑對上。`qmd search` 不需要向量。
 
-第一份 Mac 快照是 1340 份文件、2187 條向量。第二份（2026-11-27，30,650,368 bytes，integrity ok）是 1347 份文件、2198 條向量，模型全部是 embeddinggemma-300M。oracle 的 `index.yml` `models.embed` 已是同一組 Gemma。設定檔優先於環境變數，所以就算指令還帶著舊的 Qwen URI，`qmd status` 仍用 Gemma。裝上並 `qmd update` 之後，memory 914 份裡 909 份已有向量。另外 5 份是 Mac 嵌入之後才進 git 的，雜湊對不上，不要在 oracle 補算：`global/preferences/end-to-end-speed.md`、`global/preferences/gameplay-automation.md`、`projects/shelldiver/native-cli.md`、`tools/agent-collaboration/mid-turn-message-delivery.md`、`tools/hapi/codex-oauth-session-cache.md`。快照裡的 `codex-memory-notes` 有 426 份沒有向量，那不是這台的 collection。這台自己的 `codex-college-money` 有 4 份，也還沒有向量。這份筆記本身也會因此換成新雜湊，下一輪要先在 Mac `git pull` 再嵌入。
+第一份 Mac 快照是 1340 份文件、2187 條向量。第二份是 2198 條。第三份（2026-11-27，integrity ok，2199 條，模型全部是 embeddinggemma-300M）裝上並 `qmd update` 之後，memory 914 份的待嵌入數是 0，914 份都沒有改內容。oracle 的 `index.yml` `models.embed` 已是同一組 Gemma。設定檔優先於環境變數，所以就算指令還帶著舊的 Qwen URI，`qmd status` 仍用 Gemma。`qmd status` 仍可能顯示約 426 個待嵌入雜湊，那是快照裡的 `codex-memory-notes`，不是這台的 collection，不要在 oracle 補算。這台自己的 `codex-college-money` 有 4 份，雜湊已在那 426 裡面。改這份筆記會讓 memory 再多一個新雜湊，下一輪複製前先在 Mac `git pull`。
 
 各機向量應使用同一組 embeddinggemma-300M。Qwen3-Embedding-0.6B 比較大，在這台沒有 GPU 的機器上不該再當嵌入模型。
