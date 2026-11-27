@@ -38,6 +38,7 @@ generated_by: openai-codex/gpt-5.6-luna
 
 ## Mac 權限與 Claude exit 126
 
+- **本機 Mac Catalyst 測試的簽章。** 執行 HAPI 測試 App 前，確認本機可使用指定的固定簽署身分，分開 build-for-testing 與啟動，對實際產物執行 `codesign --verify --strict` 並核對簽署者及 designated requirement。正式 CLI 使用 `HAPI Local Release Signing`；GitHub 能簽 CLI 並不代表本機有可用私鑰或 Catalyst 所需權限。無法以指定身分簽署時回報原因。使用者未授權以 `CODE_SIGNING_ALLOWED=NO` 或 ad-hoc 簽章啟動本機 HAPI 測試 App。曾有兩份 `run.hapi.app` 測試產物因各自以 cdhash 識別，先後觸發「文件」權限提示；用 tccd 的 `AUTHREQ_PROMPTING` 核對 service、程式路徑與請求 ID，再判斷是否涉及正式 runner。
 - Restart 成功後若仍跳 TCC 提示，直接重驗觸發操作與負責程序。重啟、簽署或讀回授權各自只證明當步驟。
 - 舊 inode 的 session 在更新後曾報 `Process exited unexpectedly: Claude Code process exited with code 126`、`Dropping the queued message`。用 `/usr/bin/log show` 看 tccd 的 `Failed to fetch responsible file descriptor`，核對 launcher 是否經 symlink 指到 Documents。已驗證的預防是把 launcher 複製為實體檔；其餘受保護路徑仍要重驗。等舊 session inactive 後，用新版恢復並重新投遞被丟掉的訊息。0.35 的 `ping-peer` 需 `--wake` 才會恢復 inactive session；看到新版程序及 agent 輸出才算成功。
 
