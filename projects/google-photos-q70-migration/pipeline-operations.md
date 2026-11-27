@@ -5,7 +5,7 @@ project: google-photos-q70-migration
 status: active
 confidence: high
 created: 2026-10-03
-updated: 2026-10-03
+updated: 2026-11-28
 tags:
   - google-photos
   - takeout
@@ -14,74 +14,16 @@ tags:
   - python
 ---
 
-# Google Photos → HEIC Q70 遷移專案的 pipeline 操作要點
+## 遷移計畫與分類
 
-## 專案位置與性質
+- **看起來成功，結果卻是 total=0、checked=0。** `sync_anime_drive.py` 看到 `Visual classification held: ... module 'hashlib' has no attribute 'file_digest'` 時，確認目前 shell 的 Python ≥ 3.11 且有 Pillow。已驗證 `uv run --offline --with pillow python pipeline/<script>.py ...`。一般 `python3` 在歷史非登入 shell 曾解析到 3.9。
+- 分類有 `anime`、`real` 和 `review`。人工審閱 JSON 要核對 policy、來源 SHA256／path、原狀態、決議、`review_method=assistant_direct_image_inspection`、非空 reason 及時間。缺欄位可能只留一行 `Visual classification held:`。上傳前乾跑 `classifications()`，逐項比對凍結範圍的 SHA 與決議。
+- `anime` 進既有 Drive `Media/anime/picture`；`real` 才進 Photos，`review`／`unknown` 排除。Drive 複製回條不能授權刪 Photos 舊件（`anime_photos_cleanup_not_inferred_from_drive_copy`）。工作區本身不使用 Git，`state/` 是計畫與回條的權威來源。復原時查 `state/control-backup-*.zip` 和 Drive 備份；`pipeline/recovery_health.py` 可離線查 worker 與各階段。
 
-- 工作區：`<project-root>`（= `<home>/Documents/Codex/2026-09-06/google-drive-api-thread-01a0729b-38d4`，機器 swop/Mac Studio）。
-- 結構：`pipeline/`（Python 與 Node 腳本）、`state/`（大量 JSON 進度／計畫／回條，唯一權威來源）、`outputs/google-photos-api-recovery-runbook.md`（事件與規則記錄，逐日追加章節）。
-- 該工作區**不是 Git repo**；證據同步靠 `state/control-backup-*.zip` 與 Drive 備份，不要期待 git 提交。
+## 雲端寫入與清理
 
-## 直譯器限制（實測踩過）
+- **`Photos web session requires refresh`，或 Photos 首頁 302 到介紹頁。** 先讓持有有效內建瀏覽器工作階段的 session 復原。複製的狀態會過期，瀏覽器 socket 又綁 session 或 turn。此時可以先離線做 `--plan`，不嘗試重送雲端寫入。
+- `--plan` 凍結分類、來源／成品 SHA256、Drive 的唯一檔名、size、MD5、file ID 和個別對應，讓授權綁該計畫 SHA。到 `--run` 才依 live 回讀核對 media key、dedup、檔名、位元組與垃圾桶狀態。寫 journal `sending` 後才送出，送完逐項以垃圾桶回讀對帳。結果不明先回查，避免重送。只移入可恢復垃圾桶；原始紀錄與進度備份留在專案。
+- **非原畫質副本的內容 SHA 對不上。** 若要用替代身分證據，需另有綁 plan SHA 的授權。核對 Takeout sidecar 的 media key、`original_quality=false`、精確檔名與位元組數，確認未在垃圾桶，並記錄該筆用的證據。重開 journal 前先匯出前次回條。
 
-- pipeline 腳本需要 **Python ≥ 3.11**（`hashlib.file_digest`）與 `PIL`。非登入 shell 的 `python3` 可能解析到 `/usr/bin/python3`（3.9），此時 `sync_anime_drive.py` 會把每筆審閱項目降級成 `review` 並印出
-  `Visual classification held: <sha> module 'hashlib' has no attribute 'file_digest'`，
-  結果是「看起來成功但 total=0、checked=0」——比對錯誤更容易漏看的失敗模式。
-- 正確啟動方式（本機 swop 已驗證）：
-
-  ```bash
-  uv run --offline --with pillow python pipeline/<script>.py ...
-  ```
-
-  本機 uv 在 `~/.local/bin/uv`；或直接用 `/opt/homebrew/bin/python3`（3.14，含 PIL）。
-
-## 分類審閱機制
-
-- `state/anime-classification.sqlite3` 的 `classified(sha,state,path,model)` 是模型分類（`anime` / `real` / `review`）。
-- 人工審閱走 `state/anime-classification-reviews.json`（每筆需 `policy`、`source_sha256`、`source_path`、`original_state`、`state`(anime/real)、`review_method=assistant_direct_image_inspection`、非空 `reason`、`reviewed_at`）。
-- 任一欄位不符時 `classifications()` **不報錯**，只把該筆留在 `review` 並印一行 `Visual classification held:`。送出前務必先乾跑確認：
-
-  ```python
-  import sys; sys.path.insert(0,'pipeline'); import sync_anime_drive as s
-  print({h: s.classifications().get(h) for h in scope_hashes})
-  ```
-
-## 目的地政策
-
-- 動漫圖片只進既有 Drive `Media/anime/picture`（folder id `13qVDfHp6mJP3mGWYx3N6lg_wQ5JEo_5d`），由 `sync_anime_drive.py` 用 rclone remote `gdrive:` + `--drive-root-folder-id` 複製，回條在 `state/anime-drive-items/<source_sha256>.json`；**不上傳 Photos**。
-- 只有分類為 `real` 的靜態圖片（與影片）才走 Photos 上傳；`review`／`unknown` 一律排除。
-- Drive 複製完成**不能**推論 Photos 舊件已可清理（`anime_photos_cleanup_not_inferred_from_drive_copy`），清理需各自的凍結計畫與逐項回讀。
-
-## 驗證習慣
-
-- 清理／上傳一律「先凍結 SHA256 範圍 → 逐項回條 → 純回讀」，未知寫入只回查不重送；永久刪除永遠關閉，只做可恢復垃圾桶。
-- `pipeline/recovery_health.py` 是免連線的現況快照，可先看 worker 是否存活與各階段狀態。
-
-## 雲端寫入的工作階段依賴（實測）
-
-- 所有 Photos 讀寫都要一個「活著的 Photos 網頁工作階段」。本專案只認內建（Codex/ChatGPT app）瀏覽器工作階段；`~/.config/google-photos-migration/web-session.json` 的複製 cookie 幾分鐘內失效。
-- 失效的明確指紋：`PhotosWeb` 建構時 `AssertionError: Photos web session requires refresh`，直接驗證會看到 `GET https://photos.google.com/` 回 **302** 到 `https://www.google.com/photos/about/`。此時 cookie 模式不可用，且失敗發生在任何 journal／progress 寫入之前（不會留下半成品）。
-- 另一個 harness（例如 pi）**無法**借用那個工作階段：`native-browser-context.json` 記的 pipe 屬於特定 Codex session/turn，會過期；`/tmp/codex-browser-use/*.sock` 只服務當下那個 turn，外來的 `getInfo` 探測會 timeout。所以雲端步驟必須由持有內建瀏覽器的 session 執行，或由使用者先讓該工作階段復原。
-
-## 可重用的範圍凍結模式（category-excluded trash 學到）
-
-當清理需要雲端工作階段、但工作階段當下不可用時，把設計拆成兩段就不必等人：
-
-1. `--plan`：只用離線可驗證的證據凍結範圍（分類審閱、本機來源／成品 SHA256、對最新 Drive 列表的 name 唯一性＋size＋MD5＋file ID＋sha256），並把 plan SHA256 寫進授權紀錄。
-2. `--run`：寫入前才做雲端身分證明（`swbisb` 內容雜湊 → media key/dedup，必須與 `fDcn4b` 回讀的 dedup、檔名、位元組一致且無垃圾桶時間戳），先寫 journal `sending`，再送 `XwAOJf`，之後用 `zy0IHe` 垃圾桶回讀對帳；不確定寫入只回查不重送。執行器可重入。
-
-這樣「缺工作階段」只阻塞最後一步，不阻塞範圍、授權、測試與文件。
-
-## 用使用者自己的 Chromium 瀏覽器拿工作階段（實測可用）
-
-內建瀏覽器不可用時，若使用者授權自己的 Brave／Chrome，可以在**不碰使用者正在跑的視窗**下取得同一帳號的工作階段：
-
-1. 把整個 profile 目錄用 `cp -c -R` 複製到暫存沙盒（APFS clone，實測 2.2 GB profile 約 2 秒，實際佔用近零）。
-2. 刪掉沙盒裡的 `SingletonLock`／`SingletonCookie`／`SingletonSocket`，否則新實例會以 exit code 21 拒絕啟動（錯誤：`Failed to create .../SingletonLock: File exists`）。
-3. 啟動：`Brave Browser --user-data-dir=<clone> --profile-directory=Default --remote-debugging-port=9222 --remote-allow-origins=* --headless=new about:blank`；CDP 只綁 127.0.0.1。
-4. 用 CDP（Node 22+ 內建 `WebSocket` 即可，不需套件）：`PUT /json/new?<url>` 開 photos.google.com → 先 `Runtime.evaluate` 確認 `window.WIZ_global_data.oPEP7c` 是預期帳號，再 `Network.getCookies` 拿 cookie（**不要印出 cookie 值**）。macOS 上這是唯一不必碰 Keychain 解密的路（`Cookies` DB 的 v10 値需要 “Brave Safe Storage” 鑰匙）。
-5. 寫入專案的私有 0600 session 檔後**同一道命令串接執行**：複製的 cookie 只活幾分鐘。收尾要刪掉 profile 沙盒、cookie 暫存檔與暫存腳本；使用者原本的程序不受影響。
-
-## 非原畫質副本的清理真理
-
-有些圖庫副本在上傳時被 Google 重新編碼（`fDcn4b` 回報 `original_quality` false）。這種項目的內容雜湊永遠不會吻合（`swbisb` 回 0 筆），但身分其實完全確定：自己的 Takeout sidecar photo key ＋ 相同檔名 ＋ 相同位元組數。要動這種項目就把它做成**另一個常規閘門**：只當 `media_key` 存在、`original_quality is False`、檔名與位元組完全相同、且未進垃圾桶時才放行；放寬必須有自己的授權檔（綁 plan SHA256），journal 重開前先匯出舊回條當稽核（`*-journal-before-reopen-*.jsonl`），每筆結果要記下用了哪種證明。實例：47 筆中 33 筆內容雜湊、14 筆 sidecar/大小身分，兩者都逐項回讀並在垃圾桶列表獨立掃到 47/47。
+[完整原始紀錄與逐批驗證](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/google-photos-q70-migration/pipeline-operations.md)

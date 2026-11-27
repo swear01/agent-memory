@@ -6,82 +6,11 @@ status: active
 updated: 2026-09-10
 ---
 
-# 已驗證的啟動條件
+# Inari Caddy 啟動與公開 HTTPS
 
-- macOS 26.6.2 的系統 LaunchDaemon 使用 `UserName=_www` 執行 Caddy 時，
-  `StandardOutPath`／`StandardErrorPath` 指向的日誌若位於 `_www` 無法建立
-  檔案的目錄，可能反覆停在 `spawn scheduled`、`last exit code = 78: EX_CONFIG`，
-  而完全沒有 Caddy 日誌。先建立日誌檔並設為 `_www:_www`、mode 640，再
-  `launchctl kickstart system/<service-label>`，本次成功啟動。
-- Caddy 2.11.4 官方 release 的 `checksums.txt` 使用 SHA-512；不可假設為
-  SHA-256。下載的 macOS arm64 archive 已用 SHA-512 成功核對。
-- 此機實測 Caddy 可由 `_www` 帳號監聽 80／443；不必讓 Web server 以 root
-  執行。憑證資料目錄須另設為 `_www` 可寫、mode 700。
-- 常駐網站需要防止系統睡眠。最初將 AC 閒置計時器從 1 分鐘改為
-  `pmset -c sleep 0`，但 2026-09-10 證實這不足以阻止返回維護睡眠；
-  現行修正與驗證邊界見下方「網站睡眠中斷」。
+- 系統 LaunchDaemon 的 `UserName=_www` 遇 `spawn scheduled` 或 `EX_CONFIG` 且沒有 Caddy 日誌，先查 stdout/stderr 目標能否開啟。預先建檔 `_www:_www`、mode 640 再 `launchctl kickstart system/<service-label>`。此機已驗 _www 可監聽 80/443，讓 certificate state 目錄另為 _www 可寫、mode 700。官方 Caddy 2.11.4 使用 SHA-512 checksum，依該 release 核對 digest。
+- HTTP localhost、LAN 或 NAT loopback 成功不能證明外部可信 HTTPS。分開驗外網 SYN、DNS、ACME、憑證和正式 URL，再發布 canonical。若同一外網探測對正常 IP 可在 WAN 匹配 SYN、舊站 IP 不可，查臺大 CERT 精確 IP 狀態和 WAN 記錄。曾重新安裝 OpenSSH 後仍在列管，須由登記網管依規定解除，不能猜 CVE 或認為升級後自動解除。歷史解除後，既有 Caddy 自行取得憑證，沒有重設 DNS、防火牆或服務。[臺大 CERT 精確 IP 查詢](https://cert.ntu.edu.tw/Module/Index/ip.php)
+- 發布前確認 main／artifact 的實際 SHA。可採同一 GitHub Pages run 的 `github-pages` artifact 內 `artifact.tar`，避免兩站出不同提交；檢查成員路徑及 symlink，切換成品後保留舊 release 作 rollback。驗證首頁、主要語言頁、成員頁、robots/sitemap 和未知路徑 404。
+- 網路狀態時好時壞時先查 `pmset -g log`。Maintenance Sleep／`Sleep Service Back to Sleep` 在 `sleep 0`、`standby 0` 下仍發生，Enet.Service DarkWake 後可恢復。駐站使用 `sudo pmset -a disablesleep 1`，查 `pmset -g` 和 IOPMrootDomain 各自顯示 1/Yes，避免改到螢幕 timer；撤回為 `sudo pmset -a disablesleep 0`。當時外網 TLS 已重驗、Caddy 程序未變；未做強制睡眠或重開驗證，也未查明更早進入 Maintenance Sleep 的觸發。 [Apple pmset source](https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmset/pmset.m)
 
-# 驗證邊界
-
-服務啟動、內網 HTTP 成功、或 NAT loopback 成功，都不能代替真正外網 HTTPS
-驗證。憑證尚未簽發時必須分開回報部署成功與公開站未就緒，不能先發布指向
-不可用主站的 canonical。網路是否正常需每次重新測量。
-
-# 舊網域 IP 管制根因（2026-09-08 查證）
-
-- 網站舊公網 IP `140.112.171.142` 在臺大 CERT 的「目前違規紀錄」及
-  「OTHERS 受到 IP 管制中的主機」均有紀錄：2025-08-28 15:59，
-  `Others-openSSH漏洞`。公開頁未列 CVE，不能自行推定漏洞編號或修復狀態。
-- 官方來源：<https://cert.ntu.edu.tw/Module/Index/ip.php> 的精確 IP 查詢；
-  當日名單位於 <https://cert.ntu.edu.tw/Module/Index/blocklist.php?type=others&page=4>。
-  分頁及列管狀態會變動，後續恢復工作須重新查證。
-- 同一外網節點探測時，防火牆 WAN1 能收到送往正常公網 IP 的 SYN，卻收不到
-  舊站 IP 的 SYN；舊站出站封包已正確 NAT 後離開 WAN1，但無回包。不要再把
-  內網 NAT loopback 成功當成校網已解除封鎖的證據。
-- 實機 `sshd -V` 為 OpenSSH_10.3p1，macOS 26.6.2 (25G83)；重灌之後仍在
-  列管名單。需由登記網管按官方流程確認原事件修復並申請解除，不能藉換 IP
-  或代理來規避尚未解除的資安限制。
-
-# 解除管制後恢復（2026-09-09 實測）
-
-- 網管回覆重新啟用後，Caddy 不需改設定或重新啟動即取得可信憑證；
-  inari 連 ACME directory 恢復 200，Moldova／Sweden 兩個海外節點對
-  原網域 HTTPS 均回 200，解析仍為原 IP。恢復未改 DNS 或防火牆。
-- 更新網站時需先同步 GitHub 最新 main，避免發布解除管制前的舊成品。
-  靜態 release 採日期與提交編號命名；原 release 保留供回復。
-  主站首頁、中英文頁、成員頁、robots 與 sitemap 和建置成品逐位元一致，
-  不存在的路徑回 404。GitHub SEO 已透過 PR #84 合併發布，線上 canonical 指向原網域。
-- 發布期間 main 可能有其他提交；同步主站時可下載該次 Pages workflow 的
-  `github-pages` artifact，解開內含 `artifact.tar` 部署至 inari，避免兩站
-  由不同提交建置。切換前先檢查 archive 不含路徑穿越或符號連結。
-
-# 網站睡眠中斷（2026-09-10）
-
-- DNS 正常但 HTTP/HTTPS 連線逾時。電源日誌顯示 15:42:16 因
-  `Sleep Service Back to Sleep` 睡眠，15:57:26 因 `Enet.Service` 網路事件
-  進入 DarkWake，隨後網站恢復。這支持主機睡眠是此次中斷原因；不能把
-  先後測試的內外網結果誤判為持續性的特定網路路徑故障。
-- `sleep 0`、`standby 0` 已設定時仍有 Maintenance Sleep／Sleep Service
-  返回睡眠紀錄；更早進入該循環的觸發因素未查明。不要宣稱找到 macOS
-  睡眠機制本身的根因，或沿用舊的「sleep 0 已足夠」結論。
-- 在 Inari 執行 `sudo pmset -a disablesleep 1`。16:03 再查
-  `pmset -g` 的 `SleepDisabled 1`、IOPMrootDomain 的 `SleepDisabled = Yes`，
-  並確認 `/Library/Preferences/com.apple.PowerManagement.plist` 中
-  `SystemPowerSettings.SleepDisabled = true`。這是已寫入磁碟且核心生效的
-  防睡眠設定；此機設定檔不在舊的 `SystemConfiguration` 子目錄。
-- Apple PowerManagement 的 `pmset/pmset.m` 設定系統電源鍵，
-  `pmconfigd/PMSettings.m` 將其送到核心；XNU `IOPMrootDomain.cpp` 的
-  `checkSystemSleepEnabled` 會因 `userDisabledAllSleep` 拒絕睡眠。
-  此原始碼證據支持設定機制，但不是本機重開機或長期運作實測。
-- 一般手動睡眠也會停用；螢幕仍保留 10 分鐘休眠。回復命令為
-  `sudo pmset -a disablesleep 0`，只應在不再需要此防睡眠策略時使用。
-- 修正後本機多次 HTTPS 200、成員頁 200，Oracle 海外主機 HTTPS 200，
-  TLS 驗證成功；Caddy 程序不變，無須重啟、重新部署或變更 DNS／防火牆。
-  同日 CERT 精確 IP 查詢無目前違規紀錄，舊事件已在歷史結案清單。
-- 已確認阻止睡眠的設定生效及網站恢復；尚未重開機驗證，也未主動令
-  正式主機睡眠。不要把短期驗證寫成永久不會斷線的保證。
-
-來源：
-- <https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmset/pmset.m>
-- <https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmconfigd/PMSettings.m>
-- <https://github.com/apple-oss-distributions/xnu/blob/main/iokit/Kernel/IOPMrootDomain.cpp>
+[各階段舊 IP、電源、部署與 HTTPS 收據](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/machines/inari/caddy-launchdaemon.md)
