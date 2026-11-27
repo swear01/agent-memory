@@ -4,7 +4,7 @@ scope: machines/gups
 machine: gups
 status: active
 created: 2026-11-24
-updated: 2026-11-24
+updated: 2026-11-28
 tags: [gups, ieda1, hang, 卡死, POST 76, ASMedia, ST2000DM008, BIOS, netconsole]
 ---
 
@@ -29,5 +29,6 @@ tags: [gups, ieda1, hang, 卡死, POST 76, ASMedia, ST2000DM008, BIOS, netconsol
 - 把 gups 的 BIOS 更新到 F12g，和 ieda2 一致；要到現場用 Q-Flash 更新。
 - 長期把系統碟換成 NVMe。IPA、/home NFS 和 EDA 暫存目前都放在同一顆 HDD 上。
 - 卡住時要完全斷電再開；只按 reset 可能會停在 POST 76。
+- 2026-11-26 另有一次日誌停更：那是記憶體耗盡後 `sssd` worker 與 `systemd-journald` 掛掉（journald 撞上 StartLimit），不是這種沒有 OOM 紀錄的沉默卡死。見 [[sssd-login-memory-protect]]。
 
-相關：[[campus-firewall-ssh-rate-block]]、[[freeipa-ieda-servers]]、[[nfs-home-ieda2]]
+相關：[[campus-firewall-ssh-rate-block]]、[[freeipa-ieda-servers]]、[[nfs-home-ieda2]]、[[sssd-login-memory-protect]]

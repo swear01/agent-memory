@@ -2,7 +2,7 @@
 title: "國立臺灣大學學生校園郵件（Webmail 2.0 / Roundcube）客戶端連線規範與校外連線除錯"
 scope: "domains/other"
 status: active
-updated: 2026-09-26
+updated: 2026-11-28
 ---
 
 # 國立臺灣大學學生校園郵件（Webmail 2.0 / Roundcube）客戶端連線規範與校外連線除錯
@@ -70,3 +70,8 @@ tell application "Mail"
     set delete messages when moved from inbox of acc to false
 end tell
 ```
+
+## 用 Gmail 收校園信箱時的核對陷阱（2026-11-28）
+
+Gmail 若用 POP3 收這顆校園信箱，拉取間隔可能長達數小時，不能拿它來確認剛經 `smtps.ntu.edu.tw` 寄出的信。要立刻核對時，用唯讀 POP3（`STAT` + `TOP`，不要 `DELE`）直連 `msa.ntu.edu.tw:995`。從校園帳號寄信的工具路徑見 [[himalaya-ortie-setup]]。
+

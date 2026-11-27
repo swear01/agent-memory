@@ -3,7 +3,7 @@ title: "ieda1/ieda2 lab servers: FreeIPA, network, hardening"
 scope: machines/gups
 machine: gups
 status: active
-updated: 2026-10-30
+updated: 2026-11-28
 ---
 
 # ieda1 / ieda2 lab servers (FreeIPA) — 2026-10-30
@@ -37,3 +37,8 @@ updated: 2026-10-30
 - The roughly 20 older student accounts on ieda1 are still local `/etc/passwd` users, not in IPA, so they cannot log in to ieda2. Migrating them is the user's call.
 - The handover doc 「GUPS伺服器交接資訊.md」 was rewritten on 2026-10-30. At the user's request it holds the IPA admin and Directory Manager passwords in plaintext (also in Bitwarden), plus the ieda1 root password.
 - 2026-11-24：ieda2 的 journald 改成持久化（`/etc/systemd/journald.conf.d/10-persistent.conf`，Storage=persistent，SystemMaxUse=4G）；ieda1 原本就是持久化。
+
+## Login protection against RAM exhaustion (2026-11-28)
+
+- 2026-11-26 ieda1 記憶體被多個大型 Innovus 作業吃滿後，SSSD worker 與 journald 掛掉，所有 IPA 學生登入失敗。主行程仍活著時 `systemctl` 會誤報正常。詳見 [[sssd-login-memory-protect]]。
+- ieda1、ieda2 已套同一套保護：`user-.slice` 230G 硬上限（Rocky 8 cgroup v1 要靠 `MemoryLimit=`，`MemoryHigh` 不會生效）、sssd/journald 自動重啟與較低 OOM 分數、2 分鐘 `sssd-watchdog`、earlyoom、`vm.min_free_kbytes=1G`。
