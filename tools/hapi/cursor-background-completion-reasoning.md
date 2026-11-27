@@ -71,3 +71,22 @@ event. Keep the completion pending until a user-visible report explicitly
 covers it or a structured terminal result is committed to the transcript.
 An arbitrary file path, terminal-like output, or an unrelated successful
 assistant reply cannot establish this relationship.
+
+## Which Cursor clients share this behavior
+
+In CLI build 2026.11.22-e9042b2, interactive, print and ACP modes share the
+background registry implementation and completion payload format. Each entry
+point drains notifications separately. Interactive handles a terminal Await
+in its UI, and print mode with stream-json writes a structured
+`system/task_notification` before the follow-up. ACP uses its own drain and
+presenter. A change confined to ACP affects clients running that Cursor ACP
+version. Moving result accounting into shared Cursor code can cover all three
+entry points while preserving their output contracts.
+
+Ordinary CLI processes and individual ACP sessions construct separate
+in-memory registry instances. A probe using the packaged registry confirmed
+that suppressing a pending shell ID in one instance left the same ID in another
+instance available. It also left a pending item with that ID in a different
+conversation available in the same registry. This test concerns pending items.
+On the HAPI side several agents share AcpSdkBackend, while the post-done
+suppression rule is installed by the Cursor launcher.
