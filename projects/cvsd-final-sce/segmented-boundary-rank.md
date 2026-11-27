@@ -13,3 +13,5 @@ tags: [sce, seam, segment, sram, traceback]
 - 跨 seam 共用 pixels 時，下一個 replay 帶在共用界列至多用三個舊 U bytes，包含可能被前帶刪掉的中心。hit W 前將這些舊值明確保留到下一帶。只有 command 無同拍衝突的檢查，抓不到晚發的舊版讀。每筆 Q 需核對版本與地址，並禁止從已覆寫 loc 再發舊 R。
 
 PAT2／PAT5 各重數 28,448 個差值，seed41、全零空段和最左平手亦通過。原工作及重跑腳本見 [SCE-41](https://github.com/swear01/cvsd-final-sce/blob/d15f9f8ec08f823ac44802340473a66dca5ade6d/exp/area/segmented-overlap/sce41.md)。
+
+- 兩個 admitted scan rows 要分配可重用的空 slot ID，並保留各 slot 的絕對 row。兩個 active rows 可以同 parity，且 t+2 Q 歸屬需要用完整地址核版本。量本地 scan 讀寫要看真正接受的 DP vector、halo、hit-W 來源及舊帶移交。SRAM bank 單埠並不限制 local scan 埠數，SCE-51 曾在同一 bank 同拍看到三個 resident 讀與兩個新寫，五址互異。即使 slot 容量足夠也要付這些埠，或用實際仲裁停拍重驗。採 first-hole 搬出 rank low byte 時，把歸還到最後使用的持有狀態、版本和移交都計回。[SCE-51](https://github.com/swear01/cvsd-final-sce/blob/83d3d869c6335779aea914f39e98e811d4c2e4c6/exp/area/segmented-overlap/sce51-two-row-budget.md)。
