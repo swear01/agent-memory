@@ -11,3 +11,5 @@ updated: 2026-11-28
 
 - SCE-16：如果 ICV 把 SRAM black-box pin 改名成 `ICV_<n>_<pin>`，先跑原名比較並保留萃取。以同一 GDS、含 PG 的 schematic 網表和 deck 重驗，只在空 subcircuit header 加入逐一核對的 pin alias。原名的 fixture LVS FAIL，套用 alias 後 24 顆、698 nets／ports 全配對，29 個 `text_open_rename` 仍存在。兩份萃取只差工具生成的 instance ID，依宏座標展開皆對到 696 個 signal 與 48 個 PG 頂層網。
 - Innovus `verify_drc` 對 LEF obstruction 的間距和 CBDK 對 stream-out 的實體間距應各留報告。SCE-16 的 VIA45 cut 到 macro OBS 只剩 0.005 µm，但 vendor GDS 該層無 cut，ICV 對同次 GDS 0 違規。向外移 via 補 0.215 µm 反而縮小對 VSS 的實體間距，先核對 PG 再決定改 abstract 或重繞。證據在 SCE repo `exp/area/safe-fp/cj12-narrow-native-route.md`。
+
+- SCE-21：Innovus 25.10 的 `saveDesign` 可在 `libs/lef/` 建指向原輸入的絕對 symlink。複製 checkpoint 後先查 `readlink`，替換副本時用原子 rename 解除 symlink。變更 LEF 觸發 `IMPIMEX-7024` 時，從鎖定 DEF 用新 LEF 重新匯入，保留 checkpoint 的完整性檢查。對固定 SRAM access，可依同次 stream 的實際 VIA45 cut 與 tech LEF 間距在 cut OBS 做局部窗口。SCE-21 用 29 個窗口把 VIA45 markers 由 356 降到 0。先比較完整 GDS 元素（只去日期與輸出順序）、PG 網表及 LVS SPICE，再以實體輸入等同性沿用 CBDK 結果。有新幾何時重驗正式 deck。[SCE-21 報告](https://github.com/swear01/cvsd-final-sce/blob/d6cac8920043d5be04f1710a0c160c6aed0fd5cd/exp/area/safe-fp/cj12-native-abstract.md)
