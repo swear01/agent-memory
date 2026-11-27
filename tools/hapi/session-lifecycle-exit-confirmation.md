@@ -2,7 +2,7 @@
 title: HAPI inactive lease 不能代替 runner 程序退出確認
 scope: tools/hapi
 status: verified
-updated: 2026-11-12
+updated: 2026-11-28
 ---
 
 Hub `Session.active` 是心跳 lease；30 秒失聯即可變為 false，並不證明 detached runner child 已退出。新 lifecycle 操作不能只依賴 inactive 就 archive 或 delete，否則程序可能仍在跑，Hub 紀錄卻已消失。
@@ -35,3 +35,13 @@ Shared Codex runtime 的 KillSession 已將指定 root binding 設為 inactive�
 上游 PR `tiann/hapi#1930`，head `86abb6b8a5667d055d5de0c355fd6a7c6a60c8b3`，將 registry binding 的確認移出 sibling 條件：inactive binding 可確認指定 root 已封存；active binding 仍回 still_alive，absent binding 且沒有其他退出證據仍保持 unknown。Sibling 存在本身不是封存證明，也不能停掉共用 wrapper 的其他 roots。這是官方 main 也有的 runner 問題，與未合併 #1771 的 fresh-remit binding 整合缺口分開。
 
 七個 stopSession 回歸案例通過，上游 PR CI／Codex review 通過；2026-09-28 查核 PR 仍 OPEN，等待 maintainer，未合併。個人維護版 `.4` 已 carry 此 head，Mac／mazu 新 Codex session 的首次 archive 實際通過，六個既有 session roots 維持原 PID／start time。舊未部署主機或其他 Agent 的封存結果仍須個別驗證。
+
+
+## Shared Codex 升版與待送附件（0.36.7.1）
+
+- 封存再重開可以保留 HAPI ID、Codex native thread ID、已送出的歷史、標題、置頂及排程文字。隔離環境以 HAPI 0.36.7.1 和真實 Codex 0.172.0 驗證新程序可續回覆。
+- 即使 session 閒置，archive 仍會移除已上傳但未送出的 composer 附件。忙碌案例也接受 archive，排隊文字可能仍在而附件檔已消失。Archive API 沒有原子的 idle 條件，先讀 `thinking=false` 再封存有競態。Fleet 升版保留仍執行的 child 與其 runtime，讓它自然退出。
+- 同時確認 Hub inactive 與舊程序已退出後，可用 `POST /api/sessions/<id>/reopen` 啟動原 session，無須注入訊息。收到成功回應後讀回回傳的 session ID、比對舊 PID／start marker，並核對新程序的版本。隔離測試中，重開後 Hub 曾先顯示 active，再更新 metadata.hostPid。
+- 直接執行 `hapi hub --help` 在此版本可啟動 Hub。查參數時優先讀對應原始碼。測試啟動時指定隔離 HAPI_HOME 與 loopback port。
+
+[版本來源](https://github.com/swear01/hapi/releases/tag/v0.36.7.1) · [驗證紀錄](https://github.com/swear01/hapi/pull/39)
