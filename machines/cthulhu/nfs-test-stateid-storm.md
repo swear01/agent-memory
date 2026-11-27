@@ -3,7 +3,7 @@ title: cthulhu NFS 卡頓：NFSv4.1 client 的 TEST_STATEID 風暴（kernel 7.0.
 scope: machines/cthulhu
 machine: cthulhu
 status: fixed — verified 2026-11-19 after reboot
-updated: 2026-11-19
+updated: 2026-11-27
 tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 ---
 
@@ -27,3 +27,5 @@ tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 相關：[[machines/cthulhu/shared-nfs-home]]、[[machines/hapi-fleet/system-install-via-admin]]
 
 **2026-11-19 重開後驗證**：cthulhu、mazu、zeus、valkyrie、athena 全部跑 `7.0.0-43-generic`。`/proc/self/mountstats`（用 `su_<host>`／swear02 才有 sudo，swear01 沒有）的 TEST_STATEID 五台都是 0，10 秒取樣也是 0/s；DELEGRETURN 不是 0，代表 delegation 仍在正常使用。cthulhu 開機 2.5 小時內 OPEN 約 20 萬次也沒有風暴。D state 只剩使用者 `cp` 正常等 I/O；dmesg 只有一筆 `fileid changed`，不是這個 bug。
+
+**2026-11-27 復發（mazu）**：mazu 跑的仍是 7.0.0-43，10 秒取樣 `/home` 的 TEST_STATEID 約 1,131 次/秒，同時段 valkyrie 為 0。`GETATTR` 排隊 18 ms，HAPI 的 Codex 啟動因此超過 20 秒期限，見 [[tools/hapi/codex-fleet-peer-protocol]]。觸發原因尚未查明，下一步是比對 mazu 與 NAS 的 delegation 狀態。
