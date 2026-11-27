@@ -35,6 +35,8 @@ tags:
 
 覆蓋檔案只能清 working tree。經明確授權做歷史清理時，先備份 refs 和未提交差異到私有且未索引的位置，隔離重寫並逐筆核對受影響的 commit、目標 tree、最新遠端 SHA 與完整 CI。僅更新指定 branch 並以舊 SHA 作 lease。若只改 metadata，先確認工具會否重寫早期簽章；`git filter-branch --env-filter` 曾擴大受影響範圍。
 
+歷史改寫會改變固定原文連結。用私有的舊 SHA → 新 SHA 映射更新現行筆記與封存檔，並用 `git cat-file -e <sha>:<path>` 逐一驗證。敏感內容曾進入 QMD 時，先更新來源與排除範圍，再對共享和獨立索引執行 `qmd update`、`qmd cleanup`，查資料庫與可搜尋文件是否仍有匹配。
+
 其他 checkout 要在乾淨的遠端 main 上重套本機工作，避免再次推回舊歷史。即使 branch 和 PR refs 都已清乾淨，舊 SHA 仍可能由 GitHub API 或快取讀取。遠端快取清除須另查 GitHub Support 的處理結果。
 
 [完整工作流演進與驗證紀錄](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/global/workflows/shared-memory.md)
