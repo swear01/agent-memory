@@ -40,5 +40,5 @@ tags: [unity, platformer, camera, character, prefab, manual-import]
 
 ## Mac 上的專案位置
 
-- 這台 Mac 的遊戲工作區在 `<user-home>/Games/`。`game_per_week` 是其中獨立的週更原型 repo。舊的 `Documents/project` 和 `Documents/game_per_week` 是相容捷徑。
+- 這台 Mac 的遊戲工作區在 `<user-home>/Games/`。`game_per_week` 是其中獨立的週更原型 repo。舊路徑已移除，開啟專案時使用 Games 下的實際路徑。
 - 個人 fork 分支 `archive/local-character-camera-202609`（`70192ad`）保存本機角色動畫、貼圖與相機碰撞遮罩。這批修改未合入 main。
