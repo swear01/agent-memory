@@ -10,4 +10,4 @@ updated: 2026-10-01
 - **新增 spec 外硬體支援或擴大 formal 結論。** 依規格 rotate b=0..16、Gaussian a∈[-1,1]、矩陣八個有效輸入完才發下一指令。官方 I0–I10 與額外 368,779 vectors 已 PASS。Formal 執行 `bash formal/run.sh`，以 XML 核對 19 proved、24 covered、17 non-vacuous 和兩個 reset／合法 opcode assumptions；不把控制／狀態證明外推成完整數學 datapath proof。跑中途 reset 和隔離 mutation 驗 harness 能拒錯。
 - **ADFP launcher 只驗 VPN stub，或只看到 review SUCCESS。** 讀原測試／實際會話紀錄再判斷 VPN、CDP、上傳或 review。gate off／skipped／增量零不是最新 head 的完整 passing review。源碼與作業證據保留私人 `swear01/CVSD2026`；先讀已繳交 receipt，避免把本機舊工作樹當目前版本。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/ntu-cvsd-adfp/hw1-closeout.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/ntu-cvsd-adfp/hw1-closeout.md)

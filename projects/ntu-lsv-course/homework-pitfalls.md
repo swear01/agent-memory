@@ -10,4 +10,4 @@ updated: 2026-11-28
 - **把老師的 Q4 對角線慣例當成代入公式。** 先查該週檢討逐字稿。HW3 的 i=j 代表保持原變數且不取反，所以對角線都在各關係；公式的取反只用於 i≠j。依本題慣例 S1、S3–S8 為等價關係；S2 自反、對稱但不遞移。修改引用老師的說法前對原音或逐字稿。
 - **作業版面淹沒要給分的推導。** QMC 要列 pairwise merge，`00` 拒絕項另列。Covering matrix 用細全格線、輸出間以雙線分隔；cyclic core 分「單 1 的列選 essential prime」與「prime 涵蓋列」兩表。集合大小用 `\lvert S\rvert`。短證明只保留一個論證和結論；代碼、CLI、實驗流水留在工作目錄。依該次題目和使用者要求填 AI disclosure，effort 從實際 metadata 查。
 
-[HW2 繳交與版面證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/ntu-lsv-course/hw2-submission-and-writing.md) · [HW3 遲交及題意訂正原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/ntu-lsv-course/hw3-late-submission.md)
+[HW2 繳交與版面證據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/ntu-lsv-course/hw2-submission-and-writing.md) · [HW3 遲交及題意訂正原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/ntu-lsv-course/hw3-late-submission.md)

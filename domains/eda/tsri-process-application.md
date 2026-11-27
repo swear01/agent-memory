@@ -12,4 +12,4 @@ updated: 2026-10-30
 - 製程申請代理人可用本人登入進案件協助行政。PDK/CBDK 的 NDA 下載資格仍需列於當年度核准使用者名單，代理權不會代為取得，介面也沒有切換教授身分按鈕。年度法治測驗須本人作答；上一年度通過不沿用，先核對目前製程年度及本人完成狀態。
 - 學生看到「查詢製程授權名單」No Permission 不足以判斷個人資格，請看「檢視下線資格」中的「您的製程授權」（英文預設可能收合）。當次 116 年度測驗完成後 U18 已顯示，並非所有案件都保證立即匯入。若被導回 SSO 請走正常登入，憑證異常需先驗官方端點。
 
-[原範本結構、年度測驗及 U18 驗收紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/eda/tsri-process-application.md)
+[原範本結構、年度測驗及 U18 驗收紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/eda/tsri-process-application.md)

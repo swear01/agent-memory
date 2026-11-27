@@ -10,6 +10,6 @@ updated: 2026-11-28
 - 重啟 runner 本身不會補退出證據。歷史修復在證明特定舊程序已退出、並備份 state 後，補其 verified-exit tombstone，再用保留 child 的 supervisor 設定重載。程序身份或退出有疑問時保留原 state，見[退出查證](session-lifecycle-exit-confirmation.md)與[監督程序操作](supervisor-safe-operations.md)。
 - 測試收尾只處理自己建立且已交接的 session。Archive 完要讀回 lifecycle；刪除另看授權。清工作樹前查 Session CWD、dirty 狀態及 branch 歸屬，留下未驗證或有工作中的樹。0.35 請用 [peer CLI 對照與 archive 工具](peer-cli-0-35-command-changes.md)。
 
-[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/spawn-peer-failure-triage.md)
+[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/spawn-peer-failure-triage.md)
 
-- **Runner 在線，但 Codex child 立即 exit 1。** Hub 200、runner heartbeat／PID／控制埠正常，只證明 transport 路徑。沿 child 實際 launcher 收 stderr、cwd 和權限，分別報告 runner liveness 與該 session 可用性。根因不明時，重啟不是驗證。見 `git show 2505b5e:tools/hapi/runner-liveness-child-start.md`。
+- **Runner 在線，但 Codex child 立即 exit 1。** Hub 200、runner heartbeat／PID／控制埠正常，只證明 transport 路徑。沿 child 實際 launcher 收 stderr、cwd 和權限，分別報告 runner liveness 與該 session 可用性。根因不明時，重啟不是驗證。見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/runner-liveness-child-start.md`。

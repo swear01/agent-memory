@@ -53,4 +53,4 @@ tags: [hapi, fork, upstream, release, permissions, rehearsal]
 - Codex duration 用獨立 `turn_duration` metadata，重送 token_count 會重算用量。用 live start／matching completed turn，local 用 record timestamp，remote/shared 在 async queue 前取 receipt time。持久化尾頁可缺起始 user row。關聯 native turn ID，涵蓋 Code Mode hook、late token_count 和既有無標記資料；避免舊 turn 覆寫較新 usage。Live Plan call/result IDs 同 turn 穩定、跨 turn distinct，否則會重用舊 Plan 卡片並清掉摘要。
 - Pi RPC delta 已排 promise chain 時，rejection／cleanup flush 需要進同一 queue 並 await，避免掉最後一段。純 CPU 圖片註冊保持同步可去掉這個排序依賴；讀本地檔在同一 FD 做 fstat 和有界讀取，檢查增長、保證 close、避免 FIFO 阻塞。保留完整 PNG magic、error status 和 nested image payload。Pi execute signature 以 pinned tag 為準，驗證使用實際 RPC、原 extension 和隔離 model endpoint。
 
-舊版發版清單、各機結果、精確 head 和測試收據見 [整理前固定版本](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/projects/hapi-fork-maintenance.md)。
+舊版發版清單、各機結果、精確 head 和測試收據見 [整理前固定版本](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/projects/hapi-fork-maintenance.md)。

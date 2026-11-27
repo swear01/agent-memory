@@ -10,4 +10,4 @@ tags: [PHASE, phase-demo, HTML, demo-final, Sites, GitHub, itch.io, tile-grid, p
 - **itch 富文字預覽有介紹，但存完為空。** 送 Space、Backspace、Tab 讓具名 `game[description]` textarea 同步，再儲存與讀回公開段落。對公開遊戲檔核正確 hash 和真實鍵盤操作；腳本八關通過只證指定路徑可玩，不能保證難度或唯一解。
 - **修改 inactive spikes 牽動了碰撞或色相。** 定版停用齒形是低彩實心，保留方向與範圍，混色標記只留串首。跳或 wall jump 才依序換相，失敗空中跳及 dash/climb 不換相；換相當下的內嵌尖刺判定要維持。更新需重新核啟用尖刺像素、四向停用樣式和原生流程。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/phase-html/final-demo.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/phase-html/final-demo.md)

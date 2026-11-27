@@ -26,4 +26,4 @@ source_refs:
 - **隊列 ack 不代表 Hub 落盤。** Shell progress 和 terminal completion 各有 wakeup ID；當時 Cursor 對 queued completion 做 batch drain，回合返回後才 ack，失敗可 requeue。合成測試可證明隊列行為，仍須讀原 Hub transcript 驗使用者可見結果。
 - **只修一個入口。** Cursor 2026.11.22-e9042b2 的 interactive、print、ACP 共用 registry 實作但各自 drain。Interactive 有 Await suppression，print stream-json 發 `system/task_notification`，ACP 有獨立 presenter。Registry 實例與 conversation 範圍都要核對，同 shell ID 不能跨實例或對話去重。HAPI 的共用 AcpSdkBackend 也不表示所有 agent 都安裝 Cursor 的 post-done rule。
 
-[完整原始紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/tools/hapi/cursor-background-completion-reasoning.md)
+[完整原始紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/tools/hapi/cursor-background-completion-reasoning.md)

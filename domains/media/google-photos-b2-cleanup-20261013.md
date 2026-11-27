@@ -19,4 +19,4 @@ tags: [Google Photos, Q70, HEIC, HEVC, Takeout, Backblaze, B2, quota, recoverabl
 - 根目錄 `full-backup-closeout-receipt-20261015.json`、`final-backup/` 的 objects／SHA256SUMS／RESTORE.txt／RESTORE-MAPS.json 為恢復入口，優先於舊 frozen manifests 的 pending 欄位。還原 My Maps 時看根修正的 `restore_path`，早期清單有重複 `.kmz` 副檔名。
 - 對已授權 409 項驗精確 Trash／替代品，沒有清空 Google 垃圾桶。舊 B2 版本與 multipart 舊工作已收尾、監控維持 PAUSED。當時「Synology」口述是 Oracle，沒有對 NAS 清理。Oracle 已用逐項 Git／reflog／遠端保存／程序引用判斷舊 HAPI 工作樹，保留 dirty、claim、使用中和無獨立保存證據者，不因 mtime 或 node_modules 佔用就刪來源。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/media/google-photos-b2-cleanup-20261013.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/media/google-photos-b2-cleanup-20261013.md)

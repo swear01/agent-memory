@@ -42,4 +42,4 @@ generated_by: openai-codex/gpt-5.6-luna
 - Restart 成功後若仍跳 TCC 提示，直接重驗觸發操作與負責程序。重啟、簽署或讀回授權各自只證明當步驟。
 - 舊 inode 的 session 在更新後曾報 `Process exited unexpectedly: Claude Code process exited with code 126`、`Dropping the queued message`。用 `/usr/bin/log show` 看 tccd 的 `Failed to fetch responsible file descriptor`，核對 launcher 是否經 symlink 指到 Documents。已驗證的預防是把 launcher 複製為實體檔；其餘受保護路徑仍要重驗。等舊 session inactive 後，用新版恢復並重新投遞被丟掉的訊息。0.35 的 `ping-peer` 需 `--wake` 才會恢復 inactive session；看到新版程序及 agent 輸出才算成功。
 
-[整理前完整紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/supervisor-safe-operations.md)
+[整理前完整紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/supervisor-safe-operations.md)

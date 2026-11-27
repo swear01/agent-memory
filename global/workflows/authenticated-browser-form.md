@@ -24,4 +24,4 @@ tags:
 - **Forms 檔案 picker 讀得到、卻不能用頁面 JS 塞本機檔案。** 頁面對 loopback 的 fetch 曾回 `Failed to fetch`。已驗證可放進既有 Google Drive for desktop 同步目錄，再在 picker 的「我的雲端硬碟」選取。內建瀏覽器 `window.open` 曾取代原分頁，草稿恢復後重查單選與附件。送出後確認已複製到表單，也再決定清理備用檔。只收 PDF 時，先合併、逐頁驗證。
 - 共用記憶只留去識別規則。私人表單網址、姓名、聯絡資料、代碼與正文留在受控來源。
 
-[整理前完整證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/global/workflows/authenticated-browser-form.md)
+[整理前完整證據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/global/workflows/authenticated-browser-form.md)

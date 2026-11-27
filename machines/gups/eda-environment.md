@@ -30,4 +30,4 @@ updated: 2026-10-27
 
 相關：[[cadence-innovus-stylus-vs-legacy-flow]]、[[innovus-physical-check-points]]。
 
-[舊套件盤點、UART／CTS 逐次量測與維護收據](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/machines/gups/eda-environment.md)
+[舊套件盤點、UART／CTS 逐次量測與維護收據](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/machines/gups/eda-environment.md)

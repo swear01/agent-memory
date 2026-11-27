@@ -26,4 +26,4 @@ generated_by: openai-codex/gpt-5.6-luna
 - **IDs 與雜湊相同，但衍生 manifest 丟了欄位。** 若宣稱保留 row identity，就比較完整原始物件；另外證明集合互斥及聯集。對有損版本留證據、版本化修正。折疊同一 NFS 或 exact duplicate，衝突測量保留個別來源。
 - **掃程序或指令列拿到密鑰。** 發布前掃並就地替換敏感值，留範圍與前後 hash，驗證實驗語意、結果與負載數據未變。原始 snapshot 留在受控來源。
 
-[整理前完整紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/global/workflows/experiment-evidence-boundaries.md)
+[整理前完整紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/global/workflows/experiment-evidence-boundaries.md)

@@ -21,4 +21,4 @@ updated: 2026-09-21
 - **只看到 first lookup／`passed` 就說 solver 用到了。** `First plain predicate-map precision lookup/handoff` 僅非空 plain map（不含 witness），記第一次位置及計數，不提供身份。#254 的 `passed` 在 `newProverEnvironment`／`push(f)` 之前；同 run 可依內部 identity 連接，跨 run 用 formula、head、disposition。分開報 parser、實際 inject／首次匹配、solver operation、verdict 和有配對控制的 usefulness。
 - **空 JSON、截斷或部分 injection 混成成功。** Jackson 解析 schema，v1 空 candidates 的 `parse_ok=true`、`empty_candidates` 與 blank／malformed／wrong schema 分類。用完整 head/formula equality 去重並只記已寫到 precision 的 bindings，部分失敗不能以預計成功數掩蓋。PR274–277 有 110 項 focused tests 與舊 167 筆回應相容核對；無重跑 trajectories 或新增 solve 證據。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/vguide-predicate-validation-contract.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/vguide-predicate-validation-contract.md)

@@ -13,4 +13,4 @@ updated: 2026-10-31
 - **Gradient Well 點擊不動或產出減半。** 平地建置有 penalty 0.5；暗面先造 Puncture 再蓋井消除。井由相鄰 Entropic 系列敲擊，只有 `destabilizer`／`destabilizer2` 放大，`destabilizer2a` 不適用。以 Conductor 把 Chasm 和 Silo／井接通，核對有原生 tap 且入帳。
 - **Pinhole 放置 409，看似材料都夠。** 降速、用原生回收釋放 `vessel2` 儲備後在 Chasm 上升級；驗 `stats.gameIsFinished`、ENDBEGINNING 和原生存檔，遊戲完成與個別 Steam 成就另核對。已建 excavator 的存檔不能取 NEOPHOBIA；曾以直接建物診斷其他成就，其結果和原生付費操作分開。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/sixtyfour/gameplay-mechanics-automation.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/sixtyfour/gameplay-mechanics-automation.md)

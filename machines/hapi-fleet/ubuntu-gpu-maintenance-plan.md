@@ -30,4 +30,4 @@ tags:
 
 - 2026-11-19 Ada 四主機部署 R595 並採 Canonical 預編核心模組；換系列前用 `apt-cache show nvidia-driver-<ver>-server` 的 Modaliases 對照 `lspci -nn -d 10de:`。不要只排固定 reboot 時間，先確認 dpkg 無 pending 且已裝對應 kernel 模組。Cthulhu/Valkyrie 曾在排程重開時仍跑 postinst，修復見 [安裝收尾](firmware-notifier-snap-maintenance-20261118.md#2026-11-19-nvidia-安裝收尾)。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/ubuntu-gpu-maintenance-plan.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/ubuntu-gpu-maintenance-plan.md)

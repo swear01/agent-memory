@@ -13,4 +13,4 @@ created: 2026-08-26
 - **收到 `Create Unsafe Agents`。** Claude 的 `bypassPermissions` 是 YOLO，`dontAsk` 是自動拒絕需要詢問的呼叫。依使用者既有偏好傳 Auto，再讀回 agent、model、machine、workspace、permission mode 與 ready。
 - 0.35 的工具和封存路徑見 [peer CLI 對照](peer-cli-0-35-command-changes.md)。驗證 Skillshare 部署時，查發布 commit 是 source 的 ancestor，再查實際 target 是否包含規則；乾淨的 detached merge 可合法存在。
 
-[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/session-permission-preference.md)
+[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/session-permission-preference.md)

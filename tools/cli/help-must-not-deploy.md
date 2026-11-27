@@ -14,4 +14,4 @@ evidence_digest: 30c690153c08ab80471b7da0c7f16213e19c9b517a4fac84a2cd5e5b8ec1413
 
 這是歷史事故自述，沒有 help 分支修復證據。接受意外增加的版本是當時的收尾選擇，不是一般復原規則。
 
-子命令退役也要跑解析路徑。移除 `geminiCommand` 後，舊 `hapi gemini` 曾由 `resolveCommand` 當成預設 Claude 啟動並把 `gemini` 當參數。透過明確退役錯誤或共用的 unknown-command 分支避免 fallback；原始記錄只有 tombstone 已提交，沒有執行驗證或 merge 證據。見 `git show 2505b5e:tools/hapi/removed-subcommand-default-fallback.md`。
+子命令退役也要跑解析路徑。移除 `geminiCommand` 後，舊 `hapi gemini` 曾由 `resolveCommand` 當成預設 Claude 啟動並把 `gemini` 當參數。透過明確退役錯誤或共用的 unknown-command 分支避免 fallback；原始記錄只有 tombstone 已提交，沒有執行驗證或 merge 證據。見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/removed-subcommand-default-fallback.md`。

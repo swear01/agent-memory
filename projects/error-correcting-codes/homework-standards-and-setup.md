@@ -24,4 +24,4 @@ tags:
 - **XeLaTeX PDF 中文消失或 format mismatch。** BasicTeX 沒安裝權限時用 `tlmgr --usermode install <package>`；format mismatch 用 `fmtutil-user --all`。CJK 用已安裝的 Noto Serif CJK TC，次選 PingFang TC，再用 Noto Sans CJK TC；看 PDF 成品，不能只讀 log。
 - **內建編譯成功卻交到舊 PDF，或把 Codex 語音辨成 COOL。** 核對使用者目的地，重新匯出並檢視要提交的版本；獨立審查從原題出發，不繼承原解法。已授權提交後讀正確作業的回執，可下載時比對。提交成功與教師評分分開。陪讀說明和延伸練習另放，不交未要求提交的練習。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/error-correcting-codes/homework-standards-and-setup.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/error-correcting-codes/homework-standards-and-setup.md)

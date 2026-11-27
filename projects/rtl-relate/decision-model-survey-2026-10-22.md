@@ -10,4 +10,4 @@ updated: 2026-10-22
 - **把整份 RTL 當選項特徵，或用模型信心當 soundness。** 先用 Yosys／COI 取 width、fanin/fanout、assertion 距離與 CEX 摘要，短選項拆成可觀察 decision。模型只選 keep/X、策略或 refinement 次序，正式 checker 檢查 overapproximation；不改 IC3 內部。AVR 已有自動抽象，需作 baseline；NeuroAbs 公開原始程式中 candidate/signal 來源含 Yosys constant propagation，不能把所有步驟都歸給 LLM。[NeuroAbs keep-or-X 研究](neuroabs-decision-experiment-2026-10-22.md)
 - **Model list 有 Luna，但呼叫回 model_not_allowed 或 ModelProtocolUnsupported。** 當時 Go 直連 `/zen/go/v1/responses` 和 `x-opencode-session` 可跑 `reasoning.effort=low`；chat completions 不相容，`/v1/decisions` 是不同支援與端點。重新驗目前 config、endpoint、effective model/effort 和實際 accounting；free-tier CLI 會混入系統提示，不可當 controlled API。以同版 RTL、完整 output 或有效失敗、預先固定費用與效益讀回；截至本次資料，不能從定價或通用 benchmark 宣稱 RTL 加速。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/rtl-relate/decision-model-survey-2026-10-22.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/rtl-relate/decision-model-survey-2026-10-22.md)

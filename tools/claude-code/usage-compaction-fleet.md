@@ -13,4 +13,4 @@ updated: 2026-10-24
 - Archive 後已無存活程序可 compact。接近五小時使用上限由 handoff 收工；Desktop 用 `get_usage`，CLI statusline 讀 `rate_limits`。當時 hook 讀不到使用量。
 - 獨立 Desktop `start_session` 的 fork 可能忽略指定模型、沿用 parent。按使用者偏好選 Sonnet 與 fresh context；獨立 session 和 subagent 設定分見 [model fallback](subagent-model-force.md)。
 
-當時 fleet readbacks、備份與用量觀察見 `git show 2505b5e:tools/claude-code/usage-compaction-fleet.md`。
+當時 fleet readbacks、備份與用量觀察見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/claude-code/usage-compaction-fleet.md`。

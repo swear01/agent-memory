@@ -37,4 +37,4 @@ tags:
 
 其他 checkout 要在乾淨的遠端 main 上重套本機工作，避免再次推回舊歷史。即使 branch 和 PR refs 都已清乾淨，舊 SHA 仍可能由 GitHub API 或快取讀取。遠端快取清除須另查 GitHub Support 的處理結果。
 
-[完整工作流演進與驗證紀錄](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/global/workflows/shared-memory.md)
+[完整工作流演進與驗證紀錄](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/global/workflows/shared-memory.md)

@@ -16,4 +16,4 @@ updated: 2026-11-23
 - Inspect `launchctl print gui/$UID/local.focus-sync.sample` and `launchctl print gui/$UID/local.focus-sync.watch` and `~/Library/Application Support/Focus Sync/focus-sync.log`. A manual sample uses `shortcuts run 'Focus Sync Current Focus' --output-path <new-output-file> --output-type public.plain-text`; successful stdout may be empty. For recurring heat, inspect Shortcut assertions in `~/Library/Group Containers/group.com.apple.liveactivitiesd/liveactivitiesd.sql`; `Activities.request` carries base64 attributes containing the Shortcut title.
 - Real Focus on/off and online/DND readback worked with event triggers, and DND persisted after the SDK disconnected. Reboot, logout/login and actual notification sound were untested.
 
-[Prior install comparisons and dated verification](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/machines/swairM5/discord-focus-sync.md)
+[Prior install comparisons and dated verification](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/machines/swairM5/discord-focus-sync.md)

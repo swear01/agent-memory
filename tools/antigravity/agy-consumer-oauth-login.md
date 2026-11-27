@@ -35,4 +35,4 @@ tags:
 - 啟動瞬間出現 `You are not logged into Antigravity` 可能是背景 worker 早於憑證載入。用 `agy -p "reply only with OK"` 驗同帳號的實際推論。
 - Oracle 已有 `agy-login` helper 使用寬 PTY，預設走 TUI。由其本輪完整 URL 進入瀏覽器。保留同一登入程序與 verifier；核對 token 檔變更後仍要驗推論。開始前只結束自己的舊登入嘗試。
 
-[完整原始紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/tools/antigravity/agy-consumer-oauth-login.md)
+[完整原始紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/tools/antigravity/agy-consumer-oauth-login.md)

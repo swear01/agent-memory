@@ -12,4 +12,4 @@ evidence_digest: 5e5d3c62bc48019cd4055dfb7f7d2a663dd8535be8ac951ed5dde2e6ebca771
 
 重構文件時一併檢查既有索引與現行交叉引用，讓讀者能找到真正權威頁面。不要把所有舊路徑字串全域替換，也不要留下兩份互相矛盾的 active 目錄。來源停在判斷與修改計畫，沒有最終驗證結果。
 
-檢查應實際解析受影響文件的相對連結並對照搬移前基準。沒有引用 archive 仍可能有斷鏈；逐項區分原本缺檔、變更新增及 checker 限制。當時 checker 回 22 個斷鏈，包含疑似新引入的 overview→schema，未取得修後零斷鏈證據。見 `git show 06f50e3:tools/documents/migration-link-check-scope.md`。
+檢查應實際解析受影響文件的相對連結並對照搬移前基準。沒有引用 archive 仍可能有斷鏈；逐項區分原本缺檔、變更新增及 checker 限制。當時 checker 回 22 個斷鏈，包含疑似新引入的 overview→schema，未取得修後零斷鏈證據。見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/documents/migration-link-check-scope.md`。

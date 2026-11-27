@@ -34,4 +34,4 @@ HAPI #2248 驗證的是 PR 分支與 agy 1.4.11。截至當時讀回仍 open，�
 - agy 的權限由原生 allow/deny `settings.json` 與 CLI mode 控制。沒有 allow rule 時可能自動拒絕；不能從其他 HAPI flavor 的 hook 行為推論 agy。
 - 2026-09 查核時，agy CLI 無 ACP 模式，但 Google 另有 registry `antigravity-acp` 與 `agy_acp_server.par`。該版本 HAPI 未接獨立 server，ACP early RC 觀察不能代替對現行 release 的查核。
 
-版本對照、舊 fork audit、hub／runner 查詢和 PR 驗證可由 `git show 06f50e3:tools/antigravity/hapi-agy-integration-status.md` 追溯。
+版本對照、舊 fork audit、hub／runner 查詢和 PR 驗證可由 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/antigravity/hapi-agy-integration-status.md` 追溯。

@@ -45,4 +45,4 @@ TheoryContainer.UpdateTheories 內原版逐項更新 EXP，但同次更新的兩
 
 主模擬、日曆、Steam 認證與雲端儲存須各自核對。遊戲時鐘超前可能使 `dailyLastResetDate` 落在未來，Steam／Google 認證仍應用真實時間。存檔執行中即使舊 dto 欄位停滯，也要核對實際 bigDTO 與事件時間；連續自動存檔才適合量速度。若觀測原生長停頓，要把 managed Update 耗時和 Steam 原生等待分開。ProcDump 的 `target no longer running` 曾在 PID 仍存活時出現，應另查程序狀態；dump 可能含登入資料，僅留本機。
 
-完整 A/B、各版原始碼與掛鉤清理、成就、Google 認證與 Steam 重開證據見 `git show 06f50e3:tools/openspeedy/idle-spiral-simulation-budget.md`。可重建版本見 [補丁保存來源](game-patch-cloud-backup.md)。
+完整 A/B、各版原始碼與掛鉤清理、成就、Google 認證與 Steam 重開證據見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/openspeedy/idle-spiral-simulation-budget.md`。可重建版本見 [補丁保存來源](game-patch-cloud-backup.md)。

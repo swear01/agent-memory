@@ -11,4 +11,4 @@ tags: [okinawa, itinerary, maimai, google-maps]
 - **遊戲廳有開門但遊戲功能停機。** 到訪前分開查店家營業與 SEGA ALL.Net／Aime 官方狀態。本次停機時是 guest play，行程應留不用特地繞路的替代選項。景點正本以 Google 地圖「沖繩景點」與本次旅行資料夾為準。
 - **改行程後備選被移到頁尾或地圖上消失。** 行程與地圖同頁，選點保持視野，路線固定顯示。餐廳備選就在對應餐段旁，保留地圖候補資料。餐廳可用 Tabelog >3.35 且 ≥100 則為篩選門檻，附評分和評論數；本次偏好飯類，行程重視在地文化。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/okinawa-2026/maimai-outage-replan.md) · [本次行程定稿](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/okinawa-2026/itinerary-finalization.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/okinawa-2026/maimai-outage-replan.md) · [本次行程定稿](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/okinawa-2026/itinerary-finalization.md)

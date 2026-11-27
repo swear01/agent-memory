@@ -26,4 +26,4 @@ updated: 2026-10-24
 - 同一 Discord renderer 在通話時重複累積 MMDevices Render/Properties Registry Key，集中 Steam Streaming Mic/Speakers 和 AM310。自然斷線後同一 renderer 的增長降到接近零，既有句柄未立即釋放。短期低增長之後仍曾再現；尚無 stack 證明特定音訊驅動、Experimental 或 port 耗盡因果。Audiodg 曾在既有授權關閉單一 endpoint 的全部 enhancements 後暫停增長，不能外推 Discord/系統根因。
 - 使用者暫停永久固定 Standard，保留監測。當次手動 settings.json 後重啟，WebRTC `Creating audio engine: standard` 證明當次切換，但 renderer `Deferring` 及後續切回需要重新讀 log。官方 web bundle 的 automatic branch 屬機制線索，未核桌面同版，不能宣稱某個開關是持久解。需要對照就自然結束通話但保留 Discord 行程，比較至少 30 分鐘；不要中斷通話或同時改多個裝置。只通知新的可處理異常或有效對照。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/swear01-pc/windows-port-exhaustion-investigation.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/swear01-pc/windows-port-exhaustion-investigation.md)

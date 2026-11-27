@@ -22,4 +22,4 @@ updated: 2026-09-30
 - 來源 archive 的 CRC 不過並非刪除理由。舊 `copy.tgz` 的 G4 內容透過 account disposition、sealed overlay required manifest 和最終 54 卷收據做內容替代，只涵蓋當時接受的排除規則。欠缺證據的 partial 不當恢復來源，與已完成作品分開列。
 - 有 writer 的 staging 可能含 SQLite、FIFO 和另掛的 NFS live home。先確認 process references、子掛載、ACL、inode 和 RW 界線；不要將大量連到現行 NFS 的檔案當成本機 payload。已停用 staging 搬移保留 metadata，完整比對後才切路徑。短暫寫冷碟之後 sync、讀回、恢復 RO，再安全卸載。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/mazu/external-backup-drives.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/mazu/external-backup-drives.md)

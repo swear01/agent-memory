@@ -16,4 +16,4 @@ updated: 2026-11-12
 - 單一專案自己的相依套件（專案的 venv、conda env）不在這條規則的範圍內。
 - 實例：[[machines/zeus/cuda-toolkit-system-install]]、[[machines/hapi-fleet/earlyoom-nis-dynamicuser]]（2026-11-04 再次確認四台 `su_` 都能 `sudo -n`）。
 
-- Mazu 的 `su_mazu` 是管理帳號，`mazu` 是一般帳號。看到 `sudo: I'm sorry swear01. I'm afraid I can't do that` 表示此帳號未獲 sudo，改走原授權管理入口而非嘗試密碼或 TTY。管理帳號未經 sudo 也可能讀不到系統 journal；用 `sudo -n journalctl -k -b --no-pager` 取得證據。[Mazu 管理與日誌權限原始驗證](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/mazu/admin-access.md)
+- Mazu 的 `su_mazu` 是管理帳號，`mazu` 是一般帳號。看到 `sudo: I'm sorry swear01. I'm afraid I can't do that` 表示此帳號未獲 sudo，改走原授權管理入口而非嘗試密碼或 TTY。管理帳號未經 sudo 也可能讀不到系統 journal；用 `sudo -n journalctl -k -b --no-pager` 取得證據。[Mazu 管理與日誌權限原始驗證](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/machines/mazu/admin-access.md)

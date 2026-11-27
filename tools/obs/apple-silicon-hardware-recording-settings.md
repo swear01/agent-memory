@@ -18,4 +18,4 @@ updated: 2026-11-28
 - **改了 profile 卻被覆寫。** 先完全退出 OBS 再改 `basic/profiles/<profile>/basic.ini`、`recordEncoder.json` 或場景 JSON。遠端快捷鍵依賴 Accessibility。若異常終止，先保留 MKV，確認檔案能讀再處理封裝。
 - **程序還在，但整段沒錄進檔。** 暫停時日誌有 `output … paused`、`unpaused`，檔案不再長。焦點留在 OBS 時空白鍵可能觸發 Controls。用獨立熱鍵或連錄後裁切，現場看狀態圖示，收尾核對錄影長度。
 
-[完整原始紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/tools/obs/apple-silicon-hardware-recording-settings.md)
+[完整原始紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/tools/obs/apple-silicon-hardware-recording-settings.md)

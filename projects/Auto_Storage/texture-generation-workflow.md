@@ -31,4 +31,4 @@ redaction: passed
 - **只以亮度大於另一張就判 PASS。** 將 normalized sRGB channel 在 ≤0.04045 時除 12.92，其餘 `((c+0.055)/1.055)^2.4`，以 `Y=0.2126R+0.7152G+0.0722B` 計 visual-core mean。Flux Station gate 為 inactive ≤0.10、active ≥0.35、比值 ≥3.0，且 core 外每個 pixel 都與 chassis 和另一狀態一致。實機若仍難分，數值通過也要退回。
 - **只有 native PNG 通過，連接圖或實機仍用舊素材。** 保存 model/seed/prompt/reference/strength、source hashes、masks、role map、state 派生關係、亮度門檻與 native/connected hashes 到 `state_manifest.json`。先跑 focused texture tests，再全套 Python、`./gradlew runData`、`./gradlew build`、Flux Networks GameTest 與最新成品的 F11 目視。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/Auto_Storage/texture-generation-workflow.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/Auto_Storage/texture-generation-workflow.md)

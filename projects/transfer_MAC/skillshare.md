@@ -30,4 +30,4 @@ redaction: passed
 - **Gemini CLI 清理把 Antigravity 或 MCP 也移了。** AGY 的 `~/.gemini/skills` 可以是現行 target；`GEMINI.md` 是指令連結，MCP 由 canonical manifest 和 `scripts/sync-ai-agent-configs.py` 另渲染。HAPI transcript 恢復與本機 AGY 登入狀態相互獨立。Grok 已讀 Claude/universal targets；加 Grok target 造成 overlap。移除 target 可能把連結實體化留舊副本，須確認歸屬再處理。
 - **HAPI 說 skill 是新版，但 agent 仍讀舊 copy。** `hapi-session-control` 0.35 起從 shared-skills / Skillshare 發布，舊 `.hapi-managed` 副本可能遮住。先核 app runtime、共享 commit、每台實際 link 與 file content，不能以 PR 文件更新推定已部署。接口改動以 [0.35 peer 指令](../../tools/hapi/peer-cli-0-35-command-changes.md) 為準。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/transfer_MAC/skillshare.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/transfer_MAC/skillshare.md)

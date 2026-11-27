@@ -40,4 +40,4 @@ tags:
 `hapi-desktop-darwin-arm64.zip`。應對單一檔名，或 `sha256sum -c` 前先過濾精確檔名。
 此次 tarball 本身的 SHA-256 是通過的。
 
-舊部署記錄見 `git show 2505b5e:tools/hapi/remote-install-stdin-hang.md`。
+舊部署記錄見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/remote-install-stdin-hang.md`。

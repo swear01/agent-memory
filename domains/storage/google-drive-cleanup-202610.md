@@ -19,4 +19,4 @@ tags: [google-drive, cleanup, anime, mega, goodnotes, lda, sparse, motion-photo]
 
 68 支影片已按 1080p 上限修正：36 支用 1080p 原件重轉，28 支原生 720p 與 4 支 480p 無升頻。原 Drive ID／名稱／父目錄及來源保留，全部雲端比對通過。PDF／PPTX、FLAC、STEP、ARK 與 LDA 詳細驗收在原回條；教育資料集見 [學校整理收尾](google-drive-school-cleanup.md#2026-10-12-資料集封存與最終收手)。這是歷史結案，重查使用量或來源位置以 live 為準。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/storage/google-drive-cleanup-202610.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/storage/google-drive-cleanup-202610.md)

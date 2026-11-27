@@ -35,4 +35,4 @@ tags:
 - WebGL 短按可能落在兩個 Update 之間，選單用 `wasPressedThisFrame` 讀單次觸發，連續移動另做按住 repeat。
 - 常駐 Editor 反覆 Play 出現 `There are N audio listeners in the scene` 時，查 `HideFlags.HideAndDontSave` 的執行期物件殘留。Verto 以 `HideFlags.HideInHierarchy` 讓對象隨 Play 結束回收，重開 Editor 清既有殘留，再重複 Play 驗證。
 
-[完整原始用法與專案驗證](https://github.com/swear01/agent-memory/blob/2505b5e/tools/unity/unity-pipeline-cli-automation.md)
+[完整原始用法與專案驗證](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/tools/unity/unity-pipeline-cli-automation.md)

@@ -17,4 +17,4 @@ Windows Steam 版 Max Manos／OpenSpeedy 3.3.8 驗證。先確認目標程序的
 
 FingerGun 的瞄準 `crosshairX/Y/Dir` 原在 `objCTRLgame` Draw GUI End（Draw_75）。要試跳幀，先將原計算移到 End Step，只對未暫停戰鬥跳 Draw，保留選單與等待畫面。相同合成戰局量到每幀、每 5 步、每 10 步繪圖分別約 199、251、261 Step/s。驗證步進和扣時一致、瞄準仍更新、暫停不扣時、結算與存檔正常。這是部分收益，沒有達 10×，也未證明所有玩法等價。
 
-公開 [Game Patch](game-patch-cloud-backup.md) 的 Max-Manos 目錄用 `Build-MaxManosPatch.ps1` 與 UndertaleModCli 0.9.2.0，從符合 SHA 的原版離線重建，與歷史測試版 SHA 相同。輸入版本不符、輸出已存在會停。歷史測完已還原原版與兩份存檔。逐組樣本、封裝檢查和交付見 `git show 2505b5e:tools/openspeedy/max-manos-vsync.md`。
+公開 [Game Patch](game-patch-cloud-backup.md) 的 Max-Manos 目錄用 `Build-MaxManosPatch.ps1` 與 UndertaleModCli 0.9.2.0，從符合 SHA 的原版離線重建，與歷史測試版 SHA 相同。輸入版本不符、輸出已存在會停。歷史測完已還原原版與兩份存檔。逐組樣本、封裝檢查和交付見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/openspeedy/max-manos-vsync.md`。

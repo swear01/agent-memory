@@ -27,4 +27,4 @@ generated_by: openai-codex/gpt-5.6-sol
 - 保留 Astra、Sol、Terra、Luna 四階最新一代，hidden `codex-auto-review` 例外；使用者已要求移除 Daybreak，updater／restore 不加回。以 generator policy 和 live 有效集合驗證，別用 JSON 筆數。2026-11-19 的快照是 6.2 Astra／Sol、6.1 Terra、6 Luna，預設 6.2 Sol。下次查當時 catalog。
 - Canonical generator 改動見 [shared-skills #67](https://github.com/swear01/shared-skills/pull/67) 和 [transfer_MAC #94](https://github.com/swear01/transfer_MAC/pull/94)。HAPI 手冊鏡像依 [canonical gist 規則](canonical-gist-sync.md) 核對。
 
-[整理前完整證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/codex-model-catalog-allowlist.md)
+[整理前完整證據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/codex-model-catalog-allowlist.md)

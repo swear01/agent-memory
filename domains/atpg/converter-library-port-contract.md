@@ -16,4 +16,4 @@ evidence_digest: 0c67bbf89578b1449c55076e6f593adbfd70d6307aec18507b67782408c9e3e
 
 ## 找得到 netlist 時的交付界線
 
-- 恢復的 artifact 要分別核對身分、工具相容性和產生流程。既有 netlist 跑過 ATPG、名稱與 mask 一致，不能取代釘住 synthesis tool/version、原始輸入與命令。先排除工具因 cwd 錯誤卡在等待輸入，別歸因於 synthesis。[舊產物復原與重生流程的不同證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/atpg/recovered-artifact-provenance.md)
+- 恢復的 artifact 要分別核對身分、工具相容性和產生流程。既有 netlist 跑過 ATPG、名稱與 mask 一致，不能取代釘住 synthesis tool/version、原始輸入與命令。先排除工具因 cwd 錯誤卡在等待輸入，別歸因於 synthesis。[舊產物復原與重生流程的不同證據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/atpg/recovered-artifact-provenance.md)

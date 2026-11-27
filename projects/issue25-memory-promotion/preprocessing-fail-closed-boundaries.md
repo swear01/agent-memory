@@ -13,4 +13,4 @@ updated: 2026-08-30
 - **SSH 斷線或重開後不知道應從哪續跑。** 長跑由 enabled user service 所有，以 exact contract、bounded restart／人工重試及已完成 ExecCondition 管理。source DB 逐 source commit；真正需要更細 resume 時，用 private per-source SQLite 暫存 ordered chunk index、immutable source/contract hash、next record/code-point/overlap 游標、text hash 和 UInt32LE token BLOB。續跑先完整驗 staged prefix，再原子匯入同 digest 的 complete source，驗中斷／不中斷相同。
 - **SQLite quick_check／重建通過就發布索引。** 跨 shard 依 canonical source order dedup exact inputs，驗 token bytes，保留第一 representative。完整 reconstruction、source/hash、FTS/joins、token/provenance、殘留媒體與整體安全、backend parity、retrieval 是不同 gates。進度 reference 用 `SUM(issue25_sources.reference_count)`，勿把 contextual `issue25_occurrences` 當分母。舊服務與 timings 看已完成的私有報告；退役前依 [替代檢索與引用查核](retired-artifact-closeout.md)。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/issue25-memory-promotion/preprocessing-fail-closed-boundaries.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/issue25-memory-promotion/preprocessing-fail-closed-boundaries.md)

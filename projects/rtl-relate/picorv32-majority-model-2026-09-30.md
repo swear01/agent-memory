@@ -11,4 +11,4 @@ updated: 2026-10-01
 - **Jasper / SBY 原版也開始報假反例。** `expect pass,fail` 可使 SBY FAIL exit 0，讀 task status。Jasper 匯入同 checker/wrapper/defines，用 `assume -constant checker_inst.<signal>` 保留 `rvformal_rand_const_reg` 的任意但全 trace 固定，涵蓋 `insn_order`／`register_index`。漏掉時六個 register/PC/order 原版題假 FAIL。固定條件的原版 86/86 bounded、候選 05 72/86；14 FAIL 包含 M 和 CSR，不是等價證明。重跑入口為 `experiments/picorv32_majority/`，不要把一般 CI 說成候選正式驗證。
 - **候選 FAIL 得較快，或並行從 4 改 6 就報 solver 加速。** 核同題同結果、固定並行，相同定義的 solver 與 session time，另外報失敗／timeout／未落盤。現有單次類別比較與少量配對不足以宣稱穩定整體加速。使用者已暫停新呼叫和改版；原 raw logs 非全部在 Git。先讀 repo 及原收尾，勿依歷史下一步自行再跑。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/rtl-relate/picorv32-majority-model-2026-09-30.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/rtl-relate/picorv32-majority-model-2026-09-30.md)

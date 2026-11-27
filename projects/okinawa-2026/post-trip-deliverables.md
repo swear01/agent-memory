@@ -10,4 +10,4 @@ tags: [okinawa, travelogue, report, google-drive, google-photos]
 - **寫作語氣太像旅遊廣告。** 保留使用者直白的台灣學生口吻、實際感想與台灣對照，避免「必吃／療癒」式套話。
 - **口頭核對與離線備份容易當成實物確認。** 只依使用者明說標記物品，別把「悠遊卡」自動辨認成 Aime 或日本交通卡。雲端確認截圖的檔案比對只證明同步，手機有無離線下載要另外驗證。票券入口保留在購票信，帶 access token 的 URL 不寫進共享記憶。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/okinawa-2026/post-trip-deliverables.md) · [本次已完成的行前準備](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/okinawa-2026/packing-and-confirmation-handoff.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/okinawa-2026/post-trip-deliverables.md) · [本次已完成的行前準備](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/okinawa-2026/packing-and-confirmation-handoff.md)

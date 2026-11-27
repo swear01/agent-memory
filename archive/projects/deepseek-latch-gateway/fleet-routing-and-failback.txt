@@ -38,4 +38,4 @@ tags: [gateway, opencode-go, routing, failback, hapi, swear-review, model-alias,
 4. 驗證 `/status` 後，使用實際 model 和穩定 session header 推論，同時檢查 status 與 active endpoint。輪替 Command Code 以 `deepseek-pro` 驗證並要求 active endpoint 為 `command-code`。要證實 OpenRouter fallback，可在暫存隔離 config 指向失敗的 loopback upstream 並保留 OpenRouter，使用該進程的 PID 停止 smoke。避免在 shell 指令本身含暫存路徑時用同一 pattern `pkill -f`。只回報已逐機驗證的覆蓋範圍。
 5. 換 key 檢查 service runtime，更新檔案不保證程序已重載。以前的拼字 `COMMAMD_CODE_API_KEY` 要從 config、啟動腳本和 Windows DPAPI 名稱一併遷移到 `COMMAND_CODE_API_KEY`。Oracle PM2 process env 須用更新後的環境 `pm2 restart <name> --update-env`。OpenCode 在既有工作流可能同時用 `.secrets` 與 `.dsh/.credentials.yaml`。用變數引用保存 config，key 值留在核准的憑證來源。隔離測試未載 secret 時，401 `Missing Authentication header` 首先檢查 smoke 進程環境。
 
-完整發版、帳戶槽位快照、舊 router 行為、測量值和逐機驗證收據，見 [整理前固定版本](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/projects/deepseek-latch-gateway/fleet-routing-and-failback.md)。
+完整發版、帳戶槽位快照、舊 router 行為、測量值和逐機驗證收據，見 [整理前固定版本](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/projects/deepseek-latch-gateway/fleet-routing-and-failback.md)。

@@ -15,4 +15,4 @@ updated: 2026-10-18
 - 等待與 transport/native ready 共用同一 deadline。已回報但不合是 `spawn_selection_mismatch`，未報到期是 `spawn_timeout`，中途結束是 `spawn_ended`。這些都走原 compensating cleanup，未確認前不交付 remit。不要以固定 sleep 拉長窗口。
 - 回歸要覆蓋 runtime/connect 先後兩種順序、重連、lazy state、只預填設定、真 mismatch/null、過期或重啟和已耗盡的 deadline。當時 candidate CI 和整合測試有驗證；0.30.7.4 已 carry #1771 更早 head，不能以 release version 推定含這組後續修正。
 
-候選版本與完整驗證範圍見 `git show 2505b5e:tools/hapi/initial-runtime-heartbeat-race.md`。
+候選版本與完整驗證範圍見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/initial-runtime-heartbeat-race.md`。

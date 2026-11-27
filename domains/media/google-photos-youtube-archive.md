@@ -18,4 +18,4 @@ confidence: high
 - 只有精確對應的來源、替代品私人且實際可播放，再按該批授權走可恢復垃圾桶。Drive File Provider 上 macOS `trash` 曾權限錯誤，改用已驗的 Drive trash API 或 Finder；本機 Downloads 可用系統垃圾桶。不要用 `rm` 取代。Google Photos、Drive 和本機的來源是分開核對的三個集合。
 - 2026-09-06 提醒：既有私人 Shorts 有重複舊草稿，先對帳，不盲重傳或清理。當時有 14 支已驗播放但來源保留，其逐件回條與停留狀態見固定版本；數量是舊快照。排程已暫停，不自動復跑。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/media/google-photos-youtube-archive.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/media/google-photos-youtube-archive.md)

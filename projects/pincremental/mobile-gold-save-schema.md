@@ -12,4 +12,4 @@ updated: 2026-09-05
 - **Mana button has a positive label but is disabled.** `AvailableManaNow()` reports investor-derived amount. `WizardReady` separately requires >=4 and all direct investor upgrades (except `AutoCompanyOn` and the `PermaBuyers` container), plus each permanent buyer. Check AutoShares and AutoArcade; both blocked a real case.
 - **Normal achievement event runs but Steam cache stays unchanged.** Use `Start-Process "steam://rungameid/1369470"` or `steam.exe -applaunch 1369470`, then perform the original in-game action and check Steam. Directly running Pincremental.exe did not trigger Sacrifice achievement in the observed case.
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/pincremental/mobile-gold-save-schema.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/pincremental/mobile-gold-save-schema.md)

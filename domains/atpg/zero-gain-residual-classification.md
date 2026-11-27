@@ -26,6 +26,6 @@ evidence_digest: 39068903ad7fc5f299fe86f899d48ed415297c69d3200a2a8d09d9b9d2032cb
 
 ## 零增益與不收斂的診斷
 
-- `storeCurrentAtpgVal` 反覆報 `numAssignedValueChanged != 0` 時，即使 exit 0 與 coverage 正常輸出，也要先保存 invariant failure 並重現狀態更新／回溯。大量 AU 不能代替回溯導致 misclassification 的因果證據。[不變式錯誤與 coverage 證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/atpg/invariant-failure-before-coverage-cause.md)
-- Exit 124 且迭代計數增加但 gate 和 backtrack 無變化時，逐一查 `findFinalObjective` 無 objective 的 caller 是否終止或真正回溯。不要以計數成長或只把 loop 推到較高層判定修好。[無 objective 的 timeout 證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/atpg/no-objective-backtrack-path.md)
-- 平行 progressive residual 驗各 worker 自己的 `Atpg` 物件已收到必要設定。Master 的 `nonscanDisconnectInfo` 有值不證明 worker 取得同一份設定。用相同輸入和配置做 before/after，沒有修正後重跑不得把這個假說當 T2/T4 零增益根因。[worker 傳播假說與尚未重跑的證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/atpg/worker-local-configuration.md)
+- `storeCurrentAtpgVal` 反覆報 `numAssignedValueChanged != 0` 時，即使 exit 0 與 coverage 正常輸出，也要先保存 invariant failure 並重現狀態更新／回溯。大量 AU 不能代替回溯導致 misclassification 的因果證據。[不變式錯誤與 coverage 證據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/atpg/invariant-failure-before-coverage-cause.md)
+- Exit 124 且迭代計數增加但 gate 和 backtrack 無變化時，逐一查 `findFinalObjective` 無 objective 的 caller 是否終止或真正回溯。不要以計數成長或只把 loop 推到較高層判定修好。[無 objective 的 timeout 證據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/atpg/no-objective-backtrack-path.md)
+- 平行 progressive residual 驗各 worker 自己的 `Atpg` 物件已收到必要設定。Master 的 `nonscanDisconnectInfo` 有值不證明 worker 取得同一份設定。用相同輸入和配置做 before/after，沒有修正後重跑不得把這個假說當 T2/T4 零增益根因。[worker 傳播假說與尚未重跑的證據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/atpg/worker-local-configuration.md)

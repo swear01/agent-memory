@@ -20,4 +20,4 @@ tags: [Gamejam1, PHASE, Unity, WebGL, Unity-CLI, Pipeline, CI, Pages]
 - **重綁用錯舊 Esc 邏輯。** 每動作兩個 slots，保留至少一鍵，左右 Shift 屬同一邏輯鍵。capture 中 Esc 清 slot、Tab 取消；之外 Esc 關閉設定。`phase.controls.v2` 從舊單鍵資料遷移首 slot，保留 v1。settings 暫停 controller 並清 queued input，關閉等 held keys 放完。核對 browser local storage 失敗可繼續玩。
 - **房間邊界或危害的遷移遺失資料。** 只開有連結的左右邊，death 優先，過房保留原色、位置高度、速度及動作狀態，移除舊 contact。場景同時進 Build Settings 和 BuildWeb.py。mask0 保留 legacy phase，顯式 R1/B2/G4/Y5/M3/C6/W7 覆寫；PhaseSpike 長度依介面區分 cell 或 native pixel。swept carry 有 hazard 就停止移動。平台位移分段、獨立 queue/return，保留向下時有固定地板支撐的共享 rider。Visual 規則以 `DESIGN.md` 和 repo 的 frozen art/trace fixtures 為準。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/gamejam1/web-preview-ci.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/gamejam1/web-preview-ci.md)

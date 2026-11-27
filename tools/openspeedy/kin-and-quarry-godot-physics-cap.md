@@ -18,4 +18,4 @@ updated: 2026-11-28
 - **隔離 fixture 修好了個別機制，整天仍出現少打、少領。** 保留 native 接觸、攻擊與傷害 FIFO；依原生事件核對 FIND、實際接觸、首擊及入帳。Supervisor 隔離測試保留 child ground、inbound area 和 buff，一個完整日配對的 Nb 仍少約 9%。Exploder 的 Timer 防護讓真實開局 ACT 繼續，但全日有效齊射的兩組方向相反（96→101／96→89）。只把兩者當局部診斷，整日收益與速度要單獨通過。
 - **黑幕還在，容易把揭幕當作已開工。** 真實換日分別量倒數歸零、畫面揭幕與下一天開始，保留原版 autosave、地形完成與最新玩家狀態。既有交付在隔離實際加速下約 0.384–0.409 秒揭幕、0.481–0.521 秒開工；0.2 秒未達成。用途為正式採礦時，在 PowerShell 直接執行已交付的 `Auto Mining.ps1`，可留在同一視窗用一次 Ctrl+C 停止。
 
-[完整原始紀錄、原型結果與安裝驗證](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/tools/openspeedy/kin-and-quarry-godot-physics-cap.md)
+[完整原始紀錄、原型結果與安裝驗證](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/tools/openspeedy/kin-and-quarry-godot-physics-cap.md)

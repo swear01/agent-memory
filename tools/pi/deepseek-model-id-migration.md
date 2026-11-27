@@ -35,4 +35,4 @@ tags: [pi, deepseek, gateway, model-filter, fleet, swop]
 
 使用者要求保留待辦。重試前先查 runner／SSH 可達性，並對照當下 gateway 與 upstream 設定。Pi 位於 Windows 使用者 home，gateway 由 SYSTEM Scheduled Task `DeepSeek Gateway (SWOP)` 管理，設定在 `<program-data>/DeepSeekGateway`。若 runner 仍未註冊，須在 Windows 本機核對 registry，並測兩個 gateway model 的實際請求，不宜以 hub 讀取失敗推斷設定。
 
-部署明細、當時的 Windows 步驟、備份與驗證可由 `git show 06f50e3:tools/pi/deepseek-model-id-migration.md` 追溯。設定來源修正見 transfer_MAC PR #46、#47。
+部署明細、當時的 Windows 步驟、備份與驗證可由 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/pi/deepseek-model-id-migration.md` 追溯。設定來源修正見 transfer_MAC PR #46、#47。

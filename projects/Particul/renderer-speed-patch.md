@@ -13,4 +13,4 @@ tags: [electron, chromium, webgpu, openspeedy, speedhack]
 - **Save stalls after acceleration or cloud import blocks startup.** The simulated month can schedule unawaited GPU full-buffer readback and IndexedDB writes faster than they finish. Throttle autosave by real time (verified 5 s), verify local `saves/main` plus particle blob, keep original cloud files, and load verified local state before waiting for cloud import.
 - **Marketplace patch passes static checks but slot/wheel still animate.** Locate the active component from the view; the first patch targeted duplicate bundles. Preserve original weighted result, costs, callbacks and achievement side effects when removing presentation delays. Steam cache was verified 27/27 after a diagnostic achievement trigger. Preserve that provenance when evaluating normal play.
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/Particul/renderer-speed-patch.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/Particul/renderer-speed-patch.md)

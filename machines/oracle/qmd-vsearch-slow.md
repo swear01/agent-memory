@@ -20,4 +20,4 @@ tags:
 - Mac 和 Oracle 用同一 embeddinggemma-300M URI 和 bytes，實際 `models.embed` 設定可覆蓋環境變數。來源用只含應分享 collections 的 quiescent index，不混入額外本機 collections；目的端以 repo 內容重新 update，驗 memory 文件、vectors 和 pending。全索引 pending 可包含其他 collections，不等於 memory 全部待補。見 [通用 snapshot 規則](../../domains/llm-inference/qmd-snapshot-portability.md)。
 - 無法 Mac SSH 時，曾用 Tailscale file 送已停寫的 SQLite；接收端 access denied 需核對 Tailscale operator，再 `tailscale file get`。安裝前確認無 writer、保存舊 index set，來源主檔與 WAL/SHM 不可混配，裝入後依本機路徑驗一次 update 和 retrieval。舊快照的副本不與活 DB 共用，不在 Oracle 重跑全體向量作為修復。
 
-[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/oracle/qmd-vsearch-slow.md)
+[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/oracle/qmd-vsearch-slow.md)

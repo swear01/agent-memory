@@ -29,4 +29,4 @@ tags: [grok-bot, gif, avatar, macos]
 
 AXPress 或 `NSRunningApplication.activate` 回報成功後仍要讀回實際視窗。啟用後保留 run loop，確認新前景與角色名稱。在同一程序檢查前景 App、精確角色標題及空白輸入框，輸入後再查一次才送出。若 OCR 把聊天文字連到標題，縮小標題區域；避免改用任意子字串命中。更新時也可比對其他角色的 version/hash，確認操作只落在目標。
 
-歷代成品路徑、各角色規格、播放樣本與教材交接見 `git show 06f50e3:tools/grok-bot/animated-avatar-file-import.md`。
+歷代成品路徑、各角色規格、播放樣本與教材交接見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/grok-bot/animated-avatar-file-import.md`。

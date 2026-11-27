@@ -12,4 +12,4 @@ evidence_digest: e87f152beec6157355d736955a196d9fbf473e0fca90bd72fedd300868053a4
 
 核對實際服務版本、首頁引用的資產路徑及瀏覽器渲染。磁碟上有 public 不代表服務正在供應正確檔案；任意猜測的資產 URL 回 404 也不足以證明整個安裝損壞。來源沒有完整畫面驗收，不外推到所有 APT 或 pip 安裝。
 
-正式站台要核對需求裡各條具體路徑、listener 和站台配置，再移除臨時預覽。歷史案例中 nginx active、根目錄 200，dashboard、overview 與 JSON 路徑卻全 404，未取得後續恢復證據。見 `git show 06f50e3:tools/web/target-route-before-preview-cleanup.md`。
+正式站台要核對需求裡各條具體路徑、listener 和站台配置，再移除臨時預覽。歷史案例中 nginx active、根目錄 200，dashboard、overview 與 JSON 路徑卻全 404，未取得後續恢復證據。見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/web/target-route-before-preview-cleanup.md`。

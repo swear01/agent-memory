@@ -31,4 +31,4 @@ Steam Minutescape App 3327170、build 25433331，NW.js 0.100.1／Construct 3，�
 
 ## 重建與還原
 
-見 [Game Patch 保存與輸入版本](game-patch-cloud-backup.md)。最終 `package.nw` 經 ZIP 重建得到 `91EE7782B80199AB54660F6FA3D2E7544C06538A59075C0F53979F4852041C88`，`package.nw.before-late-wave` 是還原的上一補丁版，`package.nw.openspeedy-stock-direct` 是另外保存的原版。原始碼 ZIP SHA-256 為 `96EE5A78416AE216473001CFE289E5DA810C91555FD8C7A2EA10560DE4690DFF`。詳細版次、SID、指令、控制測試與證據可用 `git show 06f50e3:tools/openspeedy/minutescape-construct3-delta-cap.md` 查回。
+見 [Game Patch 保存與輸入版本](game-patch-cloud-backup.md)。最終 `package.nw` 經 ZIP 重建得到 `91EE7782B80199AB54660F6FA3D2E7544C06538A59075C0F53979F4852041C88`，`package.nw.before-late-wave` 是還原的上一補丁版，`package.nw.openspeedy-stock-direct` 是另外保存的原版。原始碼 ZIP SHA-256 為 `96EE5A78416AE216473001CFE289E5DA810C91555FD8C7A2EA10560DE4690DFF`。詳細版次、SID、指令、控制測試與證據可用 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/openspeedy/minutescape-construct3-delta-cap.md` 查回。

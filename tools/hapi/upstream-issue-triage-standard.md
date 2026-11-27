@@ -16,4 +16,4 @@ When asked which tiann/hapi issues are worth handling, use the 2026-07-13 standa
 
 Before retiring a PR for superseded behavior, read the current upstream implementation even when the original PR remains open. Record the replacement or reason and, when authorized to close it, verify the resulting state with `gh pr view`. [Prior closure examples](../../archive/tools/hapi/upstream-pr-triage-closures.txt)
 
-When the user explicitly requests all open issues, establish the complete open list and track coverage before ranking selected items. Verify on the target host if the request calls for live end-to-end evidence. A bot requested for one historical task does not become policy for later PRs. See `git show 2505b5e:tools/hapi/issue-triage-scope.md`.
+When the user explicitly requests all open issues, establish the complete open list and track coverage before ranking selected items. Verify on the target host if the request calls for live end-to-end evidence. A bot requested for one historical task does not become policy for later PRs. See `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/issue-triage-scope.md`.

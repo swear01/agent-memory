@@ -10,4 +10,4 @@ updated: 2026-10-20
 - **一端封裝省 report、另一端照抄。** 官方 `studentid_hw2_vk.tar` 要小寫學號並在 Linux 打包；ADFP 包原課程報告，COOL 可省。兩端都核解包檔案、必要 `01_rtl`、file list／include，不帶助教 testbench／memory、DesignWare 或 build outputs。用 receipt 下載原檔比對，選檔或「正在繳交」都不算。COOL 沒彈 chooser 時，先監看 filechooser，再對實際 input 按 Enter。
 - **Guacamole 有合成 drag/drop 錯誤，或遠端腳本跑到別處。** 用實際 file input 上傳，選定目標 terminal，tcsh 下要跑 Bash 語法就明確 `bash -c`。`_Py_LegacyLocaleDetected` 表示課程啟動器選到不相容 Python，可用 Bash 驗 lint summary，不改共享環境。VCS license 暫時拒絕時用 `-licwait`／`+vcs+lic+wait` 和重試，與 RTL failure 分開。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/ntu-cvsd-adfp/hw2-closeout.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/ntu-cvsd-adfp/hw2-closeout.md)

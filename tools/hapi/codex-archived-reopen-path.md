@@ -15,4 +15,4 @@ updated: 2026-09-25
 
 ## 先分清 Hub 封存與原生 rollout 封存
 
-Hub archived session 曾在直接 `hapi ping-peer` 時報 `resume_failed: Session webhook timeout`。舊版可先在 Hub 用 Reopen，確認 `active: true` 再送訊息；驗證到同一 agent 回覆。當時 `hapi resume` 也明確要求先 Hub Reopen。0.35 的 `ping-peer --wake` 及其他差異見 [peer 指令對照](peer-cli-0-35-command-changes.md)。若 Reopen 回上面的 native path 錯誤，才另查 Codex rollout，不應不停重送或聲稱內容遺失。原始交接見 `git show 2505b5e:tools/hapi/reopen-archived-before-peer-message.md`。
+Hub archived session 曾在直接 `hapi ping-peer` 時報 `resume_failed: Session webhook timeout`。舊版可先在 Hub 用 Reopen，確認 `active: true` 再送訊息；驗證到同一 agent 回覆。當時 `hapi resume` 也明確要求先 Hub Reopen。0.35 的 `ping-peer --wake` 及其他差異見 [peer 指令對照](peer-cli-0-35-command-changes.md)。若 Reopen 回上面的 native path 錯誤，才另查 Codex rollout，不應不停重送或聲稱內容遺失。原始交接見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/reopen-archived-before-peer-message.md`。

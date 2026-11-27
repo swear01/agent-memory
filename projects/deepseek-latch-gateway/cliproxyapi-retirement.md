@@ -11,4 +11,4 @@ updated: 2026-11-12
 - **Mac 換 binary 後 checksum 相同卻 SIGKILL。** 從已核對 archive 建新 inode再原子替換，保留舊檔。每台只 drain/restart 正確的 gateway；不是把 HAPI 和子 session 都重啟。改 secrets 檔不會移除現行 runner env；若工作確實要改 Runner 再依該機 supervisor 保留子 session 手法處理。
 - **模型清單有 Flash、實際回空或換上游。** 用帶 session 的真實 completion 確認非空內容、served model、gateway active endpoint/attempt 和 usage。失敗保留同欄位，診斷 1010、欠款、配額、憑證撤銷與 client 取消，勿以重啟假裝清額度。[NVIDIA／Radeon 與 renderer 陷阱](radeon-fleet-fallback.md)
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/deepseek-latch-gateway/cliproxyapi-retirement.md) · [舊 Latch Gateway 路由、failback 和舊 config](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/deepseek-latch-gateway/fleet-routing-and-failback.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/deepseek-latch-gateway/cliproxyapi-retirement.md) · [舊 Latch Gateway 路由、failback 和舊 config](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/deepseek-latch-gateway/fleet-routing-and-failback.md)

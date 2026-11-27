@@ -12,4 +12,4 @@ updated: 2026-10-21
 - **手機 cover／modal 或 HMR 造成假驗收。** Camera clamp 用真實裁切 viewport，zoom anchor 扣中心 offset；手機 Formulas 遮 world 時與 Factory／Research global keys 共用 visibility guard，world input 分別管 timer。Escape drawer 先於 focused field guard，blocking dialog 再優先。用 1280px／390px 地圖角落與 Play 中多跨 intervals 驗。跑 `npm run check` 不改同一 worktree，平行 E2E 設 `E2E_DEV_PORT`／`E2E_PREVIEW_PORT`；截圖等 Pixi canvas 真的出畫及 toast 消失，Cure camera fit 要實際完成最後一步。
 - **公開 Pages 的程式已合併，網站仍不可用。** 主站與 Pages 子路徑同用 build `--base=./`，只在 main check workflow 成功後部署；存檔在瀏覽器。若 HTTPS provisioning 卡住，先讀 Cloudflare DNS/CAA／Pages ref 與錯誤，不改另有網站的根域。原修復是 Pages 的 cname 重新綁定後才可開 HTTPS enforcement。Bot 指成 v5 action 不存在時，用 `gh api repos/<action>/git/ref/tags/v5` 查真正 tag；多頁 review 用 `gh api --paginate` 及 `original_commit_id`。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/hexapharma/design-and-review-handoff.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/hexapharma/design-and-review-handoff.md)

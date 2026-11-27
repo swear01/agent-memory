@@ -24,4 +24,4 @@ tags:
 - 10/12 的原生 GUI 及 lint 為當時版本證據，enhanced lint 有 `CMD_overloadrule01` 的 W339 warning；11/19 rerun 為 batch。原生桌面、完整大型專案和後續 PAM 變化的效果要另驗。沒有完整補齊 allocator API，走到 systemd 的其他查詢仍可能觸發。Rocky 8 `docker-shell` 已驗 snpsmem GUI／lint，可作相容環境。
 - 舊 SpyGlass X-2025.06 報 `Unknown platform: Linux-7...` 是 platform selector 和 bundled Perl 只辨識 Linux 2–6，曾在共享入口／相關 Perl 修補；舊版 `snpsmem` 另選 `runtime`，不要套到 2026.03。舊 `sg_shell` 的 dash `Bad substitution` 來自 Bash-only `PIPESTATUS`。原檔備份為 `<shared-spyglass-root>/.dvlab-backups/20260905-spyglass-linux7/`。工具相容性和掛載基線見 [EDA 安裝盤點](eda-install-inventory.md)。
 
-[SpyGlass 各階段相容性重現、部署、還原與精確收據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/hapi-fleet/synopsys-spyglass-linux7-compatibility.md)
+[SpyGlass 各階段相容性重現、部署、還原與精確收據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/machines/hapi-fleet/synopsys-spyglass-linux7-compatibility.md)

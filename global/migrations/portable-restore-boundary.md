@@ -11,4 +11,4 @@ tags: [migrations, macos, secrets, restore, verification]
 - **重建覆蓋了目的端的設定或 symlink。** 逐個 preflight，保留目的端原來的檔案、目錄及 symlink，再複製允許清單。讀回偏好檔只驗該項恢復。
 - **產物已生成，卻尚未安裝或啟動。** 分開回報 `artifact_ready`、`syntax_checked`、`runtime_verified`。保留安裝器 nonzero，實際操作安裝後的應用程式才算可用。Homebrew 一次只跑一波，結束再並行獨立的非 Homebrew 任務。
 
-[原始遷移試作與證據界線](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/global/migrations/portable-restore-boundary.md)
+[原始遷移試作與證據界線](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/global/migrations/portable-restore-boundary.md)

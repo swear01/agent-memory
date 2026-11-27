@@ -23,4 +23,4 @@ updated: 2026-10-21
 - **模板或資料不全時說已比較其他研究。** 本輪 NeuroAbs artifact v2 只有結果表，僅做明標 inspired 的 netlist cut；沒有原始 AST rewriting／CEX reduction 或 AVR 求解對照。33 個單點 havoc 皆假反例只縮小本次 monotone 搜尋空間。使用者要求直接讓 AI 搜尋約三個 baseline 30 s 的案例，另外比傳統模板，不要求先有人造成功摘要或全數超時。硬體 safety 與 PPA/equivalence 的基準也不能互換。
 - **正式生成誤走 Codex CLI 或官方 DeepSeek 帳戶。** `scripts/llm_pilot.py` direct API 每請求僅完整 user message，連 model config 一起凍結。DeepSeek 走既有 local gateway，Muse 走既有 Meta 路徑。保存 client exact body、returned model、usage、固定 `x-opencode-session`、HTTP status 與 gateway attempt/endpoint。Gateway 可能更動實際上游 bytes；官方 402 和 gateway Cloudflare 1010 屬不同路徑。只有成功 transport smoke 不能支持 RTL discovery。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/rtl-relate/certificate-checker-v0.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/rtl-relate/certificate-checker-v0.md)

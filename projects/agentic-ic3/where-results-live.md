@@ -9,4 +9,4 @@ updated: 2026-11-12
 - **逐條 induction 都不過，就把問題歸因模型。** 同時檢驗互相支援的 lemma 集合；pool 已有完整 invariant 時另量 Houdini／kernel 損失。演算法允許固定寬度算術，要驗不會把 wrap 的候選錯當數學整數；量化 family 支援是不同表達能力。SAFE 由 pool 證出時要測去 IC3 的消融和等預算外部對照，才可歸因 IC3 kernel 或模型。
 - **四題 gate 進步當 31 題全量。** 核 repository 當批 manifest、相同 cores／時間預算和完整公開 evidence；凍結 query/solver/source，分開 p15 全套與 p26 起短 gate。不同 kernel 的 Opus／DeepSeek 快照不適合作單變量比較；NeuroAbs 的 split 進度不可代替 Agentic-IC3 效果。受委任紅隊時依 [審查角色](red-team-review-role.md) 回報。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/agentic-ic3/where-results-live.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/agentic-ic3/where-results-live.md)

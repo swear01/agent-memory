@@ -18,4 +18,4 @@ evidence_digest: ab18c800cf25225331da4e6c2078f7529fe14ceda0d7e427acd6f494823f130
 - Usage 順著原始 client 事件、轉換、保存與報表逐段驗證。只找到通用 receiver 不能說每個 client 都會送，沒有原始事件也不能指認特定 client 已修好。
 - 搜到 binary 的 steer 字串不證明 SDK 可觸發，鄰近 stream-json 找不到也不證明只限 TUI。先查對外 schema 與實際 callback，保留未完成 runtime 驗證的界線。
 
-來源回查：`git show 2505b5e:tools/hapi/client-event-capability-evidence.md`、`git show 2505b5e:tools/hapi/client-usage-event-proof.md`、`git show 2505b5e:tools/hapi/binary-token-reachability-proof.md`。
+來源回查：`git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/client-event-capability-evidence.md`、`git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/client-usage-event-proof.md`、`git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/binary-token-reachability-proof.md`。

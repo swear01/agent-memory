@@ -27,4 +27,4 @@ generated_by: openai-codex/gpt-5.6-luna
 - Confirm that the snapshot contains only collections approved for the destination. The Mac's general index may include local notes beyond shared memory, even when the command used to produce embeddings specified `-c memory`. Check the collection inventory or build a separate shared-only index before transfer.
 - Keep destination-specific config and cache directory, update the destination collection paths, and verify with counts, indexed path probes and a semantic canary. A changed SQLite checksum after update is normal because local metadata may differ; integrity check or counts alone do not establish retrieval. Git retains the canonical notes; snapshots accelerate bulk embeddings and stay out of Git. See [Oracle CPU limitations](../../machines/oracle/qmd-vsearch-slow.md).
 
-[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/llm-inference/qmd-snapshot-portability.md)
+[整理前的測量與逐次驗證紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/llm-inference/qmd-snapshot-portability.md)

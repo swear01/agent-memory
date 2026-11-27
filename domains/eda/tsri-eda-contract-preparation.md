@@ -14,4 +14,4 @@ tags: [tsri, eda, contracts, pdf]
 - PDF 沒有 AcroForm 可保留底稿做文字 overlay。核對原件 hash、輸出頁數、欄位位置、字型和留白。收到掃描後依實際內容拆件並核對簽名/日期位置，保留影像，不宣稱自行驗過真偽。
 - eTAS 解析錯誤時先重載查已否受理，避免重送。上一次操作造成重繪時，下個檔案要等 upload-success 和有效送審按鈕。掃描 PDF 上傳、合約送審、合約核准、軟體核准以及 license checkout 分開驗。Drive 本機同步與雲端檔案存在、實際下載 hash 也分開。
 
-[歷史待簽檔規格、退件和 2026 核准證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/eda/tsri-eda-contract-preparation.md)
+[歷史待簽檔規格、退件和 2026 核准證據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/eda/tsri-eda-contract-preparation.md)

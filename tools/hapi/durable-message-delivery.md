@@ -70,4 +70,4 @@ PR #1771 新增回歸先紅後綠：模擬 HTTP 回應遺失／異常後，以�
 
 ## Claude 消費訊息前的 flush
 
-若 Claude `nextMessage` 即將取走下一筆，而送出佇列以其他 callback 延後排程，應在共同消費入口等待 `messageQueue.flush()`。驗證真實 callback 與 await 順序，不用微任務／宏任務的一般規則推定交付。這份歷史證據只確認程式 diff，未證明端到端或 PR 合併。見 `git show 2505b5e:tools/hapi/queued-message-flush-order.md`。
+若 Claude `nextMessage` 即將取走下一筆，而送出佇列以其他 callback 延後排程，應在共同消費入口等待 `messageQueue.flush()`。驗證真實 callback 與 await 順序，不用微任務／宏任務的一般規則推定交付。這份歷史證據只確認程式 diff，未證明端到端或 PR 合併。見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/queued-message-flush-order.md`。

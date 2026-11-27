@@ -14,4 +14,4 @@ updated: 2026-10-20
 - 明確指定 `print-color-mode=monochrome` 或 `color`；雙面長邊用 `sides=two-sided-long-edge`，原尺寸用 `print-scaling=none`。CUPS 可另用 `Duplex=DuplexNoTumble`／`ColorModel=Gray`／`PageSize=A4`，仍不依賴 PPD 的 InputSlot。DOCX 需先用 Word 匯出 PDF 並查實際頁數。
 - 用印表機 `Get-Job-Attributes` 查 `job-state=completed`、`job-completed-successfully` 與 `job-impressions-completed` 是否等於文件頁數乘份數。CUPS accepted／completed 與 HTTP 成功都不證明出紙；sandbox 無法查 IPP 時回報證據限制，不重送來測。和舊卡件分開核對本次 job ID。
 
-[逐次列印、設備證據與當時限制](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print.md)
+[逐次列印、設備證據與當時限制](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print.md)

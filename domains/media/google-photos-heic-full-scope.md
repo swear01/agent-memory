@@ -16,4 +16,4 @@ tags: [Google Photos, Takeout, HEIC, Drive API, rclone, SHA256, Motion Photo, in
 6. Library API 無原件二進位覆寫或照片 delete。已核准的網頁批次 MoveToTrash 使用實際查回的 dedupKey，未公開接口批量先重驗；parser 展開同一行所有 frames，以 ID 集合核對，避免把 250 responses 錯看成 225。每批先寫意圖和 receipts，未知結果先回讀。最終核對精確垃圾桶差集，確認替代品仍在主圖庫，不清空垃圾桶。暫存登入資訊不留在 Git 或記憶，失效從授權入口續接。
 7. 清 Drive 暫存同時查 Takeout 和 staging。FileProvider 顯示來源不等於本機獨立副本；驗完整本機 ZIP/MD5，保留清單再清精確遠端項目。`rclone lsjson --stat` 的虛擬根可能無 ID，改用父層列表核對。全量影像詳細來源與 2026-09-15 留存例外見固定版本；另見 [2026-10-15 收尾](google-photos-b2-cleanup-20261013.md)。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/media/google-photos-heic-full-scope.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/media/google-photos-heic-full-scope.md)

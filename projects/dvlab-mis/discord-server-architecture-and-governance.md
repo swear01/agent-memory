@@ -12,4 +12,4 @@ updated: 2026-09-18
 - **舊 EDA 或 R11 要改區、改名。** 沿用 channel ID 並更新 name／parent_id，先核類別與 channel permission overwrite，保留舊聊天及附件。把過期公告歸到獨立受限封存區。原身分與頻道清單見下方快照，成員現況先由正式伺服器讀回。
 - **角色調整報 403 或連續請求遇 429。** Bot 的最高角色須高於目標角色，再查權限。批次按 Retry-After 節流並讀回變更。若成員 API 因 intent 不足拒絕，使用有授權的名單或限定搜尋，別將搜尋結果當完整名單。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/dvlab-mis/discord-server-architecture-and-governance.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/dvlab-mis/discord-server-architecture-and-governance.md)

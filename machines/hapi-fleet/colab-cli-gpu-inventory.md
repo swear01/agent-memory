@@ -17,4 +17,4 @@ tags: [colab, gcloud, uv, gpu, hapi]
 - 唯讀 sandbox 看不到 `/dev/nvidia*` 時，`nvidia-smi` 的 driver error 不能證明 host 驅動壞，先看 `/proc/driver/nvidia/gpus/*/information` 與 `lspci`。uv tool list 可能被 cache lock 阻擋，核對既有 tool 目錄。bwrap 出錯改用已授權的唯讀入口。Grok box 的 HAPI runner.env 從 `/var/tmp` 消失可令 runner 不上線，不把這當 Colab/ADC 問題。
 - 官方登入如必須等待使用者交互，tmux 或沒有 tmux 時用 screen 保存待核准程序；從已授權入口完成，驗 ADC 與真實工作。OAuth code 短效，不放在聊天、Git 或 memory。等舊 session 不再需要後再做下一輪登入。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/colab-cli-gpu-inventory.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/colab-cli-gpu-inventory.md)

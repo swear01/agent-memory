@@ -16,4 +16,4 @@ tags:
 - **裁剪 S4 地形也順手刪了 Vault 歷史。** 在停服完整快照的副本操作，正式伺服器及既有備份保留。保護玩家、床位、建築、倉庫，以及 `the_vault_VaultSnapshots.dat` 索引、對應 NBT 與進度；核對所有保留的 terrain/entities/POI 與非地形雜湊。8 區塊緩衝及建築辨識是啟發式，無法保證無漏。需原地形時找 `<S4-task-root>/work/full-before-trim` 或 `server-snapshot`，本機副本並非第二份 Drive 完整包。CRC、雜湊與 Drive 讀回不等於已進遊戲驗證。
 - **祖先資料夾進垃圾桶，但 active 容量不降。** 查子檔自身的 `trashed` 欄位。新授權清理時按檔案 ID、現行名稱、父目錄、大小／MD5 確認，再逐一讀回與 changes 清點。Trash 未永久清空時不宣稱帳戶配額已釋出；維持歷史世界及現用 SWOP／M5 實例。
 
-[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/minecraft-prism-recovery/final-delivery.md)
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/projects/minecraft-prism-recovery/final-delivery.md)

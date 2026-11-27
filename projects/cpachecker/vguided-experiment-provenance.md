@@ -27,4 +27,4 @@ updated: 2026-09-30
 - **某台 final accounting 用了全域數字。** 依 `row.host` 篩選，再分 launched、terminal、預期題數。完整成本看所有實際 attempts 與服務及 cleanup，未知 usage 保持未知。只將 matched pairs 和實際 complete-response rows 做各自分母，不能用全資料的成功數除以局部集合。
 - **STOP sentinel 已出現但 coordinator 沒收到結果。** 等真實 supervisor 寫完 summary，再送 hash、計數、exit 與 STOP reason，核驗送出回條。CLI accepted 不等於已讀。保存 frozen runtime 與當前 PR head 的區別；review 通過、merge、分派結案和實驗受採納分開。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/vguided-experiment-provenance.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/vguided-experiment-provenance.md)

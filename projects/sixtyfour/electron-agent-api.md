@@ -21,4 +21,4 @@ updated: 2026-10-31
 - **高倍數快速跑但卡頓被全歸給聲音。** 同程序交錯 native/bounded/silent 及復測，長時段才分得出 renderer/JS、AudioOutputDevice、server outlier。100× 實測 bounded 降低本場景 audio CPU，state 延遲不隨靜音單調下降；未證長期穩定。換 DLL/遊戲版本先核隔離支援和實機 marker，再驗 sim、audio、render 與 save。
 - **看到歷史 `debugEval` 自訂診斷入口。** 正式 API 保持固定白名單且不接受任意 JavaScript。若工作樹留有舊實驗，停用並重啟該程序，再從正式介面核對拒絕和相同功能讀回；改設定不會即時替換已啟動程序的配置。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/sixtyfour/electron-agent-api.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/sixtyfour/electron-agent-api.md)

@@ -24,6 +24,6 @@ updated: 2026-09-08
 - **600 CPU／900 wall 誤變成 610 wall，或外層提早回收 inner capture。** `VGUIDE_TIMEOUT_GRACE=300` 是 CPU 上另加的 wall allowance；outer capture 的 `--termination-grace 15` 用來包住內層預設 10 秒收尾。以實際每台 launcher 做 model-free 檢查，包含 nonzero stage 確實阻止後續階段。
 - **需復原 2026-09-02 已移除的 dirty worktree。** 先核對原 stash 內容，再在適合的乾淨 checkout 復原；舊清理批次的 7 個 stash SHA、原保留目錄和搬移收據見下方歷史連結。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/build-verification.md) · [2026-09-02 清理及復原收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/worktree-cleanup-2026-09-02.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/build-verification.md) · [2026-09-02 清理及復原收據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/worktree-cleanup-2026-09-02.md)
 
-[舊 classes 紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/cpachecker/compiled-class-identity.md) · [Temurin／Stock crash 對照](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/cpachecker/native-predicate-test-baseline.md)
+[舊 classes 紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/cpachecker/compiled-class-identity.md) · [Temurin／Stock crash 對照](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/cpachecker/native-predicate-test-baseline.md)

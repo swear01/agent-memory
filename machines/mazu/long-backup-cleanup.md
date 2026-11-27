@@ -26,4 +26,4 @@ updated: 2026-10-12
 - NFS per-mount `nfsiostat` 第一筆是累積值，取短區間差分加 tar bytes、process wait channel、7zz CPU 與磁碟速率。慢小檔案可同時具大檔 direct I/O 正常、7zz 幾乎 idle、無重傳。tar/tee 阻塞寫 pipe 而 7zz 持續吃 CPU 則是當下壓縮瓶頸。整段平均、全機 swap、單次 iowait 不等於此程序瓶頸。權限不足的 pidstat `-1` 以有權限的 proc counters 重查。
 - NFS server `maxread/maxwrite` 可低於 client 指定值，RPC 應用保留來源埠，否則 `NFS4ERR_PERM` 不證明不支援屬性。先確認實際 mount 與共用 BDI，大量循序讀取才考慮暫調 `read_ahead_kb`（Mazu 當時 128 → 1024 KiB），結束恢復原值。這會影響共用 mount，且不保證加速小檔／隨機讀取。NAS 的 DSM API 可另看負載，首份速率可能為零。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/mazu/long-backup-cleanup.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/mazu/long-backup-cleanup.md)

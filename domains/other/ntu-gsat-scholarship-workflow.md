@@ -19,4 +19,4 @@ tags:
 - 沿用官方 PDF。機打文字對準實際可填區、勾勾置中，簽章欄交指定本人處理。逐頁渲染檢查裁切位置、內容與字級；本機副本 hash 相同只證明本機保存，另查雲端／表單。附件上傳後仍須提交成功與對應回執，後續行政審核需另查。
 - 115-1 已有送件回執，切勿依早期未送件紀錄重複提交。原始附件與回執在相應的私有工作目錄。
 
-[115-1 特定金額、時程、送件與封存收據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/other/ntu-gsat-scholarship-workflow.md)
+[115-1 特定金額、時程、送件與封存收據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/domains/other/ntu-gsat-scholarship-workflow.md)

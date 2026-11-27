@@ -14,4 +14,4 @@ updated: 2026-11-28
 
 新 session 的核准模式見 [目前使用者偏好](session-permission-preference.md)。
 
-[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/terminal-errors-and-memory-closeout.md)
+[原始診斷與查證紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/terminal-errors-and-memory-closeout.md)

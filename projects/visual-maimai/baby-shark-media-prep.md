@@ -20,4 +20,4 @@ tags:
 - **offset 對到片頭瞬音，而非穩定拍點。** 從裁切音訊重新量 beat period 與 phase，`&first` 是秒數、起始 timing row 以它為準。每 `&inote_*` 起首顯式 `(BPM)`，仍保留 `&wholebpm`。Baby Shark 已驗 115 BPM、offset **0.22 s**，早期 0.10 s 鎖錯 transient，不沿用。正式原片保留。
 - **空譜面 starter 被 parser 拒絕 `max() iterable argument is empty`。** 保留第一拍一個合法 placeholder `1` 和終點 `,,,E`；匯入成功後真正編譜時可移除。只準備媒體無須代造正式譜面。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/visual-maimai/baby-shark-media-prep.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/visual-maimai/baby-shark-media-prep.md)

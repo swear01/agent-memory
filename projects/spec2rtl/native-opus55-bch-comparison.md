@@ -10,4 +10,4 @@ updated: 2026-10-16
 - **有技能的一輪被拿來說平均更好／更差。** 兩臂的額外 skills、permission mode、oracle 監督與前輪診斷協助不同。記 skills pin、workspace 輸入、真正 Skill invocation 和 Bash 讀文件；Codex operator 回答 spec／批准架構與人類批准分開。兩組是固定 grader 的單次產物比較，native 自評不混用。Thinking 包含於 output tokens；五小時續跑 fixture 不代表實際 quota wait/recovery。長實驗用 Mazu 原生同 session resume，別重開已交付 run。
 - **Issue #35 原有比較表被長篇報告換掉。** 沿用原留言的 `Config | Model | Clock | Area (µm²) | sum Time/n | Cost | vs best` 及 gate-times 格式，新增兩列後按全表最低 cost 重算 vs best。保留 no-skill 診斷後修復與 skills Codex operator 協助等條件，精確讀回修改後原留言。[Issue #35 比較表](https://github.com/DVLab-NTU/spec2rtl/issues/35#issuecomment-6193091516)
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/spec2rtl/native-opus55-bch-comparison.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/spec2rtl/native-opus55-bch-comparison.md)

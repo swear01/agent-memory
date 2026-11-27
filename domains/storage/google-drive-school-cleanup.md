@@ -18,4 +18,4 @@ tags: [google-drive, school, deduplication, 7z, powerpoint, git, videotoolbox]
 - 電腦視覺 `hw2/hw2_data.7z`、全民國防 `data.7z`、自動控制 `autodrone-2023/datasets.7z` 與 `track_model/datasets.7z` 保存在原父目錄，解壓及逐檔 hash 驗證後才移除原資料夾。早期「hw2 保留解壓目錄」已退役；原始 ZIP 在垃圾桶，非垃圾桶的是新 7z。標註與資料數值未有損轉換，課程程式未重跑。
 - `Music-to-Lyrics/Sentence_and_Word_Parsing.7z` 檔案已完整讀回，使用前需解壓；Git 已原樣恢復，非獨立 archive。Custom Vision 僅移除授權的資料與素材，`老師predict程式.py` 保留。逐項位置、數量和收據在固定原版。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/storage/google-drive-school-cleanup.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/storage/google-drive-school-cleanup.md)

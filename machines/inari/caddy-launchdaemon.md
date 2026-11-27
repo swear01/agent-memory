@@ -13,4 +13,4 @@ updated: 2026-09-10
 - 發布前確認 main／artifact 的實際 SHA。可採同一 GitHub Pages run 的 `github-pages` artifact 內 `artifact.tar`，避免兩站出不同提交；檢查成員路徑及 symlink，切換成品後保留舊 release 作 rollback。驗證首頁、主要語言頁、成員頁、robots/sitemap 和未知路徑 404。
 - 網路狀態時好時壞時先查 `pmset -g log`。Maintenance Sleep／`Sleep Service Back to Sleep` 在 `sleep 0`、`standby 0` 下仍發生，Enet.Service DarkWake 後可恢復。駐站使用 `sudo pmset -a disablesleep 1`，查 `pmset -g` 和 IOPMrootDomain 各自顯示 1/Yes，避免改到螢幕 timer；撤回為 `sudo pmset -a disablesleep 0`。當時外網 TLS 已重驗、Caddy 程序未變；未做強制睡眠或重開驗證，也未查明更早進入 Maintenance Sleep 的觸發。 [Apple pmset source](https://github.com/apple-oss-distributions/PowerManagement/blob/main/pmset/pmset.m)
 
-[各階段舊 IP、電源、部署與 HTTPS 收據](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/machines/inari/caddy-launchdaemon.md)
+[各階段舊 IP、電源、部署與 HTTPS 收據](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/machines/inari/caddy-launchdaemon.md)

@@ -15,4 +15,4 @@ updated: 2026-11-18
 - 驗證覆蓋真實 Hub→Runner→runtime 的 spawn、同 remit retry、wait、archive 與目錄拒絕，模型端是 mock。需要 opt-in runtime integration 的 MockSession 具備 EventEmitter。既有 terminal-owned engine attach timeout 在未修改基準也發生，不能算本修正結果。
 - 0.30.7.4 carry #1771 `5a0465f6` 後，Mac 與 mazu 的 native spawn、回覆和 archive 讀回通過；Windows swop 當時未驗。切到其他 release 時查實際 code/manifest，不能沿用此舊驗證。
 
-狀態、CI 和修正原始記錄見 `git show 2505b5e:tools/hapi/codex-spawn-remit-thread-binding.md`。
+狀態、CI 和修正原始記錄見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/codex-spawn-remit-thread-binding.md`。

@@ -19,4 +19,4 @@ tags: [CULS, gpuls, resub, nsight, cuda]
 - **以 profile 推判提速，結果 wall time 變差。** 先用 nsys 定位真正大型 launch，再以 ncu `--launch-skip` 選中。細粒度 phase mark 含同步，full `clock()` 是多執行緒 CPU，不代表 latency。同步區間若 GPU 一直在跑，不能算 host 空檔。strash CPU/GPU 分層取決於每層寬度而非節點總數；過深圖的 spin 吞掉收益。依 NPN class 重排 rw slot 曾破壞 locality、讓評估 3.91→7.02 s；用逐格配對檢查 geomean 遮住的退步。
 - **用逐 pass 腳本量新版本，早停卻不生效。** 真正 `resyn2rs` handler 加 `CULS_PASSTRACE=1`；別在中間插 time 變成另一個 flow。PR #24 的 rs 門檻 300 ppm，最後一次仍跑，若 b/rw/rf 又刪 ≥6,000 ppm 則重開。40 電路配對總時間 −18%，AND 平均 +0.038%、最大 +0.349%。PR #25 要連續三次 <300 ppm、rw 與 rf 各自計；只停一次會漏 square 的下一個 rwz 高收益。Dirty-window rs 會漏遠方增益，無法靠這輪結果宣稱等價。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/ntu-lsv-course/culs-gpu-resub-profiling.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/ntu-lsv-course/culs-gpu-resub-profiling.md)

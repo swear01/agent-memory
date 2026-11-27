@@ -14,4 +14,4 @@ updated: 2026-09-21
 - **把 round cap 當 HTTP attempts 硬上限，或把 first round 當 residual learning。** `LlmCallScheduler.recordCallCompleted()` 舊邊界只計成功回合；失敗 request 另核帳。在作出硬上限承諾前驗 attempt cap，或用證明有界的單一路徑。當輪 compiler candidate 若在 call 後才注入，必須檢查下一份 prompt 才能說有 context exposure。
 - **#174 解了就重開 #173。** MathSAT fix 已合併 #176，固定舊 #173 STOP packet 仍保留；要補 formal matrix 或前進 C5，另行 preregister 並預建驗證當前 runtime。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/precision-compilation-issue170.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/precision-compilation-issue170.md)

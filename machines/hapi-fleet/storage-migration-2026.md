@@ -17,10 +17,10 @@ updated: 2026-09-29
 - Canonical Home 以帳號身分建一個 `home/<account>/`。以現役內容為 base，G2/G3/G4 舊資料相異的內容用 `.archive/<generation>/` 保留，不覆蓋 current。同 numeric UID/GID 可能已分配新帳號，還原先核對 owner。Sealed overlay 只包含舊版必要差異，不能單獨當 standalone Home。需保存 account/disposition manifests。
 - 預設保留 source、Git、README、論文、設計證據、最終結果、不可重建輸入。Dataset、模型、軟體或編譯輸出需有可取得來源及版本，不能因年代或目錄名決定可刪。Docker reclaimable、stopped 和 unreferenced 只描述引用狀態；若 volume 含研究環境，先用保留 owner/ACL/xattr/sparse 的 tar.zst 封存，做讀回、來源比對及跨主機 hash 確認。不要手刪 `overlay2`。
 
-- Athena 的 `/` 與 `/mnt/md0` 曾是同一 ext4 NVMe，NFS `/home` 遮住的是本機舊 Home。先查同 UUID、子掛載與程序引用，避免把本機熱緩存發現成第二套備份。Hugging Face Arrow 處理 cache 與下載原料、解壓、模型分開盤點；只在逐項授權與可重建來源確認後清明確範圍。[Athena 2026-09-30 清理證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/athena/storage-2026.md)
-- NFS 單一 retired EDA 樹清理時，先核對帳號、舊路徑、現行共享庫和原有專案樹。已核准清掉 `jack0716/tsri.retired-20260914`，同帳號 `3dic` 研究樹保留。代表 VCS/cell-library 檔的 SHA 和 inode 驗證不足以宣稱整棵樹完全相同；比較部署與刪除前後作用域。[退休 EDA 來源核對與刪除收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/nfs-jack0716-home.md)
+- Athena 的 `/` 與 `/mnt/md0` 曾是同一 ext4 NVMe，NFS `/home` 遮住的是本機舊 Home。先查同 UUID、子掛載與程序引用，避免把本機熱緩存發現成第二套備份。Hugging Face Arrow 處理 cache 與下載原料、解壓、模型分開盤點；只在逐項授權與可重建來源確認後清明確範圍。[Athena 2026-09-30 清理證據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/athena/storage-2026.md)
+- NFS 單一 retired EDA 樹清理時，先核對帳號、舊路徑、現行共享庫和原有專案樹。已核准清掉 `jack0716/tsri.retired-20260914`，同帳號 `3dic` 研究樹保留。代表 VCS/cell-library 檔的 SHA 和 inode 驗證不足以宣稱整棵樹完全相同；比較部署與刪除前後作用域。[退休 EDA 來源核對與刪除收據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/nfs-jack0716-home.md)
 
-- Cthulhu 和 Valkyrie 的 `<remote-home>` 是同一份 NFS。清理只做一次；另一個 client 短暫看見舊名稱時先重讀再操作。已核准的可恢復清理進使用者自己的 Trash，移入垃圾桶不等同已釋放容量。別將釋放容量的需求當成清空整個 Trash 的授權。[Cthulhu 原先的清理筆記](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/cthulhu/shared-nfs-home.md)
+- Cthulhu 和 Valkyrie 的 `<remote-home>` 是同一份 NFS。清理只做一次；另一個 client 短暫看見舊名稱時先重讀再操作。已核准的可恢復清理進使用者自己的 Trash，移入垃圾桶不等同已釋放容量。別將釋放容量的需求當成清空整個 Trash 的授權。[Cthulhu 原先的清理筆記](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/machines/cthulhu/shared-nfs-home.md)
 
 ## 搬移、故障碟與刪除閘門
 
@@ -35,4 +35,4 @@ updated: 2026-09-29
 - 2026-09-29 Valkyrie 舊 Home 私有封存移至 One Touch 長碟 `backup/private-system-backups/valkyrie-g1-migration-20260926/`，原 NFS 私有路徑已撤。未加密，exFAT 掛載權限只限制本機。七個研究 Docker volume 封存在 NFS `<admin-home>/private-system-backups/valkyrie-docker-repro-volumes-20260929/`。原本未被引用的 volume 含非空研究資料。
 - 舊 Zeus Home 的完整 Mazu SSD 包已依該批授權移除。補存少量程式碼與測試資料放長碟 `backup/private-system-backups/zeus-g2-unique-source-20260929/`，附 SHA manifest；只承諾精簡範圍。其餘來源依現役 Git/NFS 和 Canonical Home 成品查找。Cthulhu 的研究專案經確認搬入 canonical NFS，Valkyrie 某些 active local homes 仍須各自核對。逐帳號與來源範圍查原始驗證收據。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/storage-migration-2026.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/storage-migration-2026.md)

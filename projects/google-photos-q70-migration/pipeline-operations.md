@@ -26,4 +26,4 @@ tags:
 - `--plan` 凍結分類、來源／成品 SHA256、Drive 的唯一檔名、size、MD5、file ID 和個別對應，讓授權綁該計畫 SHA。到 `--run` 才依 live 回讀核對 media key、dedup、檔名、位元組與垃圾桶狀態。寫 journal `sending` 後才送出，送完逐項以垃圾桶回讀對帳。結果不明先回查，避免重送。只移入可恢復垃圾桶；原始紀錄與進度備份留在專案。
 - **非原畫質副本的內容 SHA 對不上。** 若要用替代身分證據，需另有綁 plan SHA 的授權。核對 Takeout sidecar 的 media key、`original_quality=false`、精確檔名與位元組數，確認未在垃圾桶，並記錄該筆用的證據。重開 journal 前先匯出前次回條。
 
-[完整原始紀錄與逐批驗證](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/google-photos-q70-migration/pipeline-operations.md)
+[完整原始紀錄與逐批驗證](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/projects/google-photos-q70-migration/pipeline-operations.md)

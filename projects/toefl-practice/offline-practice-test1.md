@@ -11,4 +11,4 @@ updated: 2026-10-11
 - **固定練習卷的正確率被轉成正式分數。** 匯出完整 ZIP 後按原題及相符 rubric 診斷。Test Overview 同題 Email 4 分及 Discussion 5 分示例是 task anchors，非原始分數等化表；字數要求依原題不同。可依使用者要求給寫作／口說各一個明標主觀、未校準的診斷暫估，勿把未校準四科猜測加成正式總分或信賴區間。
 - **ASR、靜音檢查或原音模型接收成功被當發音評分。** 先驗音檔可解碼、時長、非空，再看兩份不受標準答案提示的轉錄；模型分歧與低音量只能標疑點。Gemma 音訊 extractor 預設截 30 秒，45 秒題需保全後段；即使分段完整，本輪模型在靜音控制有幻覺，評語未採用。用最新私人 v3 評分明細的 `aiDiagnosticBands`，官方等化 `bands` 仍為 null。完整口說任務分需要可靠原音；作答、分數與錄音留在私人本機。
 
-[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/toefl-practice/offline-practice-test1.md)
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/projects/toefl-practice/offline-practice-test1.md)

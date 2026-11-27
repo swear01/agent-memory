@@ -69,4 +69,4 @@ on each host. Write a shared NFS source once and verify every alias separately.
 
 See the live base template for policy text. It can change independently of this
 procedure. The 2026-09-03 and 2026-10-14 fleet readbacks are available with
-`git show 06f50e3:tools/agent-rules/base-sync.md`.
+`git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/agent-rules/base-sync.md`.

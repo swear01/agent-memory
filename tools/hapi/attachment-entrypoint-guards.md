@@ -14,4 +14,4 @@ evidence_digest: 7dceb50df4b3cef03c63615888f65542d12861f3bbcbb78a7ba713af8ea51c6
 
 ## 檔案 drop 的預設動作
 
-在 dragover 與 drop 識別 `Files` payload 後才 preventDefault。附件 disabled 時仍須阻止瀏覽器開啟檔案，但不加入附件。非檔案拖放保留原生行為，例如把選取文字拖進 composer。歷史 review 確認兩個拖放問題已被處理，仍有 locale 問題，未重跑瀏覽器驗收。見 `git show 2505b5e:tools/hapi/file-drop-default-action-boundary.md`。
+在 dragover 與 drop 識別 `Files` payload 後才 preventDefault。附件 disabled 時仍須阻止瀏覽器開啟檔案，但不加入附件。非檔案拖放保留原生行為，例如把選取文字拖進 composer。歷史 review 確認兩個拖放問題已被處理，仍有 locale 問題，未重跑瀏覽器驗收。見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/file-drop-default-action-boundary.md`。

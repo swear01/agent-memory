@@ -39,4 +39,4 @@ claude auth status
 
 沿標準入口與原 npm bin 驗證版本、symlink、`claude auth status`（應見 `claude.ai`，以及預期的帳戶方案）；HAPI 應另用 runner 的 PATH 核對。用已取得授權的實際請求驗證指定模型，不能將登入和版本讀回當成所有主機的請求驗證。更新 binary 後舊程序不會換版，SDK、直接 HTTP 與原 binary 不受 wrapper 認證清除影響。
 
-歷次 fleet 明細、範圍與異常見 `git show 06f50e3:tools/anthropic/claude-subscription-launcher.md`。來源是 transfer_MAC PR #64 和 `docs/claude-subscription-fleet.md`。
+歷次 fleet 明細、範圍與異常見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/anthropic/claude-subscription-launcher.md`。來源是 transfer_MAC PR #64 和 `docs/claude-subscription-fleet.md`。

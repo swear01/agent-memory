@@ -26,4 +26,4 @@ tags:
 - Cthulhu/Valkyrie 排程重開截斷仍跑的 driver postinst，`nvidia-compute-utils-595-server` half-configured，本機 `nvidia-persistenced` 帳號也未建好。回線後用 `dpkg --configure --pending` 完成 pending 和 triggers，再驗帳號/service、dpkg audit、執行中 kernel 的 module、loaded driver、實際 CUDA 初始化。不要僅以某個時間排程認定安裝已完成。Transient timer 重開即消失，亦可能仍指舊 kernel。
 - Mazu 當時確認無 CUDA 或本機圖形工作後，短暫停 GDM/persistence，正常 unload 舊模組並裝載對應執行中 kernel 的新模組，保留 boot 和 SSH／編輯器程序後驗 HAPI 與 CUDA。僅適用已清空 workload 的維護。Ada 595 與 Zeus Pascal 580 的 modalias／Toolkit 區別見 [GPU 維護](ubuntu-gpu-maintenance-plan.md)。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/firmware-notifier-snap-maintenance-20261118.md)

@@ -17,4 +17,4 @@ updated: 2026-11-04
 - **從 GUI 做出類似結果，被報成精確重現 script。** Place Standard Cell 執行 `place_design`，legacy Synthesize Clock Tree 是 `clockDesign`；嚴格重現走同一 graphical session 的 launch terminal，CTS 讀實際 report 及 CCOpt debugger。當時 Windows menu 沒有 Console／History／Log Viewer；`view_log <existing-log-file>` 開的是唯讀 viewer。
 - **NanoRoute 的 Global Detail Route 和 Global＋Detail 看似同選項。** 同勾 Global/Detail 才會有 `routeDesign -globalDetail`，另名 Global Detail Route 是 `routeWithEco`。表單預設 End Iteration=1、Fix Antenna=true、Auto Stop=false，跟 script 的 auto／auto／true 不同；通過 DRC／connectivity／antenna 仍標 GUI variant。精確重現取消表單並從原 CTS checkpoint 的 fresh session 跑 `route_design`。SRoute 的 Follow Pins 對應 corePin，`noCorePins=1` 是開；Basic layer change 與 Via Generation 的 crossover／target range 分開核對。
 
-[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/domains/eda/cadence-innovus-stylus-vs-legacy-flow.md)
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/domains/eda/cadence-innovus-stylus-vs-legacy-flow.md)

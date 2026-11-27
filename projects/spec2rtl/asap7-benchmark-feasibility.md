@@ -11,4 +11,4 @@ updated: 2026-10-09
 - **全 Mamba 合成省略 simulation DRAM 後留下 unresolved module。** `aoc_dram_model.sv` string 使 DC VER-700；直接省略檔案會少硬體 DRAM ports/boundary。之後 local-buffer elaboration 的 exit 137 未證 kernel OOM。需要真正拆硬體界面、做 gate harness、提供合格同製程多 port／masked SRAM。Conv／RLE 的新模型為 512×8／512×45、active-low whole-word，最新版 RLE 無 BWEB，低 36 bit wrapper 仍待驗。詳見 [SRAM qualification](sram-compiler-feasibility.md)。
 - **共用套件可讀或對照 bench 綠了，被升成預設。** `/apps/cad/cell_library/ASAP7_EDK/memory-20261009/README.md` 為研究整合入口，含 ROM、校準模型、驗證程序及 RAM 的明確資格；`orfs-platform/` 是固定 ORFS v1.7 副本。從共用唯讀處複製到 scratch 重跑 ROM RTL／SDF、converter 比對和 RAM 反例，依登入帳號檢查讀取及 `verification/SHA256SUMS`，不能以 mazu 可讀替代其他主機。全晶片 P&R／corner coverage、完整 Mamba、SRAM qualification 和 performance baseline 均未就緒；維持既有 production CI/goldens。
 
-[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/spec2rtl/asap7-benchmark-feasibility.md)
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/projects/spec2rtl/asap7-benchmark-feasibility.md)

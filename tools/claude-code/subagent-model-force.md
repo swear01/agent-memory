@@ -38,4 +38,4 @@ Desktop 的 `start_session`（linked/side session）開的是獨立 session，�
 - subagent 的 effort 預設值：Desktop binary 有 `subagentEffort` 字串，但未追到預設來源；不要假設一定是 medium。
 - CLI 無 `effortLevel` 時的預設 effort：GrowthBook 快取同時有「Opus 建議 medium」與「high 為預設」兩種提示，未實測確認。
 
-舊配置、Desktop 實驗及設定備份見 `git show 06f50e3:tools/claude-code/subagent-model-force.md`。
+舊配置、Desktop 實驗及設定備份見 `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/claude-code/subagent-model-force.md`。

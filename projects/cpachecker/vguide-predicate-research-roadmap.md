@@ -23,4 +23,4 @@ updated: 2026-10-21
 - **關係在 trace 中有效，不等於模型穩定選對。** `hh2012-ex1b` delayed oracle matched replay 從 UNKNOWN 到 TRUE；#149 Muse answer-free nested-loop cue 的 blind A/B 為 final hit 0/3→2/3，最低編號完整 treatment replay 兩次 TRUE。這支持該例 mechanism，不能外推命中率。需要因果歸因時，用完整原始 response 對 suppressed injection，再按獨立證據移除群組。
 - **關鍵路徑最終號稱成功但中途結束不完整。** 原 C proof 採納需驗正常退出、完整 request/response/plan receipt 及 verified obligations；timeout 中已印的 TRUE 保留 raw 但不採納。cgroup OOM 有可信 supervisor/identity 對應才分類資源 UNKNOWN，terminal 缺失仍獨立記。ArrayAbstractionAlgorithm 的 delegate `AlgorithmStatus` 要合取且尊重 `stopAfterError`；imprecise CFA 回原 C 重驗的 status replacement 不同。PR295 對 075 同 compiler 恢復正確 FALSE，屬 wrapper 修正。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/vguide-predicate-research-roadmap.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/vguide-predicate-research-roadmap.md)

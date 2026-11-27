@@ -34,4 +34,4 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 
 - Start/end/cancel 由單一 navigation 物件管理 token、in-flight、lease 與 scroll AbortController，以 `signal.aborted` 判斷所有權。找不到回覆所屬 prompt 時回 null，不往尾端猜。跨主動取消與串流更新驗最新目標，不用固定 sleep。
 - 優先從 `buildAssistantReplyTargets`／`replyTargetsRef` 找 re-key 的 prompt，DOM 僅備援。Trim 保留 tail 起點所在 turn 的 prompt；store 與 runtime 都用 `normalizeDecryptedMessage(m)?.role === 'user'` 並排除 failed。以顯示順序和被略過列判斷：略過區段沒有 prompt 才標同 turn 的 `~turn` gap。重新 trim 時保留既存 gaps，避免錯配或跨 turn 分享。
-- 這些修正以 #1542 再 #1597 的整合測試與歷史 PR head 為證據。當時 CI 的 pass 只屬固定 head，後續合併／部署另查實際狀態。歷史 raw 驗證和變更進度見 `git show 2505b5e:tools/hapi/history-navigation-protection.md`。
+- 這些修正以 #1542 再 #1597 的整合測試與歷史 PR head 為證據。當時 CI 的 pass 只屬固定 head，後續合併／部署另查實際狀態。歷史 raw 驗證和變更進度見 `git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/history-navigation-protection.md`。

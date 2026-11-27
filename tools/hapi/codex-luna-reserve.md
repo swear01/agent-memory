@@ -18,4 +18,4 @@ updated: 2026-11-28
 - `account/rateLimits/read` 先用 null 探測。0.153.4 對 `supportsLunaReserve:false` 回 -32600；0.154.0 有新版欄位。只有完整實作 client 端接續時才宣告 supports。用真實 `thread/settings/updated` 測延遲確認，RPC ACK 與 native 事件分開。
 - [#1836](https://github.com/tiann/hapi/pull/1836) 當時的實測：`model/list(includeHidden=true)` 沒列 `gpt-reserve`，但隔離 thread 的原生 Reserve 推論成功且回獨立 bucket，百分比未變。這不能證明 quota 增量，也不能證明 HAPI 條件式切換已端到端部署；應用真實符合資格的 HAPI session 核對 picker、native model 與扣額，不刻意耗盡額度。
 
-[整理前完整證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/tools/hapi/codex-luna-reserve.md)
+[整理前完整證據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/tools/hapi/codex-luna-reserve.md)

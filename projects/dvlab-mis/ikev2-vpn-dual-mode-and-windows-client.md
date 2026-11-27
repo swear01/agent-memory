@@ -18,4 +18,4 @@ tags: [vpn, ikev2, windows, powershell, certificate, eap, psk, archive, dvlab-mi
 - **`Set-RasphonePreSharedKey`／`PropertyNotFoundStrict`。** 從公告的目前憑證版重取安裝包。舊版錯把 rasphone.pbk 固定當 Unicode，又對 scalar 或 null 讀 `.Count`。維護類似腳本時辨識 BOM／編碼，使用 `@(Get-Content ...)` 保持陣列；`SplitTunneling = $false` 也能宣告全流量，不靠是否出現 `0.0.0.0/0` 字串判斷。
 - **RasClient 20226／828，五分鐘附近斷線。** 啟用管理員後用 `Get-NetIPsecQuickModeSA` 讀新連線的實際 `IdleDurationSeconds`，分開看 profile、ActiveStore、PersistentStore 和事件時間。舊 EAP 實測把全局與 RRAS 值設為 3600，重連及重啟 RasMan／IKEEXT 後 SA 仍 300；Windows 11 Home 的 `netsh ras set ikev2connection idletimeout=60` 亦回參數錯誤。仍無重新開機與長閒置對照，不能把這些操作當成功修法。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/dvlab-mis/ikev2-vpn-dual-mode-and-windows-client.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/dvlab-mis/ikev2-vpn-dual-mode-and-windows-client.md)

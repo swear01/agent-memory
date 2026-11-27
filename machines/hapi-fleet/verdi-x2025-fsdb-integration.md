@@ -30,4 +30,4 @@ schCapture -win $s -file out.png -region 0 0 5000 5000
 - `verdi -batch` 仍可能報 `Failed to create DISPLAY`。先以 `xdpyinfo` 查實際 display，`/tmp/.X11-unix` 可能有死 socket。可用既有 X11/VNC 或 Verdi 2025.06 內附 `/apps/cad/verdi/verdi/2025.06/bin/Xvfb`，例如 `:99 -screen 0 1920x1080x24 -nolisten tcp -fp /usr/share/fonts/X11/misc`。舊 binary 預設 font path 不存在時報找不到 `fixed`，`-fp` 只給一個存在目錄。設 `DISPLAY=:99` 後才跑 GUI；要整屏畫面可用 `xwd` 加 ffmpeg。清自己的 GUI 時用確認過的 PID，廣泛 `pkill -f verdi` 會連安裝路徑有 Verdi 的 Xvfb 一起殺掉，GUI process 通常為 `Novas`。
 - 2026.03 的 FSDB 自動 PLI／PrimeTime 讀回條件見 [EDA 安裝盤點](eda-install-inventory.md)，不可將兩版的 PLI 行為互推。
 
-[舊 launcher、各 GUI 路徑與端到端模擬收據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/hapi-fleet/verdi-x2025-fsdb-integration.md)
+[舊 launcher、各 GUI 路徑與端到端模擬收據](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/machines/hapi-fleet/verdi-x2025-fsdb-integration.md)

@@ -21,7 +21,7 @@ tags:
 
 短篇申請文件須依官方規則計算字數，包含段落換行，並保留安全餘量。PDF 完成後確認頁數、紙張尺寸與逐頁視覺結果；同步多份副本時以內容雜湊確認一致。文件完成或上傳不等於正式送出，入口網站仍須另行確認送件結果。
 
-Google Forms 的 Drive 選檔器要核對表單登入帳號與檔案帳號一致。選到預覽時仍要按選取和插入，檔名出現在表單中才算掛上。若所有文字欄位已填仍報必填，查是否漏勾「在我的回覆中記錄以下電子郵件地址」。保留成功回執，收件不等於審核或評分完成；本機 SHA／DriveFS item-id 也不等於雲端讀回。實習報告填前先分開合約職稱與實際部門。[GSAT 115-1 實習報告與口頭簡報提交收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/other/ntu-gsat-internship-report.md)
+Google Forms 的 Drive 選檔器要核對表單登入帳號與檔案帳號一致。選到預覽時仍要按選取和插入，檔名出現在表單中才算掛上。若所有文字欄位已填仍報必填，查是否漏勾「在我的回覆中記錄以下電子郵件地址」。保留成功回執，收件不等於審核或評分完成；本機 SHA／DriveFS item-id 也不等於雲端讀回。實習報告填前先分開合約職稱與實際部門。[GSAT 115-1 實習報告與口頭簡報提交收據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/other/ntu-gsat-internship-report.md)
 
 # Durable writing guidance
 

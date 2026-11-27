@@ -45,4 +45,4 @@ skipped entries with empty question text. The fixture isolates data loss in
 the mapper, but does not establish whether live Claude emits empty text or
 how often it hangs. Verify actual provider identity and handle missing fields
 explicitly, including multi-question partial answers. See
-`git show 2505b5e:tools/hapi/question-answer-provider-contract.md`.
+`git show 9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e:tools/hapi/question-answer-provider-contract.md`.

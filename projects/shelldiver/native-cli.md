@@ -34,7 +34,7 @@ CLI ack 只證明命令收到了。宣告一輪完成前，依序查原生結果
 - **轉換台產出在玩家背包找不到。** 購買 Transmutator Automation（1,000 黑曜石）之後，完成品直接送至商店，仍要在原生介面投入符合資格的漁獲。依存檔核對物種、稀有度和數量；等轉換台原料、成品與商店待售走完再集中領箱，讀回錢包。
 - **花掉通訊器預算，或把等級當成結局。** 採水晶時先保留通訊器的 10,000 水晶，購買規劃讀原生已解鎖節點。通關目標是取得五個分支終點各一級、支付 10Q 貝殼買 Hammock Repair，最後核對原版 `has_played_hammock_cutscene` 已寫入存檔。
 
-[完整原始紀錄、命令與各深度實測](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/projects/shelldiver/native-cli.md) · [1100m 原始量測](https://github.com/swear01/agent-memory/blob/c3368747fbc1fdde4c15d8fc3c82217500cf2286/projects/shelldiver/native-cli.md)
+[完整原始紀錄、命令與各深度實測](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/projects/shelldiver/native-cli.md) · [1100m 原始量測](https://github.com/swear01/agent-memory/blob/86f38610525e57a230a7c3b87405fea76530bb1c/projects/shelldiver/native-cli.md)
 
 ## 動態路線與加速驗收
 

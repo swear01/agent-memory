@@ -11,4 +11,4 @@ updated: 2026-09-11
 - **有線正常，手機或 Wi-Fi 卻慢。** 同時量有線 WAN、無線 LAN/WAN、RSSI、實際協定、channel/width，而非只看管理頁設定。09-11 的 LAN/WAN 無線速度接近，實際只關聯 802.11n/40 MHz，即使管理頁顯示 1733 Mbps。當時切到 ASUS 802.11ax；09-15 手機慢另見 [校級 DNS 上游](firewall-dns-school-upstreams.md)，不能沿用同根因。
 - **R9000 韌體 CGI 回錯或永遠等不到 finish.txt。** 有線端只留單一 admin 操作；`multi_login.html` 先依既有管理流程接手。multipart 順序先 `mtenFWUpload` 映像再 `upfile`，預檢看 `UPG_version.htm` 與 `new_version`，不是 finish.txt。確認同型號官方映像與備份後，授權 flash 才送 `upload_firmware`／`upgrade_yes_no=1`；變更後讀回三個 radio off 及有線正常。配置備份含機密，權限 0600、不進 Git；安全韌體更新不等於修了 channel width。
 
-[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/dvlab-mis/netgear-r9000-network-recovery.md) · [Wi-Fi 切換與韌體原始驗證](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/dvlab-mis/netgear-r9000-wifi-slow.md)
+[原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/dvlab-mis/netgear-r9000-network-recovery.md) · [Wi-Fi 切換與韌體原始驗證](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/dvlab-mis/netgear-r9000-wifi-slow.md)

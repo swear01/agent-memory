@@ -11,4 +11,4 @@ updated: 2026-10-09
 - **OpenFinRAM 成功 exit 或 35-pin 幾何核對 PASS。** PR #8 修 DFF mapping/DEF fixture 及缺 SPICE 時拒絕 stub，14/14 CTest；`sram_x128x8x1` 的 128 是物理 WL 幾何，該宏邏輯為 512×8。Calibre 缺 tcsh 的那次跳過 LVS。補齊 CDL、在 Rocky8 用已授權 child wrapper 真實執行後為 **LVS INCORRECT**：log 顯示部分 data pins、VDD/VSS 黏同一 net，裸 bitcell 對照也不合。Pin 有 metal 不表示電性分離，沒有完整宏 DRC、PEX 或 SPICE characterisation。v2lvs 在容器 PID 1 的 license 假象與已實測修法見 [Calibre 授權筆記](../../domains/eda/calibre-container-licensing.md)。
 - **已部署研究檔案就引用 OpenFinRAM 為 qualified。** 共用路徑 `/apps/cad/cell_library/ASAP7_EDK/memory-20261009/ram/`：OpenFinRAM 512×8 明列 `STATUS=LVS_FAILED`；攤平 SPICE 只去掉暫存依賴，沒有修電路。官方 views 是固定快照；OpenRAM FreePDK45 僅參考。OpenFinRAM 根目錄缺 LICENSE，README 標示不足確認再散佈；只附研究 repair patch。ROM 與驗證入口見 [ASAP7 subset](asap7-benchmark-feasibility.md)。
 
-[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/spec2rtl/sram-compiler-feasibility.md)
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/a90d5791102e82884f021bff1b4feb7d74c35247/projects/spec2rtl/sram-compiler-feasibility.md)

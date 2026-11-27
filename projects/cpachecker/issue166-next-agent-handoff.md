@@ -12,4 +12,4 @@ updated: 2026-09-03
 - **想把 trace result 當 all-path invariant 或泛化。** 另凍結研究問題：全路徑 claim 要檢查 concrete entry／loop transition 的 initiation 與 inductiveness；replication 則要先凍結 provenance-based held-out cohort。不從 outcome 挑 case，分開量 generation、transport、abstraction precision 和 consumer usefulness。此結果也未隔離 candidate 5 的因果效果。
 - **重用舊 replay 發現 request hash 不符。** 本案 retired `DEEPSEEK_MODEL` 被 Java 忽略，實際 fallback 走另一模型；另有 prompt/context 字節差異和不同 arm 的後續 request sequence。保留原錯誤與 exact-hash 條件，不猜 hash、改 production prompt 或重新執行已關閉的歷史 packet。看 [實驗 provenance](vguided-experiment-provenance.md) 和 [Python／Z3 環境](issue166-python-environment.md)。
 
-[完整原文](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/projects/cpachecker/issue166-next-agent-handoff.md)
+[完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/issue166-next-agent-handoff.md)

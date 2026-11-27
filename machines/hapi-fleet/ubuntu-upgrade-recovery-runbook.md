@@ -51,4 +51,4 @@ NIS 斷線診斷與七天認證快取適用範圍如下。
 
 原始碼參考：[proxy_child](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_child.c#L485-L537)、[server_setup](https://github.com/SSSD/sssd/blob/2.12.0/src/util/server.c#L456-L518)。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/ubuntu-upgrade-recovery-runbook.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/ubuntu-upgrade-recovery-runbook.md)

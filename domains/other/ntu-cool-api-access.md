@@ -19,7 +19,7 @@ tags:
 - 以授權介面申請或撤銷 token，不存正文、log 或截圖。頁面同源的 API request 可使用現有登入，Canvas 的 JSON 有時以 `while(1);` 前綴。HttpOnly cookie 無法從 JS 讀取，也不應移到另一台。頁面 API helper 以 `startsWith('/api')` 判斷完整 API path，避免把課程相對 `/assignments` 打到站根路徑。SSO 的真實欄位是頂層頁面，公告 iframe 和過期 snapshot ref 勿混用。
 - 課程 Files 為空也可能有教材。查 `/courses/<id>/modules?include[]=items` 的 ExternalUrl 和 `external_url`，一般 `url`／`html_url` 可能只是 Canvas redirect。授權下載用登入分頁或 API；若以 API 為該檔取得帶 verifier 的臨時下載連結，也當成私有資料，不留 log。PDF 章節頁序應由渲染或原文確認。
 
-2026 年數位系統設計的 course id 是 `45284`，大學部帳號。已下載教材存於 `gdrive:document/學校講義/大二/數位系統設計`。API 404 的舊檔曾標記 hidden_for_user，未下載不能說全量；Box 傳檔失聯時曾改核准 Drive 中繼再 rclone 拉取。[2026-09-29 個別教材、下載排除及傳檔收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/other/ntu-cool-dsd-45284-materials.md)
+2026 年數位系統設計的 course id 是 `45284`，大學部帳號。已下載教材存於 `gdrive:document/學校講義/大二/數位系統設計`。API 404 的舊檔曾標記 hidden_for_user，未下載不能說全量；Box 傳檔失聯時曾改核准 Drive 中繼再 rclone 拉取。[2026-09-29 個別教材、下載排除及傳檔收據](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/other/ntu-cool-dsd-45284-materials.md)
 
 ## 上傳和繳交
 
@@ -31,4 +31,4 @@ tags:
 
 - 對學生用該作業 `submissions/<user_id>/comments/files` 上傳留言附件，再 PUT submission comment 的 `file_ids`。GET 帶 `include[]=submission_comments` 驗附件。輸入 `posted_grade` 後讀回 score，`post_manually` 下 `posted_at` 仍可為 null，學生還看不到。未發布作業曾拒絕打分 403；正式發布會讓學生看到、可能通知，不能為測試寫入私自打開。區分已儲存分數、已發布分數、留言附件和學期正式成績。
 
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/domains/other/ntu-cool-api-access.md)
+[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/other/ntu-cool-api-access.md)
