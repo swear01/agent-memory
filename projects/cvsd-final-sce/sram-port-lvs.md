@@ -1,0 +1,10 @@
+---
+title: "CVSD SCE SRAM 實體 port 與獨立 LVS"
+scope: "projects/cvsd-final-sce"
+status: active
+updated: 2026-11-27
+---
+
+- SCE A2 和 tie 修正版的 merged GDS 在 CBDK IC Validator 都有頂層 VDD/VSS short，即使 tie 修正版 Innovus verifyConnectivity 無異常。A2 的同次 checkpoint 是 addFiller 後保存的 `outA2O_fill.dat`。從隔離副本執行 `saveNetlist -phys -excludeLeafCell -exportTopPGNets`，讓 CBDK 提供葉節點介面。ICV 2026.03 Nettran 預設生成 `$PINS`，會拒絕舊 wrapper 的 `-sp-dollarPins`。同批含 inline leaf 定義的 PG 網表曾在 ICV SPICE→NDB assertion 中止。
+- TA 同批 1024x8 LEF 和 vendor GDS 的 116 個 signal rectangles 全差 `(+8,+8) µm`，PG strips 尺寸也不同。用正式 GDS port polygons 和 287.510×241.930 µm bbox 建 APR view，保持原始 GDS。只移 SREF 對齊訊號會讓原 LEF VDD 幾何打到 GDS VSS，必須重建 PG ports 後重新佈線。先用 GDS 做 macro port 與 spacing gate，streamOut 後再驗 raw port access、無黑箱 M4 和 CBDK LVS。
+- CBDK Phantom frame 與本案 SRAM GDS 只有 pin/outline 抽象幾何。CBDK 的 `tsmc13_lvs.spi` 是空 subcircuit 介面。這組輸入可做獨立 interconnect 和 macro 邊界 LVS。元件級驗證需真實裝置 GDS 和相符 CDL。完整指令、正反對照、報告與 scripts 在 SCE repo `exp/area/lvs/`。
