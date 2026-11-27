@@ -23,3 +23,5 @@ Codex CLI 會拒絕缺少 id token 欄位的 auth 檔（`invalid credential JSON
 已啟動的 app-server 不會重讀檔案。對 app-server 子程序送 TERM，HAPI parent 會跟著退出（runner 記 `app-server exited`），session 變 inactive。用同一筆 hub session resume，不要另開一筆。2026-11-27 resume 後，該 Codex session 回覆了確認句，沒有再報 refresh 失敗。
 
 Pi 與 Codex 若同時握有同一組 refresh，下一次輪替會再讓其中一邊失效。這次只讓 Codex 載入 Pi 當時的有效組合，沒有再主動刷新。
+
+重開 Codex peer 前，可先用一次真實請求確認 CLI 認證可用：`cd /tmp && codex exec --skip-git-repo-check "Reply with exactly: ok"`，回 `ok` 才算通過（約 1.6 萬 tokens）。啟動即失敗的 peer 直接用 hapi-session-control 的 `archive-peer.py` 歸檔，修好認證後再開新的。
