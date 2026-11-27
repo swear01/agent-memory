@@ -9,3 +9,4 @@ updated: 2026-11-28
 - 被動追 notifier 分支可用 scoped file/line breakpoint 搭配 `stop -command` 與 `stop -continue`。用 `senv time` 記錄時間，`memory -write` 在相鄰原始碼行擷取前後全陣列，並以 `run -absolute` 限制到查驗窗。即使前後全 X，斷點仍能證明分支執行，資料損失則須看有無已知字轉 X。SCE-31 已用兩顆真實 SRAM leaf、未改 SDF 和 100 fs precision 驗證。
 - VCS Y-2026.03 的 runtime `+no_notifier` 在整個設計停止 timing-check notifier register 更新。可沿用原執行檔做 A/B，SDF path delay 與 timing check／violation 訊息照常。保留 executable、SDF、TB 的 hash，另以 A/B 實際邊緣和 violation 訊息查對。這是全域資料效應診斷，範圍包含 standard cell 與 SRAM。
 - 以 UCLI `dump -add <scope>.mem -aggregates` 保存 SRAM 陣列後，離線轉檔要用 `vpd2vcd +includemda trace.vpd trace-mda.vcd`，普通匯出會省略陣列。要保留同一 timestamp 的已知值→X，開 VPD `dump -deltaCycle on`，轉檔時保留同時間連續變化。先用 `+includemda -h` 核對陣列字數，再比較資料。
+- VCS Y-2026.03 用含常數檔名的 TA `$sdf_annotate` 時，外面加 runtime `$test$plusargs` 條件仍可能在 elaboration 就產生完整 SDF 註記資料。未註記對照先檢查 `elab.raw` 與 `sdfAnnotateInfo`，並在 runtime 驗證略過標記、leaf clock 有效邊緣與殘餘 model delay，再使用功能結果。純空白 runtime annotation log 不夠。
