@@ -14,7 +14,7 @@ tags:
 ---
 
 - `qmd vsearch` 不是純向量搜尋。它會先用 `qmd-query-expansion-1.7B-q4_k_m`（Qwen3 微調、grammar 限制、maxTokens 600）生成 lex/vec/hyde 擴展查詢，再把原始查詢加上每條 vec/hyde 擴展依序各做一次 embedding，最後才用 sqlite-vec 比對。
-- 實測（load average 約 15–18，swap 已用 4 GB）。注意：這組數字是誤用「沒加 shared-memory env 前綴的 `qmd`」量的，所以 embedding 用的是預設的 embeddinggemma-300M。canonical 設定（`QMD_CONFIG_DIR`/`XDG_CACHE_HOME` 指到 `/var/tmp/qmd-memory-<host>`）的 embedding 是 Qwen3-Embedding-0.6B，比預設大一倍，會更慢。expansion 模型兩邊相同，都是 1.7B，所以結論不變：
+- 實測（load average 約 15–18，swap 已用 4 GB）。注意：這組數字是誤用「沒加 shared-memory env 前綴的 `qmd`」量的，所以 embedding 用的是預設的 embeddinggemma-300M。當時 canonical 設定曾改成 Qwen3-Embedding-0.6B，比 Gemma 大一倍，會更慢。2026-11-27 起這台改回 Gemma，與 Mac 的向量同一組模型。expansion 模型兩邊相同，都是 1.7B，所以查詢擴展仍然慢：
   - embedding 冷啟動（runtime 加 300M 模型）25 秒，之後每次 0.95 秒。
   - expansion 一次 836 秒；模型已載入的第二次也超過 14 分鐘沒跑完。
   - 向量比對：1,498 個 chunk × 768 維，可以忽略。
@@ -32,4 +32,6 @@ oracle 沒有 GPU。`qmd embed -c memory` 會停在 CPU，應直接停掉。swai
 
 裝上前確認本機沒有寫入同一顆資料庫的 qmd，把舊檔移開，刪掉殘留的 WAL/SHM，再放入新主檔。之後只跑 `qmd update`，讓本機 collection 路徑對上。`qmd search` 不需要向量。
 
-這次 Mac 快照是 1340 份文件、2187 條向量，模型是 embeddinggemma-300M，不是這台設定的 Qwen3-Embedding-0.6B。`qmd status` 因此仍把多數文件標成待嵌入。那是模型不一致，不是拷貝失敗；不要在 oracle 補算。要補的向量應在 Mac 用同一個 Qwen3 模型產生後再傳一次。Mac 自己也還有約 426 份文件沒有向量。
+這次 Mac 快照是 1340 份文件、2187 條向量，模型是 embeddinggemma-300M。oracle 的 `index.yml` `models.embed` 已改成同一組 Gemma，跟 Mac 的向量一致。設定檔優先於環境變數，所以就算指令還帶著舊的 Qwen URI，`qmd status` 仍用 Gemma。改完後待嵌入從 1335 降到 430，那 430 份是 Mac 快照裡本來就沒有向量的文件，不要在 oracle 補算。
+
+各機向量應使用同一組 embeddinggemma-300M。Qwen3-Embedding-0.6B 比較大，在這台沒有 GPU 的機器上不該再當嵌入模型。
