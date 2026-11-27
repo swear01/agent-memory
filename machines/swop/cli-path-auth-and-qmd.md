@@ -5,7 +5,7 @@ machine: swop
 status: active
 confidence: high
 created: 2026-09-04
-updated: 2026-10-31
+updated: 2026-11-28
 tags:
   - windows
   - path
@@ -29,6 +29,13 @@ generated_by: openai-codex/gpt-5.6-sol
 因此 `Get-Command qmd` 或 `Get-Command gh` 在長時間存活的 session 內回報 missing，不等於工具未安裝。重裝前先檢查 User `PATH`、WinGet package ownership 與預期 executable 的絕對路徑；目前 session 可暫時 prepend 已驗證的安裝目錄，新 session 才會自然繼承持久設定。Node 升級後也要重查 versioned WinGet 路徑。
 
 `agent-memory` 的 CI validator 會用 Python 讀取完整 Git history。Windows 預設 CP950 可能在內容檢查前先發生 `UnicodeDecodeError`；執行同一套 validator 時先設定 `PYTHONUTF8=1`。這是 verifier encoding 前置條件，不代表 Markdown 或 Git history 驗證失敗。
+
+# WinGet portable 升級後的版本與命令入口
+
+2026-11-28 在 swop 從 SSH 更新。WinGet 的登錄版本、實際執行檔版本、`WinGet\Links` 的命令入口要分別核對。
+
+- `Google.AntigravityCLI` 的 `agy.exe` 曾自行更新到 1.5.12，WinGet 仍登錄為 1.5.9，正常升級拒絕覆寫。先用 `Get-Command agy.exe` 找到實際執行檔，讀出版本，並用 `Get-FileHash -Algorithm SHA256` 對上 `winget show -e --id Google.AntigravityCLI -v 1.5.12 --source winget` 的 Installer SHA256，再用 `Get-AuthenticodeSignature` 確認簽章有效。確認是官方套件的版本漂移後，以 `winget upgrade -e --id Google.AntigravityCLI --version 1.5.18 --source winget --force` 修復。WinGet 照常驗證新安裝檔雜湊。新 SSH 連線的 `where agy`、`agy --version` 與 `winget list -e --id Google.AntigravityCLI` 均核對成功。
+- `Anthropic.ClaudeCode` 升級後曾回報已新增 alias，但新 SSH 的 `where claude` 仍找不到。先確認 `%LOCALAPPDATA%\Microsoft\WinGet\Packages` 下對應套件的 `claude.exe` 存在，且 `%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe` 缺失。用 cmd.exe 的 `mklink "<WinGet Links>\claude.exe" "<Claude WinGet package directory>\claude.exe"` 恢復原入口，再從新 SSH 連線驗證 `where claude` 和 `claude --version`。實測原 User PATH 即可解析。
 
 # GitHub authentication layers
 
