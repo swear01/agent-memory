@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: 2026-10-22 在 oracle（Neoverse-N1 2 vCPU、11 GB、qmd 2.8.3、CPU-only llama.cpp）上分階段計時，並讀過 dist/store.js 的 vectorSearchQuery 和 dist/llm.js 的 expandQuery。
 created: 2026-10-22
-updated: 2026-11-14
+updated: 2026-11-27
 tags:
   - qmd
   - oracle
@@ -25,3 +25,11 @@ tags:
   - 需要完整的 `qmd query` / `vsearch` 時，到有 GPU 的 Mac 上跑。
   - `qmd embed -c memory` 也一樣：2026-11-14 在 oracle 跑了 20 分鐘還沒完成就停掉了。在 oracle 寫記憶後只跑 `qmd update`。
 - 中文查詢用純 vec 時排序不可靠：「Claude 遠端 session 能不能在 turn 中途插話」沒有把 hapi-claude-midturn-steer 排進前 3。關鍵字比較明確時，`qmd search` 反而比較準。
+
+## 2026-11-27 向量從 swairM5 複製，不要在 oracle 重算
+
+oracle 沒有 GPU。`qmd embed -c memory` 會停在 CPU，應直接停掉。swairM5 的 SSH 22 拒絕連線時，改由那台把安靜的 `index.sqlite` 用 Tailscale file 送到 swever。接收端若出現 file access denied，先 `sudo tailscale set --operator=$USER`，再 `tailscale file get`。不要傳模型、WAL 或 SHM。
+
+裝上前確認本機沒有寫入同一顆資料庫的 qmd，把舊檔移開，刪掉殘留的 WAL/SHM，再放入新主檔。之後只跑 `qmd update`，讓本機 collection 路徑對上。`qmd search` 不需要向量。
+
+這次 Mac 快照是 1340 份文件、2187 條向量，模型是 embeddinggemma-300M，不是這台設定的 Qwen3-Embedding-0.6B。`qmd status` 因此仍把多數文件標成待嵌入。那是模型不一致，不是拷貝失敗；不要在 oracle 補算。要補的向量應在 Mac 用同一個 Qwen3 模型產生後再傳一次。Mac 自己也還有約 426 份文件沒有向量。
