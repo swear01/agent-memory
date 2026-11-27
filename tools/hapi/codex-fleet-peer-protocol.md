@@ -10,6 +10,7 @@ tags: [hapi, codex, spawn-peer, ping-peer, waitForReply, model-switch, mazu, nfs
 
 - Codex session 在 HAPI 下看得到 MCP 工具 `spawn_peer`、`ping_peer`、`inspect_peer`。用 `spawn_peer(..., waitForReply=true)` 派工後，子 session 一結束當輪，HAPI 就把最後一則訊息排進**呼叫者**的對話。追問時用 `ping_peer(waitForReply=true, deliveryMode=queue)`，回覆一樣會自動送回。
 - 實測 1,388 個 ASCII 字元全文送達，SHA 相同，結尾標記完整。`inspect_peer` 的預覽只截到 1,200 個 UTF-16 單位，所以不能拿預覽當全文。
+- 上游 `6f7420aa6` 的 `ping_peer(auto)` 在送出前用最新 session 狀態選一次 Queue 或 Steer。忙碌中的 Claude/Codex 若未回報 `steeringActive`，這筆會排隊，tool 之後不會再提升它。`waitForReply` 回傳到父 session 時則固定走 Queue，與去程的 deliveryMode 無關。查個案時先看方向、`localId` 與 `steerNote`。[去程](https://github.com/tiann/hapi/blob/6f7420aa6/cli/src/modules/pingPeer/pingPeer.ts#L800-L827) [回程](https://github.com/tiann/hapi/blob/6f7420aa6/cli/src/modules/pingPeer/pingPeer.ts#L1293-L1302)
 - Parent 標記不會訂閱後續回合，CLI 的 `--wait` 也只等到啟動或投遞完成。只用 CLI 時，要約定子 session 完成後主動 `ping-peer <parent> --delivery-mode queue` 一次。
 - 呼叫端 CLI 每 10 秒檢查一次訂閱，最長 6 小時。CLI 一重啟，等待中的回覆就會遺失，這時要依任務表逐一 `inspect-peer` 未結案的 session 補收。
 - 實用協議：
