@@ -19,3 +19,5 @@ updated: 2026-11-28
 
 - LVS 的 black-box comparator 可能略過只接未配對 macro ports 的萃取根。即使成對報出的根聯集涵蓋預期邏輯端點，同一 instance／pin 的其他 landing 仍可能落在額外根。以同次 landing 表逐層核對 formal，再沿原萃取階層展開所有接觸根。逐網核對聯集、外網端點與獨立 PG roots，並清點每個跨層接點牽涉的根，再判定單次接線是否涵蓋完整分網。
 - SCE-28：Innovus 25.10 可用 `defIn -nets -incremental_routing` 匯入只含一個 signal net 的 DEF，保留既有 regular routes，再另存並 fresh restore 驗證。若鎖定的原 GDS 在首次 restore 之前匯出，先用相同 stream map 做一次未改 DB 的 restore/stream 對照。SCE 的純對照也把 VDD/VSS 頂層文字從 M6 移到 M7，且座標和 ECO stream 相同。以狀態與內容比對 DEF SPECIALNETS、用幾何內容比對自動命名 via，再驗全層幾何差集和 CBDK 萃取。這能判斷差異來自標籤選點或實際外網變更。逐 GDS 元素零差異的門檻仍需計入標籤。 [SCE-28 報告](https://github.com/swear01/cvsd-final-sce/blob/60c4af02070b5b884b61a6e8ecdc9c82617027aa/exp/area/safe-fp/sce28-native-route-db.md)
+
+- SCE-32：遇到 CBDK Phantom 標準元件的 leaf formal 少一腳，先核對原始 GDS 同名 pin 金屬與完整 label，再用單顆原廠 leaf 做同一 deck 的 A/B，只在頂層 GDS 與 physical Verilog 同步引出目標腳。TLATXL 的 QN 在兩組原廠 leaf 都存在，未引出時萃取五腳且原廠 black-box 只缺 QN，同名引出後萃取六腳並配對。依萃取 leaf formal 順序核對每個 instance 端點、其餘腳同名且各自獨立，才能將差異歸因至目標腳表示。適用範圍為 Phantom 介面。[SCE-32 報告](https://github.com/swear01/cvsd-final-sce/blob/c62794721f1a8eace0026b37b23e77cdc452fa9c/exp/area/a2-clean-repair/sce32-tlatxl-leaf-fixture.md)
