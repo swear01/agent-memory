@@ -2,7 +2,7 @@
 title: Unity Platformer 工作坊：手動換皮流程與保留入場效果
 scope: projects/Starter-Kit-3D-Platformer-for-Unity
 status: active
-updated: 2026-09-29T03:05:19+08:00
+updated: 2026-11-28
 tags: [unity, platformer, camera, character, prefab, manual-import]
 ---
 
@@ -14,7 +14,7 @@ tags: [unity, platformer, camera, character, prefab, manual-import]
 - 要教的是：下載模型／Prefab → 匯入設定 → 尺寸與朝向 → 材質與骨架／動畫 → 保存可用的角色 Prefab → 接到原 Player → Play 驗證。
 - Game 畫面只保留原 HUD，F1 原版／F2 改良版 camera 是隱藏示範功能。
 - 開場旋轉及跳躍效果是使用者要保留的入場表現，不要當作控制 bug 刪除，也不需要另做開始／結束階段系統。舊紀錄的「移除開場角度漂移」已被這個決定取代。`View.cs` 現用 `m_OpeningRotationOffset` 保留開場旋轉，同時讓 mouse look 立即響應；切換模式不重播。
-- 持續在正式原專案 `<user-home>/Documents/project` 操作，不另外建立獨立 Unity checkout/worktree。保存 unrelated dirty/untracked 內容，只提交本次檔案。
+- 持續在正式原專案 `<user-home>/Games/Starter-Kit-3D-Platformer-for-Unity` 操作，不另外建立獨立 Unity checkout/worktree。保存 unrelated dirty/untracked 內容，只提交本次檔案。
 - `origin` 是使用者 fork `swear01/Starter-Kit-3D-Platformer-for-Unity`；`upstream` 是 `Pomdap/Starter-Kit-3D-Platformer-for-Unity`。原作者 push 曾 403，後續走使用者 fork 的 branch／PR 流程。
 
 ## 手動換皮的實例與限制
@@ -37,3 +37,8 @@ tags: [unity, platformer, camera, character, prefab, manual-import]
 - 本次記憶更新再次實查成品：Avatar valid／human=true，humanScale `0.4499078`，外層 Scale `1`，內部模型 Euler Y `180°`。
 - PR #4 本次只做編譯、引用、來源文件與匯入設定檢查，沒有從頭重跑完整手動匯入；不要把先前工具準備成品說成已驗證完整手動操作。
 - Swear Review 因 no items selected 跳過，不能把 execution success 當 substantive clean review。Gemini 後續對精確 head 給出無意見終態；依 OR 規則完成合併。沒有 required CI checks，不宣稱遠端 build 通過。
+
+## Mac 上的專案位置
+
+- 這台 Mac 的遊戲工作區在 `<user-home>/Games/`。`game_per_week` 是其中獨立的週更原型 repo。舊的 `Documents/project` 和 `Documents/game_per_week` 是相容捷徑。
+- 個人 fork 分支 `archive/local-character-camera-202609`（`70192ad`）保存本機角色動畫、貼圖與相機碰撞遮罩。這批修改未合入 main。

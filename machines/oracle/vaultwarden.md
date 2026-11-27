@@ -3,10 +3,10 @@ title: Oracle VPS 上的 Vaultwarden 與 agent 取密碼的 vault wrapper
 scope: machines/oracle
 tags: [vaultwarden, tailscale, caddy, bitwarden-cli, oci]
 status: active
-updated: 2026-11-21
+updated: 2026-11-28
 ---
 
-本機 SSH alias `oracle`（Ubuntu 26.04.1 arm64（2026-11-20 從 24.04 升級，見 [[ubuntu-2604-upgrade]]），tailnet hostname `swever`）跑 Vaultwarden，只能從 tailnet 用 `https://swever.<tailnet>.ts.net` 存取。設定檔在本機 `<home>/Documents/vault-infra`（server/、client/vault、README 施工步驟）。
+本機 SSH alias `oracle`（Ubuntu 26.04.1 arm64（2026-11-20 從 24.04 升級，見 [[ubuntu-2604-upgrade]]），tailnet hostname `swever`）跑 Vaultwarden，只能從 tailnet 用 `https://swever.<tailnet>.ts.net` 存取。設定檔在本機 `<home>/Documents/vault-infra`（server/、client/vault、README 施工步驟）。Mac 的 `<home>/.local/bin/vault` 直接連到此處的 `client/vault`。搬移資料夾時須一併更新連結，並確認指令仍可執行。
 
 - Vaultwarden：Docker compose 在 `/opt/vaultwarden`，`network_mode: host` + `ROCKET_ADDRESS=127.0.0.1` `ROCKET_PORT=8000`，不發佈 port，避免 Docker NAT 規則混進 OCI 的 iptables。`SIGNUPS_ALLOWED` 預設 false，只有建帳號時用 `sudo SIGNUPS_ALLOWED=true docker compose up -d` 打開。
 - Caddy（apt 2.6）在 host，憑證由 tailscaled 提供，需要 `/etc/default/tailscaled` 的 `TS_PERMIT_CERT_UID=caddy`，且 tailnet admin 要開 MagicDNS 與 HTTPS Certificates。第一次 TLS handshake 會現場取憑證，可能超過 10 秒，curl 測試要給長 timeout。
