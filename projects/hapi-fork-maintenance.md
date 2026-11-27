@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-11-27
+updated: 2026-11-28
 tags:
   - hapi
   - fork
@@ -36,6 +36,12 @@ A rehearsal proving tree equality, tests, or artifacts does not authorize public
 - `--force-with-lease` using the captured old branch SHA
 
 Keep tokens, signing material, runner environments, and deployment configuration out of the patch series and upstream.
+
+## Upstream bot review errors during release selection
+
+Check the upstream `pr-review` run and its exact head SHA separately from functional CI. If the Codex runner exits after reconnects with a high-demand error, treat the review as missing and keep an external PR deferred until HAPI Bot returns a clean verdict for that head. The upstream workflow runs on PR events. A maintainer with write access can rerun the failed job on the same SHA. A passing review on a fork PR applies to that fork PR.
+
+Example from 2026-11-28: [tiann/hapi#2168](https://github.com/tiann/hapi/pull/2168) at `d17463aa` passed functional CI but its [review run](https://github.com/tiann/hapi/actions/runs/45743777177/job/139654817108) exited before publishing a verdict. Published `v0.36.7.1` includes [#2564](https://github.com/tiann/hapi/pull/2564), which remembers manual folder collapse. The full expansion-and-collapse fix was deferred. Chromium Settings round trips passed in all four desktop/mobile cases at the #2168 head. Recheck upstream review and the exact released tree before the next carry decision.
 
 # Latest verified release
 
