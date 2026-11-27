@@ -16,3 +16,5 @@ updated: 2026-11-28
 - SCE-18 的 PG 萃取 `SCE.net.gz` 將相鄰 SRAM 重包為合成階層 `VCELLR1`。直接數頂層 leaf 只見 4 顆，逐層沿 formal mapping 展開 12 個雙宏子電路後是 28 顆、56 個 PG terminals。同一份 GDS 在 cthulhu Rocky 中使用 `exec icv` 停在 license 啟動，保留 Bash 並由子行程執行 ICV 後正式 deck 完成。
 - SCE-18 在 cthulhu 用專案的 `source "$HOME/cvsd_final_apr/invenv.sh"` 啟動 Innovus 25.10、checkout 八核並完成 placement。直接 source 公用入口缺 amd64 `libXp.so.6`，只補 libXp 又缺 `libtatlas.so.3`。既有專案腳本載入 CIC wrapper、使用者相容庫、工具所附 RHEL9 相容庫和 Ubuntu 系統 libstdc++ preload。
 - SCE-25：相同 native SRAM pin 的多層接觸可在 ICV 成為不同頂層根。先用實際接觸層、座標與精確 DEF／physical 網表核對兩根的完整 driver/load，再決定是否接線。若 landing 附近的 PG rail 擋住短疊孔，可在宏外以實際金屬和 via 接回兩根。用原名 CBDK 重萃後核對目標實端聯集、所有其他萃取端點集合與 PG 集合，並重驗 DRC。即使 `text_open_rename` 診斷仍在，實際外部接線可證明單網修復。缺同版 SRAM device GDS／CDL 時，宏內連通仍未知。證據見 SCE repo `exp/area/safe-fp/sce25-native-net.md`。
+
+- LVS 的 black-box comparator 可能略過只接未配對 macro ports 的萃取根。即使成對報出的根聯集涵蓋預期邏輯端點，同一 instance／pin 的其他 landing 仍可能落在額外根。以同次 landing 表逐層核對 formal，再沿原萃取階層展開所有接觸根。逐網核對聯集、外網端點與獨立 PG roots，並清點每個跨層接點牽涉的根，再判定單次接線是否涵蓋完整分網。
