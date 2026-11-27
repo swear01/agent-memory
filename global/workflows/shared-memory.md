@@ -1,88 +1,35 @@
 ---
-title: Shared persistent agent memory workflow
+title: QMD 共享記憶、索引與同步容易踩的坑
 scope: global
 status: active
 created: 2026-08-18
-updated: 2026-11-06
+updated: 2026-11-28
 tags:
   - shared-memory
   - qmd
   - github
 ---
 
-# Shared persistent agent memory workflow
+## 查詢與索引
 
-這個 repository 是跨 agents、projects、sessions 與 machines 共用的 persistent engineering memory。Markdown 檔案是 canonical source。
+- 工具、瀏覽器或 session 第一次非預期失敗時，先查 `qmd search "<服務> <動作> <原始錯誤>" -c memory`，再用 `qmd get` 讀解法和適用版本。缺少觸發條件時，修正擁有流程的 skill 入口。
+- 沒有 `-c memory` 的搜尋會混入預設索引中的本機 collections。若同一條規則或結案報告排在共享解法前，先用 `qmd collection list` 核對索引來源。SwairM5 的舊 `codex-memory-notes` 已獨立，僅在需要回查時用 `qmd --index legacy search "<關鍵字>" -c codex-memory-notes`。
+- `qmd status` 的 pending 是整個索引的統計。先核對檔案屬於哪個 collection，日常只更新共享向量用 `qmd embed -c memory`。在 QMD 2.8.3，`update` 的 pending 提示可能仍用預設模型計算。以 scoped embed 的 `All content hashes already have embeddings` 或實際向量涵蓋率確認。
+- GPU 回報 `Failed to create any embedding context` 時，用 `qmd doctor` 確認裝置與可用 VRAM。GPU 實際失敗後，可用 `QMD_FORCE_CPU=1 QMD_EMBED_PARALLELISM=1 qmd embed -c memory` 單工重試，完成後確認 embedding freshness。有從 Mac 複製同模型向量的無 GPU 機器，依各機流程更新。
+- QMD 2.8.3 的 `update` hook 在 collection 根目錄執行。共享庫的 hook 若用 `git pull --ff-only`，遇分歧應先人工釐清，避免索引更新擅自改 Git 歷史。
 
-使用 QMD 的 `memory` collection 搜尋與讀取記憶；不要把 QMD 的 SQLite/vector index 當成 canonical data。
+## 寫入與同步
 
-遇到第一次非預期的工具、瀏覽器或 session 失敗，重試或回報受阻前，先用 QMD 搜尋「服務＋動作＋症狀」並 `qmd get` 讀完整解法。2026-11-06 已把這個觸發條件放入 active `shared-memory` skill 的 description 與開頭；只新增一篇事後記憶不足以補上技能觸發。
+- 共用內容放進 `swear01/agent-memory` 的 Markdown。保留會改變下一步的症狀、版本、做法與驗證。一次性進度、逐次量測留在原始證據，更新同一個問題的現行筆記。
+- Codex 本機 ad-hoc 可含私人資料。只把適合公開的長期經驗整理進共享庫。推送前查遠端可見性與 author、committer，提交使用 GitHub noreply。共用 QMD SQLite、向量和 cache 都可本機重建。
+- 使用者已授權每次更新記憶後同步。只提交核對過的檔案，保留其他工作，確認本次提交到達遠端。再跑 `qmd update`、需要時 embed，最後用實際查詢讀回。遠端同步和本機檢索要各自驗證。
+- 新檔先 `git add` 再執行 `.githooks/pre-push`，check 基於 `git ls-files`，也檢查 Git 歷史。工作樹和 staged 都跑 `git diff --check`。設定 `core.hooksPath .githooks` 可在 push 時重跑檢查。既有無關失敗須在基準重現；本次新增的問題要先修。
+- CI 用 regex 掃私人路徑、信箱和憑證樣式，Markdown 反引號也會命中。範例路徑用 `<remote-home>` 等 placeholder，憑證只寫 `Bearer <api-key>` 等佔位符，個人帳號用角色描述。
 
-GitHub repository `swear01/agent-memory` 負責在不同 machines 之間同步這些 Markdown 記憶。新增或更新已驗證的長期經驗後，先 `git pull --rebase`，再 commit、push，並重新執行 QMD update/embed。
+## 遠端歷史仍含私人資料
 
-使用者於 2026-09-12 明確要求：每次更新記憶都要同步；此要求即後續記憶提交與推送的持續授權，不需每次重新詢問，也不能停在「已更新、未推送」。僅提交本次已核對的變更，保留其他 session 尚未完成的 dirty files；確認本次檔案沒有未提交差異、HEAD 與遠端一致，再刷新並查詢確認本機 QMD。
+覆蓋檔案只能清 working tree。經明確授權做歷史清理時，先備份 refs 和未提交差異到私有且未索引的位置，隔離重寫並逐筆核對受影響的 commit、目標 tree、最新遠端 SHA 與完整 CI。僅更新指定 branch 並以舊 SHA 作 lease。若只改 metadata，先確認工具會否重寫早期簽章；`git filter-branch --env-filter` 曾擴大受影響範圍。
 
-2026-09-25 使用者再明確要求：代理修改檔案後，完成必要檢查就提交，不要把自己的修改留在 dirty worktree。若使用者明確要求把既有 dirty 修改一起提交，先檢查內容與衝突，再一併 commit／push；其他未授權的工作仍保留。
+其他 checkout 要在乾淨的遠端 main 上重套本機工作，避免再次推回舊歷史。即使 branch 和 PR refs 都已清乾淨，舊 SHA 仍可能由 GitHub API 或快取讀取。遠端快取清除須另查 GitHub Support 的處理結果。
 
-2026-09-12 使用者核准更新 pre-push-review、personal-pr-workflow 與 shared-memory 的失敗分類規則：本次新增／加重問題要修正；已在未修改基準重現且與本次無關的失敗，記錄證據與影響後，不單獨阻擋已授權提交／同步。環境或工具問題要標示未驗證，不能稱為通過。真實敏感資料暴露、重大正確性或資料損失風險仍需先處理，平台強制 merge/deploy 檢查不豁免。不得為了綠燈自行改檢查器、分支保護或重寫歷史。來源修訂見 shared-skills PR #34。
-
-同步前核對遠端可見性：2026-09-12 `gh repo view swear01/agent-memory --json isPrivate` 回傳 false，不能因通用 skill 稱為 private 就假定此遠端為私有。此次基準 `2a766e4` 的原樣 worktree 以完整 CI validator 重現 Pi 文件個人路徑與歷史檢查兩項失敗；它們已在相同遠端公開，不是本次變更新增。仍逐一檢查待提交檔案沒有新增秘密或禁止的個人路徑，保留既有失敗狀態，不宣称全綠。
-
-2026-10-07 使用者再次重申「之後都要同步」。Codex 的本機 ad-hoc 記憶是暫存／私人來源；新增後須把可公開的長期規則與已驗證工具經驗整理進 canonical repository，完成檢查、commit、push 與遠端核對。只新增本機記憶或刷新 QMD 不能宣稱跨機器同步已完成。逐人成績、私人留言、原始繳交檔等敏感資料保留於私人檔案，不因同步記憶而公開。
-
-記憶有變更時，QMD update/embed/query-check 成功只證明本機索引可用，不代表遠端已同步。完成前必須確認 working tree clean、目前 branch 不再顯示 `ahead`，且 local `HEAD` 等於 remote branch；若 push 缺少授權或失敗，應詢問或明確回報未完成，不得跳過後宣稱完成。若只有 QMD read/update 而 Markdown 沒有變更，則沒有 Git commit 或 push 可做。
-
-這個 repository 的 CI 會檢查可達 Git 歷史；commit 前確認 author 與 committer 都使用 GitHub noreply email。個人信箱一旦進入遠端歷史，後續一般 commit 無法消除，必須重寫歷史。
-
-QMD 2.8.3 會在 collection 根目錄執行 `update` hook，與呼叫 `qmd update` 時所在的 working directory 無關。`memory` collection 使用 `git pull --ff-only`，只接受可 fast-forward 的同步；若本機與遠端分歧，停止並人工處理，不讓索引更新自動 rebase Git 歷史。
-
-QMD 2.8.3 的 `qmd update` 結尾會用預設 embedding model 計算 pending hashes；使用自訂 `QMD_EMBED_MODEL` 時可能誤報全部文件需要 vectors。執行一次 `qmd embed` 後，以其 `All content hashes already have embeddings` 結果及 `qmd status` 的 document/vector counts 為準，不因該提示重複 embed。
-
-若 `qmd embed` 在 GPU VRAM 緊張時回報 `Failed to create any embedding context`，先用
-`qmd doctor` 確認 device probe 與可用 VRAM；這不是 Markdown／Git 資料遺失。以
-`QMD_FORCE_CPU=1 QMD_EMBED_PARALLELISM=1 qmd embed` 做單工 CPU retry，完成後再用
-`qmd doctor` 驗證 `embedding freshness` 與 vector sample。不要因 auto-GPU context 失敗而略過
-embedding 或重建 canonical Markdown。
-
-# CI validator 的禁項（寫 note 前先自查）
-
-`.github/workflows/validate-memory.yml` 用 `git ls-files` 掃 tracked files，所以**先
-`git add` 再驗**，否則新檔不會被檢查；它同時掃描完整 Git 歷史（`git log -p`），
-已進入歷史的 secret 無法靠改 working tree 修好。本機重現方式是從 workflow 抽出
-`run:` 區塊當 script 執行（先 `git diff --check`，再跑其中的 python inline 檢查）。
-
-- 非 README 的 `.md` 必須以 `---\n` 開頭並含第二個 `\n---\n`（frontmatter）。
-- 絕對路徑禁：以 `home` 或 `Users` 為第一層的絕對路徑（CI 用「slash 接 home/」與
-  「slash 接 Users/」兩種 regex 擋，連 CI 自己的 workflow 檔都用字串串接繞開），
-  改用 `<remote-home>`、`<worktree-root>` 這類 placeholder。
-- secret regex 不只抓真 key，也抓寫法。實測踩到的例子：把 shell 變數直接接在
-  `Bearer` 後面會命中，因為 `<authorization 或 bearer> + 冒號或等號` 這條規則只把
-  `Bearer <...>` 與 `${...}` 當成可接受的 value；照 repository 慣例寫 angle-bracket
-  placeholder（`Bearer <api-key>`）才通過。
-- 這類檢查是純 regex，不認 Markdown code span：把觸發字串原文寫進 backtick 裡一樣會
-  讓 CI 失敗，只能用改寫或 placeholder。本節自身就是被 validator 退回三次才寫成的。
-- 其他會命中的形式：`sk-` 加 20 字以上、GitHub token 前綴、AWS access key 前綴、
-  Google API key 前綴、PEM private key 的 BEGIN/END 標頭行、JWT、以及
-  「key/token/password/secret/credential/cookie 等關鍵字 + 冒號或等號 + 非 placeholder 值」。
-- 一般 email 形式字串，以及 commit author/committer 的個人信箱都會失敗。
-
-## 已授權的歷史隱私清理
-
-先查實際 repository visibility，不因名稱是 personal memory 就假設 private。一般同步不得 force-push；只有使用者明確授權歷史清理時，才另行備份、在隔離 clone 重寫命中文件，逐一核對歷史 tree 只改允許的路徑。
-
-備份包含本機 refs、staged／unstaged patch 與 untracked 檔，放在不會被 QMD 索引的私有位置，不推送備份。發布時僅更新受影響分支，以明確的遠端舊 SHA 作 force-with-lease；遠端變動就停止，不能用一般 force 或 mirror push 覆蓋。
-
-同步其他 checkout 時，先保留本地工作，再以新的 remote main 為基底重套；不得 merge 或推回舊歷史。驗證新 tracked files、完整歷史、CI 與 remote SHA 後才刷新 QMD；索引清理不能代替 Git 清理。GitHub 的 unreachable objects／快取是否已清除，不能由 branch history 乾淨就斷言。提交使用與既有紀錄一致的公開 noreply 身分，避免把個人信箱重新帶進 metadata。
-
-2026-10-21 的 metadata 清理證實：`git filter-branch --env-filter` 會移除較早簽章，讓單筆信箱修正擴大成數百筆 commit ID 變更。只改 raw commit 的 author／committer 信箱，再逐筆改後繼提交的 parent ID，可保留受影響區段以前的簽章與 commit ID；推送前須逐筆比對 raw commit、最終 tree、完整歷史驗證及遠端最新 head。此次遠端在準備期間新增一筆提交，先納入該提交後才以指定舊 SHA 的 lease 更新，不能直接推原先準備的版本。
-
-此次修復已推送：只變更命中提交及其後繼共 11 筆 commit ID，最終 tree 與修復前遠端完全相同；新 main 與後續一般記憶提交的 Validate Memory CI 都通過，作者與提交者使用公開 noreply 身分。QMD 已完成 update／embed，並能搜尋到 #287 擴展研究的歸因、實驗邊界及此次修復紀錄。
-
-仍須保留清除範圍的限制：修復後 GitHub API 仍能透過舊 SHA 取得原提交，即使當時所有遠端分支與 PR refs 都不再包含它。這表示分支歷史與 CI 已修好，不能宣稱個人信箱已從 GitHub 儲存與快取完全刪除。依 GitHub Docs 的敏感資料清除流程，伺服端快取清除須向 GitHub Support 提出請求，由 GitHub 決定是否受理；本次未提交該請求。其他舊 checkout 後續同步須沿用上段的重套流程，避免重新推回舊歷史。
-
-## 2026-10-28 個人信箱再次外洩（repo 為 PUBLIC）
-
-- 提交 `anthropic: personal org key preferred with lab fallback across fleet`（2026-10-27 23:32 +0800）在 `tools/anthropic/fleet-api-experiments.md` 寫入使用者個人 Google 信箱，且未跑本機驗證就 push；CI 失敗也沒人處理。出自 10-27 晚間 Anthropic personal/lab key 全 fleet 部署，該批工作由 mazu `agentic-ic3-repro` coordinator（Claude Opus 5.5）經 hapi 派工；swairM5 與 mazu 的本機 transcript 都找不到包含此提交的那一段，無法再精確指認單一 session。
-- 已依上節流程修復：隔離 clone 以 `git filter-branch --tree-filter` 只重寫該提交起共 10 筆，最終 tree 只差該行，完整驗證通過後以舊 SHA 作 `--force-with-lease` 推送。舊 SHA 在 GitHub 快取仍可能可取得，未向 GitHub Support 申請清除。
-- 機制化防呆：repo 新增 `.githooks/pre-push`，直接執行 `validate-memory.yml` 內同一段檢查。每台機器 clone 後要執行 `git config core.hooksPath .githooks`，否則 hook 不生效。
-- 規則：帳號只寫「使用者個人 Google 帳號」之類描述，不寫信箱；push 被 hook 擋下時修內容，不要 `--no-verify`。
+[完整工作流演進與驗證紀錄](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/global/workflows/shared-memory.md)

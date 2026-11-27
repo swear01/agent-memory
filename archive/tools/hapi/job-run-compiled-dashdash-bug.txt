@@ -1,3 +1,8 @@
+> Archived: 2026-11-28
+> Reason: Same HAPI 0.29.0.1 issue as the verified fix note
+> Replacement: tools/hapi/job-run-dash-separator.md
+> Status: historical only; do not use as active truth.
+
 ---
 title: HAPI compiled CLI 的 job run -- 參數正規化 bug
 scope: tool

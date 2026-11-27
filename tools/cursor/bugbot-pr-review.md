@@ -1,16 +1,13 @@
 ---
-title: Cursor Bugbot PR 自動審查設定與驗證界線
+title: Cursor Bugbot 的 usage limit 留言與手動審查
 scope: tools/cursor GitHub PR review
-status: superseded 2026-10-22 — Manual Only
-updated: 2026-10-22
+status: verified
+updated: 2026-11-28
 ---
 
-- **2026-10-22 更新（目前有效）：** 使用者改為「agent 自選 reviewer，偏好 Gemini 與 Swear Review」。Cursor 額度常用盡，`Every Push` 讓每個 PR 都出現 `Bugbot couldn't run - usage limit reached`，agents 誤以為是自己呼叫 Cursor。已把 Trigger Mode 改回 `Manual Only`（重新載入確認），PR Summaries 改 `Off`。手動觸發：`bugbot run` 或 `@cursor review`。Codex 同步關閉，見 `tools/codex/code-review-auto-off.md`；選擇規則在 `github-pr-review-loop` skill。
-- （歷史）使用者要求每個 PR 自動 review。Cursor 個人設定的 Trigger Mode 已由 `Manual Only` 改為 `Every Push`，重新載入仍顯示「Bugbot will automatically review every push to a PR」。此模式也 review 後續推送，適合要求 review 對應最新 PR head 的流程；`Once Per PR` 只在開 PR 時 review，跳過後續 pushes。
-- 這是帳號層級設定，套用到所有已啟用 Bugbot 的 repositories，不只本次指定的兩個。沒有另外啟用全部 repositories。
-- `DVLab-NTU/spec2rtl`、`DVLab-NTU/hw-benchmark` 的 Bugbot 開關均已啟用，重新載入組織頁後分別用 repository name 搜尋，兩者仍為 checked。`swear01/swear-review` 原本已啟用。
-- 目前管理入口為 `https://cursor.com/automations/from-cursor/bugbot`，組織頁在其 organization 路徑。GitHub App 的 repository access 不等於 Cursor repository 的 Bugbot 開關，也不等於自動 trigger；三者應分別核對。
-- 此次僅改 Trigger Mode，Autofix 仍為 `Off`。Bugbot 頁面說明 runs 依 agent usage 計費；每次 push review 會增加使用量。
-- 2026-10-08 核對兩個 DVLab repositories 都沒有 open PR，因此沒有實際新 PR 自動觸發或 latest-head review pass 的證據。設定保存與審查執行完成需分開報告。
-- 使用者取消 spec2rtl 的 Swear App 整合；`DVLab-NTU/spec2rtl` PR #11 已於 `2026-10-08T03:14:53Z` 關閉，未合併。Swear App 維持 private；不要重新開該 PR 或擴大 App 可見性。取消 repo 整合不撤銷 Swear backend 已合併的修正，細節見 `tools/review/swear-ocr-context-coverage.md`。
-- 官方文件：`https://cursor.com/docs/bugbot`。後續應重新核對 live settings 與當下 PR head，不能把此次保存設定當成未来的 review 結果。
+看到 `Bugbot couldn't run - usage limit reached` 時，先查留言對應哪個觸發與 head SHA。帳號若開著 `Every Push`，額度不足時每次 push 都可能留下這句。該留言只證明有一次嘗試，合併前仍要驗證最新 head 有完成且通過的 review。
+
+- 2026-10-22 重新載入設定頁驗證為 `Manual Only`，PR Summaries 為 `Off`。審查依 `github-pr-review-loop` 選擇 provider；選 Bugbot 時用 `bugbot run` 或 `@cursor review` 手動觸發。
+- 診斷觸發問題時，分別核對 GitHub App 的 repository access、Cursor 的 repository 開關和帳號層級 Trigger Mode。設定保存和最新 head 的審查結果應分開查證。
+
+[原始設定與驗證紀錄](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/tools/cursor/bugbot-pr-review.md)
