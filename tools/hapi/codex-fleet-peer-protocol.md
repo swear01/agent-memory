@@ -23,9 +23,10 @@ tags: [hapi, codex, spawn-peer, ping-peer, waitForReply, model-switch, mazu, nfs
 
 mazu 再出現 `engine.sock ENOENT` 或 `startup is still unconfirmed` 時，先依回報的 PID 確認原 session 是否仍在啟動，再檢查正式 Runner 的 launcher 與 `hapi-mazu-codex.socket`。修復後用 `spawn-peer --machine mazu --agent codex --permission-mode autoReview` 新建測試 session，等第一則模型回覆。HAPI v0.36.7.1 的 `thread/start` RPC 等 20 秒，NFSv4.1 大量發出 `TEST_STATEID` 時，技能和外掛目錄掃描可超過此期限。底層診斷與非 NFS 主機對照見 [NFS TEST_STATEID 風暴](../../machines/cthulhu/nfs-test-stateid-storm.md)。
 
-- 主機的 `/home` 繼續使用 NFSv4.1。只有 HAPI 新開的 Codex app-server 在私有 mount namespace 以 NFSv4.0 存取同一個 NAS home，保留原使用者與群組。共享的設定、外掛及 session 歷史仍在原處。使用預設 profile 時，worker 在別名 `/var/lib/hapi-codex/profile` 下用 tmpfs 放目前 Codex 版本的內建 `skills/.system`。原本的 Skillshare 與 Codex 目錄沒有額外的掛載點，因此 Skillshare 仍可更換整個目標目錄。
-- 2026-11-28 在正式 user Runner 和 Codex 0.172.0 驗證，Runner 重啟前後新 session 均收到 webhook 與第一則模型回覆。既有 session 跨過 Runner 重啟，封存的測試 session 也可 resume。system mount 與 socket 已啟用開機啟動，整機重開仍待驗證。
-- 回滾時先撤除 Runner 的 launcher drop-in，確認新啟動已走原 CLI，等既有 worker 和連線排空，再停止 socket 與 NFSv4.0 掛載。保留主機上的 `/var/lib/hapi-codex/profile` symlink，本機 SQLite 記錄的 rollout 絕對路徑仍可能經此別名讀回。部署與回滾指令見 transfer_MAC PR #109 的 README，這次驗證時程式仍在審查中。[操作文件與驗證](https://github.com/swear01/transfer_MAC/pull/109)
+- 主機的 `/home` 仍是 NFSv4.1。HAPI Codex worker 的私有 mount namespace 只把 `/home` 換成同一個 NAS 的 NFSv4.0 掛載，沿用正式 Runner 原本的 `CODEX_HOME`、群組和本機 SQLite。技能、內建 `skills/.system`、外掛與 rollout 都在原路徑，技能目錄本身可以被 Skillshare 更換。
+- 驗封存相容性要選本次工作自己在部署前用原 profile 建立的測試 session。試行版的 profile 別名雖指向相同 inode，Codex 仍因 canonical rollout 路徑不在它認定的封存目錄下而回報 `must be in archived directory`。改回原 `CODEX_HOME` 後，同一個舊 session 以原 native thread ID 恢復，模型能從前文答出 `MAZU-CODEX-OK`。只驗部署後新建的 session 會漏掉這項回歸。
+- 檢查真正的冷啟動時，在排空 worker 後卸載、重新掛載 NFSv4.0。首次未預熱時，約 20 秒仍找不到 `engine.sock`。冷掛載量到 `codex --version` 花 8.65 秒，緊接著啟動隔離 app-server 又花 12.43 秒。部署的 `hapi-mazu-codex-warm.service` 在每次 backing mount 啟用後，先用私有暫存 profile 讀入 Codex 程式，stdin 給 EOF。socket 等到 oneshot 成功才開始監聽。重新掛載後，正式 Runner 收到新 session webhook 用了 25.086 秒，接著收到第一則模型回覆。mount 與 socket 已啟用開機啟動，尚未實測整機重開。
+- 回滾先撤除 Runner 的 launcher drop-in，確認新啟動走原 CLI，等既有 worker 與連線排空，再停 socket、warm service 與 NFSv4.0 掛載。曾部署別名試行版的 mazu 保留原有 `/var/lib/hapi-codex/profile` symlink，讓 SQLite 中記錄的試行版 rollout 路徑仍可讀。全新安裝不建立該別名。這次驗證時 PR #109 仍在審查。[部署、回滾與驗證](https://github.com/swear01/transfer_MAC/pull/109)
 
 # 改 Codex session 的模型
 
