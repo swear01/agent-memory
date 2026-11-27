@@ -36,7 +36,8 @@ CLI ack 只證明命令收到了。宣告一輪完成前，依序查原生結果
 - **技能樹點到鄰近節點。** 原生相機偏移會跨回島保存，過場也會打斷平移復原。每次換技能或平移後先讀實際中心與倍率，再用世界座標換算點擊。橋接缺該欄位時，用 `Get-ShelldiverSkillCamera.ps1` 唯讀指定執行檔和 PID。逐筆核對買到的原生技能、扣款與存檔。
 - **交魚或領錢看起來完成，存檔仍短少。** 商店容量按物種與稀有度檢查；倉庫遇背包堆疊已滿時，先賣背包再提領。長按箱子可能只領一筆；反覆原生領取後確認待售、待領都歸零，核對錢包實際增加。錢箱動畫可能在原版第一次寫檔後才播完，核對短少確為落盤尾差後，可用下一趟原生出航補存。先留存檔副本；原版 `Game.json` 是十六進位文字，解碼後略過 16 bytes 再解析 UTF-8 JSON。
 - **轉換台產出在玩家背包找不到。** 購買 Transmutator Automation（1,000 黑曜石）之後，完成品直接送至商店，仍要在原生介面投入符合資格的漁獲。依存檔核對物種、稀有度和數量；等轉換台原料、成品與商店待售走完再集中領箱，讀回錢包。
-- **花掉通訊器預算，或把等級當成結局。** 採水晶時先保留通訊器的 10,000 水晶，購買規劃讀原生已解鎖節點。通關目標是取得五個分支終點各一級、支付 10Q 貝殼買 Hammock Repair，最後核對原版 `has_played_hammock_cutscene` 已寫入存檔。
+- **全技能進度停在吊床結局。** 目前驗收是同一份原版存檔全技能 800／800。加總 `skills_saved` 並對照 `total_skill_levels_upgraded` 和 `all_skill_levels`，再逐節點核對 `rank == maxRank`。Steam 正式版共 241 個節點。已讀回 228 個固定價節點合計 766 級、11 個條件價節點合計 32 級、潛艇與吊床各 1 級。1200m 是第 12 海域 `rm_ocean_magma_03`，解鎖後是此任務的主要捕撈和採礦地點。
+- **靜態價格表漏掉最後幾級。** 以原版技能資料解析當前版本的條件價和前置需求。Bubble Size II 正式版需要 Bubble Damage VII 至少 1 級，兩級各 2,000 黑曜石。Hammock Repair 需要五個分支終點並花 10Q 貝殼，也計入全技能上限。水晶採集時先保留通訊器的 10,000 水晶。吊床結局可另用原版 `has_played_hammock_cutscene` 存檔旗標核對。
 
 [完整原始紀錄、命令與各深度實測](https://github.com/swear01/agent-memory/blob/8696a2520bf54c862500a0fbea6b035a4db2ffd0/projects/shelldiver/native-cli.md) · [1100m 原始量測](https://github.com/swear01/agent-memory/blob/86f38610525e57a230a7c3b87405fea76530bb1c/projects/shelldiver/native-cli.md)
 
@@ -54,3 +55,5 @@ CLI ack 只證明命令收到了。宣告一輪完成前，依序查原生結果
 - **把顯示更新率或要求值當成已達倍速。** Shelldiver 用 `game_set_speed` 設引擎目標，以 `display_set_timing_method` 選原生排程。原生時間方法、作業系統計時解析度、螢幕 Hz 和引擎實際完整 Step 各自核對。同一 1200m 戰鬥比較原版 1 倍與原生 System 計時加四分之一殘影，實測 59.95 → 206.055 Step／牆鐘秒，約 3.44 倍，單發 16 Step 的世界飛行距離仍相近。此遊戲的 10 倍目標為約 600 完整 Step／秒，實測尚待達成。
 
 [動態路線、滿包與倍速原始驗證](https://github.com/swear01/agent-memory/blob/032d62af4ea9b36fbb96534768e7df7688db6155/projects/shelldiver/native-cli.md)
+
+- **技能樹關閉後水下仍有大量技能粒子。** 原版 `o_upgrade_area` 直接建立 `ps_skill_can_buy`（PSYS28），停用自動畫圖，仍會自動更新。房間離開的 CleanUp 只釋放技能 UI 表面，重建節點時會失去舊粒子系統的控制代號。原版 Save and Exit 返回同一程序的標題畫面。原版重設只清理登記在 `part_system_holders` 的系統，PSYS28 走直接建立路徑。唯讀抽樣曾在水下發現 1,140 套仍自動更新的 PSYS28，以及 12,683 顆活粒子。用同程序、同交戰區的粒子數和完整原版 Step 確認任何效能修復。
