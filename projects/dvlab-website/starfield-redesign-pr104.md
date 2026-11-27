@@ -3,13 +3,13 @@ title: DVLab 網站星空／星圖紙重新設計 PR #104
 scope: projects/dvlab-website
 project: DVLab-NTU/dvlab-ntu.github.io
 status: active
-updated: 2026-10-17
+updated: 2026-11-28
 tags: [impeccable, liquid-glass, theme, typography]
 ---
 
 ## 狀態
 
-- 2026-10-17 開 PR #104（branch `design/starfield-redesign`），CI `verify` 兩個 matrix 都 pass；**尚未 merge / 部署**。merge 到 `main` 才會部署 Pages，inari 仍需另外更新。
+- 2026-11-28 查 [PR #104](https://github.com/DVLab-NTU/dvlab-ntu.github.io/pull/104) 仍 open。GitHub Pages 使用 workflow；頁面是否部署到該版要查部署 SHA，Inari 另查線上版本。
 
 ## 使用者確認的方向
 

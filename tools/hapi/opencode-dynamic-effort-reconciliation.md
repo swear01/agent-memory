@@ -11,3 +11,5 @@ evidence_digest: c388538d610d48f61e86d503b4f51a6f981e5ef77aea2bd741d8208e279a2b4
 歷史 issue 指出 Web 硬編 effort 列表而 CLI 直接轉送，可能碰到 Effort not found；ACP 已回報 thought_level options，後續 commit 訊息另指出 fallback 成功後 Hub 仍廣告被拒絕的值。
 
 將當次 model／session 的 capability 傳到 UI 並在送出邊界驗證，若政策允許改用其他支援值，須在 ACP 成功後同步實際值，不能維持虛假的選擇。來源有設計、程式片段與 commit 描述，沒有完整端到端證據；不能由 CLOSED 推定所有版本都修好，也不外推到其他 flavor。
+
+缺少 `session/set_config_option` 時讓 inline switching 明確不可用；後端拒絕更改時回復 UI 狀態。若政策允許 fallback，也要等實際成功才顯示新值。這是設計驗收條件，前次調查尚無 released build 的端到端驗證。

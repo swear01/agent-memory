@@ -16,4 +16,4 @@ tags: [synthesis, synopsys, design-compiler, cadence, genus, yosys, eda, prefere
 - 五台 Ubuntu 主機（mazu、cthulhu、athena、valkyrie、zeus）都掛 `/apps`。不要印出或 cat license 檔，也不要動 `/apps`。
 - 網表轉 AIG 只能用非合成類的轉換：GTECH 或 generic 元件改寫成簡單閘，再用 ABC `strash; comb; write_aiger`。
 - 交辦子 session 時，要把這條規則寫進 brief。2026-11-03 有子 session 又改用 Yosys，被使用者糾正。
-- 舊紀錄 [[tools/yosys/large-rtl-to-aig]] 是 2026-10-30 用 Yosys 做的，只能當歷史參考，不要再照那個流程做新的合成。
+- 舊紀錄 [舊 Yosys AIG 路徑與歷史樣本](../../archive/tools/yosys/large-rtl-to-aig.txt) 是 2026-10-30 用 Yosys 做的，只能當歷史參考，不要再照那個流程做新的合成。

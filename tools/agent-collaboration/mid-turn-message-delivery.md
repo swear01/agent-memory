@@ -3,7 +3,7 @@ title: Happy、HAPI 與原生 CLI 的執行中訊息交付
 scope: tools/agent-collaboration
 status: active
 confidence: high
-updated: 2026-11-27
+updated: 2026-11-28
 evidence: Claude Code 和 Codex 官方文件、兩個上游的固定版本原始碼及 GitHub issue 與 PR。
 tags:
   - agent-protocol
@@ -28,7 +28,7 @@ redaction: passed
 - Happy CLI 的 Claude remote 在 `result` 後才拉下一筆，Codex wrapper 也未接 `turn/steer`。手機忙碌時送出 follow-up 預設排到下一輪。[Claude remote，4a21b91e](https://github.com/slopus/happy/blob/4a21b91e451044970e4a731220af2beb69bbd024/packages/happy-cli/src/claude/claudeRemote.ts#L337-L374) [Codex app-server client，4a21b91e](https://github.com/slopus/happy/blob/4a21b91e451044970e4a731220af2beb69bbd024/packages/happy-cli/src/codex/codexAppServerClient.ts#L1126-L1192)
 - 原生 iOS 的送出會先進裝置 outbox，Hub 收件後則儲存、發出更新並回覆 HTTP。具備 receipt capability 的 session，iOS encoder 也會送 `expectsAcceptance`、`queuedWhileBusy`。[iOS outbox](https://github.com/slopus/happy/blob/4a21b91e451044970e4a731220af2beb69bbd024/packages/happy-ios/Sources/HappyCore/Chat/Sending/OutboxSender.swift#L104-L116) [iOS metadata](https://github.com/slopus/happy/blob/4a21b91e451044970e4a731220af2beb69bbd024/packages/happy-ios/Sources/HappyCore/Chat/Sending/UserMessageEncoder.swift#L37-L67) [Hub v3 收件](https://github.com/slopus/happy/blob/4a21b91e451044970e4a731220af2beb69bbd024/packages/happy-server/sources/app/api/routes/v3SessionRoutes.ts#L181-L238)
 - Happy Agent daemon 的遠端 follow-up 走 Steer。若將兩者放在同個選單，應依 session 類型、capability 和缺省值送出。#1868 是 legacy CLI 的提案，#1910 與 happy-agent#57 處理新版 Agent。這些 PR 在 2026-11-27 均未合併，舊 React Native app 路徑也已從 main 移除。後續行動端工作以原生 iOS、Android 為準。[上游討論 #1867](https://github.com/slopus/happy/issues/1867) [#1868](https://github.com/slopus/happy/pull/1868) [#1910](https://github.com/slopus/happy/pull/1910) [happy-agent#57](https://github.com/slopus/happy-agent/pull/57) [舊 app 移除](https://github.com/slopus/happy/commit/e46a907d269ac87e3c1836e9ff1f9f48e87cbc01)
-- #1388 是本機 Claude 終端接管卡住的個案。#2088 則回報 iOS 介面無法分辨已收件、排隊和開始執行，使用者因而可能重送。[#1388](https://github.com/slopus/happy/issues/1388) [#2088](https://github.com/slopus/happy/issues/2088)
+- iOS 若只顯示收件而沒顯示執行，先用原訊息 ID 查排隊／開始狀態。[#2088](https://github.com/slopus/happy/issues/2088)
 
 ## tiann/HAPI
 
@@ -44,6 +44,6 @@ redaction: passed
 
 ### 六種 runner 的 guarded follow-up
 
-HAPI #2623 的 `1ef7f1e01` 把普通文字、peer Auto 和已完成的子任務回覆接到同輪交付。適用 Claude remote、Codex、Pi 0.58.4+、OpenCode v1/v2、Cursor ACP 和 Antigravity ACP。以用戶端觀察到的 token 綁定原輪次。派送前明確待決可在同輪解除後再嘗試，結果未明則保留同一筆訊息。這是 PR 版本紀錄，上線狀態另查部署版本。[上游改動](https://github.com/tiann/hapi/pull/2623/commits/1ef7f1e01a3604bfbda7a0c5250ba09d10612111)
+HAPI #2623 的 `1ef7f1e01` 把普通文字、peer Auto 和已完成的子任務回覆接到同輪交付。適用 Claude remote、Codex、Pi 0.58.4+、OpenCode v1/v2、Cursor ACP 和 Antigravity ACP。以用戶端觀察到的 token 綁定原輪次。派送前明確待決可在同輪解除後再嘗試，結果未明則保留同一筆訊息。2026-11-28 查 #2623 仍 open。以上是該 PR 的候選行為，上線以各機部署版本為準。[上游改動](https://github.com/tiann/hapi/pull/2623/commits/1ef7f1e01a3604bfbda7a0c5250ba09d10612111)
 
 驗證 provider 能力要查 HAPI 實際使用的協定。Codex app-server 配合隔離 home 和本機 Responses stub，可從 thread/read 與後續模型請求核對同輪 user item。Copilot CLI 1.0.117 的 ACP 在隔離測試中收到第二個 prompt 時回傳 cancelled 與 user_abort。Kimi ACP 明確設定 rejectIfBusy，DSH ACP 限定一個 in-flight prompt。Grok interject 會先回覆入列，可能在原輪結束後以新 ID 跑另一個 prompt。這些行為無法直接用原生 TUI 的 Steer 功能推論。[Copilot ACP 回報](https://github.com/github/copilot-cli/issues/4555) [Kimi ACP](https://github.com/MoonshotAI/kimi-code/issues/2370) [DSH ACP](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/acp/acp/README.md) [Grok interjection](https://github.com/xai-org/grok-build/blob/2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8/crates/codegen/xai-grok-shell/src/session/acp_session_impl/interjection.rs)

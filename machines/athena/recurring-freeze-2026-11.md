@@ -9,37 +9,12 @@ updated: 2026-11-24
 tags: [kernel, freeze, bert, hardware, raptor-lake]
 ---
 
-# Athena 反覆 freeze（2026-11-24 查核）
+# Athena freeze：分開辨認 preempt_count、硬體與 watchdog
 
-延續 [[machines/hapi-fleet/ubuntu-gpu-maintenance-plan]] 的「Athena 反覆 kernel panic」與 [[machines/mazu/kernel-panic-2026-09-05]]。
+- 用 `su_athena` 查 previous-boot journal、pstore、`/var/crash`。非正常結束前曾有 `softirq: huh, entered softirq 7 SCHED ... preempt_count`，與 idle scheduler（`_nohz_idle_balance`）panic 指紋相近。2026-11-24 已驗整機卡死時 `oops=panic panic=10`、`kexec_crash_loaded=1` 也沒有觸發 dump，只能由現場 reset。新開機的 `BERT: [Hardware Error]: Skipped 1 error records` 是韌體證據，未印完整內容不代表沒有硬體錯誤。保留 `/sys/firmware/acpi/tables/data/BERT`，以同級主機和不同負載交叉驗。
+- 全核 stress 曾過，Innovus 的部分核心高頻負載仍復發；不能用送修歸還或滿載燒機當作修好。歷史可辨識 CPU 的異常集中 P-Core 0 的 CPU 0–1，`softirq: huh` 本身沒有 caller CPU。單機 CPU／RAM／主機板仍待隔離；Raptor Lake Vmin 只是候選，復發也不能直接判 Core 1 同樣退化。既定隔離順序為離線 MemTest86 再以授權硬體交叉驗證或保固，避免切換現役主機無法保存的工作。
+- iTCO watchdog：無 ACPI WDAT，Ubuntu 自動載入 iTCO 可能被 blacklist。當時明確啟用 `iTCO_wdt` 並寫 `/etc/modules-load.d/iTCO_wdt.conf`、`/etc/systemd/system.conf.d/watchdog.conf`，`RuntimeWatchdogSec=5min`／`RebootWatchdogSec=10min`。避免 30 秒在 kdump capture kernel 不餵 watchdog 時提前 reset。用 `systemctl show -p WatchdogDevice`、`wdctl` 確認，真 freeze reset 與 reboot 接手未驗。回復只移除當次兩個設定，保留後續改動及檢查 watchdog ownership。
+- CPU 0 是 BSP；下線 CPU 1 曾使 Bun `os.cpus()[0].times` 拋 `ERR_SYSTEM_ERROR: Failed to get CPU information` 並讓 HAPI restart loop。維持 CPU 0–1 在線，由 `/etc/systemd/system.conf.d/pcore0-quarantine.conf` 設 `CPUAffinity=2-31`，`init.scope`、`system.slice`、`user.slice`、`machine.slice` 的 `AllowedCPUs=2-31` 讓 userspace 避開 P-Core 0。 `athena-pcore0-quarantine.service` 及 `/usr/local/sbin/athena-pcore0-quarantine.sh` 將 CPU 0–1 的 `scaling_max_freq` 設 3.0 GHz、EPP power，`default_smp_affinity=fffffffc` 及可搬 IRQ 避開。驗 CPU frequency／affinity、HAPI 及負載下是否再現。短時無 softirq 不證明已修好。
+- 回復 affine/quarantine 要先確認原檔、drop-in 與 slice 沒有後來的有效調整，再依收據停該 service、撤專用檔案和四個 unit 的 `AllowedCPUs` 後 daemon-reload。對於共享 NFS 的 `user@1075` 抖動和 `fusermount3` denials，另查 Zeus-only user units 的 `ConditionHost`、殘留 firmware notifier 和 `swear02` linger；這些當時修好日誌雜訊，沒有證明能消除 freeze。
 
-- 一般帳號 `athena` 沒有 sudo；看 system journal、pstore 用 `su_athena`。
-- 2026-10-01 起 16 個 boot 中，**每個沒有 `Journal stopped`（非正常結束）的 boot 都出現 `softirq: huh, entered softirq 7 SCHED ... preempt_count 00000101, exited with 00000102?`**（每 boot 1–17 次）；正常 reboot 的 boot 幾乎沒有。這是 8 月 panic trace（SCHED_SOFTIRQ／`_nohz_idle_balance`）同一路徑的 preempt count 洩漏。
-- 現在的死法是整機 freeze，不是 panic：`oops=panic panic=10` 與 kdump（`kexec_crash_loaded=1`）都沒觸發，pstore、`/var/crash` 皆空。11-23 23:55 死後停了 13 小時；11-24 14:22 死、14:33 回來。使用者確認兩次都是手動按 reset 才恢復，主機不會自己重開。
-- 11-24 的兩次開機都有 `BERT: [Hardware Error]: Skipped 1 error records`，代表韌體記下前一次 boot 的硬體錯誤（記錄 >1 KiB 所以 kernel 沒印內容）；更早的 boot 沒有 BERT 記錄。
-- 對照：Valkyrie、Cthulhu（同 i9-13900K、microcode `0x133`、kernel `7.0.0-43`）與 Mazu（14900K）自 10-01 起 `softirq: huh` 與 BERT 都是 0。證據指向 Athena 單機 CPU／RAM／主機板，Raptor Lake 已發生的 Vmin 退化最可疑（microcode 只能防止惡化，不會修復），但尚未經硬體交換確診。
-- 送修期（`10/19–11/11`，Boot `-9..-6`）主機板網卡 MAC（`a0:36:bc:ad:e0:6f`）、CPU、4 條記憶體與 BIOS 均未變；期間曾跑全核 `stress-ng` 約 36 小時（壓到觸發 OOM killer，但 0 次 `softirq: huh`、0 次死當），回機後一跑 `innovus`（15%–47% 部分核心負載）數分鐘即噴 `softirq: huh` 並 freeze，吻合兩顆 `5800 MHz` TVB 偏好大核（`Core 0` = `CPU 0,1`、`Core 1` = `CPU 2,3`）在單／少核高頻 Boost 與進出 idle 時的 Vmin 不穩。
-- 歷史所有印出 CPU 編號的異常（8 月 `swapper/1` panic、10 月兩次 `swapper/0` `scheduling while atomic`、11/15 `abc_v25` segfault `likely on CPU 0`）皆落在實體 `Core 0`（`CPU 0`/`1`），但 `softirq: huh` 無 caller CPU 欄位；`/sys/firmware/acpi/tables/data/BERT` 含 3,424 bytes Intel Raptor Lake CPU/PMC CrashLog（`0x41037305` / `0x11037101` / `0x17037101`），其中 2 個區塊有非零值。x86_64 Linux 無 `cpu0/online`，無法將 `CPU 0` offline。
-- 雜訊非根因：`fusermount3` AppArmor DENIED 原由 `user@1075` 每分鐘啟停觸發（已於下方修正）；`earlyoom` 顯示記憶體 99% 空閒，無 OOM、Xid、thermal。
-- 下一步沿用既定順序：離線 MemTest86 → 與 Valkyrie/Cthulhu 交換 CPU（或 Intel 保固 RMA）。freeze 時不會自動重開。
-
-# 硬體 watchdog（2026-11-24 已啟用）
-
-- Athena 沒有 ACPI WDAT；Ubuntu `/lib/modprobe.d/blacklist_linux_*.conf` 封鎖 `iTCO_wdt` 的自動載入，但明確載入可用（Z790 PCH TCO v6，上限約 613 s）。
-- `/etc/modules-load.d/iTCO_wdt.conf` 開機載入模組；`/etc/systemd/system.conf.d/watchdog.conf` 設 `RuntimeWatchdogSec=5min`、`RebootWatchdogSec=10min`。用 `daemon-reload` 就生效，不需重開：`systemctl show -p WatchdogDevice` 為 `/dev/watchdog0`、`wdctl` timeout 300 s。
-- 選 5 分鐘而非 30 秒：kdump 的 capture kernel 不會載入被封鎖的 iTCO，也不會餵它；太短會在寫 vmcore 時被 reset。
-- 尚未驗證：重開後是否自動接管（下次開機看 `journalctl -b | grep "hardware watchdog"`），以及真的 freeze 時是否會 reset。回滾：刪掉這兩個檔案再 `daemon-reload`。
-
-# 雜訊與時區修正（2026-11-24）
-
-- Zeus 每分鐘 `:01` 由 `glances_collect.py` 以 `swear02` SSH 輪詢各機；共用 NFS `<admin-home>/.config/systemd/user/` 下的 `dvlab-windows-enroll.service` 與 `ninfer-oracle-tunnel.service` 原缺 `ConditionHost=zeus`（另殘留 `timers.target.wants/snap.firmware-updater.firmware-notifier.timer`），且 Athena 未開 `swear02` linger，導致每分鐘反覆啟停 `user@1075`（UID 1075 user manager）並刷 `fusermount3` AppArmor DENIED。
-- 已在 Zeus 備份原 user units 至 `/var/backups/swear02-systemd-user-20261124/` 後為兩 unit 補上 `ConditionHost=zeus`、移除殘留 timer 連結並僅 `daemon-reload`（Zeus 四個運作中服務 `MainPID` 不變）；同步在 Valkyrie `daemon-reload` 與 `reset-failed` 清零失敗 unit；在 Athena 啟用 `loginctl enable-linger swear02` 並清理 user failed state，同時將 Athena 時區由 `Asia/Manila`（`PST`）改為 `Asia/Taipei`（`CST`）。驗證跨一輪 `:01`–`:15` 輪詢已無 `user@1075` 啟停、無 Zeus-only unit 失敗、無 `fusermount3` 拒絕紀錄，且 `overview.json`／`detail.json` 正常更新。
-
-# P-Core 0 隔離與基頻鎖定（2026-11-24 已啟用）
-
-- x86_64 Linux 7.0 無 `cpu0/online`（無法將 BSP `CPU 0` 下線）；且實測若將中間核心 `CPU 1` 設為 `online=0`，HAPI 內建的 Bun `v1.4.4` 執行 `os.cpus()[0].times` 會拋出 `ERR_SYSTEM_ERROR: Failed to get CPU information` 導致 `hapi-runner` 重啟迴圈。
-- 因此維持 `CPU 0–1` 在線，改以多層隔離將實體 `Core 0`（`CPU 0–1`）完全移出工作負載並鎖定無 Turbo 基頻，其餘 23 核 30 執行緒（`CPU 2–31`）維持全速：
-  1. `/etc/systemd/system.conf.d/pcore0-quarantine.conf`（`CPUAffinity=2-31`）及 `systemctl set-property` 於 `init.scope`、`system.slice`、`user.slice`、`machine.slice` 持久化設定 `AllowedCPUs=2-31`，所有 userspace 程序（含 `hapi`、`innovus`、SSH）僅能排程於 `CPU 2–31`。
-  2. `/etc/systemd/system/athena-pcore0-quarantine.service`（呼叫 `/usr/local/sbin/athena-pcore0-quarantine.sh`）：將 `CPU 0` 與 `CPU 1` 的 `scaling_max_freq` 鎖在 `3000000`（`3.0 GHz` 基頻）與 `EPP=power`，並將 `default_smp_affinity`（`fffffffc`）與可搬移 IRQ 導向 `CPU 2–31`。
-- 實測部分核心 `stress-ng` 壓測期間 `CPU 0–1` 維持基頻以下（約 `800 MHz`）、`CPU 2+` 正常 Boost（`5.3–5.42 GHz`）、`0` 筆 `softirq: huh`，且 `hapi-runner` 與 Dashboard 均正常運作。若後續仍重現 `softirq: huh` 或 freeze，代表第二顆 `5800 MHz` 偏好核 `Core 1`（`CPU 2–3`）亦退化，屆時再限制 `CPU 2–3` 最高頻率。
-- 回滾指令：`sudo systemctl disable --now athena-pcore0-quarantine.service && sudo rm -f /etc/systemd/system/athena-pcore0-quarantine.service /usr/local/sbin/athena-pcore0-quarantine.sh /etc/systemd/system.conf.d/pcore0-quarantine.conf && sudo systemctl set-property init.scope AllowedCPUs= && sudo systemctl set-property system.slice AllowedCPUs= && sudo systemctl set-property user.slice AllowedCPUs= && sudo systemctl set-property machine.slice AllowedCPUs= && sudo systemctl daemon-reload`。
+[各 boot 對照、watchdog 閘門、備份和逐項回復命令](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/athena/recurring-freeze-2026-11.md)

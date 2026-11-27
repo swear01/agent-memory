@@ -1,7 +1,7 @@
 ---
 title: Codex ignored MCP type and legacy feature settings
 scope: Codex configuration and transfer_MAC fleet MCP rendering
-status: verified_with_windows_pending
+status: active
 updated: 2026-10-03
 ---
 
@@ -27,7 +27,6 @@ python3 "$HOME/.local/share/agent-config-sync/scripts/sync-ai-agent-configs.py" 
 
 The deployment backed up `config.toml` under `<home>/.cache/codex-config-20261003/`, compared parsed TOML against the original with only the ignored key removed, verified the renderer hash, and reran rendering to prove idempotence. No HAPI service restart was required; existing processes may retain previously loaded settings.
 
-Windows `swop` remains pending. It was absent from the current HAPI online machine list; external SSH attempts timed out and the known internal SSH endpoint was unreachable from mazu. Do not reuse the older eight-host success snapshot as evidence for this rollout.
-
+Windows was outside the 2026-10-03 verification. Check the current fleet handover and read back the active Windows renderer and native client before reporting success. An earlier rollout or current runner liveness cannot establish those checks.
 
 Deployment hashes and the complete 2026-10-03 verification are available with `git show 54da0f0adfdb3dacb3bca59a729b12975d44ec9b:tools/codex/ignored-config-settings.md`. For publishing and refreshing shared memory, see [shared-memory workflow](../../global/workflows/shared-memory.md).

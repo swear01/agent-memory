@@ -1,54 +1,20 @@
 ---
-title: Claude API 實驗用 fleet 環境
+title: Claude API 實驗的憑證範圍、workspace header 與讀回
 scope: tools/anthropic
 status: active
 updated: 2026-11-11
-tags:
-  - anthropic
-  - fleet
-  - credentials
+tags: [anthropic, fleet, credentials]
 ---
 
-# Claude API 實驗用 fleet 環境
+## 路徑與授權
 
-## 2026-10-27 起：預設改用個人 org 的 key
+- 個人批次實驗使用明確選定的個人 API 憑證，勿走訂閱帳號的 `claude -p`，也不要依賴繼承的 `ANTHROPIC_API_KEY` 或 shell 預設 fallback。只在當次有授權的實驗使用 lab key。2026-11-11 的 Agentic-IC3 Opus 補跑允許個人額度耗盡或 rate limit 時用 lab key 接續，此條只描述該案。
+- 互動式 Claude Code 走[訂閱啟動入口](claude-subscription-launcher.md)。wrapper 只清理該子程序的認證環境，直接 HTTP／SDK 保持獨立。
+- 歷史設定使用 `ANTHROPIC_API_KEY_SWEAR` 與 `ANTHROPIC_API_KEY_LAB`。個人 org key 當時不帶 workspace header，lab identity-linked key 需送 `anthropic-workspace-id`，否則模型清單可回 HTTP 400。`anthropic-use-lab` 設 workspace，`anthropic-use-swear` 清除它。Python SDK 要明確提供 header，不能由 CLI 環境變數行為推定。
+- SDK 不會自動改用另一把 key。舊 shell／子程序會持有舊環境，新 shell 或明確傳入授權的憑證後重驗。使用 vault 或既有受控環境，只讀回結果與所用身份，避免列印值、shell 設定、請求 header 或把值貼進終端命令。
 
-- `~/.secrets` 現在有兩把：`ANTHROPIC_API_KEY_SWEAR`（Swear's Individual Org 的 key `swear-mac`，用的是 $100 credits，2026-11-20 到期；不需要 workspace header）與 `ANTHROPIC_API_KEY_LAB` + `ANTHROPIC_WORKSPACE_ID_LAB`（下方原本那把 identity-linked key 改名）。`ANTHROPIC_API_KEY` 預設等於 SWEAR，沒有 SWEAR 時才退回 LAB。
-- 切換：shell 函式 `anthropic-use-lab`（同時設定 workspace ID）、`anthropic-use-swear`（unset workspace ID）。SDK 與 Claude Code 都不會在額度用完時自動換 key。
-- 已驗證：Mac（使用者測過兩把）與 mazu 的共用 home（2026-10-27 用 SWEAR 打 `count_tokens` 與 Opus 5.5 生成成功，沒帶 workspace header）。其他主機沒逐台驗證。
-- **改檔前就啟動的 shell 和程序，env 裡仍是舊值**（`ANTHROPIC_API_KEY` = lab key）。要指定扣哪把的程式，不要依賴繼承的 env：agentic-ic3-repro 的 `scripts/run_matrix.py` 改從 mazu `~/.config/agentic-ic3/anthropic.env`（0600）讀 key。
-- vault（Vaultwarden）2026-11-11 起有個人 key：項目 `API · anthropic personal-org (agentic-ic3)`（username `ANTHROPIC_API_KEY`、password 為 key，hash 與 `ANTHROPIC_API_KEY_SWEAR` 一致）。lab key 不在 vault。另有 `Claude Code OAuth token`（訂閱 token，不是 API key）。
+## 驗證界線
 
-## 已驗證狀態（2026-09-30）
+`GET /v1/models?limit=1` 非空 200 只說明可連、認證及 workspace 通過該端點，生成要用另一次經授權的實際呼叫驗證。NFS 共用 home 可更新一次，各 host 的實際 caller 獨立讀回。舊記錄在各日期涵蓋不同機器，不能由 HAPI 在線或設定存在推定遺漏的機器曾完成驗證。
 
-- Mac、mazu、cthulhu、athena、valkyrie、zeus、oracle 共 7 台的帳號 `~/.secrets` 有 `ANTHROPIC_API_KEY` 與 `ANTHROPIC_WORKSPACE_ID`；檔案權限為 `0600`。四台 `swear01` Linux 主機共用 home，只從 mazu 寫一次，再逐台讀回。
-- 七台各自啟動的新互動 shell 均取得兩個變數，且沒有 `ANTHROPIC_BASE_URL` 覆蓋。各主機對 `GET /v1/models?limit=1` 發送指定 workspace header，皆收到 HTTP 200、非空模型清單，回應 workspace header 與設定一致。這只證明金鑰、workspace 與網路可用；未執行付費模型生成，也未驗證舊程序重載。
-- Windows `swop` 尚未部署：外網 SSH TCP/22 逾時，從 mazu 測試舊區網 SSH 也未開通。恢復可用連線後再部署並逐機驗證，不可宣稱 8/8 完成。
-
-## 使用方式與安全界線
-
-- 此 identity-linked key 需要每次 API 請求帶 `anthropic-workspace-id` header；只設定 `ANTHROPIC_API_KEY` 會讓模型清單請求回 HTTP 400。Anthropic CLI 可讀 `ANTHROPIC_WORKSPACE_ID`。Python SDK 要用 `default_headers={"anthropic-workspace-id": os.environ["ANTHROPIC_WORKSPACE_ID"]}`，不能假設 SDK 自動讀取這個變數。官方說明：<https://platform.claude.com/docs/en/manage-claude/authentication>。
-- 真實金鑰存於各帳號的 `~/.secrets`，不可放入 Git、筆記、命令參數或工具輸出；本筆記也省略 workspace ID 的值。跨機複製金鑰時透過 SSH stdin 傳送，合併既有檔案並保持 `0600`，不覆蓋其他變數。
-- 憑證稽核只能輸出變數名稱與狀態，不要整段顯示 shell 設定。這次檢查 `.bashrc` 時曾意外讓一把無關的既有 OpenAI key 出現在工具輸出；已告知使用者需要輪替，完成輪替尚未驗證。
-
-## Claude Code 訂閱入口（2026-10-17）
-
-上述 API 金鑰仍供真正 API 程式使用。Claude Code 已另外部署[訂閱啟動入口](claude-subscription-launcher.md)，只移除 Claude 子程序認證變數；不要因這份 API 環境筆記把 Claude 改回 API key 登入。新版 fleet 範圍與 Athena 送修排除以該筆記為準。
-
-## 個人 key 優先、lab key 備援（2026-10-27）
-
-- 個人 org：Claude Console「Swear's Individual Org」（使用者個人 Google 帳號；預設進的是 DVlab Team org，建 key 前要先切換）。$100 promo credit，2026-11-20 到期。key 名稱 `swear-mac`，Default workspace，前綴 `sk-ant-usr`（user-linked key，可正常呼叫 API）。
-- `~/.secrets` 結構：原 lab 值改名為 `ANTHROPIC_API_KEY_LAB`、`ANTHROPIC_WORKSPACE_ID_LAB`；新增 `ANTHROPIC_API_KEY_SWEAR`；`ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY_SWEAR:-$ANTHROPIC_API_KEY_LAB}"`；預設不設 `ANTHROPIC_WORKSPACE_ID`（lab workspace ID 不適用個人 org）。切換函式 `anthropic-use-lab` / `anthropic-use-swear`。
-- SDK 與 Claude Code 沒有額度用完自動換 key 的機制；要全自動需 LiteLLM proxy fallback。
-- 已部署並以 `GET /v1/models` 兩把皆 HTTP 200：M5、M1（新建 `~/.secrets` 並由 `.zshrc` source）、swear01 共用 home（mazu/zeus/cthulhu/valkyrie）、oracle。備份 `~/.secrets.bak-20261027`。athena、swop SSH 逾時未部署。
-- 教訓：用 box 終端機存 key 時，`xclip`/`xsel` 不存在，誤把 key 貼到命令列而出現在截圖；下次先 `stty -echo; cat > file` 再貼。
-
-## 實驗批次不要走訂閱 `claude -p`（2026-10-28）
-
-- 使用者指示：大量實驗呼叫（例如逐題問 Claude 60 次）不要用 claude.ai 訂閱帳號的 `claude -p`，有被封鎖的風險；改用 `ANTHROPIC_API_KEY_SWEAR`（明確引用 `_SWEAR`，不要依賴 `ANTHROPIC_API_KEY` 的預設值）。`_LAB` 原則上不用於個人實驗；例外見下節。
-- 互動式 Claude Code session 本身照常用訂閱，這條只限制實驗程式的批次呼叫。
-
-## Agentic-IC3 的 Opus run：個人 key 用完改 lab key（2026-11-11）
-
-- 使用者指定順序：先用 `ANTHROPIC_API_KEY_SWEAR`，額度用完或 rate limit 時改用 `ANTHROPIC_API_KEY_LAB`（含 `ANTHROPIC_WORKSPACE_ID_LAB` header）接續跑。這條是 agentic-ic3 實驗的明確授權，取代上一節對這個專案的禁止。
-- mazu `~/.config/agentic-ic3/anthropic.env` 目前是 SWEAR 那把（hash 比對確認）；2026-11-11 Opus low 補跑 26 runs（$16.04）全用 SWEAR，沒有觸發 fallback。
+[原始診斷與部署快照](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/anthropic/fleet-api-experiments.md)

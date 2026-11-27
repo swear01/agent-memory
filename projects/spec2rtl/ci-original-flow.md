@@ -18,15 +18,8 @@ updated: 2026-10-18
 此要求由使用者於 2026-10-10 直接重申，並要求加入共享記憶；不是由 CI 失敗或模型推論自行得出的政策。
 
 
-## 2026-10-18：本輪 CI 研究停止
+- 2026-10-18 使用者停止該輪 CI 研究及排程，保留正常 GitHub CI、已部署版本、固定參照及失敗證據。重新啟動研究、模型實驗或重建排程需新指示。
+- 判斷缺 lint summary 時可查工具原始證據；SpyGlass 跑過但模型未交摘要仍是交付缺口。生成的定向測試與獨立 functional gate 分開，alignment pass 仍可能漏掉架構承諾沒有落實。PPA 的 AT 使用 mapped area × cycles × 通過 STA 的週期，重點是同一固定參照及實際關鍵路徑。
+- 保留生成 RTL、原始失敗及固定 baseline。CI-only 維護的使用者工作流為隔離驗證後整合 develop；skills 用獨立 PR。
 
-使用者要求記錄結論後停止；等待新指示才繼續調查、修改或模型實驗。排程已刪除，不重建。保留既有部署、workflow、固定參照與全部失敗證據；這不是停用正常 GitHub CI 觸發。
-
-- 已完成：skill PR #69 合併，controller `72719716` 部署至兩個 Mazu runner，91 項 native tests 通過。Grok4.7 Medium／Fast=false，Oracle Opus5.5 High／Fast=false。固定參照來源run38370030437保留，AT使用mapped area×cycles×STA通過週期，5%退步為warning。
-- 最新run39025717999：180.28分鐘、FAIL。Keccak77.20分鐘後缺lint摘要；工具紀錄確認SpyGlass跑過，但模型沒有寫summary。BCH180.11分鐘逾時；347項生成的定向測試通過不等於獨立六個pattern通過。RTL未改、架構文件補正仍造成20.39分鐘alignment重驗；DC最後已跑36分15秒仍在mapping。兩design均無有效最終獨立功能／STA／AT結果。
-- 前一輪run39012273541的Keccak獨立3/3與scored STA通過，雜湊AT卻比固定參照+362.15%：cycles不變、面積2.10倍、週期2.20倍。具體問題是動態lane讀寫的長mux/XOR路徑，以及共用round datapath承諾未落實而alignment漏判。
-- 結論：CI已有可追溯的部署與固定參照，但生成品質、產物收尾、保守重驗及EDA成本仍限制可靠度與速度。沒有達成穩定完整CI／10–15分鐘目標；最新結果也不足以判定#69改善AT，或把全部問題歸因於Grok／skill無效。
-
-不手修生成RTL、不重抽求綠、不自動重建baseline。CI-only維護的專案規則是隔離驗證後直接整合develop、不開PR；skill仍用獨立PR，#69由使用者明確授權合併。
-
-證據：`<task-root>/outputs/skill69-promotion-20261017/closeout-20261018.md`、`final-result-39025717999.json`、`keccak-diagnosis.json`及該目錄的原始run資料；部署收據在`<task-root>/outputs/handoff-stability-20261017/deployment-v2.json`。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/spec2rtl/ci-original-flow.md)

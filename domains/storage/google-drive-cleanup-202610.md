@@ -15,8 +15,12 @@ tags: [google-drive, cleanup, anime, mega, goodnotes, lda, sparse, motion-photo]
 - Drive 舊父目錄已進垃圾桶時，子檔仍可有獨立 `ownedByMe`／`trashed` 狀態。全量快照加 changes token 續接，批次 API 外層 200 還要逐項查 inner status 和操作後 metadata。Blob size 和配額 `quotaBytesUsed`／`usageInDrive - usageInDriveTrash` 分開，配額可能延遲更新。
 - 歷史個案：LDA 用 `lda_storage.save_model/load_model` 保留原檔名，還原 ndarray、RNG、float64 位元。NPZ 壓縮若排序 COO 資料，重建設 `sorted=False`；驗 full-row fill、截斷／損毀 footer 和舊新 scikit-learn inference。Minecraft 只重建有版本和原下載 checksum 的 JAR，未知 JAR、歷史世界與設定留存。Anime 出庫有使用者確認 MEGA 上傳，未有獨立 MEGA 讀回；一份未解密舊包的風險接受只適用當批，不是後續刪除政策。
 
-## 2026-10-12 最後一批瘦身結案
+## 解壓、文件結構與 JPEG Motion Photo
 
-68 支影片已按 1080p 上限修正：36 支用 1080p 原件重轉，28 支原生 720p 與 4 支 480p 無升頻。原 Drive ID／名稱／父目錄及來源保留，全部雲端比對通過。PDF／PPTX、FLAC、STEP、ARK 與 LDA 詳細驗收在原回條；教育資料集見 [學校整理收尾](google-drive-school-cleanup.md#2026-10-12-資料集封存與最終收手)。這是歷史結案，重查使用量或來源位置以 live 為準。
+- 去重查大小、完整 hash、程式引用、資料集分區。ZIP 與解壓樹比對完整路徑／目錄／CRC／逐檔內容；資料封存要驗還原與雲端讀回才清當批授權的來源。文字封存保留編碼和引用；PDB 被移除便失去原 binary 的符號資訊，C source 存在不證明可重編。
+- OOXML 保留 XML default namespace，ElementTree 寫成 `ns0:Types`／`ns0:Relationships` 曾使 LibreOffice 載入失敗。保留非影像部分 bytes，驗字型、全頁渲染與回下載。原生 PowerPoint 動畫、PDF 內嵌播放器與一般 1080p HEVC 檔案各需驗。
+- JPEG Motion Photo 要解析實體 MP4、HDR gainmap 和 MPF。若保留尾部元件，重算 MPF offset，依 ExifTool、byte comparison 和 decode 驗證；HDR gainmap 可見不等於 bytes 相等或手機實測成功。是否可以移除動態部分看該批授權。
+
+[校內講義、原位封存與素材復原收據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/domains/storage/google-drive-school-cleanup.md)
 
 [整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/storage/google-drive-cleanup-202610.md)

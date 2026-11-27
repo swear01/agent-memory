@@ -1,35 +1,12 @@
 ---
-title: Impeccable installation, hooks, and concise UI policy
+title: Impeccable hooks 的設定來源、信任與出貨驗證
 scope: tools/impeccable
 status: active
 updated: 2026-10-16
 ---
 
-2026-10-16 verified snapshot; recheck host availability and PR state before further deployment.
+- **Skill 讀得到，但 hooks 未載入或未信任。** Skillshare 管 skill 與 target links；來源更新後依其流程同步。transfer_MAC 的 `scripts/sync-ai-agent-configs.py` 從 `stow/agents/.agents/impeccable-hooks.json` 渲染 Claude `settings.json` 和 Codex `hooks.json`。Codex renderer 使用 `~/.agents/skills/impeccable/scripts/impeccable`；launcher 缺檔先核對實際載入來源。只認可已審過的 Impeccable handlers，保留其他設定與既有信任。
+- **Hook 動了，不代表 UI 驗收完成。** 以 Codex 的 `skills/list`、`hooks/list` 確認發現及各 handler 的狀態，再用相關 Edit／Stop 實例驗證。後端編輯保持靜默是當時的 smoke 之一。歷史 browser modal probe 逾時，native Windows 尚無實測證據；PR merge 或 CI 也不能代替這兩項。自動 Skillshare audit 有警告，後續人工判讀不能當成 audit 自動通過。
+- 按全域 AGENTS.md，交付前對改動 UI 跑 Impeccable distill，移除多餘文案並保留重要操作提示、無障礙與必要警告。只改文字偏好不必重裝 engine 或重設 hook 信任。
 
-## Installed scope
-
-- Mac, mazu, cthulhu, valkyrie, Zeus (`su_zeus`), Oracle: full Impeccable 4.6.0 skill, engine 0.1.15, global UI rule, and enabled hooks. Codex native `skills/list` discovered the skill; `hooks/list` confirmed both Impeccable handlers trusted, with no hook errors. Edit/Stop engine smoke checks passed; backend-only edits stayed silent.
-- Athena and Windows swop were offline and remain pending. No active runner or session was restarted.
-- Upstream tag `skill-v4.6.0`; installed shared-skills commit `b048ea108e2f8082d93a588ab0abb29f00f57535`. Skill payload and installed state are separate from PR merge status.
-
-## Ownership and use
-
-Skillshare owns the portable skill and target links. Mac canonical source is `<transfer-MAC-root>/.skillshare/skills`; remote source is `<remote-home>/.config/skillshare/skills`. Run `skillshare sync` after source changes; preserve independent local skills.
-
-`<transfer-MAC-root>/scripts/sync-ai-agent-configs.py` renders hooks from `stow/agents/.agents/impeccable-hooks.json`. Claude has SessionStart, PostToolUse (`Edit|Write`), and Stop; Codex has PostToolUse (`Edit|Write|apply_patch`) and Stop. Existing unrelated handlers/settings are preserved. Trust only the reviewed Impeccable handlers through native Codex controls; do not enable a global trust bypass or trust unrelated modified hooks.
-
-Normal frontend prompts can select Impeccable automatically; users need not paste the policy each time. To request the workflow explicitly: `Use Impeccable distill on this UI.` Hooks provide automatic checks, not a guarantee of good copy. The common AGENTS rule requires distill on changed UI before delivery.
-
-The user prefers concise English global rules and no helper text by default. Keep copy only when it helps the current action, prevents a concrete error, or explains an important consequence; preserve existing style, functionality, accessibility, and essential warnings.
-
-Shorter proposed wording below was discussed but **not applied**; the deployed rule remains the earlier longer English version:
-
-> Default to no helper text. Before delivery, run Impeccable distill on changed UI; preserve existing style, functionality, accessibility, and essential warnings.
-
-## Verification boundaries and follow-up
-
-- transfer_MAC PR #60 merged at `3777a4efdd3b41da17cc6c331e10c4b87d00a99d`; shared-skills PR #47 remains open at the installed commit, with unresolved upstream live-overlay review findings and no passing provider. Rechecked both PR states on 2026-10-16. Do not treat a completed review job as a clean review.
-- Full live browser workflow and native Windows execution remain unverified. A Chromium modal probe timed out; an accidental pass claim was withdrawn. Never cite it as successful evidence.
-- Skillshare's automatic audit flagged vendored code; reviewed import proceeded after manual triage. Do not report the automatic audit as passing.
-- A shorter global-rule edit does not require reinstalling the engine, altering hooks, or trusting them again. Replace only the preference line outside `agents_rule-base`; preserve host-specific settings.
+[原始部署快照、PR 與驗收範圍](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/impeccable/fleet-installation.md)

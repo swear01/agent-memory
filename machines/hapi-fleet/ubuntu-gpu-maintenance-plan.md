@@ -17,6 +17,7 @@ tags:
 # Ubuntu GPU 主機維護：driver mismatch、開機和 NFS
 
 - `nvidia-smi` 的 CUDA 欄是 driver 能力。另看 `nvcc --version`、實際 Toolkit symlink 和專案 smoke。Zeus GTX 1080 Ti 是 Pascal `sm_61`，留 NVIDIA 580 和 CUDA 12.9。595 的 modalias 缺 PCI ID `10de:1B06`；Ada 主機用 13.3 Update 1 與其相容分支。Zeus 的 CUDA 12.9.1 是 runfile 安裝，Ubuntu 26.04 不在該 Toolkit 當時驗證矩陣，使用者接受這個例外。不要順便更新 Zeus BIOS。見 [Zeus Toolkit](../zeus/cuda-toolkit-system-install.md)。
+- 硬體型號以目標機列舉和 PCI ID 核對。Driver 尚待重開或 `nvidia-smi` 失敗時保留 live CUDA／loaded version 為待查，不從另一機或已安裝套件補值。[先前型號與待重開誤填情境](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/hapi-fleet/reported-hardware-pending-driver.md)
 - 若 `Driver/library version mismatch`，比對 loaded `/proc/driver/nvidia/version`、當前及預定 kernel 的 on-disk modinfo、userspace NVML/libcuda symlink、APT/DKMS 和 journal。未重開的舊模組可能與新 library 不合。Mazu 使用 Ubuntu 預編譯 `linux-modules-nvidia-*`，空 DKMS 清單不證明沒裝。Firmware package 版本也不證明 active driver。
 - 先下載，核對維護窗口和工作負載，再靠近核准重開時安裝，縮短新 library 與舊模組並存時間。逐台保留已知可開 kernel 和本機管理入口。重開後驗 boot ID、loaded/on-disk driver、`nvidia-smi`、GPU smoke、SSH／NIS／NFS／HAPI／Docker。遠端無回覆不等於主機停機。Athena 復發時停止擴大變更，見 [近期 freeze](../athena/recurring-freeze-2026-11.md)。
 - 該五台依使用者決定停 APT 自動更新。查 `APT::Periodic::Update-Package-Lists`、`Unattended-Upgrade` 均 0，兩個 apt-daily timers disabled/inactive。2026-11-18 使用者解除四台 Snap refresh hold；Zeus 沒有 Snap。APT 與 Snap 狀態分開核對。設定不適用 Oracle/Mac/Windows/NAS，也不阻止人工更新。原檔在各台 `/var/backups/disable-auto-updates-20260915-*`。

@@ -1,5 +1,5 @@
 ---
-title: DVLab MIS HackMD to Google Docs migration
+title: DVLab MIS Google Docs ownership and write-back
 scope: projects/dvlab-mis
 project: dvlab-mis
 tags: [hackmd, google-drive, google-docs, documentation]
@@ -8,50 +8,11 @@ created: 2026-08-25
 updated: 2026-09-28
 ---
 
-# DVLab MIS HackMD to Google Docs migration
+# DVLab MIS 文件歸位與寫回
 
-## 正式架構
-
-- 私有網管文件的正式入口是共用 DVLab 帳號所擁有、維持 `Restricted` 的 `DVLab-MIS` Google Drive 資料夾。`about.user` 可確認共用 DVLab 帳號身分，不能單憑顯示名稱確認其 MIS 身分；還需核對目標資料夾與文件的擁有者及既有定位。
-- 2026-08 遷移當時是 19 份獨立正式文件加 1 份 `00 - DVLab MIS 文件索引`，全部為 Google 原生文件；索引取代 HackMD tags。這是歷史數量，後續新增服務文件應查即時清單。
-- 2026-08-25 追加納入 `DVLab 本地 LLM：Valkyrie NInfer + Zeus Bifrost` 與 `DVLab 伺服器無主帳號清理公告`。
-- 2026-09-11 起：canonical 已在 Google Drive。使用者確認後，HackMD 只保留給實驗室同學看的公開文件；其餘網管／私有 note 已用 CLI `notes delete`／`team-notes delete` 丟進垃圾桶（可還原，不是清空垃圾桶）。
-- 仍留在 HackMD 的公開／成員文件：`Notes from DVLab MIS Team`、`DVLab Server Usage Policy`、`DVLab VPN 安裝指南`、`DVLab personal profile instruction`、`DVLab 伺服器無主帳號清理公告`、`GPU and CUDA`。
-- `GPU and CUDA` 在內部目錄標成給成員看，但未登入訪客抓取為 forbidden；其餘五份訪客可讀。
-- `DVLab MIS` team workspace 在清理後已沒有 note。私有網管文件以 Google Drive 為準，不要再把 HackMD 當回滾來源。
-- 遷移當下的 6 個 Google 試轉產物先前已移至 Drive 垃圾桶，與這次 HackMD 清理無關。
-
-## 已驗證的轉換流程
-
-- Markdown 經 Pandoc 轉為 rich HTML，再貼入 Google 文件；貼入前移除 HTML `<title>`，並把文件基準樣式設為「一般文字」。
-- 相對 `.md` 連結依固定 Google file ID 對照表改成直接文件連結。完成後索引有 19 個 Google 文件連結，未解析 `.md` 連結為 0。
-- Drive 最終清單為 20/20 Google 原生文件，兩份追加文件各只有一份，沒有 Word 或 Markdown 副本。
-- Google Docs 匯出 DOCX 回讀保留中文、標題、表格與等寬程式碼；表格分隔線的純破折號正規化不算正文遺失。
-- 原始 18 份文件有 `HackMD 遷移基準 2026-08（驗證完成）`；兩份追加文件與更新後索引有 `HackMD 遷移擴充 2026-08-25（驗證完成）`。
-- 批次匯入時暫時啟用的「將上傳的檔案轉換成 Google 文件編輯器格式」已恢復為關閉。
-
-## 日常寫回（2026-09-11 已驗證）
-
-- 本機預設 `gws` 登入的是個人 Google 帳號，**不是**共用 DVLab 帳號。寫 `DVLab-MIS` 前先用 rclone remote `dvlab-drive` 打 Drive `about.user`，確認共用 DVLab 帳號身分，再核對目標資料夾與文件的擁有者；沒有預期 MIS 帳號資料時，不可只憑 `about.user` 宣稱已驗證 MIS 身分。
-- 正常修改用 Docs API 增量更新（`replaceAllText` / 在既有清單項換行處 `insertText`），加 `writeControl.requiredRevisionId`；寫完立刻 export `text/plain` 讀回。不要用 Markdown 全文覆蓋，不要建同名副本。
-- 2026-09-28 跨機器寫回已驗證：Mac 上的 Pi 僅從 `dvlab-drive` 取得短效 access token，以臨時 RSA 公鑰加密後透過 HAPI 傳回密文；協調端解密並自行呼叫 Drive／Docs API。不要傳送 refresh token、client secret 或明文憑證。直接 API 寫入後需核對帳號、原生文件、修訂、段落、連結及 owner-only 權限。
-- Drive `text/plain` 匯出可能使用 CRLF；與 Python `Path.read_text()` 的結果比對前先正規化換行。此次兩份正式文件的增量修改均於正規化後確認除目標文字外無正文差異。
-- 2026-09-11 SSID 切換已寫回 `353 network setup manual(private)` 與 `Notes from DVLab MIS Team`：實驗室 Wi-Fi 只剩 ASUS 的 `DVLab353`，R9000 無線關閉，舊名 `DVLab353-2` 停用。
-
-## 操作邊界
-
-- 每次操作必須核對 Google 帳號身分與目標資料夾／文件擁有者，不可把 URL 的 `u/N` 當成固定身分，也不可只憑帳號顯示名稱推定 MIS 身分。
-- 更新既有文件時依 file ID 寫回並讀回驗證，不建立同名副本。
-- 記憶不得保存密碼、API key、文件正文、帳號資料、HackMD note ID、Google file ID 或受限文件 URL；精確對照以受控遷移包的 mapping 檔為準。
-
-## 文件歸位與格式（2026-09-16 使用者糾正）
-
-- 「文件要整理，不要全部放同一份」不是為每台主機另建一本混合筆記。先讀 `DVLab MIS Notes(private)` 的用途導覽及各正式文件現有章節，再按原架構更新。
-- `DVLab Overview` → 設備、硬體規格、本機救援管理帳號及受限帳密紀錄；實體位置未確認時不得猜測設備區。
-- `353 network setup manual(private)` → `device MAC and IP bindings` 內的主機紀錄，以及 `Firewall configuration` 內的 NAT／port forwarding。不要在文件頂端堆一段涵蓋所有主題的更新紀錄。
-- `New Server Setup(private)` → 主機加入 NIS／NFS 的流程、實作結果、救援路徑與尚未完成的切換。新主機案例放在現有適用章節。
-- Minecraft 這類獨立服務可有專用 runbook，集中版本、遊戲設定、白名單、服務操作、備份與還原；網路與主機資料連回原文件。
-- 索引沿用「原生項目符號＋文件名稱本身帶 hyperlink」。不要寫成「名稱：完整 URL」，不要把裸網址或 Markdown 星號塞進原生 bullet。文字連結、段落樣式和項目符號必須一致；只有真實連結使用藍色底線，一般說明與標題不應繼承連結外觀，並清除空白 bullet。
-- Docs `insertText` 會繼承插入點的 paragraph/list/text style；只比對 plain-text export 不足以驗收。回讀並檢查 `paragraphStyle`、`bullet`、`textStyle.link`，確認標題層級及內容位置；必要時匯出 PDF 做視覺驗證。
-- 調整分類前保留受限快照；先寫入正確目的地並核對內容、權限，再移除錯位重複段落。舊文件連結可保留精簡導引，不能留下第二份帳密或設定來源。
-- 使用者要求更新記憶與 QMD 時，必須真正完成 Markdown、同步、索引、embedding 及搜尋驗證，不能只更新 Google 文件便宣稱已記住。
+- 私有網管資料以受限 `DVLab-MIS` Drive 資料夾和原生 Google Docs 索引為準。HackMD 保留面向成員／公開的文件。讀取前以實際權限核對。
+- 本機預設 `gws` 是個人帳號，先用受控 rclone remote `dvlab-drive` 查 Drive `about.user`，再核對目標資料夾和文件的擁有者。顯示名稱或 URL `u/N` 不能證明身分。file ID 對照見受控遷移包，憑證、受限文件 URL 和正文不放記憶。
+- 依既有 file ID 用 Docs API 增量修改，帶 `writeControl.requiredRevisionId`。`replaceAllText` 做精準置換，新增索引項時在既有清單項換行處 `insertText`。避免全文覆蓋或同名副本。
+- 寫後匯出 `text/plain`，正規化 CRLF 再比對。新增文字會繼承樣式，另讀 `paragraphStyle`、`bullet`、`textStyle.link`。索引使用原生 bullet 和帶連結的文件名，移除空 bullet 及標題／說明誤承繼的連結。必要時預覽 PDF。
+- 歸位先讀 `DVLab MIS Notes(private)`。設備規格及受限救援帳密放 `DVLab Overview`；MAC/IP binding、NAT port forwarding 各放 `353 network setup manual(private)` 專節；NIS/NFS、救援及未完成切換放 `New Server Setup(private)`。獨立服務可用專用 runbook 連回主機／網路文件。先留受限快照並核對目的地內容與權限，再移除來源的重複段落。
+- 還需轉舊 Markdown 時，Pandoc rich HTML 去掉 `<title>`、以一般文字樣式貼入 Google Docs，按受控 file ID mapping 替換相對連結，匯出 DOCX 檢查標題、表格、等寬程式碼。

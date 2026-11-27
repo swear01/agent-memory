@@ -1,5 +1,5 @@
 ---
-title: 可疑 commit 輸出需要 Git 狀態回讀
+title: Git 提交回讀與審閱方實際可見的分支 tip
 scope: tools/git
 status: active
 updated: 2026-09-11
@@ -13,4 +13,10 @@ updated: 2026-09-11
 
 原文提出寫 message 檔再用 `git commit -F`，但沒有附上成功結果；這也不能證明所有 stdout 問題都由 heredoc 引起。若當前工具的結果仍不可信，保留改動並明確報告狀態未確認。
 
-來源：Issue25 backlog consolidation v1 的負樣本救回案例；controller-publication-v1 的 commit-readback 對照紀錄。這是一筆被初次模型漏選、經正文及四則相鄰訊息核對後保留的教訓，不代表全部負樣本的漏失率。
+## 對外交接時再核對遠端
+
+本地 commit、遠端可見性與審閱方所用 SHA 分別核對。分支只有本機時，依授權推送確切分支，或交付可追溯的 diff。先讀回遠端 tip 與審閱目標，別只提供 repo 名稱。歷史案例只查到最新 commits 未出現在遠端，後續推送與審閱結果未驗證。
+
+[提交案例](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/git/commit-output-readback.md) · [交接案例](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/git/reviewer-visible-tip.md)
+
+Carry 或 cherry-pick 後出現 `nothing to commit` 時，核對指定基底與預期檔案的實際 tree、index 和工作樹。它可能表示變更已等價存在、套用沒有生效或尚未 stage。缺少差異不授權 reset、覆寫或宣稱整批完成。[carry 原案](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/git/nothing-to-commit-content-check.md)

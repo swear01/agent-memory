@@ -14,3 +14,5 @@ updated: 2026-09-11
 可重用的檢查方式：對依賴 SQLite build 選項的功能，確認目標 runtime 實際支援情況，並測試缺少功能的路徑。內容長度估算不能冒充 dbstat 的頁面配置／實體磁碟用量；正式環境驗證與 Linux CI 結果分開記錄。未來 Bun build 是否仍缺少 dbstat，須重新檢查。
 
 來源：Issue25 backlog consolidation v1，controller-publication-v1 的 dbstat-ci-scope 對照紀錄；正文與四則相鄰訊息已核對。
+
+查 HAPI DB 前先確認 owner。Hub 維運其設定的 `hapi.db` 和 WAL／SHM，Runner 的 state/logs 以及 agent 自己的 DB 是不同來源。曾有設計誤把 DB 認為每個 Runner 一份，無須為不存在的資源新增 RPC；這是設計界線，並無該儲存頁正式部署證據。[資料歸屬原案](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/hapi/storage-resource-owner.md)

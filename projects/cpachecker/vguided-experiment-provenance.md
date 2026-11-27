@@ -28,3 +28,7 @@ updated: 2026-09-30
 - **STOP sentinel 已出現但 coordinator 沒收到結果。** 等真實 supervisor 寫完 summary，再送 hash、計數、exit 與 STOP reason，核驗送出回條。CLI accepted 不等於已讀。保存 frozen runtime 與當前 PR head 的區別；review 通過、merge、分派結案和實驗受採納分開。
 
 [完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/vguided-experiment-provenance.md)
+
+- 啟動前核對實際選集用途、成員順序及內容，避免把 `excluded_trivial_solved` 當 non-trivial 目標。誤跑結果保留其真實範圍，重跑用獨立輸出目錄。
+
+[合併來源](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/cpachecker/selected-dataset-identity.md)

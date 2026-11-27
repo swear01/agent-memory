@@ -5,73 +5,11 @@ status: active
 updated: 2026-11-28
 ---
 
-# 國立臺灣大學學生校園郵件（Webmail 2.0 / Roundcube）客戶端連線規範與校外連線除錯
+# NTU 學生郵件：POP3/SMTPS 與驗收
 
-## 背景與系統架構
+- 學生 Webmail 用純學號當登入名稱，顯示郵件地址才含 `@ntu.edu.tw`。POP3 `msa.ntu.edu.tw:995`、SMTPS `smtps.ntu.edu.tw:465` 均 TLS 且 SMTP 需驗證。按使用者目前規則，寄學生信用 Himalaya `-a ntu`（只寄送），NTU M365 工作信走 Outlook connector，有工作信附件才用 Apple Mail。 [臺大計資中心郵件設定](https://jsc.cc.ntu.edu.tw/ntucc/email/mailsoftwaresetup.html)
+- Exchange 的帳密驗證成功仍可能在送信回 `Client does not have permissions to send as this sender`，先查帳號類型和 envelope sender，學生照正式 SMTPS 設定。連線逾時與認證失敗分開看，核對網路、DNS、TLS 和埠號；不要由 timeout 就猜防暴力封鎖的時長或頻率。
+- 手動設定 POP 客戶端時保持伺服器副本，讀回剛建立的確切帳號之留存設定，不以 `first pop account` 批次改既有信箱。先存草稿、附件核對和授權，送出後驗實際成功。轉收信箱可能延遲，不能把沒抓到新信當作沒寄出；必要時從獲准的學生 POP3 做 `STAT`／`TOP` 唯讀查，不能用 `DELE`。
+- 郵件傳輸與 Himalaya 的已配置命令見 [[himalaya-ortie-setup]]；不要僅因 Apple Mail 有既存帳號就用它替代現在的寄送入口。
 
-1. **適用對象與系統本質**：
-   - 2020 年 5 月以後入學之臺灣大學學生（學號如 `r14...`, `b13...`）。
-   - 網頁介面入口為 `webmail2.ntu.edu.tw`，實質轉導至 `https://wmail1.cc.ntu.edu.tw/rc/`（基於 Roundcube 的 Linux 郵件系統）。
-   - **非 Microsoft Exchange 架構**，且計資中心**不開放標準 IMAP**（Port 993 連線拒絕），收信僅支援 POP3。
-
-## 客戶端（macOS Mail / 手機）設定參數
-
-| 項目 | 正確設定值 | 常見錯誤與注意事項 |
-| :--- | :--- | :--- |
-| **電子郵件地址** | `<student-id>@ntu.edu.tw` | 需完整包含網域名稱 |
-| **使用者名稱** | `<student-id>` | **必須為純學號**；嚴禁保留系統預設的「自動」，嚴禁附加 `@ntu.edu.tw` |
-| **帳號類型** | `POP` / `POP3` | 嚴禁選擇 `IMAP` 或 `Exchange` |
-| **收件伺服器** | `msa.ntu.edu.tw` | 埠號 `995`，必須勾選 SSL/TLS 加密 |
-| **寄件伺服器** | `smtps.ntu.edu.tw` | 埠號 `465` (SSL/TLS)，必須勾選「外寄伺服器需要驗證」；**切勿改用 mail.ntu.edu.tw** |
-
-## 寄件伺服器權限陷阱與校外連線超時除錯（核心教訓）
-
-1. **切勿將寄件伺服器改為 `mail.ntu.edu.tw`（權限陷阱）**：
-   - `mail.ntu.edu.tw` 是教職員使用的 Microsoft Exchange 伺服器。
-   - 雖然其 Port 587 在校外看似可以通過 SMTP 帳密認證，但由於學生郵箱未建置於 Exchange 上，實際發送郵件時 Exchange 會嚴格拒絕代理，並拋出致命錯誤：
-     `SMTP; Client does not have permissions to send as this sender`。
-   - 因此學生發信**唯一合法的寄件伺服器只有 `smtps.ntu.edu.tw`**。
-
-2. **校外 `smtps.ntu.edu.tw:465` 連線逾時（Timeout）真因**：
-   - **官方政策無校外 IP 限制**：計資中心官方規範明確說明 `smtps.ntu.edu.tw` 支援校外寄信，其防護依賴「強制 SMTP 帳密驗證」而非純 IP 白名單。
-   - **連線逾時成因**：當客戶端因舊密碼錯誤或 macOS 自動探測未加密 Port（110/25）連續失敗時，會觸發臺大伺服器端的防暴力安全機制（如 Fail2ban），將來源 IP 暫時靜默丟包（Drop / Timeout）15～30 分鐘，在介面上造成長達 60 秒的登入旋轉卡死。
-   - **解決方案**：
-     - 若遭遇 Timeout，請靜置等待 15～30 分鐘讓防火牆解除封鎖，或切換手機熱點/連線臺大 VPN。
-     - 伺服器必須維持 `smtps.ntu.edu.tw`（Port 465 SSL），切勿病急亂投醫改換 Exchange 主機。
-
-## 登入成功後必做安全配置
-
-1. **避免伺服器端信件遭清空**：
-   - POP3 協定預設會在本地客戶端抓取信件後將伺服器端郵件刪除。
-   - 帳號新增完成後，必須進入 macOS 郵件「設定」→「帳號」→ 該校園帳號：
-     - 將「收取郵件後移除伺服器上的備份」設為「**一個月之後**」或「**永不**」，確保網頁版 Webmail 2.0 信件完整保留。
-
-## macOS Mail.app AppleScript 自動化配置技巧
-
-若在 macOS GUI 中因自動管理連線或快取導致無法直接修改 SMTP 參數，可透過 AppleScript 直接操作 `smtp server` 物件進行原地修正：
-
-```applescript
-tell application "Mail"
-    set s to smtp server "ntu.edu.tw"
-    set server name of s to "smtps.ntu.edu.tw"
-    set user name of s to "<student-id>"
-    set port of s to 465
-    set uses ssl of s to true
-    set authentication of s to password
-end tell
-```
-
-同時，POP 帳號的防刪信保護亦可直接透過 AppleScript 強制鎖定：
-
-```applescript
-tell application "Mail"
-    set acc to first pop account
-    set delete mail on server of acc to false
-    set delete messages when moved from inbox of acc to false
-end tell
-```
-
-## 用 Gmail 收校園信箱時的核對陷阱（2026-11-28）
-
-Gmail 若用 POP3 收這顆校園信箱，拉取間隔可能長達數小時，不能拿它來確認剛經 `smtps.ntu.edu.tw` 寄出的信。要立刻核對時，用唯讀 POP3（`STAT` + `TOP`，不要 `DELE`）直連 `msa.ntu.edu.tw:995`。從校園帳號寄信的工具路徑見 [[himalaya-ortie-setup]]。
-
+[早期 Apple Mail 配置與故障處理紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/domains/other/ntu-student-mail-client-setup.md)

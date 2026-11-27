@@ -30,43 +30,18 @@ tags:
 - TSRI eTAS 要走 `https://etas.tsri.niar.org.tw/tsrisso` 的完整 callback；單登入舊 portal 後 API 401 不代表沒授權。以當下 allow-download 目錄核對版本／sp，學界 SolvNetPlus 當時無軟體下載權。新版 checkout 不能證明舊版。Windows Tanner/PADS、Assura 新裝及 standalone Questa 明確排除，別重跑舊下載佇列。
 - ABC/Yosys 為五台各自 host-local 系統安裝，Yosys 指定 `/usr/local/bin/abc`。查一般帳號解析及 synth/ABC pass；GTKWave 與 OSS CAD Suite 並非共用基線。學生入口、版本與 limits 以 `/apps/eda/README.md` 和實測為準。
 
-# PrimeTime 2026.03 原生 libsasl 相容修補（2026-11-12）
+# PrimeTime 2026.03：native `libsasl2.so.3` 缺漏
 
-- Mazu、Cthulhu、Valkyrie、Zeus 的 `/apps` 均掛載同一 NFS export，只部署一次；四台 Ubuntu 26.04.1／kernel 7.0.0-38／glibc 2.43。Athena 送修，未連線／驗證。
-- PT launcher 環境下 `pt_shell_exec` 唯一缺少的外部 library 是 `libsasl2.so.3`。直接 `ldd` 的 libRtxStable／libnffr／libNPI／libnffw／libnsys 已由內附 `linux64/pt/shlib2` 提供；exec2 的 Qt5Core／Qt5Gui 也已內附於 `linux64/pt/shlib/qt/lib`，不是需要另裝的套件。兩個 worker 與六個 FSDB shlib2 DSOs 在內附 runtime 路徑下無缺漏。
-- 從 Rocky Linux 8 官方 BaseOS [cyrus-sasl-lib-2.1.27-6.el8_5.x86_64.rpm](https://dl.rockylinux.org/pub/rocky/8.10/BaseOS/x86_64/os/Packages/c/cyrus-sasl-lib-2.1.27-6.el8_5.x86_64.rpm) 抽出 library；RPM SHA-256 `b1a98c3128e57243d2ce7212ced1d8676d4196feac16079e6335413a0b57ca41`。未執行 RPM 安裝、apt 或更動 `/usr/lib`，沒有用 `.so.2` 冒充 `.so.3`。
-- 放置於 `/apps/eda/synopsys/primetime/2026.03/lib/compat-rocky8/`：`libsasl2.so.3.0.0`、原 RPM 的 `libsasl2.so.3 -> libsasl2.so.3.0.0` 連結、`COPYING`。Library SHA-256 `7de4d792e5a89acf1d1e38949e0fe9e0a21b42235c21aa0d38fd20d5fb660b30`；所需 GLIBC symbol versions 最高 2.15（2.2.5、2.3、2.3.4、2.4、2.14、2.15），主機提供且 `ldd` 全部解析成功。
-- `/apps/eda/env.sh` 的 `synopsys/primetime` → `2026.03` 分支僅加 `libs=lib/compat-rocky8`，由既有 LD_LIBRARY_PATH 邏輯載入。修補後 env SHA-256 `cf2cd1d1d3d3ee7a69b5de4653515c8d083dd2020ef53992df72f5c48f3f3429`。`primetime.sh`、原廠 binary、其他版本、cur、系統 library、license 設定均未修改；PT 重複 source 不重複加入路徑，無效版本拒絕，DC 2026.03 不會載入此相容目錄。
-- 管理入口使用 `su_cthulhu`＋sudo；改共享檔前備份至 `<pt-root>/.dvlab-backups/20261112-pt-libsasl/`，保留 `env.sh.before`、未修改的 `primetime.sh.before`、原始 RPM、manifest、`ROLLBACK.md`。相容目錄原本不存在。
-- 四台均以一般帳號、新的 `env -i` Bash，公開 `source /apps/eda/synopsys/primetime.sh 2026.03` 入口讀取 CBDK_IC_Contest_v2.5 的 `SynopsysDC/db/typical.db`、IOTDF gate netlist／SDF／絕對 VCD：成功 link 1,171 leaf cells、report_timing、update_power、report_power，exit 0、精確完成 marker、無 Error；Total Power 均 `5.596e-04`。保留 PTE-066（annotated arcs 零 transition）與 PTE-003（停用 timing arcs）兩項 warning，不能稱零 warning。
-- Mazu 以 VCS＋Verdi 2026.03、`-debug_access+all`、`tb.v` 不加 `+define+VCD` 產生 `gt.fsdb`，模擬 RESULT PASS（141 cycles／1415 ns）；FSDB SHA-256 `ed12871b6024c0cf1aed7adc93ec04737a8ccea38f28f55d8d3a4d79827dc34d`。原生 PT 從絕對路徑 `read_fsdb`，並完成 update_power／report_power（同 power），exit 0；另有 FSDB 太小而改 regular power analysis 的提示。time_based 的 read_fsdb 只讀 header，須完成 update_power 才證明 event 讀取。不要加舊式 `-P novas.tab pli.a`：2026.03 已拒絕該方式，依 VERDI_HOME 自動整合。
-- Mazu 一般帳號使用既有 `docker-shell` 預設 Rocky r7 亦完成相同 VCD 設計／power 測試（exit 0、相同 power）。驗證資料在一般帳號 `~/pt-native-20261112/`：`smoke.tcl`、`dependency-audit.txt`、各 `<host>-native/pt.log`、`mazu-fsdb/pt.log`、`fsdb-sim/auto-pli/`、`docker-check/pt.log`。跨機首次測試漏傳 harness 的 PT_CHECK_* 環境變數，Tcl 報錯但 PT 仍 exit 0；已保留失敗 log，補齊變數重跑並檢查完成 marker／Error 行後才判定通過。
-- 還原：先確認沒有新 PT job 使用相容目錄，並核對 env.sh 仍為上述修補後 SHA；以 sudo 將備份 `env.sh.before` 原子複製回 `/apps/eda/env.sh`，再把 `<pt-root>/lib/compat-rocky8` 搬到備份下 `compat-rocky8.disabled`，開新 Bash。若 env.sh 後來另有修改，只移除 PT 2026.03 的 `; libs=lib/compat-rocky8`，不可整檔覆蓋；完整命令在備份的 ROLLBACK.md。還原後 Ubuntu 原生啟動會恢復缺 libsasl，原容器路徑仍可用。未驗證 GUI、分散式分析或大型 signoff 專案。
+- 用真正的 launcher 環境查 `pt_shell_exec`；工具自帶 `shlib2` 與 Qt5，裸 `ldd` 顯示缺少內附項目時不能直接當作系統缺件。Ubuntu/glibc 2.43 上的外部缺件是 `libsasl2.so.3`。從已核對 SHA 的 Rocky Linux 8 官方 `cyrus-sasl-lib-2.1.27-6.el8_5.x86_64.rpm` 抽 library、SONAME symlink 和 COPYING，放 `/apps/eda/synopsys/primetime/2026.03/lib/compat-rocky8`，只讓 `/apps/eda/env.sh` 的 `synopsys/primetime` 2026.03 分支設定 `libs=lib/compat-rocky8`。不要裝 Rocky RPM 到宿主、改 vendor binary 或用 `.so.2` 代 `.so.3`。核對重複 source、不合法版本、DC 不載該目錄。
+- 共享 `/apps` 只變更一次。以一般帳號、新的 `env -i` Bash 走正式 `source /apps/eda/synopsys/primetime.sh 2026.03`，核對相符 DB、mapped netlist/SDF/VCD、真正的 link 與 timing/power 完成 marker，再查 Error。PT 的 Tcl error 可能仍 exit 0；漏傳 smoke harness `PT_CHECK_*` 不能算通過。四台原生 VCD、Mazu 原生 FSDB／Rocky 容器的驗證分開；當時未連 Athena、未驗 GUI／分散式／大型 signoff。
+- VCS＋Verdi 2026.03 走 `-debug_access+all`、`VERDI_HOME` 自動 PLI；舊 `-P novas.tab pli.a` 已拒絕。FSDB 用絕對路徑 `read_fsdb`，time_based 讀 header 不等同讀完整 events。再跑 `update_power` 和 `report_power`，核對是否落回 regular power analysis，保留 PTE-066/PTE-003 警告。
+- 用 `<pt-root>/.dvlab-backups/20261112-pt-libsasl/` 中 `ROLLBACK.md`、manifest 和原檔。先查沒有 job 使用 compat lib 且核對 live env SHA；只有完全符合當時修補版才整檔原子回復。若另有修改，只撤該分支的 `libs=lib/compat-rocky8`，再移走 compat 目錄並用新 Bash 驗；恢復原生缺 libsasl 時用已驗的 Rocky 容器。
 
-# 舊版 DC 統一啟動入口（2026-09-28）
+# 舊版 DC：glibc 不相容與正式入口
 
-- 同學在新的 Bash 登入終端機使用 `source /apps/eda/synopsys/synthesis.sh 2022.12-sp6`，再執行 `dc_shell` 或 `dc_shell -f synth.tcl`。入口自動處理相容環境，不需 sudo、Docker 權限或手動進容器；同一工具換版仍需新終端機。
-- 根因：DC 2022.12-sp6 的舊執行檔依賴 `__pthread_unwind@GLIBC_PRIVATE`，五台 Ubuntu 26.04／glibc 2.43 皆無法直接啟動；四台另缺 `/bin/csh`。只補 csh 或沿用既有 libpng12 不足以解決 glibc 問題。
-- `/apps/eda/env.sh` 僅對 Ubuntu 上選定的 DC 2022.12-sp6 插入相容命令目錄；`/apps/bin/dc_shell` 與同包命令共用入口，呼叫 `/apps/eda/.compat/dc-2022/run`。後者使用五台既有 `/usr/bin/bwrap` 與從 Rocky r7 映像抽出的共用 rootfs，保留 cwd、HOME、UID／GID、參數與主機檔案路徑。Docker 僅用於管理員一次性準備 runtime，不參與學生啟動。
-- 子程序覆蓋相容系統函式庫與設定，保留網路及授權主機解析；passwd／group 資料遮蔽認證欄位。`EDA_DC_RUNTIME=1` 只設在子程序防止遞迴，不得洩漏至父 shell。這是相容執行環境，不是安全隔離承諾。
-- 五台 Mazu、Athena、Cthulhu、Valkyrie、Zeus 均以無 Docker 群組的 `nobody` 帳號，經公開 source 入口合成 16-cell counter，寫出 caller-owned mapped Verilog。可重跑 `bash /apps/eda/.compat/dc-2022/check.sh`；涵蓋空格路徑、重複 source、無效版本及同一 shell 換版拒絕。Tcl `analyze` 的檔名含空格時須用 `[list $env(EDA_CHECK_RTL)]`，避免將一個檔名拆成多項。
-- Mazu 一般 NIS 帳號另在同一 shell 完成 DC 合成與 VCS 2023.12-sp2 編譯、反相器模擬；VCS 用 `source /apps/eda/synopsys/vcs.sh 2023.12-sp2` 與 `vcs -full64 ...`。DC 互動提示字元、標準輸入及退出亦以無特權帳號驗證。主機 glibc、登入設定與 cur 未改，2026.03 仍解析原入口；不要用舊版失敗紀錄要求同學自行進容器。
-- 五台入口／helper／檢查／README SHA-256 已讀回一致。原始檔、更新後 source 及部署紀錄保存在受保護的 `/apps/eda/.admin/dc-entry-20260928/`。Design Vision GUI 與完整學生專案未驗證；其他版本／工具的相容性不能從此結果外推。
-- 原有 HackMD 學生指南已就地補上舊版 DC／VCS 指令並修正過時的啟動失敗 QA；API 全文讀回與候選稿一致，閱讀／編輯權限仍為 `signed_in`／`owner`。文件保留學生需要的 source、啟動與 QA，不加入安裝流水帳。
+- 新 Bash `source /apps/eda/synopsys/synthesis.sh 2022.12-sp6` 後執行 `dc_shell -f synth.tcl`。舊 binary 在 Ubuntu 26.04／glibc 2.43 的 `__pthread_unwind@GLIBC_PRIVATE` 缺件無法靠補 csh/libpng12 修。正式入口只在該版用 `/apps/eda/.compat/dc-2022/run`；既有 `bwrap` 與 Rocky r7 rootfs 保留 caller cwd/HOME/UID/GID 和網路授權。學生不需要 sudo、Docker 或自行開容器，這是相容環境而非安全隔離。
+- `EDA_DC_RUNTIME=1` 只在子程序防遞迴；passwd/group 遮蔽認證欄位。用 `/apps/eda/.compat/dc-2022/check.sh` 驗空格路徑、重複 source、無效版和同 shell 換版被拒，確認 mapped Verilog 由 caller 擁有。Tcl `analyze` 對空格檔名用 `[list $env(EDA_CHECK_RTL)]`。一般帳號還需實際編譯和模擬，不能以 command resolution 代替。原始改動備份查 `/apps/eda/.admin/dc-entry-20260928/`；Design Vision GUI 和其他版本需各驗。
 
-- 五台 Mazu／Athena／Cthulhu／Valkyrie／Zeus 已讀回相同 README、env、docker-shell 與 vManager helper SHA256；本輪測試服務均 MainPID 0，其他使用者容器保留。
+- 部分工具的特定版本有公開 source 的 smoke，不能推論全部 GUI/PDK/signoff。如果 IC Workbench 官方範例只能選取、不能編輯，先查 `cell edit_state 1`。VC Formal smoke 要有 proven 且 non_vacuous；IC Validator 至少有正常及刻意違規 GDS 對照。
 
-## 最後六組版本的功能證據
-
-下列六組皆通過五台公開 source 入口測試；不能外推為所有 GUI、PDK 或 signoff 流程皆驗證。
-
-| 工具與版本 | 已驗證範圍 |
-|---|---|
-| PrimeSim 2026.03 | Pro／SPICE 分壓 0.5 V，license checkout／checkin |
-| VC Formal 2026.03 | counter FPV proven 且 non_vacuous；舊 2023.12 保留 |
-| IC Validator 2026.03-sp1-1 | 合格 GDS 0 違規，刻意窄線 GDS 1 違規 |
-| IC Workbench 2026.03 | GDS 讀取、編輯、旋轉 90 度、儲存、重開與尺寸；官方範例須先 `cell edit_state 1` |
-| ADMS 2026_1_1 | AFS 126 點、Eldo opamp、混合訊號反相器、官方 Solido Wave GUI 範例 |
-| vManager VMANAGERAGILE_24.03.004 | Xcelium 25.03.005 兩筆回歸皆 passed，鎖定／拒絕 NFS／停止後關閉 ports |
-
-[整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/eda-install-inventory.md) · [Athena 席位核對](https://github.com/swear01/agent-memory/blob/86f38610525e57a230a7c3b87405fea76530bb1c/machines/hapi-fleet/eda-install-inventory.md)
+[PrimeTime、DC 版本精確雜湊、安裝範圍和六組功能測試收據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/hapi-fleet/eda-install-inventory.md) · [整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/eda-install-inventory.md) · [Athena 席位核對](https://github.com/swear01/agent-memory/blob/86f38610525e57a230a7c3b87405fea76530bb1c/machines/hapi-fleet/eda-install-inventory.md)

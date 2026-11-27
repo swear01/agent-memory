@@ -29,12 +29,6 @@ Zed's registry-mode OpenCode entry and an explicit command-mode entry are differ
 
 Do not treat an edit as a verified fix. Confirm the Zed restart, ACP logs, active working directory, session listing, and actual history recovery before marking the change active.
 
-# Runtime option boundary
+HAPI Web 的 effort 動態回報屬另一條 ACP adapter，見 [OpenCode effort 辨識與回讀](../hapi/opencode-dynamic-effort-reconciliation.md)。不以任一項操作已完成推定 Zed history 可恢復。
 
-When an OpenCode ACP build exposes runtime effort options, derive the
-available values from ACP rather than hardcoding a preset list. If
-`session/set_config_option` is unavailable, disable inline switching
-explicitly. Unsupported requested values must be rejected or coerced to a
-supported value, and a failed update must roll back the HAPI/web state. This
-remains `needs-review` until restart and history recovery are verified on the
-released build.
+[原始調查](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/opencode/zed-acp-routing.md)

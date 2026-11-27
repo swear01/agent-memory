@@ -22,3 +22,7 @@ updated: 2026-09-21
 - **空 JSON、截斷或部分 injection 混成成功。** Jackson 解析 schema，v1 空 candidates 的 `parse_ok=true`、`empty_candidates` 與 blank／malformed／wrong schema 分類。用完整 head/formula equality 去重並只記已寫到 precision 的 bindings，部分失敗不能以預計成功數掩蓋。PR274–277 有 110 項 focused tests 與舊 167 筆回應相容核對；無重跑 trajectories 或新增 solve 證據。
 
 [完整原文](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/projects/cpachecker/vguide-predicate-validation-contract.md)
+
+- **Mock 回空候選而 sidecar 有輸出。** 核對 `parse_predicate_args` 的實際 wire schema；舊 mock 的字串 args 被只掃物件的 parser 忽略。依版本用支援的 nested ref nodes，對不支援形狀明確報錯，mock 結果僅涵蓋該 mock。
+
+[合併來源](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/cpachecker/predicate-args-wire-shape.md)

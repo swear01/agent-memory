@@ -15,7 +15,7 @@ tags: [hapi, spawn-peer, ping-peer, inspect-peer, archive-peer, stop-peer, wait-
 
 | 0.30 維護版 | 0.35 |
 |---|---|
-| `hapi spawn-peer` | 還在，只是 `hapi --help` 沒列。沒有 `--remit-id`；`--permission-mode` 省略時是 yolo，依 [[session-permission-preference]] 明確傳。在 session 內優先用 MCP `spawn_peer`。 |
+| `hapi spawn-peer` | 還在，只是 `hapi --help` 沒列。沒有 `--remit-id`；`--permission-mode` 省略時是 yolo，依 [session 許可模式](session-permission-preference.md) 明確傳。在 session 內優先用 MCP `spawn_peer`。 |
 | `hapi ping-peer` | 還在。inactive session 會被拒（exit 5），加 `--wake` 才會 resume；有 `--delivery-mode auto/queue/steer`。 |
 | `hapi inspect-peer`、`hapi set-mode` | 還在。 |
 | `hapi wait-peer` | Unknown command。在 session 內用 MCP `spawn_peer`／`ping_peer` 帶 `waitForReply: true`，然後結束這一輪；在 shell 裡輪詢 `hapi inspect-peer <id>`（0.35.0.1 沒有 `--json`，會回 `unexpected flag: --json`；要結構化資料就打 `GET /api/sessions/:id`）。 |
@@ -24,23 +24,13 @@ tags: [hapi, spawn-peer, ping-peer, inspect-peer, archive-peer, stop-peer, wait-
 | `hapi stop-peer` | 沒有替代品。runner `stop-session` 會順便 archive，不是 process-only stop。 |
 | `hapi abort-peer` | 沒有 CLI 替代品，從 Web UI 中斷這一輪。 |
 
-archive 之後一定要用 `inspect-peer` 讀回 `active=false`，才能回報「已收掉」。
+archive 之後讀回 lifecycle 已為 archived；`active=false` 也可能是 runner 斷線，不能單獨當成已封存。見 [runner 程序查證](supervisor-safe-operations.md)。
 
-# 為什麼 agent 還會打舊指令（2026-11-18）
+## 舊的 bundled skill 與 Skillshare
 
-一個 session 要收掉自己開的 Grok（Cursor flavor）peer，照舊指令跑 `archive-peer`，先回報收掉了，之後才發現指令不存在、peer 還是 active。最可能的來源是 `multi-model-review.md` 的「收完結果就 `hapi archive-peer`」（已改寫）。另外查到兩種可能讓舊指令繼續存在的來源：
+`hapi-session-control` 改由 Skillshare 發布。v0.35.0.1 還包含 fork 的舊安裝器，啟動 agent 時可能把帶 `.hapi-managed` 的實體目錄更新成 bundled 版本；指令表或 archive script 不一定等於 Skillshare 版本。遇到工具引用已淘汰的 `archive-peer`，先核對該 agent 實際載入的 skill path／symlink 和 release，再按 HAPI 維護手冊移走確認屬舊安裝器的副本。不要覆寫本機自管 skill。
 
-1. **HAPI 自己管理的舊 skill 副本**（目錄帶 `.hapi-managed`）。這是維護版 fork 的功能（`fork/session-control-skill`，上游沒有）：`ensureHapiSessionControlSkill` 在 `bootstrapSession` 時只把 skill 寫進**這次啟動的 flavor** 的技能目錄，失敗只記 debug log；很久沒開的 flavor 副本就一直是舊版，舊的 `hapi-session-runtime` 也沒人清。
-2. **記憶裡還在教舊指令的筆記。** 同日已改寫成上表的做法；歷史紀錄保留，但標明只適用 0.30.x。
-
-# 2026-11-18 起改由 Skillshare 發布
-
-使用者決定 skill 一律走 Skillshare，所以：
-
-- `hapi-session-control` 移進 shared-skills（swear01/shared-skills#66，含 `scripts/archive-peer.py` 與測試），transfer_MAC#93 bump submodule 並把 migration test 改成「必須由 Skillshare 發布」。
-- fork 移除安裝器（swear01/hapi#34 合進 `main`，`9ac535a`）。`skills.ts` 的各 flavor skill roots 與測試的 HOME 重導保留。**已發布的 `v0.35.0.1` 仍含安裝器**，要等下一次 fork release 部署才會停止寫入；在那之前，Grok／Pi／agy 等沒有 Skillshare target 的目錄，開該 flavor 的 session 時會被寫回 0.35 bundled 版（內容沒有舊指令，但沒有 archive script）。Claude／Codex／Cursor／`~/.agents` 已是 Skillshare symlink，安裝器碰到 symlink 只記 debug、不覆寫。
-- 遷移：把技能目錄裡帶 `.hapi-managed` 的 `hapi-session-control`／`hapi-session-runtime` 移出，再 `skillshare pull`。2026-11-18 已完成 Mac、mazu／athena、cthulhu／valkyrie、zeus、oracle；**swop 離線未做**（還要移除它 `codex`／`universal` target 對 `hapi-session-control` 的 exclude）。
-- Grok、Pi、agy 都讀 `~/.agents/skills`（Pi `@earendil-works/pi-coding-agent` 與 agy binary 都有這個路徑；Grok 另讀 `~/.claude/skills`），所以不需要額外 target。
+把過去 Windows 的 target exclude 或暫未遷移狀況當成當批證據。現行 target 與機群範圍依 HAPI 手冊核對。原始部署歷史和版本對照見 [整理前紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/hapi/peer-cli-0-35-command-changes.md)。
 
 # Agent 自己 archive（archive-peer.py，2026-11-18 實測）
 

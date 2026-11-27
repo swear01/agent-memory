@@ -6,39 +6,13 @@ status: active
 updated: 2026-11-28
 ---
 
-# ieda1 / ieda2 lab servers (FreeIPA) — 2026-10-30
+# GUPS ieda1／ieda2：FreeIPA、NFS 和管理登入
 
-- ieda1.gups.ntu.edu.tw = old `gups` / intl.gups.ntu.edu.tw (public 140.112.186.18, LAN 192.168.100.254 on enp70s0). FreeIPA 4.9.13 server (idm:DL1), realm GUPS.NTU.EDU.TW, **no integrated DNS** — names via /etc/hosts LAN entries.
-- ieda2.gups.ntu.edu.tw (planned public DNS intl2.gups.ntu.edu.tw) = second Rocky 8.10 box (LAN 192.168.100.1, public 140.112.186.23/24 gw .254 on eno1 via NetworkManager; enp70s0 `never-default yes`). IPA client.
-- IPA ports only in firewalld zone `internal` (LAN). Public zone: only 22. xrdp (3389) and cockpit disabled on both.
-- fail2ban 1.0.2 both: systemd backend, firewallcmd-rich-rules, bantime 1h increment, findtime 10m, maxretry 5, ignoreip includes LAN, Tailscale 100.64/10.
-- ieda2 root: key-only (`PermitRootLogin prohibit-password`); keys = SwairM5 + gups root ed25519. SwairM5 `ssh ieda2` → 140.112.186.23.
-- Secrets: ieda1:/root/ipa-credentials.txt (600), /root/cacert.p12; copy in user's self-hosted Bitwarden item "ieda1 FreeIPA" (admin login + Directory Manager hidden field + cacert.p12 attachment). Never print them.
-- Backup: /etc/cron.d/ipa-backup Sun 04:00 `ipa-backup --data --online` → rsync to ieda2:/root/ipa-backups/.
-- Group `pdk_approved` GID 1024 = local PDK_approved (IPA lowercases group names). sudo only for IPA `admins` (`sudorule-add-user --groups=admins`; no sudorule-add-group). HBAC allow_all still on.
-- Old local student accounts on gups are stale; not migrated. /home not NFS-shared (NDA PDK lives under the home tree, `PDK` dir).
-- EDA licenses are remote at TSRI (lshc/lstn/lstc in /etc/hosts — keep them); not hostname-bound, but TSRI must whitelist the server's public IP.
+- ieda1 是 FreeIPA master、ieda2 是 client，realm `GUPS.NTU.EDU.TW`。這套 FreeIPA 未整合 DNS，私網身份用 LAN hosts entries；公網 DNS 與本機 hosts 分著看。IPA ports 只在 firewalld internal LAN zone，公網維持已核准 SSH 路徑。xrdp/cockpit 的歷史啟停不代表現在開放。登入卡住先看 fail2ban、SSH 和 identity resolver，不能光看 gateway ping。
+- ieda1 的 `/home` 透過 NFSv4 供 ieda2 LAN 使用，對應 export 限 ieda2、`root_squash`，NFS 防火牆只開 internal。ieda2 由 `/etc/auto.master.d/home.autofs`／`/etc/auto.home` 掛各帳號，SELinux `use_nfs_home_dirs` 開啟。區分 live NFS home 與舊本機合併備份，別當成兩份現役資料。NFS root_squash 下，root 不等於可讀 PDK；以授權帳號、group 與 actual file access 核對。
+- 舊 ieda1 本機學生帳號未全部遷 IPA，不能因可登入 ieda1 就預期 ieda2 也可。IPA group `pdk_approved` 會小寫，GID 1024 是對應本機 `PDK_approved`；建立帳號與授 PDK 或 sudo 要分開驗。NDA 保護以 live 身分與群組為準，不擴大共享。LAN 隔離時 root/local account、系統磁碟和 SSSD lookup 可以仍正常，NFS 帳號的 home/access 仍因掛載重試延遲。
+- `ipa-server-install` 曾在 umask 077 失敗，既有安裝要求 0022；不要把 admin password 放在 `ipa-client-install` argv。帳號建立只走受保護的管理入口和核准流程。寄送前可用原有 script 的 `--preview` 驗不會寄信，真實寄送需按使用者授權，憑證用保管庫與私有交接資料。
+- ieda1 和 ieda2 的 TSRI license 為遠端 `lshc/lstn/lstc`；登錄的 public IP 必須符合當期 TSRI 規則。曾要求 PTR 結尾 `edu.tw` 且 A 正解回同一 IP。獨立 resolver 交叉查 A/PTR；DNS 並非 GUPS 自管 zone，依計中官方申請入口辦理。家目錄和 DNS 資料都先查 live，不以當時的等待回覆當現況。
+- IPA online data 備份從 ieda1 到 ieda2 的受控位置，時間與 `ipa-backup` scope 查 cron，並另驗還原。Journald 持久化不保證日誌一直可寫；若學生同步登入失敗但 `systemctl` 顯示 SSSD active，照 [記憶體壓力與 SSSD worker](sssd-login-memory-protect.md) 查實際 worker、domain 與 `id`。
 
-## Gotchas
-- `ipa-server-install` fails under umask 077 → run with umask 0022.
-- Passing admin password on `ipa-client-install` command line exposes it in `ps`; prefer prompt/file.
-- Gateway 140.112.186.254 doesn't answer ping but routes fine.
-
-## Public DNS for TSRI IP registration (2026-10-30)
-- TSRI「IP 登錄」只收「大專院校 IP」：IP 的 PTR 名稱須以 `edu.tw` 結尾，且該名稱的 A 正解回同一 IP（TSRI 申請須知附錄 A）。
-- 已驗證（Google DoH）：140.112.186.18 ↔ `intl.gups.ntu.edu.tw` 正反解一致，保留此名，不改 intl1。SwairM5 本機 dig 曾錯誤顯示 PTR 為空，查 DNS 用公開 resolver 交叉確認。
-- 140.112.186.23 已分配但無 A/PTR；預定名稱 `intl2.gups.ntu.edu.tw`。`intl` 公開名稱沒有任何設定依賴（SSH config 全用 IP；兩台 /etc/hosts 的 intl 別名指 LAN 192.168.100.254）。
-- 管理方：`186.112.140.in-addr.arpa` 與 `intl.gups.ntu.edu.tw` 都在計中 DNS（ntuns / dns.ntu.edu.tw），GUPS 不自管 zone；`gups.ntu.edu.tw` 是 CNAME 到 Bunny CDN。
-- 申請流程：由單位（GUPS 窗口歐姍姍）填計中「網域名稱申請表」、主管核章送網路組（https://ccnet.ntu.edu.tw/ccnet/domain.php ；DNS 業務窗口見申請表 PDF），學生不能自送。2026-10-30 已寄信請歐姍姍申請 intl2 A+PTR，待回覆。DNS 好了之後再請王信博老師在 TSRI「IP 登錄」上傳 .18、.23。
-
-## Account creation (2026-10-30)
-- `ieda1:/root/ipa_add_user.sh <user> <name> <email> [reset]` reads the password on stdin. It does a kinit as admin using the root-only credentials file, runs ipa user-add, adds the user to pdk_approved, and sets the password. It then sets krbPasswordExpiration to now+90d (so there is no forced change at first login) and creates the home with mkhomedir_helper on ieda1. Homes must exist on ieda1 or ieda2's autofs mount fails.
-- The Drive script `gups_accounts.sh` (in the GUPS TA folder) calls it over ssh and mails the password via himalaya. `--preview` sends nothing. It was tested end to end with a throwaway account on both servers, and that account was deleted.
-- The roughly 20 older student accounts on ieda1 are still local `/etc/passwd` users, not in IPA, so they cannot log in to ieda2. Migrating them is the user's call.
-- The handover doc 「GUPS伺服器交接資訊.md」 was rewritten on 2026-10-30. At the user's request it holds the IPA admin and Directory Manager passwords in plaintext (also in Bitwarden), plus the ieda1 root password.
-- 2026-11-24：ieda2 的 journald 改成持久化（`/etc/systemd/journald.conf.d/10-persistent.conf`，Storage=persistent，SystemMaxUse=4G）；ieda1 原本就是持久化。
-
-## Login protection against RAM exhaustion (2026-11-28)
-
-- 2026-11-26 ieda1 記憶體被多個大型 Innovus 作業吃滿後，SSSD worker 與 journald 掛掉，所有 IPA 學生登入失敗。主行程仍活著時 `systemctl` 會誤報正常。詳見 [[sssd-login-memory-protect]]。
-- ieda1、ieda2 已套同一套保護：`user-.slice` 230G 硬上限（Rocky 8 cgroup v1 要靠 `MemoryLimit=`，`MemoryHigh` 不會生效）、sssd/journald 自動重啟與較低 OOM 分數、2 分鐘 `sssd-watchdog`、earlyoom、`vm.min_free_kbytes=1G`。
+[ieda2 掛載設定、LAN 中斷對照與舊 home 合併證據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/gups/nfs-home-ieda2.md)

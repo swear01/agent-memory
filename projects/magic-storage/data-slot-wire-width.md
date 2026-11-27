@@ -8,6 +8,6 @@ evidence_digest: 7b18390bae8c393c3981751c3a491994b20ad7da37d5ff6c511e5cae45624da
 
 # 容器資料槽契約必須符合實際封包寬度
 
-保留的架構審查片段指出 Minecraft 1.21.1 容器資料封包使用 writeShort/readShort，並警告當時提出的 data-slot 契約不安全。片段在後續說明前即截斷。
+Minecraft 1.21.1 容器資料封包使用 `writeShort/readShort`。設計 data slot 時核實際序列化寬度與 signedness，讓邊界值走完整 wire codec，直接呼叫接收函式不足以驗證。64-bit 拆分與 enum 順序仍需源碼及實測支持。
 
-設計同步資料時，以實際序列化寬度與 signedness 核對編碼和解碼；直接呼叫資料接收函式的測試不能代替走過 wire codec 的驗證。此來源不足以支持草稿加入的完整64-bit拆分方案、enum順序或修補成功結論，這些仍保留待查。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/magic-storage/data-slot-wire-width.md)

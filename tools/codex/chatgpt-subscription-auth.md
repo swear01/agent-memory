@@ -27,7 +27,7 @@ codex login status
 
 - Mac、Mazu、Cthulhu、Valkyrie、Zeus、Oracle 皆已設定，且真實 `codex login status` 仍為 ChatGPT。Mazu 共用 home 只寫一次，再逐台讀回。
 - 六台都用臨時 `CODEX_HOME`、假金鑰及 file credential store 隔離測試；`codex login --with-api-key` 與 `CODEX_API_KEY` 的 `codex exec` 均 exit 1 拒絕啟動，沒有建立 auth.json。測試未碰真實憑證或送模型請求。
-- 新啟動程序才載入設定；既有 Codex／App 需重開。Athena [送修排除](../../machines/athena/repair-status.md)；Windows swop 依使用者指示略過，未部署或驗證。
+- 新啟動程序才載入設定；既有 Codex／App 需重開。2026-10-17 這批未驗正在送修的 Athena，也未驗依當次指示略過的 Windows swop。重做時核對 HAPI 現行 handover 和各主機有效設定。
 - 這是使用者預設設定，CLI `-c`、profiles、不同 `CODEX_HOME` 可覆寫。需要管理員限制時另用 system requirements 的 `allowed_login_methods = ["chatgpt"]`，本次未部署管理員政策。
 
 來源：transfer_MAC PR #65（merge `5f37d6fe44b478952fdb891aef446872c3094f6a`），121 項測試與 CI 通過；repo `docs/mac/40_AI_Agent_MCP_and_Skills.md` 記錄此政策。官方依據：<https://developers.openai.com/codex/auth/#enforce-a-login-method-or-workspace>。

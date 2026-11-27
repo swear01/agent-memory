@@ -12,3 +12,8 @@ updated: 2026-10-30
 - Account `dvlab` = Microsoft account the lab Microsoft account; shell sessions are not elevated — admin changes need `Start-Process -Verb RunAs` (user clicks UAC).
 - Auto logon (2026-10-30): set HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device DevicePasswordLessBuildVersion=0 (turns off "only allow Windows Hello sign-in", which hides netplwiz checkbox), then user unchecks "must enter user name and password" in netplwiz and types the MS account password → AutoAdminLogon=1, password in LSA secret (no DefaultPassword plaintext).
 - 26H2 upgrade (2026-10-30): offered via WU (enablement package), GE26H2 indicators show no safeguard hold; was blocked by a pending reboot (`...WindowsUpdate\Auto Update\RebootRequired`). Check offers via COM `Microsoft.Update.Session` searcher "IsInstalled=0 and IsHidden=0".
+
+## Keep working during cleanup
+
+- ASUS Fn hotkeys depend on ASUSOptimization. Check the actual provider before removing MyASUS services. Keep Update, Store, Windows Security and the installed GPU driver unless the user changes that scope. Non-elevated SSH or a user shell cannot stand in for the approved UAC step.
+- Exact names matter: an unanchored app-cleanup regex also matched the Accessibility and Accessories Start folders. Inspect the candidate set and backup pin metadata before touching Explorer state; verify the actual desktop after Explorer reload. A driver/optional-feature maintenance run is pending until reboot and functional checks.

@@ -11,4 +11,4 @@ updated: 2026-09-16
 
 先分開檢查查詢剖析、詞彙匹配與文件內容。把命令列旗標作為字面內容加上 code delimiters；詞彙查詢中的全形斜線改成空格。只調整 query，不改筆記來迎合查詢，也不放寬 top10、精確文件身份或全文比對。
 
-兩次恢復均保存原始錯誤輸出與雜湊，核對已完成前綴的筆記身份、內容雜湊及回讀結果後，只續跑未完成部分。分別由 4/9 和 3/6 續跑，最後全部通過 lexical、hybrid 與逐行全文回讀；未重做 update/embed 或已成功部分。查詢成功仍只證明可檢索，來源語意必須另行查核。
+兩次恢復均保存原始錯誤輸出與雜湊，核對已完成前綴的筆記身份、內容雜湊及回讀結果後，只續跑未完成部分。當時以相同驗證條件完成 lexical、hybrid 和逐行回讀；沒有重做已成功部分，也沒重新 embed。查詢成功只證明可檢索，來源語意另外查核。[歷史回讀前綴](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/retrieval/qmd-query-parser-checkpoint-recovery.md)

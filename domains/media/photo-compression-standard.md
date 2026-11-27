@@ -6,37 +6,11 @@ updated: 2026-10-12
 tags: [photo, compression, HEIC, Q70, PDF, PPTX, quality]
 ---
 
-## 使用者確認的預設
+# 照片與文件內嵌影像的品質校準
 
-2026-10-11 使用者明確要求沿用先前照片標準，並套用到 PDF／PPTX 內嵌圖片的壓縮方針。獨立照片預設採既有 **HEIC Q70** 流程，保留原解析度；不要自行改成 JPEG Q90／Q92，或把舊專案 HEIF Q15、Q50、Q80 的個別試驗當成目前通用標準。執行前先核對原流程的實際編碼器與參數，不能只看副檔名或品質數字。
+- 獨立照片使用已核准編碼器的 HEIC Q70（原生實測 `quality=0.7`），保留原解析度、日期、EXIF／ICC、HDR、透明度。動態照片是否保留依該案授權，普通的靜態重編不能保留 MP4／gainmap。從原始來源處理，避免對有損中間檔反覆轉碼。以實際 MIME／副檔名和輸出格式核對引用。
+- PDF/PPTX 需依容器和閱讀器選擇格式。PDF 1.7 的標準 filters 不含 HEIC，不能把圖片改成 HEIC 再標 `/DCTDecode`。PowerPoint 可匯入不等於可以直接換 PPTX 封裝內部。對平坦 logo、線稿及透明圖以無損或保留原編碼，保護文字、向量、可編輯元素及活躍內容。
+- 需要用 JPEG／JPEG2000 作替代時，曾以原生 HEIC Q70 reference 量化 PSNR：不比 reference 低超過 0.25 dB、最低 32 dB，禁止為此再降採樣。這是特定流程採用的 calibration，不等同跨編碼器感知品質；重新校驗實際工具和讀者後再用。教科書 PDF 的既有節省門檻是至少 2%，未達留原件。
+- 全頁／投影片前後渲染，另核對實際容器與雲端完整讀回，成功後只依該批授權清來源。HDR gainmap 存在不等於 bytes 一致；手機原生 HDR、PowerPoint 動畫、PDF 內嵌播放均需個別驗證。 [PDF 1.7 規格](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf) · [Microsoft HEIF codec](https://learn.microsoft.com/en-us/windows/win32/wic/heif-codec)
 
-保留日期、EXIF／ICC、HDR、透明度等適用資訊；不要為節省容量默默移除功能或縮圖。動態部分是否保留依具體授權：本次國防科技 93 張照片已獲授權移除 Motion Photo 影片，這不是所有照片可一律移除動態或 HDR 的授權。
-
-## PDF／PPTX 內嵌圖片
-
-同樣先以既有照片標準作為品質與壓縮方針，不因圖片在文件裡就自行選較高的 JPEG 品質。HEIC Q70 與 JPEG Q70／Q90 不是可直接換算的品質；尚未實測的替代參數不能標為等效或符合標準。
-
-容器與閱讀器限制要先查證並說明，再採最小可行方案：PDF 1.7 的標準影像 filters 不含 HEIC，不能把影像串流換成 HEIC 卻沿用 `/DCTDecode`。PowerPoint 能匯入 HEIC 也不代表直接改 PPTX 封裝後能在所有閱讀器顯示，須查實際儲存格式並渲染／開啟驗證。無法直接沿用時，明列原因、可用編碼、實測品質與容量，不能默默改成另一套標準。文字、向量、線稿、透明圖片與可編輯結構仍須保留。
-
-盡量從保留的原始來源重做，避免對已經有損壓縮的版本反覆轉碼。保留簡潔檔名主幹與原資料夾位置；改格式時使用真實副檔名及 MIME，檢查程式／文件引用。上傳後完整讀回比對，驗證成功後才依已授權範圍清來源。
-
-## 本次偏差與更正狀態
-
-先前國防照片實際使用 JPEG Q90；PPTX 流程使用 JPEG Q92、4:4:4、長邊最多 2560；PDF 流程從 JPEG Q88／Q92／Q95 選擇，依內容降到 200／300 dpi。這些是歷史實作，不是使用者確認的新標準，也未驗證與 HEIC Q70 等效。
-
-原因是 agent 為保留原解析度、HDR／動態容器以及文件可讀性，自行採取保守 JPEG 方案，卻未先核對既有標準或說明差異。這是流程疏漏；不能歸因於使用者要求改標準，亦未證明 HEIC 做不到。
-
-93 張照片先移除動態影片：621,707,529 → 363,959,922 bytes，當時仍是 JPEG Q90。後續已完成 HEIC Q70 重轉及 PDF／PPTX 重評估，以下為更新後狀態；不要再把舊「尚未重做」當成待辦。工作區 `<workspace-root>` 為 `<user-documents>/Codex/2026-10-08/new-chat`。
-
-## 2026-10-12 已驗證執行結果
-
-- 93 張照片已從保留的原始來源產生原解析度 HEIC Q70，363,959,922 → 231,154,703 bytes；保留主幹、ID／父目錄，改真實 `.HEIC` 副檔名。EXIF／ICC 與 HDR gainmap 資訊檢查通過；gainmap 重編不宣稱位元組相等，手機原生 HDR 未測。
-- 71 份既有 PDF 全部重評估、4,058 頁渲染，採用 55 份、16 份保留。照片及 PDF 這輪 148 份替換完整雲端讀回，原始來源仍保留。回條：`<workspace-root>/outputs/照片與講義依Q70重壓_20261011.json`。
-- 文件內嵌照片使用 JPEG／JPEG2000 與實際原生 HEIC `quality=0.7` 參考圖比較全圖 PSNR，允許最多低 0.25 dB，另設最低 32 dB；已採用文件的全部頁／投影片再前後渲染核對。這是可量測校準，**不是跨編碼器的感知品質等效證明**。不新增降採樣，文字、向量及可編輯結構保留。
-- 224 個 PPTX 上傳項目中 184 份採用並全投影片渲染通過；1 個捷徑另保留。平坦 logo／線稿、透明 PNG 使用無損或保留原編碼，不能只因是 JPEG 就有損重壓。原生 PowerPoint 動畫未測。
-- 教科書 PDF 試壓採用 1／4；若候選縮小不足 2%，保留原件，不為少量節省強制替換，也不宣稱未採用候選已完整渲染。後兩項回條：`<workspace-root>/outputs/剩餘檔案壓縮完成_20261012.json`。
-
-## 格式依據
-
-- [Adobe PDF 32000-1:2008](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/PDF32000_2008.pdf)：7.4 的標準 filters 與影像編碼。
-- [Microsoft HEIF extension codec](https://learn.microsoft.com/en-us/windows/win32/wic/heif-codec)：HEIF／HEIC 與系統 codec；不能由系統能解碼推論所有 PPTX 閱讀器支援。
+[各批次 JPEG 試做、HEIC 重評與驗證收據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/domains/media/photo-compression-standard.md)

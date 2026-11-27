@@ -1,5 +1,5 @@
 ---
-title: "兩份缺失證據相等不代表完整性"
+title: "完整性檢查應拒絕缺件與交換證據欄位"
 scope: "tools/build-verification"
 status: active
 updated: 2026-09-15
@@ -13,3 +13,9 @@ evidence_digest: 55d99648429e63674edb61e79c8ef2672e43af34a34452232f4c5d4ccff90ee
 比較兩份證據之前，先驗證各自是否存在、符合 schema，並對照獨立的預期 inventory 檢查完整性。負面測試應包含兩份一起缺失，以及只缺一份；不能只檢查多餘項目而漏掉遺失項目。
 
 來源提出綁定 artifact、classpath 與完整分類集合的 digest 作為修正建議，並非已完成修復。自包含 digest 無法抵抗內容與 digest 一起重算；需要更強防竄改保證時，須有獨立可信依據或從 exact artifact 重建。這次查核支持歷史分析的陳述範圍，未重新執行該 mutation。
+
+## 每筆 marker 的完整關係
+
+Closure 曾各自比較 label 和 result-hash 集合，交換兩筆合法 marker 的 repetition 後仍判 valid。應依獨立 inventory 逐筆核對 `(label, repetition, role, result, definition)`，驗缺件、多件、一對一和型別。除同時缺失測試外，需有保留所有合法值但只交換配對的負例。當輪只有審查重現，沒有驗證後續修復。
+
+[換位案例](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/build-verification/paired-marker-identity.md)

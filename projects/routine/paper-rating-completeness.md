@@ -5,6 +5,10 @@ status: active
 updated: 2026-11-10
 ---
 
-- `swear01/routine` 的 2026-11-10 排程 [42757735741](https://github.com/swear01/routine/actions/runs/42757735741) 成功，報告有三篇總分，12 個細項只顯示 1 個。先查 `daily-report` artifact，區分評分缺漏、有效空選擇、模型呼叫失敗及 Discord 發送失敗。原始模型回覆沒有保存，無法確定是缺 key 還是格式不符。
-- [PR #13](https://github.com/swear01/routine/pull/13) 合併為 `a6c6a1d`。選文模型須提供四個細項；只針對入選論文的缺漏做一次補評，保留排名、總分及有效細項。仍缺的欄位固定顯示「未提供」。無入選時仍靜默結束。
-- 41 項測試、主分支 CI 與最新提交 Gemini review 已驗證。分支 [dry run 42770358557](https://github.com/swear01/routine/actions/runs/42770358557) 以初版修復提交 `f190a9a` 執行成功，報告三篇各有四項星等，沒有「未提供」。未測正式 Discord 交付，未更新 Gist，也未重發舊訊息。
+- 日報有論文總分但缺星等時，先讀 GitHub Actions 的 `daily-report` artifact，分開四細項缺漏、有效空選擇、來源／模型失敗及 Discord 送出。上次未留 raw reply，缺 key 或格式不符未隔離。
+- [PR #13](https://github.com/swear01/routine/pull/13) 要選文模型產四個細項，只補評入選文章的缺漏一次，保持排名、總分及現有細項。仍缺顯示「未提供」。來源成功且選擇經驗證為空時保持靜默。空陣列本身不能證明來源查詢完整，也不能吞掉 timeout／限流。
+- Dry run 核 artifact 的排序、總分和細項，分開驗證正式 Discord delivery。當次只驗 dry run 與 CI，正式送達未測。
+
+[原始紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/routine/paper-rating-completeness.md)
+
+合併自 [空選擇的舊調查](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/routine/validated-empty-selection.md)。

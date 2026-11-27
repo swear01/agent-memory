@@ -33,7 +33,7 @@ MSI 會把 `sshd` 服務改指 `C:\Program Files\OpenSSH\sshd.exe`，並新增�
 - ssh-agent：MSI 會設成 Auto，已改回原本的 Disabled。
 - Machine PATH：`C:\Program Files\OpenSSH\` 排在 `System32\OpenSSH\` 前，`ssh` 解析到新版。
 - 內建 capability 沒移除，System32 的 9.5p2 檔案仍在。
-- Git for Windows 用自己內附的 ssh，不受影響（見 [[git-ssh-portablegit]]）。
+- Git for Windows 用自己內附的 ssh，不受影響（見 [Git for Windows](cli-path-auth-and-qmd.md#git-fetchskillshare-pull-卡住)）。
 
 # 安全做法與回退
 

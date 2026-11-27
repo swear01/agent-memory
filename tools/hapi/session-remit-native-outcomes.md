@@ -2,29 +2,15 @@
 title: HAPI remit 結果必須依 native terminal outcome 判定
 scope: tools/hapi
 status: verified
-updated: 2026-11-18
+updated: 2026-11-28
 ---
 
-> 這裡的 `wait-peer` 規則針對 0.30.x 維護版（PR #1771）。0.35 已無 `wait-peer`（見 [[peer-cli-0-35-command-changes]]）；「不能只看 thinking=false 判定成功」的原則仍適用於輪詢 `inspect-peer`。
+先區分 HAPI session 暫時閒置、某次 remit 已終止、任務交付已完成。新版用 `hapi inspect-peer` 或該版本支援的查詢。0.30.x 維護版的 `wait-peer` 已在 0.35 移除。[peer CLI 版本表](peer-cli-0-35-command-changes.md)
 
-`Session.thinking === false` 不是成功證據：heartbeat expiry、abort、native error 都可能清除 thinking。`wait-peer` 必須在該 remit 的訊息視窗找到明確 native success；部分 prose 加 idle 不能回傳 completed。`ready` 也不是成功事件，部分 launcher 在失敗後仍會發送。
+- **`thinking=false` 或 `ready`。** 核對所要訊息的 native terminal outcome。Heartbeat 過期、abort、native error 會讓 UI 閒置，有些 launcher 失敗後也會送 ready。PR 等待與外部背景工作還要讀回 PR、測試或產物。
+- **排隊與訊息邊界。** 同批 `MessageQueue2` 的 consumed local IDs 共用 `invokedAt`，超過這批的已消費普通訊息才是後一個邊界。未 invoked 的 queue row 和同輪的 `steered` 訊息不截斷原 remit。Hub schema v27 用 `messages-consumed.steered` 保存是否接受，晚到的 steer ACK 補欄位並保留第一次 `invokedAt`；普通 ACK 保留既有旗標。
+- **各 runtime 的終止事件。** 保留 ACP `stopReason`、Claude result `subtype/is_error`。ACP prompt 拒絕經 finally 排空輸出後發 error；Cursor 和 Codex 先排除重試或 stale turn。Pi 等整個 agent settlement，`turn_end` 可能只是內部的工具迴圈。AGY 等 child close 與 send queue 排空；原生輸出證明已接收時，consumed ACK 要早於該回答。
+- **Pi snapshot 與用量警告。** `streamSnapshot: true` 按 nested `data.id` 在整個分頁視窗保留最新文字與第一次位置。普通訊息照常保留。用量上限會留下 `lifecycleState=running`、`thinking=false` 和用量警告。額度重置後查原工作樹與背景副作用，續跑同一個 session 並讀回新的 remit；有多個 worker 時逐一核對。
+- **只擷取到 user 文字或流程中斷。** 分別確認 Hub 已保存的訊息、runner 本機狀態與真正產物。技能 canonical 比對失敗是獨立的啟動錯誤。若原工作會寫外部文件，先讀回已有內容再考慮重試。
 
-`MessageQueue2` 可將同模式的多個 user message 合成一個 prompt，Hub 對同批 consumed local IDs 使用同一 `invokedAt`。結果擷取應略過相同 invokedAt 的其他 user row，以及尚未 invoked 的排隊 row；不同 invokedAt 的已消費 row 才是下一批邊界。
-
-保留 runtime 現有終止原因，避免只靠 UI 的 thinking/ready：ACP 的 `AgentMessage.turn_complete.stopReason` 原先被共用 converter 丟掉；Claude SDK result 轉為 `system/turn_duration/resultSummary` 時須保留 subtype/is_error。Codex 須先通過 child/stale-turn 與自動重試過濾，再發送持久化終止訊息。Cursor 的 recovered stderr/inline error 也可能伴隨 end_turn，須等自動重試流程決定後才發布結果。
-
-Pi `turn_end` 是 LLM/tool-loop 小回合，不能當整個 prompt 結束；等 `agent_settled`（或既有 legacy settlement）並 flush 文字後才發布最後 stopReason。AGY 須等 child close 與 send queue 排空；一旦原生 prose/tool/result 證明接收，先 emitMessagesConsumed，再輸出回答，否則 invokedAt 排序可能把回答排到 remit 前面。
-
-驗證來源：PR #1771 的 wait-peer 回歸涵蓋 heartbeat expiry、idle、abort/error、同批 remits、Claude 空輸出成功；runtime 回歸涵蓋 Codex stale/retry、Cursor retry、Pi tool-loop settlement 與 AGY ack/output/terminal 順序。這些規則描述已實測的修正，不能用來假定尚未驗證的 runtime 結束事件格式。
-
-中途 steering 是另一種同回合輸入：它的 `invokedAt` 不同於原 remit，不能當下一個普通 prompt。Hub schema v27 將 CLI `messages-consumed.steered === true` 存為訊息的 `steered` 欄位，REST、fork 與歷史合併也保留；不能從使用者請求的 `meta.deliveryMode` 推定已接受。Cancel probe 可能先寫 invokedAt，再收到正式 steer ACK，此時補上 steered，仍保留首次 invocation timestamp；後續普通 ACK 不可清除它。遷移及 socket→store→messages API／copy 回歸已通過。
-
-`AcpSdkBackend.prompt` 的 `session/prompt` RPC 拒絕時，原本沒有 stopReason；launcher 捕捉錯誤並保持 active，會讓 wait-peer 等到 timeout。共用 backend 的 catch 將 stopReason 設為 error，重新拋出原錯誤，既有 finally 排空輸出後發布失敗 terminal。Cursor 已在外層延後 terminal 到重試決策完成，因此中間重試不會誤報失敗。新增 producer 與 steering 回歸在舊程式碼皆失敗，修正後通過。
-
-Pi 文字輸出也是 cumulative snapshot：Hub row id 每筆不同，但 nested `data.id` 穩定且 `streamSnapshot: true`。`wait-peer` 與 `inspect-peer` 應按此 stream ID 更新同一文字區塊，保留第一次出現的位置與最新內容，不可把每個前綴都加入答案，也不可按文字內容去重。`wait-peer` 的 map 必須涵蓋整個 remit 視窗，不能逐頁重建；一般非 snapshot 訊息即使 data.id 相同仍需保留。兩個新增回歸在舊 collector 失敗、修正後通过，涵蓋跨頁、不同 stream ID、最新 row metadata 與普通文字。
-
-2026-09-27 的 swairM5 Pi 文件查核案例：父 session 兩次 `wait-peer` 逾時後封存子 session；後來 `inspect-peer --limit 100` 回傳 `lifecycleState=archived`，只擷取到三則 user 文字、沒有 agent 文字。`inspect-peer` 會從 Hub 訊息列擷取可辨識的文字，這個結果不能區分 Hub 未儲存、同步中斷或擷取器未解析，也不能推論 Pi 本機沒有回覆或正式文件沒有部分寫入。重新寫入前先以已核對身分的帳號讀回正式文件。另一次重開 Pi 在 webhook 前因 `Canonical hapi-session-control skill is shadowed or could not be verified` 退出，屬於獨立的啟動錯誤；該訊息只表示實際解析的技能未通過與內建內容的比對，不能單憑字面斷定哪個路徑遮蔽。事後本機技能解析比對通過，新 Pi 也成功啟動；舊 Pi 的訊息缺失原因仍未證實。
-
-2026-10-27 委派修 PR 的經驗：子 session 在等 Monitor 或 HAPI Bot review 時會先結束自己的回合，`wait-peer` 因此回報 completed，但工作其實還沒做完。長時間的 PR 修正改用背景迴圈輪詢 `hapi inspect-peer <id> --json`：直到 `thinking` 為 false，且最後一則 agent 文字含 PR 連結、長度像最終報告，才讀取結果。`Claude AI usage limit warning|...` 這類用量警告也是 agent 訊息，判斷條件和最後印出結果時都要先濾掉，否則會把警告當成報告。背景 Bash 有時間上限，等 bot 的迴圈要設 `timeout` 7200000。
-
-2026-11-11 CULS-fast 長時間委派的經驗：Claude 子 session 撞到 5 小時用量上限時不會結束，`inspect-peer` 會一直顯示 `lifecycleState=running`、`thinking=false`，最後一則 agent 訊息是 `You've hit your 5-hour limit ...`；`wait-peer` 會持續等待，不會回報 `session_ended`。在本機用 `wait-peer` 迴圈等它，會無聲地卡到額度重置。重置後要對同一個 session `ping-peer` 一則「從中斷處接續、先檢查 worktree 和背景工作」的 resume 訊息，拿到新的 remitId 再等。好幾個 worker 會在同一時間撞上限、也在同一時間重置，所以要一起 resume。這類需要盯十幾小時的監督工作，交給 HAPI 上同一台機器的協調者 session 來做，比本機 session 穩：本機 session 會一直被 context 壓縮和用量上限打斷。
+[原始回歸、Pi 交接與等待案例](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/hapi/session-remit-native-outcomes.md)

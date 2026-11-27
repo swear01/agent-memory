@@ -5,23 +5,11 @@ status: active
 updated: 2026-11-24
 ---
 
-# 目前狀態
+# Athena 回機後的 Runner 本機狀態復原
 
-2026-10-17 至 2026-11-12 送修；2026-11-12 使用者確認修好歸還，已恢復一般 fleet 操作範圍，不再排除 SSH、探測、部署或同步。
+- 2026-11-12 歸還後恢復一般 fleet 作業範圍。這不等於硬體故障已修復；部分核心負載仍可 freeze，操作與限制見 [Athena freeze](recurring-freeze-2026-11.md)。HAPI 共用家目錄的檔案從其他機器可見，不代表 Athena runner 本機正常。
+- 若返修或清理後 `hapi-runner.service` 出現 `Failed to load environment files` restart loop，先檢查 Athena 自己的 `/var/tmp/hapi-runner/runner.env`、`/var/tmp/hapi-athena/settings.json` 與本機 Agent state。NFS home 的 unit/binary 可全數完好，而 `/var/tmp` 已被清掉。
+- 從已確認的 fleet source／備份重建 `runner.env`，確保 `HAPI_HOME=/var/tmp/hapi-athena` 與該機原 machine ID，避免複製別台身分或讓 Hub 新增重複 machine。只在正確的 local state target 從既有 `.nfs-seed` 種回。重啟前查現役 session；從 Athena 直接驗 systemd active、`KillMode=process`、MainPID 等於 runner state PID、Hub 仍是原記錄與 agent canary。管理操作用 `su_athena`，實際 live 設定與身分查 HAPI skill 及 Hub。
+- 登入延遲看 [earlyoom 與 systemd-oomd](../hapi-fleet/earlyoom-nis-dynamicuser.md)，NSS/PAM 以 [後續 NIS 復原](../hapi-fleet/ubuntu-upgrade-recovery-runbook.md) 為準。不要從回機時的套件、NVIDIA 或 NSS 快照推目前版本。
 
-- **2026-11-24 更新**：送修期間主機板、CPU、記憶體並未更換（僅通過全核降頻 `stress-ng` 燒機），回機後跑 `innovus` 等部分核心負載仍會觸發 `SCHED_SOFTIRQ` `preempt_count` 異常並整機 freeze；目前已啟用 iTCO 硬體 watchdog、將 `P-Core 0`（`CPU 0–1`）移出排程並鎖定 `3.0 GHz` 基頻、修正時區為 `Asia/Taipei` 及啟用 `swear02` linger，詳見 [2026-10/11 反覆 freeze 與緩解紀錄](recurring-freeze-2026-11.md)。
-
-# 回機核對（2026-11-12）
-
-- SSH 正常；hostname `athena`、LAN `192.168.1.202`、Ubuntu 26.04、kernel `7.0.0-31`（其他四台為 `7.0.0-38`，未升級，需要 sudo）。`/apps` 為 automount，`/usr/local/bin/abc` 仍在。
-- 送修期間本機 `/var/tmp` 被清空：`/var/tmp/hapi-runner/runner.env`、`/var/tmp/hapi-athena/settings.json` 與 codex／opencode／cursor 本機 state 目錄都消失，`hapi-runner.service` 卡在 `Failed to load environment files` 的 auto-restart 迴圈。NFS home 上的 unit、binary（`0.30.7.7`）與 `hapi-runner-sync` 都還在。
-- 修復：從 cthulhu 複製 `runner.env`（只改 `HAPI_HOME=/var/tmp/hapi-athena`）、從 cthulhu 的 `settings.json` 換回原 machineId `68d64dd8-4b63-4b86-956a-ae807d75b6f1`（不這樣做 runner 會註冊成新機器）、重建並從 `.nfs-seed` 種回本機 state 目錄。重啟後 active/running、KillMode=process、MainPID 等於 `runner.state.json` pid，hub 顯示該 machineId active。
-- 教訓：任何本機 `/var/tmp` 被清掉的 NAS 機器都要先重建 `runner.env` 與帶原 machineId 的 `settings.json`，再啟動 runner。
-
-# 回機補齊（2026-11-12，用 `su_athena` + `sudo -n`）
-
-- `apt-get full-upgrade`（345 升級、0 移除）→ Ubuntu 26.04.1、kernel `7.0.0-43-generic`（比其他四台的 `-38` 新）、systemd `259.9`（其他為 `259.5`）。NVIDIA `580.178.04` DKMS 已為 `-43` 編好，RTX 4090 正常。升級中 openssh 重啟，SSH 會拒絕連線數分鐘，屬正常。重開機後 dpkg audit 乾淨、無 failed unit。
-- [SpyGlass NSS](../hapi-fleet/synopsys-spyglass-linux7-compatibility.md) 改成 `files nis sss systemd`，備份 `/var/backups/spyglass-nss-20261112-155522/`。
-- [ARM memory compiler i386 依賴](../hapi-fleet/eda-install-inventory.md) 已裝；另補 earlyoom（同 mazu 設定與 `DynamicUser=no` drop-in）、glances、python3-bottle、finger、screen、texlive-latex-extra，與 mazu／cthulhu／valkyrie 一致。
-- 新坑：`systemd-oomd` 拖慢登入約 2 分鐘；已在 Athena、mazu、cthulhu、valkyrie 移除套件並 mask，見 [earlyoom 筆記](../hapi-fleet/earlyoom-nis-dynamicuser.md)。
-- 仍未做：swear01 的 `claude-relink` crontab（與 mazu 相同的一行）安裝時被權限檢查擋下，待使用者決定。
+[Athena 送修／回機原始檢查和修復收據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/athena/repair-status.md)

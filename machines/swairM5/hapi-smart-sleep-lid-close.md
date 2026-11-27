@@ -8,62 +8,25 @@ created: 2026-10-25
 updated: 2026-11-22
 ---
 
-# 結論
+用 `pmset -g` 檢查 `SleepDisabled 1`。Claude Desktop 的 keep-awake、`caffeinate` 和 Amphetamine 類 assertion 擋 idle sleep，在電池合蓋仍可能出現 `Clamshell Sleep`。BetterDisplay 與 `xyz.hapi.auto-virtual-display` 負責顯示器切換。
 
-- 真正能擋住「合蓋睡眠」的只有 `pmset disablesleep 1`（`pmset -g` 顯示
-  `SleepDisabled 1`）。Claude 桌面版的 keep-awake、`caffeinate`、Amphetamine 類
-  assertion 只擋 idle sleep；電池合蓋時 `pmset -g log` 仍會出現 `Clamshell Sleep`。
-- SwairM5 已有自製的 HAPI smart-sleep，只在「有工作」時切 `disablesleep`，
-  2026-10-25 起也把 Claude Code 的活動算進去。
+## 自動防休眠
 
-# 架構（`~/Library/Application Support/HAPI/`）
+- `~/Library/Application Support/HAPI/` 的 LaunchAgent `xyz.hapi.smart-sleep-watcher`（`hapi_smart_sleep.py`）每 2 秒更新 `smart-sleep.state`。ActivityLatch 在 busy 開啟，idle 10 秒或 unknown 60 秒後解除。常駐 Claude 進程不能表示工作中。CLI、桌面 Code 與 HAPI Claude 的 transcript `~/.claude/projects/*/*.jsonl` 在 180 秒內更新算 busy。Cowork 和一般雲端聊天無此訊號。長時間無 transcript 更新可能睡著，電池放包包則留意工作持續時發熱。
+- root LaunchDaemon `xyz.hapi.smart-sleep-helper`（`/Library/Application Support/HAPI/hapi-smart-sleep-helper.sh`）把超過 20 秒的 state 視為過期，退出亦重設 `disablesleep 0`。直接手動設值可能幾秒後被校正。先查 state 新鮮度、launchd、`/var/log/hapi-smart-sleep.log`。修改 watcher 用 `launchctl kickstart -k gui/$(id -u)/xyz.hapi.smart-sleep-watcher` 及同目錄 `python3 -m unittest test_hapi_smart_sleep`；原始備份 `backups/*.20261025`。Watcher 已實測 busy 時為 1，idle 回 0 有單元測試覆蓋。
 
-- 使用者 LaunchAgent `xyz.hapi.smart-sleep-watcher`：`/usr/bin/python3
-  hapi_smart_sleep.py`，每 2 秒把 `1`/`0` 寫到 `smart-sleep.state`。
-  `ActivityLatch`：busy 即開；idle 10 秒或 unknown 60 秒後關。
-- root LaunchDaemon `xyz.hapi.smart-sleep-helper`：
-  `/Library/Application Support/HAPI/hapi-smart-sleep-helper.sh` 讀 state
-  （超過 20 秒視為過期），切 `pmset disablesleep`，結束時重設為 0，
-  log 在 `/var/log/hapi-smart-sleep.log`。
-- `xyz.hapi.auto-virtual-display`（`lid-display-switch`，BetterDisplay 虛擬螢幕）
-  只負責合蓋／開蓋切螢幕，不防睡眠。
+## 手動倒數
 
-# Claude 活動偵測
+用 `~/.local/bin/keep-awake 7200`，正整數秒數，與「合蓋不休眠」捷徑共用互斥鎖和心跳，已有手動倒數會拒絕。用 `pmset -g`／`IOPMrootDomain` 讀回 1/Yes 及到期的 0/No。已驗證短倒數及兩小時倒數啟動。實體合蓋與 watcher 併行未實測。若 CLI 不可用且 watcher 確定未載入，歷史驗證用使用者 launchd 限時刷新既有值為 1 的過期 state。保存原 mtime，到期還原並移除臨時工作，讓 helper 過期復原。避免兩個 writer 共寫 state。
 
-- Claude 桌面版的 `claude` 行程會常駐好幾天，不能用「行程存在」判斷。
-  改用 `~/.claude/projects/*/*.jsonl` 的 mtime：CLI、桌面版 Code 分頁
-  （含 Remote Control）、HAPI 的 claude session 都會寫這裡。
-- `claude_recently_active()`：任一 transcript 在 `CLAUDE_ACTIVE_SECONDS = 180`
-  秒內有寫入就算 busy，放在 `observe_activity()` 最前面；log 會顯示
-  `HAPI/Claude activity busy; closed-display sleep blocked`。
-- 沒涵蓋：桌面版一般聊天（跑在雲端，不需要）、Cowork（本機沒有 jsonl）。
-- 已知限制：單一工具呼叫靜默超過 180 秒會讓 Mac 中途睡著；
-  電池合蓋放包包時只要 Claude 在跑就不會睡（發熱、耗電）。
+## 虛擬螢幕切換加固
 
-# 修改與驗證
-
-- 修改後重啟：`launchctl kickstart -k gui/$(id -u)/xyz.hapi.smart-sleep-watcher`。
-- 測試：同目錄 `python3 -m unittest test_hapi_smart_sleep`（11 個通過）。
-- 已實測 busy 時 `SleepDisabled 1`；切回 0 只有單元測試覆蓋。
-- 原檔備份：`backups/*.20261025`。
-# 臨時合蓋不休眠（2026-11-09 驗證）
-
-- root helper 每兩秒校正 `SleepDisabled`；直接執行 `pmset -a disablesleep 1` 可能當下讀到 1，幾秒後就被校正回 0。先查 `/var/log/hapi-smart-sleep.log`、watcher 的 launchd 狀態和 state 檔的新鮮度。
-- 當 watcher 未載入且既有 state 內容為 1、只是 mtime 過期，可用使用者 launchd 工作在期限內定期更新 mtime，讓現有 root helper 接手。記下原 mtime，期限到還原並移除臨時工作；若程序中斷且不再刷新，helper 會在過期後自行復原。不要與正在寫入同一個 state 的 watcher 併用。
-- 短時測試用 `pmset -g` 與 `IOPMrootDomain` 讀回啟用及恢復（1/Yes → 0/No）；同法啟動 90 分鐘工作並讀回啟用。未以實體合蓋驗證該次 90 分鐘工作。
-
-# 命令列防休眠（2026-11-13）
-
-- SwairM5 上用 `keep-awake 7200` 啟動兩小時合蓋防休眠；命令位於 `~/.local/bin/keep-awake`，參數為正整數秒數。不需開視窗、sudo 或允許「捷徑」執行 shell 指令。
-- CLI 沿用「合蓋不休眠」捷徑的心跳檔與互斥鎖，由既有 HAPI root helper 控制 `SleepDisabled`。已有手動倒數時會拒絕再啟動。
-- 已驗證 7 秒倒數讓 `SleepDisabled` 從 0 變 1 再回 0，另確認 7200 秒倒數啟動後為 1；當時自動 watcher 未載入，未實體合蓋測試。
-
-# 虛擬螢幕切換加固（2026-11-22）
-
-- **前因（2026-11-21 當機）**：記憶體吃緊觸發 Jetsam 後 BetterDisplay GUI 無回應；舊版 `lid-display-switch` 每次 5 分鐘 health check 與事件都會衍生 BetterDisplay CLI，且 `retryWorkItem` 在開始執行時未清除，遇到連續事件會倍增平行重試鏈、繞過指數退避，每 10 秒狂戳 BetterDisplay；開蓋時又依賴 BetterDisplay CLI 切回主螢幕，最終 `WindowServer` 事件緩衝溢位並伴隨 `ap_panic` 強制重開機。
-- **方案 B 行為（`~/Library/Application Support/HAPI/lid-display-switch.swift`）**：
+- 記憶體壓力、BetterDisplay 無回應和重試重疊曾伴隨 WindowServer 溢位與 `ap_panic`。
+- **目前行為（`~/Library/Application Support/HAPI/lid-display-switch.swift`）**：
   - 狀態檢查優先使用原生 `CGGetOnlineDisplayList` + `NSScreen.screens`（`detectVirtualDisplayNative`）；開蓋無虛擬螢幕或合蓋已掛上虛擬螢幕時 **0 次 BetterDisplay CLI 呼叫**，僅在真正切換或鏡像／未知狀態時才回退 CLI。
   - 開蓋設回內建主螢幕改用原生 `CGConfigureDisplayOrigin(..., 0, 0)` + `CGCompleteDisplayConfiguration`（必要時先解除鏡像），不依賴 BetterDisplay。
   - CLI timeout 縮短為 5 秒；連續超時 2 次自動 `SIGTERM → SIGKILL` 並 `open -g -b pro.betterdisplay.BetterDisplay` 背景重啟（冷卻 120 秒）；連續超時達 4 次進入 300 秒熔斷退避。
   - 嚴格單一執行排程（`isReconcileRunning` + 清除 `weakWork`）：`health check` 與失敗期間的 `display reconfiguration` 不再重置退避，僅 `lid change` / `screens wake` / `session active` 會立即搶佔。
 - **部署與驗證**：依 `macos-launchagent-ad-hoc-binary-deploy.md` 以新 inode 替換並執行 `launchctl bootout` + `bootstrap`。已通過 `xcrun swiftc`、`--self-test`、`codesign --verify` 與啟動零 CLI 呼叫驗證；尚未實測實體合蓋／開蓋與 BetterDisplay 實機卡死復原。舊版備份於 `~/Library/Application Support/HAPI/backups/lid-display-switch-20261122-pre-plan-b/`；`transfer_MAC` snapshot 尚未同步。
+
+[舊版診斷與逐次驗證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/swairM5/hapi-smart-sleep-lid-close.md)

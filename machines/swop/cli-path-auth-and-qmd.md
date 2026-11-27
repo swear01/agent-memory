@@ -32,6 +32,11 @@ generated_by: openai-codex/gpt-5.6-sol
 - 運行中的 HAPI exe 被鎖不能直接 Copy-Item 覆蓋；NTFS 可重新命名已核准舊檔，再放同名新檔。換 runner 前依 runbook 保留已知 backup、查 active session/PID，透過原 `HAPI Runner (SWOP)` Scheduled Task 恢復，確認 machine identity、Hub heartbeat 和實際 Agent canary。SSH 或 HAPI 可見性分別驗；不同 NAT 網段的歷史 LAN IP 不可直接當當前路由。
 - GitHub fetch 卡住時，若 LAN SSH 可達，來源可製作以對方 commit 為 prerequisite 的增量 bundle。兩端驗 bundle，目標 source clean 才 fetch/fast-forward，再 skillshare sync。不終止別人的 pull。SSH PowerShell 讀 junction 失敗時，以同機真實 HAPI Runner principal 的 list-directory RPC 核對；source 可讀或 SSH 單獨失敗不證明技能是否於 Runner 看得到。
 
+## Git fetch／Skillshare pull 卡住
+
+- `ssh -T git@github.com` 成功，只證明單獨 SSH 連線。舊 Git for Windows 使用 ExternalOpenSSH 時，Git 子程序曾在認證／exec 後卡住，換 443、Git protocol 或 shell 皆未改善。先查 Git 子程序實際的 SSH 和 repo-local `core.sshCommand`。2026-10-26 用 `winget upgrade --id Git.Git --custom "/o:SSHOption=OpenSSH"` 改走隨 Git 發行的 MSYS SSH，再驗同一 repo 的 `git fetch` 及 `skillshare pull`。Installer 可繼承舊選項，須明確指定。系統 sshd 是另一條路；其版本與防火牆看 [OpenSSH MSI](openssh-msi-upgrade.md)。既有 PortableGit 臨時副本已退役，不從舊路徑復原。[第一次 Git/SSH 故障與轉換驗證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/swop/git-ssh-portablegit.md)
+- 遠端預設 shell 是 cmd。PowerShell 授權指令若傳輸 quoting 失敗，可用 UTF-16LE 的 `-EncodedCommand`，或 scp 腳本、寫無敏感內容的本機暫存 log 再讀回。CLI 輸出經 SSH 變 CLIXML 時，不以畫面空白視為命令未執行。
+
 ## WinGet portable 升級
 
 - **登錄版本落後實際執行檔，WinGet 拒絕升級。** 用 `Get-Command` 找 live binary，查版本，將 `Get-FileHash -Algorithm SHA256` 與同版本的 `winget show -e --id Google.AntigravityCLI -v <installed-version> --source winget` 對照，再核 `Get-AuthenticodeSignature`。證明是官方套件版本漂移後才用 `winget upgrade -e --id Google.AntigravityCLI --version <target-version> --source winget --force`。用新 SSH 驗 `where agy`、版本和 WinGet 登錄。

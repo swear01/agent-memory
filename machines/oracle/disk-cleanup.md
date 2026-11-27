@@ -1,5 +1,5 @@
 ---
-title: oracle 磁碟清理：哪些可以刪、哪些看起來像暫存但不能刪
+title: "Oracle 磁碟壓力：QMD 保護、worktree 和 journal"
 scope: machines/oracle
 tags: [disk, cleanup, qmd, swear-review, opencodereview, worktree, journald]
 status: active
@@ -7,23 +7,11 @@ created: 2026-10-26
 updated: 2026-10-26
 ---
 
-2026-10-26 在 oracle（hostname `swever`，`/` 193G）把用量從 93G 清到 80G。之後再清可以照這份順序。
+# Oracle 磁碟壓力：先保留現役環境，再定位來源
 
-## 可以直接清
+- `/var/tmp/qmd-memory-swever/` 同時有 QMD 應用設定、索引和當前模型，即使位於暫存根目錄也要先核對 live `QMD_CONFIG_DIR`、`XDG_CACHE_HOME` 和 process。與試驗用 snapshot／cache 副本、活 SQLite sidecars 分開盤點。對 Oracle 的查詢與向量重建用 [Oracle QMD 筆記](qmd-vsearch-slow.md)。
+- 找到成批 `tmp-swear-review-job-*-repo` 時，先查 Swear Review 現役工作。舊 runner 的環境合併順序曾讓 `ocrEnv` 蓋掉隔離的 `HOME`，導致 repo clone 寫到共用 sessions。修正後以新 job 完成再查 sessions 是否累積。舊目錄即使長得像同一 bug，也逐批核對 owner、程序和已驗證來源，不能憑名字當刪除授權。
+- Worktree 以 Git 本身檢查和移除。須驗無 active session／child、工作樹乾淨、所有 commit 有遠端對應分支或其他可恢復保存，而且沒有使用者保留標記。用 `git worktree remove`，不 rm repo 路徑。Bun hardlink 會讓單目錄 `du` 高估釋放量，使用 `df` 的 filesystem 讀回。
+- Journald vacuum 只清 archive。大量空間在 active journal 時，核對保留要求後先 rotate 再 vacuum；以 `journalctl --disk-usage`、`df` 驗。追蹤自己啟動的暫存 server/process；確認原工作的 PID／session 已停，不因長期留在 pm2 cgroup 直接殺現役程序。
 
-- `<remote-home>/.opencodereview/sessions/tmp-swear-review-job-*-repo`：swear-review 每次 bot review 留下的 repo clone，用完不會自動刪。這次累積了 1147 個、8.8G，是最大的一筆浪費。root cause 是 `runOcr` 先設 `HOME`、後展開 `ocrEnv`，結果真正的 HOME 蓋掉了 isolated HOME。已在 swear01/swear-review PR #15（`7a6d7ff`）修正，2026-10-26 用 `scripts/deploy-oracle.sh main` 部署。之後的 job 1535 跑完後 sessions 目錄是空的，驗證有效。這個部署腳本不會先 drain 進行中的 job：在測試 gate 期間開始的 job 1534 被 restart 中斷，新 process 啟動時重跑它，但舊的 `/tmp/swear-review/job-1534/repo` 還在，`git clone` 因此失敗。這只影響一次 review，之後重新觸發就成功了。要判斷 OCR 是否閒置，用 `ps -eo args | grep -c '[b]in/opencodereview review'`；`pgrep -f` 會匹配到包著這個 pattern 的 bash 指令本身，永遠不會判定為閒置。刪之前先確認沒有正在跑的 review（`pgrep -af swear-review`，並且最近一小時沒有新目錄），然後用 `find ... -mmin +60 -exec rm -rf {} +` 清掉。
-- journald：直接 `journalctl --vacuum-size=200M` 會釋放 0B，因為空間都在 active journal 檔。要先 `sudo journalctl --rotate` 再 vacuum，1.3G 才會降到 178M。
-- `<worktree-root>/hapi/*`：每個 worktree 的 `du` 約 1.7–2.2G，但 bun 的 hardlink 讓單獨刪一個 worktree 實際釋放得比較少（8 個約 5G）。只刪同時符合「`git status --porcelain` 為空」以及「`git branch -r --contains HEAD` 有結果」的 worktree，並從 `<home>/hapi` 執行 `git worktree remove`。注意 repo 是 `swear01/hapi`，查 PR 時不要用上游 repo 名。
-
-## 看起來像暫存，但不能刪
-
-- `/var/tmp/qmd-memory-swever/`：這是 shared-memory 現役的 QMD config 和 index（`QMD_CONFIG_DIR`、`XDG_CACHE_HOME` 都指向這裡）。`cache/qmd/models` 裡的三個 gguf（embedding、reranker、query expansion，共 2.4G）都在用，`cache/qmd/index.sqlite` 和 `config/qmd` 也是現役的。其他像 `cache-*`、`config/<test-name>`、`index.sqlite.*.bak`、`*.snapshot.sqlite-*` 都是測試留下的副本，2026-10-26 已清掉，整個目錄剩 2.5G。
-
-## 已刪除的 issue #25 資料
-
-- 使用者確認後，2026-10-26 刪掉了 `/var/tmp/shared-memory-issue25-20260821-oracle/`（2.9G，redacted corpus 和 episodes）和 `/var/tmp/candidate-v3/`（0.9G shards）。當時 agent-memory issue #25 雖然還是 open，但從 2026-08-21 之後就沒有進度。要恢復的話，從原始 session log 用 `redact_jsonl.py` 重新產生。
-
-## 殘留程序
-
-- 2026-08-14 有一次 dsh 測試用 `nohup node_modules/.bin/dsh --profile web --patch hapi-no-web.yml --port 0 &` 在 `/tmp/dsh-runtime-test` 啟動，之後沒有 kill。它在 pm2 cgroup 底下掛了兩個多月，監聽 127.0.0.1 的隨機 port。agent 測試背景 server 時，結束前要記得 kill。
-- agent 跑 Android build 會留下 Gradle daemon（約 0.5G RSS），閒置 3 小時會自己結束，不需要處理。2026-11-14 起這台已經沒有 Android SDK，Android build 改到遠端跑（見 heavy-work-goes-remote）。
+[Oracle 2026-10 專案收尾、容量和逐項佐證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/oracle/disk-cleanup.md)

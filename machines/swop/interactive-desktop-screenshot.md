@@ -6,10 +6,11 @@ status: active
 updated: 2026-11-04
 ---
 
-# swop：SSH 下擷取桌面截圖
 
-- `ssh swop` 跑在非互動 session，`Get-Process` 看不到 `MainWindowTitle`，`CopyFromScreen` 會得到黑圖。
-- 使用者 `stanl` 通常已登入互動桌面（`Get-Process explorer -IncludeUserName` 可看到 SessionId）。把下載／啟動／UI Automation／`CopyFromScreen` 寫成 ps1，用 `schtasks /create ... /it /ru stanl` 建立互動式排程工作跑一次，完成後刪除，就能拿到真實畫面。
-- 2026-11-04 用此法下載 MobaXterm Home Edition portable（v26.6）到 `<swop-home>/Documents/Codex/2026-11-04/mobaxterm/`，以 gupstest 金鑰實連工作站並截圖 Session settings、X11-Forwarding、`DISPLAY=localhost:10.0`、xterm。
-- v26.6 的 SSH 表單是 `Remote host` / `Username` / `Port`，沒有舊教學說的「Specify username」勾選框；X11-Forwarding 與 Compression 在 `Advanced SSH settings` 分頁。
-- 在 ssh 裡用 `powershell -Command` 傳 `$_`、引號很容易被 cmd 吃掉，複雜查詢改成 scp 一個 ps1 再 `-File` 執行。
+`ssh swop` 落在非互動 session，`MainWindowTitle` 可能空白，`CopyFromScreen` 可能產生黑圖。
+
+擷取前確認使用者授權，再用 `Get-Process explorer -IncludeUserName` 確認目前的互動使用者和 SessionId。在同一使用者的桌面執行核准的腳本，使用一次性 `schtasks /create … /it /ru <interactive-user>` 排程，完成後刪除工作。核對工作執行結果與實際截圖。
+
+複雜 PowerShell 查詢透過 SCP 上傳 .ps1 再用 `powershell -File` 執行，避免 SSH 的 Windows command shell 改寫 `$_` 或引號。
+
+[原始驗證紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/swop/interactive-desktop-screenshot.md)

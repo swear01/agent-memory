@@ -30,3 +30,7 @@ When the WirePulling project is already open in Unity, same-project batchmode ca
 MCP resource listing is not proof of an Editor connection. In the same session, the MCP instance list repeatedly reported zero instances and scene/console calls returned `No Unity Editor instances found`, although Computer Use showed a Unity window.
 
 Do not claim Play Mode, runtime Console, or visual MCP validation until an instance is registered.
+
+For level acceptance, translate the designer’s intent into a real Play Mode path. Test standing and movement on the actual floor, interaction, and completion. This catches a one-stroke puzzle that looks valid in static checks but has no standable floor.
+
+[合併來源](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/WirePulling/level-intent-playability.md)

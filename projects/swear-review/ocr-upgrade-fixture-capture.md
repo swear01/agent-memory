@@ -16,3 +16,7 @@ source_refs:
 - **服務看似 idle 或 health 綠就報完成。** 在 Oracle 用唯讀 DB 確認 `review_jobs`／`review_runs` 無 queued/running，檢查 OCR 程序，累計 metrics 不能代替。保留 OCR 全域目錄、app dist、config 和適當 DB 備份，再升級 build/runtime，核 startup 及 health/ready。用 open PR 的真實 full review 核版本、terminal coverage 和結果；已合併 PR 上指令不建立 job。Rollback 同時復原 binary、app revision/dist 與 config，重啟後再驗。
 
 [原始紀錄](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/projects/swear-review/ocr-upgrade-fixture-capture.md)
+
+- **大 PR review item timeout／compression exhausted。** 先查逐 item manifest、部署版本、工具與 `code_search` 回應尺寸，再確認 gateway 獨立 inference 和精確 PR head。1.13.13 曾成功處理 #288 的兩個大項目，單一樣本不足以保證其它 PR。舊 v1.12.9 的自訂 tools file 已退役。check 綠只證明 review 執行範圍，另讀實際 findings。
+
+[合併來源](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/swear-review/ocr-large-pr-recovery.md)

@@ -9,48 +9,10 @@ tags: [日文, 片假名, katakana, 練字紙, 官方詞表, 雙面列印]
 
 # 片假名單字練習紙
 
-## 使用者需求與固定版型
+- 選外來語、人名和地名，以中文意思提示遮住左側默寫。相同拼寫只一行，確有用法的不同寫法均保留。長音、小假名各一格，六字在前、七字在後。勿為補滿或湊雙面增加未要求的詞、複習行或單假名。
+- A4 直向、每面 22 行、每行連續 14 格，每格 13 mm，第七格後分隔。左 7 格描寫、右 7 格默寫，六字兩側各餘一格。右邊 18 mm 是中文欄（含 2 mm 間距），左右頁邊各 5 mm、上下各 5.5 mm。無可見標題、頁碼及讀音。
+- 官方來源為 NINJAL 實際 href 的 `rokusyutaisyo.csv`（cp932，教育詞彙庫）、IRODORI `wordlist_all.xlsx`、MARUGOTO 繁中詞表，另有《大學日本語》第一、二冊。需跨冊去重及核對中文義與拼寫。IRODORI Excel 的フランダンス，官方 PDF 寫フラダンス，按 PDF 排除在六／七字外。勿把 Tシャツ、Jポップ、JR、SOS 的全片假名讀音當慣用字形。KanjiVG r20260714 須保留 © Ulrich Apel、CC BY-SA 3.0 及來源。
+- 正式修正版在 Drive `document/學習紀錄/碩一/日文二上/`，本機在 `<user-documents>/Codex/2026-10-12/new-chat-2/outputs/`，附 `詞彙與來源.txt`。產生器 `work/build-katakana-words.py` 和 `work/katakana-word-manifest.json` 在 `<user-documents>/Codex/2026-10-08/new-chat-3/`，核對已移除補詞邏輯，每筆 manifest 只出現一次。核對 ActualText、末頁留白，再下載 Drive 檔驗證。保留單假名與漢字練習紙。
+- A4 黑白、100% 原尺寸、雙面長邊翻頁。PDF 的 DuplexFlipLongEdge／PrintScaling=None 仍要讀回印表機設定。修正版沒有重印，依當次授權份數列印。相關 [[machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print]]。
 
-使用者常記得單字讀音及平假名，卻想不起片假名寫法；單獨反覆練假名效果不佳，改用實際外來語與人名、地名練習。中文意思作為提示，淡字描完後可遮住左側、看中文在右側回想寫法。
-
-- 2026-10-12 使用者明確要求：不要為了補滿頁面或雙面紙擅自新增單字、重複詞或其他未要求的內容；空間不足一頁就留白，不必湊偶數頁。之後製作練習材料都應遵守已要求的內容範圍。
-- 同一個詞的不同拼寫可以保留，例如「コンピュータ／コンピューター」、「スパゲッティ／スパゲッティー」；同一拼寫只排一行，不自行加複習行。
-- A4 直向，每面 22 行、每行 14 個連續 13 mm 方格；中間沒有格子間隙。
-- 左側 7 格淡字描一次，右側 7 格空白自行寫一次。統一練兩遍；六字詞每側剩下一格，不能再塞單字母補強。
-- 每行分隔豎線固定在第七格後，不依詞長移動；整頁六字詞全部在前，七字詞全部在後。
-- 中文意思只放最右側 18 mm 欄（含 2 mm 間距）；左、右頁邊距 5 mm，上下各 5.5 mm。沒有可見標題、頁碼或讀音。
-- 長音「ー」、小假名各占一格；六／七字是實際書寫字元數，不能按音節數計算。
-- 列印採 A4、黑白、100% 原尺寸、雙面長邊翻頁；PDF 內嵌 DuplexFlipLongEdge 與 PrintScaling=None，仍需向印表機明確指定並讀回實際設定。
-
-## 已完成版本與來源
-
-目前版本為 2026-10-12 修正版：313 種不同拼寫，各一行；184 個六字詞、129 個七字詞，共 15 頁。最後一頁只有 5 個詞，其餘 17 行格子留白；雙面列印仍需 8 張紙，最後一張背面留白。307 詞出現在官方來源，另外 6 詞出自既有《大學日本語》第一、二冊。
-
-2026-10-08 舊版擅自加了 39 行複習詞，形成 352 行／16 頁；使用者指出重複後已移除。舊版僅是歷史列印記錄，不能再把「補滿雙面紙」當成需求。
-
-- 國立國語研究所 NINJAL「日本語教育基本語彙データベース」共 11,827 筆教育詞彙對照資料，原研究為 2009 年報告；不是當前常用頻率排行榜。官方頁面 mmsrv.ninjal.ac.jp/brfvep/，實際 CSV 檔名 rokusyutaisyo.csv（cp932）；來源頁面的連結文字與實際檔名拼法不同，應用實際 href。
-- 國際交流基金 IRODORI 入門、初級 1、初級 2 合併詞表共 4,247 筆、3,676 個不同見出し；官方 resources.html 下 wordlist_all.xlsx。
-- 國際交流基金 MARUGOTO 繁體中文詞表涵蓋入門到中級 2；中級 1 有 2,878 筆、中級 2 有 3,633 筆，跨冊需去重。
-- 不把 Tシャツ、Jポップ、JR、SOS 的全片假名讀音當成慣用片假名拼寫。IRODORI Excel 的フランダンス與初級 2 PDF 的フラダンス不一致，採 PDF 拼法後為五字，不納入本版。
-- 人名及少用地名允許納入，但缺乏可確認中文意思或疑似拼寫錯誤的資料不硬湊。
-- 淡字沿用 KanjiVG r20260714 向量筆畫，© Ulrich Apel，CC BY-SA 3.0；原始來源及授權留在附檔與 PDF 中繼資料。
-
-## 可重用檔案
-
-產生器與來源工作根目錄：`<user-documents>/Codex/2026-10-08/new-chat-3/`。
-
-- 修正版 PDF 與詞表：`<user-documents>/Codex/2026-10-12/new-chat-2/outputs/片假名單字練習紙_六字七字_雙面.pdf`、同目錄 `詞彙與來源.txt`；原工作根的同名檔案也已同步修正。
-- 完整來源連結及授權留在 `詞彙與來源.txt`；原工作根 `outputs/版面預覽.png` 為未變動的第一頁預覽。
-- 產生器：`work/build-katakana-words.py`；字詞與逐行配置：`work/katakana-word-manifest.json`；原始官方資料：`work/sources/`。
-- 修正版 PDF SHA-256：`4ffbc3a3044a6872d0c0c7f6b01da8b8fa2dae3679238c099dc8a1914241cceb`。
-- 已逐頁解析 15 頁 PDF 的 ActualText 並與 manifest 對照：313 行、313 種拼寫、無重複拼寫；原詞表、中文、順序及不同拼寫全部保留。已檢查全部頁面縮圖及最後一頁版面，兩處交付 PDF 雜湊相同。
-- 產生器已移除補詞邏輯，頁數按每頁 22 行計算，並斷言每種拼寫恰出現一次。修正版未重新列印。保留既有單假名及漢字練字紙；不要拿舊生成器覆蓋這版。
-- 2026-10-12 依使用者要求，將 15 頁修正版 PDF 放到 Google Drive `document/學習紀錄/碩一/日文二上/`，並從遠端重新下載；頁數與 SHA-256 均吻合。使用者不需要此次去重前的備份，`<user-documents>/Codex/2026-10-12/new-chat-2/work/before-dedup/` 已移到垃圾桶；不得再把它當作需保留的工作備份。
-
-列印機的紙匣、IPP 與完成判定參照 `machines/swairM5/kyocera-ecosys-m6635cidn-ipp-print.md`。這次列印授權只限一份，不代表以後可自行重印。
-
-## 2026-10-08 實際列印驗證
-
-使用者要求本版雙面列印一份，並記錄記憶及 QMD。先核對實驗室 Kyocera ECOSYS M6635cidn 型號與既有設備 UUID，Validate-Job 接受後只送出一個 Print-Job，指定紙匣 2、A4、黑白、copies=1、sides=two-sided-long-edge、print-scaling=none。Get-Job-Attributes 讀回相同雙面與不縮放設定，最終 job-state=completed、job-state-reasons=job-completed-successfully、job-impressions-completed=16，因此本次完成 16 面／8 張 A4；未在現場目視檢查紙張。
-
-本次直接經本地 en0 到達既有實驗室印表機，不能宣稱 VPN tunnel 已建立；曾執行既有連線捷徑，最後以斷線捷徑恢復原先無 VPN tunnel 狀態。實際設備識別與完成判定優先於推測網路狀態。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/japanese-study/katakana-word-penmanship.md)

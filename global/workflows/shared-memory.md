@@ -12,7 +12,7 @@ tags:
 
 ## 查詢與索引
 
-- 工具、瀏覽器或 session 第一次非預期失敗時，先查 `qmd search "<服務> <動作> <原始錯誤>" -c memory`，再用 `qmd get` 讀解法和適用版本。缺少觸發條件時，修正擁有流程的 skill 入口。
+- 接手具名機器、特定專案、重複流程或續跑工作前，先搜尋目標與動作。工具、瀏覽器或 session 第一次非預期失敗時，在重試或回報受阻前加原始錯誤查 `qmd search "<服務> <動作> <錯誤>" -c memory`，再用 `qmd get` 核對適用版本。觸發規則由 `shared-memory` skill 維護。
 - 沒有 `-c memory` 的搜尋會混入預設索引中的本機 collections。若同一條規則或結案報告排在共享解法前，先用 `qmd collection list` 核對索引來源。SwairM5 的舊 `codex-memory-notes` 已獨立，僅在需要回查時用 `qmd --index legacy search "<關鍵字>" -c codex-memory-notes`。
 - `qmd status` 的 pending 是整個索引的統計。先核對檔案屬於哪個 collection，日常只更新共享向量用 `qmd embed -c memory`。在 QMD 2.8.3，`update` 的 pending 提示可能仍用預設模型計算。以 scoped embed 的 `All content hashes already have embeddings` 或實際向量涵蓋率確認。
 - GPU 回報 `Failed to create any embedding context` 時，用 `qmd doctor` 確認裝置與可用 VRAM。GPU 實際失敗後，可用 `QMD_FORCE_CPU=1 QMD_EMBED_PARALLELISM=1 qmd embed -c memory` 單工重試，完成後確認 embedding freshness。有從 Mac 複製同模型向量的無 GPU 機器，依各機流程更新。

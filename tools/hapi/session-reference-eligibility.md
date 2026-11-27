@@ -22,7 +22,7 @@ updated: 2026-09-09
 
 ## 測試隔離
 
-CLI globalSetup 固定使用暫存目錄下的 hapi-test-config.json，結束時刪除。不同 worktree 的完整測試不可共用同一暫存目錄平行跑，否則一套 teardown 會令另一套報 Missing isolated hub config；依序執行即可。
+平行執行請為每次 invocation 建獨立 `TMPDIR`，避免共用隔離 Hub 產物後被其他套 teardown 移除。見 [測試隔離](parallel-test-tmpdir.md)。
 
 ## SQLite iterator 注意
 

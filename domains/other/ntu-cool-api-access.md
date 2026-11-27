@@ -32,3 +32,8 @@ tags:
 - 對學生用該作業 `submissions/<user_id>/comments/files` 上傳留言附件，再 PUT submission comment 的 `file_ids`。GET 帶 `include[]=submission_comments` 驗附件。輸入 `posted_grade` 後讀回 score，`post_manually` 下 `posted_at` 仍可為 null，學生還看不到。未發布作業曾拒絕打分 403；正式發布會讓學生看到、可能通知，不能為測試寫入私自打開。區分已儲存分數、已發布分數、留言附件和學期正式成績。
 
 [整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/domains/other/ntu-cool-api-access.md)
+
+### SpeedGrader 的未公開儲存
+
+- 作業手動公布時仍需核對已公布狀態；寫入後以重新載入的分數和自己的留言回讀為證。SpeedGrader 僅 fill 可以顯示數值卻未儲存，實測逐字輸入且 Submit 後才為 graded／Hidden。不得把已儲存狀態視為已公布，禁止在未另取得授權時 Post Grades。既有的學生留言不當刪除候選。
+- 教學驗收用該次正式 rubric、指定 top 和原始測試資料。沒有新增要求時不以語言偏好、字數或同一缺失觸發多少 testcase 重複扣分。對人工作了未聲明的前處理或修改的測試，要和原始可直接重跑結果分開；私人逐人成績、留言和原始檔案留在受控來源。[HW1 原 rubric、cell-count 判斷與批改驗證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/domains/eda/hw1-cell-count-grading-policy.md)

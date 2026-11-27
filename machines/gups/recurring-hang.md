@@ -31,4 +31,4 @@ tags: [gups, ieda1, hang, 卡死, POST 76, ASMedia, ST2000DM008, BIOS, netconsol
 - 卡住時要完全斷電再開；只按 reset 可能會停在 POST 76。
 - 2026-11-26 另有一次日誌停更：那是記憶體耗盡後 `sssd` worker 與 `systemd-journald` 掛掉（journald 撞上 StartLimit），不是這種沒有 OOM 紀錄的沉默卡死。見 [[sssd-login-memory-protect]]。
 
-相關：[[campus-firewall-ssh-rate-block]]、[[freeipa-ieda-servers]]、[[nfs-home-ieda2]]、[[sssd-login-memory-protect]]
+相關：[[campus-firewall-ssh-rate-block]]、[[freeipa-ieda-servers]]、[[sssd-login-memory-protect]]

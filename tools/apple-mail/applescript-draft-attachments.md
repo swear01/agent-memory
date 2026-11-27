@@ -1,44 +1,39 @@
 ---
-title: 用 AppleScript 在 Apple Mail 建立帶附件的草稿與寄出
+title: NTU M365 工作信箱附檔：Apple Mail 草稿與寄件驗證
 scope: tools/apple-mail
 status: active
 confidence: high
 created: 2026-10-20
-updated: 2026-10-20
-tags:
-  - apple-mail
-  - applescript
-  - osascript
-  - attachments
+updated: 2026-11-28
+tags: [apple-mail, applescript, attachments, ntu-m365]
 ---
 
-# 用 AppleScript 在 Apple Mail 建立帶附件的草稿與寄出
+依全域 AGENTS.md，NTU M365 工作信箱平時用 Outlook connector，需附檔時用 Apple Mail。Gmail 與 NTU 學生信箱使用 [Himalaya](../himalaya/himalaya-ortie-setup.md)，學生 SMTP 為 `himalaya -a ntu`。寄出前列出收件人、主旨與附件，並核對實際寄件帳號。
 
-Gmail connector 的 `create_draft` 要把附件 base64 塞進參數（幾百 KB 的 PDF 會吃掉大量 token），Outlook connector 的草稿不支援附件。macOS 上改用 `osascript` 讓 Apple Mail 直接讀本機檔案，零 token 成本，也能指定寄件帳號。2026-10-20 用此方法寄出 7 張實驗室採購發票 PDF。
+## 草稿
 
-> 2026-10-20 起 Gmail 與 NTU 學生信箱改用 himalaya 寄信（見 [[himalaya-ortie-setup]]）；這個方法只留給 NTU M365 工作信箱需要附件時。
-
-## 做法
+Apple Mail 可直接附上本機檔案。以 `osascript - "<寄件帳號>" "<收件地址>" "<主旨>" "<正文>" "<附件完整路徑>"` 執行草稿腳本，讓 `on run argv` 處理參數和中文路徑。
 
 ```applescript
-tell application "Mail"
-  set m to make new outgoing message with properties {subject:"...", content:b, sender:"<account-address>", visible:true}
-  tell m
-    make new to recipient with properties {address:"<recipient>"}
-    tell content
-      make new attachment with properties {file name:(POSIX file "<path>.pdf")} at after the last paragraph
+on run argv
+  set {senderAddress, recipientAddress, subjectText, bodyText, attachmentPath} to argv
+  tell application "Mail"
+    set m to make new outgoing message with properties {subject:subjectText, content:bodyText, sender:senderAddress, visible:true}
+    tell m
+      make new to recipient with properties {address:recipientAddress}
+      tell content
+        make new attachment with properties {file name:(POSIX file attachmentPath)} at after the last paragraph
+      end tell
     end tell
+    save m
   end tell
-  delay 2
-  save m
-end tell
+end run
 ```
 
-- 檔案路徑透過 `osascript - "$DIR" <<'EOF' ... on run argv` 傳入，避免中文路徑在 shell 引號裡出錯；Google Drive for desktop 的 `CloudStorage/.../我的雲端硬碟` 路徑可直接用。
-- `sender` 要填 Mail 帳號的完整地址（`get email addresses of every account` 可查）。
+## 驗證與回復
 
-## 陷阱
+- 草稿的 `count of attachments of outgoing message` 曾回 0，讀 `mail attachments` 時也可能報 `-1728`。用草稿視窗核對附件圖示、檔名及郵件大小。寄出後對實際寄件帳號的 Sent mailbox 查該封信，`message` 物件上的 `count of mail attachments` 可作讀回。
+- 寄送前核對同一份草稿的 From、To、Subject 和附件。若透過 AppleScript 選取草稿，只有主旨相同不足以確認目標；需核對欄位和唯一性後才處理。
+- `close m saving no` 不會移除已儲存的草稿。需要移除時只處理已核對的目標草稿，並重新整理後讀回，因為同步可能略有延遲。
 
-- `count of attachments of outgoing message` 與 `mail attachments of outgoing message` 對草稿永遠回 0 或報錯 `-1728`，**不能拿來驗證**。改用 computer-use `app_screenshot` 看草稿視窗底部的附件圖示與「郵件大小」。
-- `close m saving no` 只關掉視窗；已 `save` 過的草稿仍留在 `drafts mailbox`，要另外 `delete (every message of drafts mailbox whose subject ...)`。刪除後立即查詢仍會列出，約 3 秒後才同步消失。
-- 寄出用 `send item 1 of (every outgoing message whose subject is "...")`；先確認數量為 1 再送。寄出後驗證要掃 `every mailbox of every account`（NTU POP 帳號的寄件備份叫 `Sent Messages`），`message` 物件上的 `count of mail attachments` 才是可信的附件數。
+[原始實測與歷史做法](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/apple-mail/applescript-draft-attachments.md)

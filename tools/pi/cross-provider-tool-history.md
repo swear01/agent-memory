@@ -66,11 +66,4 @@ core 不會修掉這條路徑。`pi-codex-conversion` 3.0.23 的相關 message-h
 也與 3.0.15 無差異；Meta 使用 Pi core 的普通 `openai-responses` provider，並不
 走 Codex adapter 的去重路徑。
 
-## Fleet 部署狀態
-
-2026-08-30 已在七台 HAPI runner（四台共用 NFS home 的 Linux 主機、Zeus、
-Oracle、Mac）完成更新並逐台 smoke：Pi 0.84.4、`@aliou/pi-processes` 0.12.0、
-`pi-tool-repair` 0.2.3、`pi-subagents-lite` 1.13.0、
-`@howaboua/pi-codex-conversion` 3.0.23、`pi-web-access` 0.27.0；各機
-`npm audit --audit-level=high` 均為 0 vulnerabilities，預設模型呼叫均回覆 `OK`。
-既有 extension 清單與鎖版策略保留，未更新 HAPI。
+該修正和各 runner 的版本組合是歷史驗證；遇同樣 400 時以當前 `pi-processes` 通知方式和實際 request 回讀。[歷史機群更新與驗證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/pi/cross-provider-tool-history.md)

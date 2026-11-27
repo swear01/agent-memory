@@ -2,10 +2,10 @@
 title: "Valheim Duo QoL v61：模組更新、負重設定遷移與拾取網格設定"
 scope: projects/valheim
 status: verified-packaging-runtime-unverified
-updated: 2026-10-18
+updated: 2026-11-28
 ---
 
-截至 2026-10-18，本次核對的正式交付為 v61，取代此筆先前的 v58 狀態。續作先讀目前 repository、lock 與交付，不把歷史版本當成當前版本。
+2026-11-28 查 repository 的 tags 與 `main/history/` 皆指向 v61；GitHub 的 latest Release 仍是 v34。續作以 [lock.json](https://github.com/swear01/valheim-duo-qol/blob/main/lock.json) 與 [history/versions.json](https://github.com/swear01/valheim-duo-qol/blob/main/history/versions.json) 核對實際版本，再找同版私人交付。下文玩法與驗證範圍依 v61。
 
 - 專案 `<user-documents>/valheim-duo-qol`，公開 repo `swear01/valheim-duo-qol`。v61 檔名 `Valheim-Duo-QoL-v61.r2z`，profile `Valheim-Duo-QoL-20261018-v61`；51 個線上套件、42 份公開設定、43 份私人設定。
 - 雙人交付 `<project-root>/deliveries/2026-10-18/Valheim-Duo-QoL-v61.r2z`，與正式私人重建逐位元組相同，權限 0600。公開／私人同名，不能拿公開下載代替私人交付。
@@ -34,8 +34,6 @@ updated: 2026-10-18
 
 主分支只留 `history/v61/`，歷史原始 archive／lock 留在對應 tags，不改寫已發布 tags。兩人退出遊戲、備份角色／世界後，匯入同一份私人包為新 Gale profile，勾選 Import all files 才會複製內附 DLL。
 
-v61 公開 archive SHA256：`c0fd15dfad49389200a21bff4e751db7a2df0e6608bd8970d114070fb06bd2ea`。私人交付雜湊留在本機驗證紀錄，這裡不記錄私人來源或名單。
-
-模組包 PR #30 已合併；head 與 v61 tag 為 `ceb28a9880080fabda7cad85388540f6d42ea9b1`，合併 main 為 `9f009b1f49c157b6a2342ab2de9639e154eb71d5`。17 項 Python 測試、27 項 SlashBack 檢查及相同 DLL 重建、61 版 archive／lock／tag／profile、依賴與設定、公開／私人重建、v60→v61 私人 ZIP 差異、隱私檢查與 0600 均通過；私人權限與 Badgers 逐位元組不變。三項同 head CI 通過，Codex code／security review 在同 head 均 completed 且無 findings，依 OR 規則採第一個通過者。Swear 為模型／OCR 服務失敗、Cursor 為額度用盡，均不是程式檢查通過；Gemini 依賴誤報已以完整 lock 舉證。本機已同步 main，任務分支／worktree 已清理。
+v61 的包裝與版本鎖驗證見 [模組包 PR #30](https://github.com/swear01/valheim-duo-qol/pull/30) 及專案 `research/mod-updates-v61-20261018/`。
 
 Gale GUI 匯入、新版 ExtraSlots 備份恢復、負重／腰帶／其他模組互動、Torch 火光、食物格續吃／自動收納排除、死亡食物保留、Unity／Harmony 與雙人／長時間行為皆未在本次實測；沒有啟動遊戲或修改存檔。種植重疊／扣料異常仍未確認修復。證據為 `<project-root>/lock.json`、`history/versions.json`、`research/mod-updates-v61-20261018/verification.json`、`pre-merge-verification.json`、`merged-verification.json` 與模組包 PR #30。記憶同步及 QMD 索引要另做遠端與搜尋讀回，不由模組包檢查推定。

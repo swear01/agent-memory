@@ -22,6 +22,8 @@ updated: 2026-09-29
 
 - Cthulhu 和 Valkyrie 的 `<remote-home>` 是同一份 NFS。清理只做一次；另一個 client 短暫看見舊名稱時先重讀再操作。已核准的可恢復清理進使用者自己的 Trash，移入垃圾桶不等同已釋放容量。別將釋放容量的需求當成清空整個 Trash 的授權。[Cthulhu 原先的清理筆記](https://github.com/swear01/agent-memory/blob/9b2d556e370f3a71736d5dc0a63f3b1e1c8c3a0e/machines/cthulhu/shared-nfs-home.md)
 
+- `/tmp`、`/var/tmp`、工作暫存目錄不一定是獨立磁碟；用 `findmnt -T` 和 `df` 比對實際可用量，查活工作及必要證據再選位置或清理。[暫存共用根分割區的例子](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/hapi-fleet/scratch-disk-capacity.md)
+
 ## 搬移、故障碟與刪除閘門
 
 1. 分批保存清單、容量、mtime、owner、SHA-256，查程序引用、special files、巢狀 mount、目的衝突和磁碟空間。NFS 可用 `rsync -aHAXS --numeric-ids` 建 incoming，讀回做帶 checksum 的 dry-run，核對 metadata，從第二個入口確認可讀。Docker 另查 container/builder 引用。SHA manifest 用相對路徑時從指定根目錄驗。

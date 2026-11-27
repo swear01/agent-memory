@@ -21,7 +21,7 @@ redaction: passed
 
 # Targeting
 
-Use the macOS bundle identifier for localized applications. A localized display name failed to resolve while `com.apple.systempreferences` worked.
+Use the macOS bundle identifier for localized applications. A localized display name failed to resolve while `com.apple.systempreferences` worked. A game lookup returned `Invalid app` and switching to the launcher ID then timed out. Listing an app or trying its ID does not establish screen access. Verify the actual target window or screenshot before claiming a visual check. This game case did not produce a successful screenshot. [Historical game probe](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/computer-use/desktop-app-negative-probe.md)
 
 # State refresh
 

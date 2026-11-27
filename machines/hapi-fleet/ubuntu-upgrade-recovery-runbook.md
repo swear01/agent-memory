@@ -52,3 +52,10 @@ NIS 斷線診斷與七天認證快取適用範圍如下。
 原始碼參考：[proxy_child](https://github.com/SSSD/sssd/blob/2.12.0/src/providers/proxy/proxy_child.c#L485-L537)、[server_setup](https://github.com/SSSD/sssd/blob/2.12.0/src/util/server.c#L456-L518)。
 
 [整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/hapi-fleet/ubuntu-upgrade-recovery-runbook.md)
+
+## Ubuntu 26.04 重開後的常見 failed units
+
+- `logrotate` 報 `duplicate log entry for /var/log/cloud-init*.log` 時，先核對 `cloud-init` 與 `cloud-init-base` 的兩份規則確實同內容，原修法只退役重複的 `cloud-init` 規則，沒有 cloud-init 的主機不適用。
+- SSSD 延續寫 `sssd.log.1` 時，查 `/etc/logrotate.d/sssd-common` 的 postrotate PID 路徑是否仍為 `/var/run/sssd.pid`；已確認的實際 PID 檔是 `/run/sssd/sssd.pid`，錯誤被 `|| true` 吞掉。修正後送 HUP 並驗新 log 收到內容；套件更新如遇 conffile 提示重查這個修補。
+- Cthulhu 若 `apport-autoreport` timeout 且 whoopsie 不運作，先核對 `/var/lib/apport/autoreport` 旗標是否符合使用者允許的回報設定，不在無授權時改成對外上傳。GDM 的舊 `user@` 或 scope 失敗先確定另有健康 greeter；若是 [systemd-oomd 舊延遲](earlyoom-nis-dynamicuser.md) 的殘留，修原因後清 failed state 即可。
+- 2026-11-12 的原設定備份位於各台 `/var/backups/fleet-unit-fix-20261112/`，還原前核對後續改動與證據。[當次單元故障、修正與驗證](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/hapi-fleet/degraded-units-cleanup-20261112.md)

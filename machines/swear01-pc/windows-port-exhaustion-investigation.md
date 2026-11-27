@@ -27,3 +27,8 @@ updated: 2026-10-24
 - 使用者暫停永久固定 Standard，保留監測。當次手動 settings.json 後重啟，WebRTC `Creating audio engine: standard` 證明當次切換，但 renderer `Deferring` 及後續切回需要重新讀 log。官方 web bundle 的 automatic branch 屬機制線索，未核桌面同版，不能宣稱某個開關是持久解。需要對照就自然結束通話但保留 Discord 行程，比較至少 30 分鐘；不要中斷通話或同時改多個裝置。只通知新的可處理異常或有效對照。
 
 [整理前的完整證據與逐批紀錄](https://github.com/swear01/agent-memory/blob/54da0f0adfdb3dacb3bca59a729b12975d44ec9b/machines/swear01-pc/windows-port-exhaustion-investigation.md)
+
+### 死機時的檔案系統與背景工具
+
+- Windows 提升 PowerShell 的 `chkdsk.exe` 曾回 Access denied，維持系統 ACL，改用 `Repair-Volume -Scan` 與 Chkdsk 26226 event 讀回非離線掃描。掃描無誤只代表該次 filesystem 檢查，不能排除韌體、SSD 或 allocator。SMART 累計值要看是否持續增加，不能只根據歷史計數指認根因。
+- 更新 PowerToys 後依使用者設定保留 Awake/FancyZones、停用 LightSwitch。查選項和實際 process，與 port 失敗是否改善分開報告。[當次套件更新與 SSD 檢查收據](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/machines/swear01-pc/windows-freeze-powertoys-ssd-checks.md)

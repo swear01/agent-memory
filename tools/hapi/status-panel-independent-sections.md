@@ -1,13 +1,12 @@
 ---
-title: "Session status 的 Goal 與各清單不要推測成同一階層"
+title: HAPI Session Status 面板的唯讀與獨立區塊
 scope: tools/hapi
-status: active
-updated: 2026-09-16
-evidence_digest: 70e500376819b2bebff9c3b60c7efe12aa432100ef49ccc6ca49f3ff866fe777
+status: needs-review
+updated: 2026-11-28
 ---
 
-# Session status 的 Goal 與各清單不要推測成同一階層
+使用者對 HAPI Session Status 面板的需求：唯讀呈現 Goal、Task 清單、Subagents 和 Background terminals，各有明確來源和狀態。Task 用最新 snapshot，不累積舊清單，也不猜 Task 和 Subagent 屬於同一階層。錯誤放回所屬項目，無錯誤或空區段時無須填充；額度資訊不混進面板。
 
-使用者明確要求 task 是 list，subagent、goal、task、terminal 各自獨立；歷史助手後續方案移除帳號 allowance，將錯誤放在所屬項目並隱藏空區域。
+背景 terminal 應可辨識與查看；依該要求不加 Stop、Re-run 等更動執行的按鈕。若需導航查看輸出，與程序控制交互分開。這些是規格討論，不表示 backend 事件格式、區塊或端到端流程已實作。驗收以實際事件與現行畫面資料為準。
 
-依實際事件表示目前目標、最新 task snapshot、subagent 與明確背景工作，不猜 task 與 subagent 的對應，也不把歷史 task 累積成目前清單。使用者要求沒錯誤就不顯示錯誤提示；來源是設計討論，列出的 backend 欄位及能力不是已驗證實作。
+[原本唯讀要求](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/hapi/status-panel-readonly-scope.md) · [原本區塊要求](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/tools/hapi/status-panel-independent-sections.md)

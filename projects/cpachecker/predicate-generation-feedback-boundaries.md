@@ -5,35 +5,12 @@ status: active
 updated: 2026-09-28
 ---
 
-在凍結 revision `e8ffb7aace30d6c2ffc323da3e38ee9fbd15bb7b` 的 native75 中，LLM 前端已有多輪 schedule、最近4輪 CE／outcome、precision 累積與 source slicing。重新提議這些功能之前，先辨認真正缺少的資料。
+- 提議新回饋前先讀 production prompt。Native75 已有多輪排程、最近 4 輪 CE/outcome、precision 累積和 source slicing。曾看到 `CeSummaryBuilder` 每條 relation 截 280 字元、structured CE 缺 branch_conditions／ssa_values／assignments、infeasible pivot／ARG prune unavailable；source 仍可含分支和賦值，`G ! overflow` 亦有提供。模型增量與注入前 `native_delta` 分開。當次 usefulness gate disabled，raw whitespace 去重不等於 solver 等價。
+- PRECISION_ONLY 不必是 invariant。ICE 正反／implication labels 需真 teacher；整條假反例 UNSAT，局部 SAT prefix/transition 未必可達。用實際 ARGPath 核完整 CFA edges 到達 prompt，另驗 consumer 和解題效果。#152 RETIRED，不重跑停止格；新研究凍結母體、answer-free 與等長 irrelevant controls，context／scheduler 分開消融。
+- 拆 reducer 做 direct baseline 時保留 corpus 共同 C 語意如 `cpa.predicate.memoryAllocationsAlwaysSucceed=true`，各題依 YAML 保持 ILP32/LP64。漏帶此設定曾把 malloc 允許返回零的反例記為 WRONG，修復後仍可因插值得到 UNKNOWN。
+- `parsePureExpression` 未宣告 wrapper 遇 `~` 可殘留 `CProblemType`。ASTConverter 僅對 `op_tilde` 從有效整數 operand 套 integer promotion、保留 unary minus 行為，encoder 另遞迴拒未解型別。未處理的 exit 1 為 INVALID。
+- PredicateCPARefiner 先 `checkCounterexample` 再進 VGuide；`fallbackWithoutInterpolation` 可能在 non-interpolating UNSAT 後仍重拋原插值錯誤。INFO 訊息不足以證 UNSAT。Source-only 無實際 block/SSA/pointer context 時以 `native_c_context_unavailable` 拒 `c:`。#302 的恢復入口驗真正 UNSAT 後只新增 PRECISION_ONLY，再用 `ARGReachedSet.removeSubtree` 重排；SAT 走真實反例處理。
+- `recovery_precision_delta` 須扣 head 已有的 global/function/local，instance-only 不能視為整個 head 已有。用 CFA path hash、`firstGuardReason`、recheck 例外區分 `repeatedCounterexample` 與前置失敗。以 max rounds > 1 的固定重播排除 cap 混淆；該次重播仍 UNKNOWN。
+- 診斷 jar 的 `config/specification/sv-comp-reachability.spc` 可能從 jar 路徑解譯，保留相對 `config`（可用 symlink），切 CWD 不夠。配置失敗維持 INVALID。
 
-本次只讀稽核151個完成呼叫：全部structured CE明列branch_conditions／ssa_values／assignments unavailable，全部relation summary含省略號；CeSummaryBuilder將單條relation截為280字元。原source仍可能含分支與賦值，所以不能說模型完全看不到它們。structured assertion雖空，但151個prompt均正確明示G ! overflow，不是active property缺失。
-
-RefinementOutcomeStore只有visits、interpolant/block數、候選接受／注入／拒收數與native_delta；最後一項在LLM注入前計算，不能當模型效益。EVERY有111個後續prompt明列infeasible pivot、ARG prune等資訊unavailable。PredicateUsefulnessGate在所有稽核record均disabled，不能拿其歷史bvmul heuristic解釋這批結果。
-
-EVERY的1,506 candidate items展成1,683 head bindings；以同題同arm的head＋僅規範化空白的raw文字計算，795次重複出現（47.2%）。這不是solver語意等價、不表示47.2%可省成本，也不能忽略相同head在不同occurrence／memory context的語意差異。接受／注入數、唯一公式數、局部進度與原題verdict必須分開。
-
-Clause2Inv／Loopy的clauses與Houdini有可借用的候選保存及具體失敗回饋，但不能把PRECISION_ONLY split一律當待證inductive invariant篩掉。ICE正例、反例、implication labels須由相應teacher產生；假反例整條path不可滿足，不能捏造它的concrete model。局部SAT prefix／transition model須標明可能不可達。沿實際ARGPath列完整CFA edges，是較小、尚待效果測試的context補充方向；勿另造parser或擅自啟動已退休precision compiler。
-
-舊Issue152已明確RETIRED／NOT_PLANNED，單例obligation提示／factorization未證泛化。不可重跑舊停止格，再把同題成功稱為通用；新研究需新範圍、跨題型、answer-free與等長無關資訊control。先把context與scheduler分開消融，維持原source、機器語意、consumer及whole CPU/wall。
-
-上述歷史只讀稽核沒有新 verifier／模型呼叫，未產生新增解題或加速結論。可追溯報告與雜湊：
-`<experiments-root>/reports/predicate-generation-methods-20260928/REPORT.md`、
-`EXISTING-RUN-AUDIT.json`。
-
-
-#296 後續實測已確認實際 prompt 收到完整 CFA proof steps（第一對相同 prefix：0筆對56筆，16,000字元上限），但資訊抵達模型不等於 predicate 可消費或新增解題。首輪 direct CEGAR pilot 漏掉 `cpa.predicate.memoryAllocationsAlwaysSucceed=true`：凍結2026-07-11 corpus 的 `sll-token-2` 因允許 malloc 回傳0而三組同判 WRONG。只切換此選項的無 LLM 對照消除空指標反例，但 MathSAT5 插值仍失敗，結果 UNKNOWN。從既有 reducer 配置拆出 direct baseline 時，必須保留原 corpus 的共同 C 語意契約，同時依每題 YAML 保留 ILP32／LP64；不能整份複製 reducer 選項，也不能把共同語意一起刪掉。證據：`<experiments-root>/reports/issue296-allocation-semantics-20260928/`。
-
-#298 確認另一個轉換缺口：`parsePureExpression` 的無宣告 wrapper 讓 CDT 將 `~state_145` 設為問題型別；後續 scope binding 修正 identifier，`ASTConverter` 的 unary default 卻保留舊 `CProblemType`，導致公式編碼拋 `UnsupportedOperationException`。候選是有效的 C 運算；只新增拒收 guard 可止崩潰，但不算修好它的表示能力。修補需從已解析 operand 推導 unary 型別，另保留對未解析型別的個別拒收。直接 exit1 的未處理例外須另記 INVALID／failure reason，不應當成普通 budget UNKNOWN 或負面方法證據。PR #299 已合併修復：僅對 `op_tilde` 從有效整數 operand 套用 C integer promotion，保留 unary minus 原行為；另於 native encoder 遞迴拒收 CProblemType。原題使用同樣兩份快取回答、零新 API 呼叫重播，原崩潰候選成功在 N582 注入；第二輪15個全部接受。原題仍到診斷CPU上限，故 consumer修復不等於新增解題。證據：`<experiments-root>/reports/issue298-original-replay-20260928/CONSUMER-EVIDENCE.json`。
-
-
-#300 記錄另一個實際入口限制（來源479804e）：`PredicateCPARefiner` 先 `checkCounterexample` 再進 VGuide bridge；原生插值失敗可在任何 LLM 呼叫前結束分析。`fallbackWithoutInterpolation` 即使 non-interpolating solver 證明 UNSAT 仍重拋原插值錯誤；INFO log 不能區分此分支與 feasibility check 也失敗。不可因看見插值錯誤就宣稱路徑已證 UNSAT。現成 `sourcePriorMode=true` 只接受SMT路徑，`validateSourceOnly` 明確以 `native_c_context_unavailable` 拒收所有 `c:` 候選；它缺乏實際 block formula／SSA／pointer context，不是 native-C 的可直接開啟替代路線。研究提前介入時，先核對真實 context 是否已存在，再重用現成 encoder／validation，不能猜 SSA 或偽造 interpolants。證據：`<experiments-root>/reports/issue296-interpolation-boundary-20260928/EVIDENCE.{md,json}`。
-
-
-#300 的實際診斷確認：插值前已有可用的 ARGPath／block formula／SSA／pointer context，可沿原 consumer 編碼 `c:` 候選。PR #302（source `2fc6213de291e37ae3f07aac7c19e6a712e1690c`）以真正 non-interpolating UNSAT 結果為入口，只把新 PRECISION_ONLY predicates 加到 precision，再用 `ARGReachedSet.removeSubtree` 保持 coverage 並重排探索；SAT 仍走真實反例處理。最後版本本機固定回答驗證 shared_mem2 的候選在 N32 編碼、注入、重新探索，但終局 UNKNOWN，不能說增加解題。max rounds=1 的單次呼叫不能證明重複路徑 guard 有效；提高為3、every_n=1的獨立重播仍只一次本機 HTTP，才排除上限的混淆。證據：`<experiments-root>/reports/issue300-native-recovery-20260928/root-final-capability/RECEIPT.json`；正式 LLM 效果需另做 matched evaluation。
-
-`PredicatePrecision` 建構器會把 global／function predicates 複製到新增的 local key；因此 `calculateDifferenceTo` 增加不必然代表新增資訊，也不等於 LLM 候選數。恢復入口先比對候選 head 上原有的 global／function／local predicates；instance-only predicate 不能視為整個 head 都已追蹤。`recovery_precision_delta` 記錄去重後真正新的 head/formula bindings，原生插值增量仍為 `native_delta=0`。實際 global-existing candidate regression 證明沒有新資訊時不改 ARG。這個區分對判斷 precision 進度和避免無效重啟很重要；也不能進一步把新 binding 當作解題收益。
-
-#300 合併後的 fixed-response 診斷（5b44575d、shared_mem2）實測排除含糊因果：第一次插值失敗時 non-interpolating recheck 為 spurious，原回答產生15個新 head/formula bindings，bridge 回傳 true；第二次同一完整 CFA-node 序列 SHA-256 的路徑，被 `repeatedCounterexample` guard 擋在 recheck 與 bridge 之前。兩輪 path hash 相同、firstGuardReason 明列 repeated_counterexample，因此此例可確定停止原因，而不再僅由「兩次 refinement、一次 LLM」推測；另一個可能早退點是 recheck 的 CPAException，需同樣記錄才能區分。這只證明入口障礙，終局仍 UNKNOWN。來源：`<experiments-root>/reports/issue300-guard-diagnostic-20260928/replay-c/RESULT.json`，console SHA `f3915ec2e5cfedb8f99c65f99f31cbcab995074f70baf2485c4c1a1a7b393213`。
-
-搬移診斷 jar 時，CPAchecker 的內建 reachability specification 可能從 jar 所在目錄解析 `config/specification/sv-comp-reachability.spc`；只把 cwd 換回 runtime 並不足夠。保留 config 的相同相對布局（此例使用指向已凍結 config 的 symlink）才完成原 property 載入。兩次配置載入失敗均保留 INVALID，不能當作方法 UNKNOWN。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/f4e2dfbea776667f5b468d76c07353fb4e0977a4/projects/cpachecker/predicate-generation-feedback-boundaries.md)
