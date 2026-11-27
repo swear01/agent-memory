@@ -2,14 +2,18 @@
 title: cthulhu 與 mazu 的 NFSv4.1 TEST_STATEID 風暴
 scope: machines/cthulhu
 machine: [cthulhu, mazu]
-status: mazu production mounts use NFSv4.0, cause of prior NFSv4.1 recurrence unconfirmed
+status: mazu production mounts restored to NFSv4.1, long-term recurrence unverified
 updated: 2026-11-28
 tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 ---
 
-2026-11-28 經授權讓 mazu 正常關機重啟，`/etc/fstab` 將正式 `/home`、`/apps` 都指定為同一批 NAS export 的 `vers=4.0`。這是整台 mazu 的設定。重開後以 `findmnt -t nfs,nfs4` 核對兩個實際掛載，在正式 `/home` 通過寫入、fsync、rename、重開讀回，以及獨立程序的鎖衝突與釋放測試。`/apps` 可讀一般檔案，兩個正式掛載的 `TEST_STATEID` 累計均為 0。NFSv4.0 本身不送 NFSv4.1 的這項操作。
+2026-11-28 Gaia 升到 DSM 7.4.1-90080 Update 2 後，mazu 正式 `/home` 和 `/apps` 已免重開恢復到 NFSv4.1，fstab 的兩筆均明訂 `vers=4.1`。原先以 4.0 隔離症狀的配置已撤回。HAPI Codex socket worker 仍有獨立的 4.0 home 視圖；正式 HAPI 首則回覆能驗證服務，但觀察主機的 4.1 必須在主機正式掛載上執行。
 
-- 回到 v4.1 前，先比對 `/var/backups/mazu-nfs-cutover-2rs3ymws/fstab.original` 與現行 fstab，保留其後其他變更。安排維護時段排空作業、寫入與檔案鎖，還原兩個掛載的原設定，經正常停機切換後再驗讀寫、鎖與 RPC。修改 fstab 不會改變正在使用的掛載版本。
+- 這次在正式 v4.1 `/home` 上實測 fsync、rename、讀回與跨程序鎖，`/apps` 通過讀檔。28 秒工作負載兩個 export 的 TEST_STATEID 增量均為零。新連線的短測無法預測長時間運行後是否復發。
+- 有使用中的掛載須先排空。這次 /apps 可直接正常卸載；/home 先在獲准的維護時段短停 Hub、Runner、tunnel、DGX VPN、DeepSeek gateway 與相關使用者服務。使用本機檔案系統上的 systemd 工作，從 / 執行正常卸載及重新掛載，再復原服務。免重開切換時也要確認 CI 與 Snap 的隔離環境，見 [[machines/mazu/apps-nfs-mount]]。
+
+先前 4.0 隔離期間與 NAS 韌體對照：
+
 - 同一台 mazu 重開後另外以正常 NFSv4.1 掛兩個 export 做對照。28.1 秒內讀取小檔 3,806 次，讀寫、fsync、rename 與鎖測試通過。349 筆成功 `SEQUENCE` 的旗標全為 0，兩個測試掛載的 `TEST_STATEID` 也全為 0。這只證明新建立的 v4.1 client state 在該次短測正常，後續是否復發仍須觀察。
 
 - Gaia 升至 DSM 7.4.1-90080 Update 2 後，在 mazu 重跑相同的獨立 v4.1 掛載測試，28.6 秒讀取 3,762 次，寫入、fsync、rename 與跨程序鎖皆通過，349 筆成功 SEQUENCE 的旗標均為零，兩個 export 的 TEST_STATEID 增量也都是零。舊韌體在全新連線狀態已通過同一測試，這項對照無法證明韌體消除了長時間運行後的風暴。更新與用戶端復原流程見 [[machines/gaia/dsm-api-apps-share]]。
