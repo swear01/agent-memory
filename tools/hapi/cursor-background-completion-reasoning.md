@@ -2,7 +2,7 @@
 title: HAPI shows Cursor background-completion reasoning in chat
 scope: tools/hapi
 status: verified
-updated: 2026-11-27
+updated: 2026-11-28
 tags: [hapi, cursor, acp, reasoning, notify_on_output]
 source_refs:
   - https://github.com/tiann/hapi/issues/2267
@@ -14,79 +14,16 @@ source_refs:
   - hapi:web/src/chat/normalizeAgent.ts
 ---
 
-For an English “Briefly inform” passage after a background shell completes, compare the
-original message's Hub envelope with the session's metadata. The observed HAPI 0.35.0.1
-session declared `metadata.flavor: cursor` and stored the passage as agent reasoning
-inside a `content.type: codex` envelope. The envelope is shared by ACP output and
-cannot identify the agent. The global content search did not find that reasoning
-row. Searching for nearby visible task text and reading its session's message
-context exposed the original row.
+## 背景 shell 結束後，聊天多出「Briefly inform」推理
 
-Cursor can run an extra assistant pass when a background shell finishes. HAPI
-#2268 suppresses this speech and reasoning after the launcher recognizes a
-structured `AGENT_NOTIFY_SUMMARY` with `status: done`. The #2267 report
-includes that footer, and #2268's suppression tests start from a recognized
-done footer. #2354 added a Cursor workspace rule that
-asks the model to emit that footer when **Emit status summaries** is enabled.
-Both changes shipped in HAPI 0.35.0.1. The Hub setting defaults to off and was
-off when checked during this investigation. The preceding completion reply had
-no footer, leaving the default configuration outside #2268's suppression path.
+- 先讀原始 Hub row 的 session `metadata.flavor`。在 HAPI 0.35.0.1 的案例裡， Cursor ACP 存成 `content.type: codex`，這個 envelope 無法辨識 agent。全域搜尋可能找不到 reasoning，改搜可見的任務文字再讀前後訊息。Chat 的 **Collapse Reasoning** 只改顯示。
+- HAPI #2268 要先辨識 `AGENT_NOTIFY_SUMMARY` 的 `status: done`，才抑制後續推理。#2354 讓 Cursor 在 **Emit status summaries** 開啟時收到 footer 規則。0.35.0.1 的預設為 off，已驗證案例也未開啟且上一輪無 footer，即使裝了修正也不會觸發這條路徑。
+- Cursor ACP 的 completion action 可在原 `session/prompt` 回 `end_turn` 前發生。當時普通與背景的 text/thought 共用 presenter，沒有來源或 completion ID。用 prompt 狀態、shell 退出時點或文字相似度直接去重會吞正常回答，應依明確來源與穩定 terminal event ID 判斷。保留第一次成功／失敗、同一工作的新結果和 soft-steer 回覆。原案沒有 raw ACP stream，此結論來自本機 presenter 對照。
 
-Web Chat settings can collapse Reasoning by default.
+## 發送過、讀過、使用者看到，要各自驗證
 
-## Cursor ACP event origin
+- **前景已用 Read 看見 terminal 成功，仍收到回報。** 修法不能只改 Await。把前景 Await 或讀到受管理 terminal 的 confirmed final state 對應至同一 execution/event。任意檔案路徑或看似 terminal 的輸出不足以建立關聯。保留 pending，直到已寫入結構化 terminal 結果或使用者可見訊息已明確交代結果。
+- **隊列 ack 不代表 Hub 落盤。** Shell progress 和 terminal completion 各有 wakeup ID；當時 Cursor 對 queued completion 做 batch drain，回合返回後才 ack，失敗可 requeue。合成測試可證明隊列行為，仍須讀原 Hub transcript 驗使用者可見結果。
+- **只修一個入口。** Cursor 2026.11.22-e9042b2 的 interactive、print、ACP 共用 registry 實作但各自 drain。Interactive 有 Await suppression，print stream-json 發 `system/task_notification`，ACP 有獨立 presenter。Registry 實例與 conversation 範圍都要核對，同 shell ID 不能跨實例或對話去重。HAPI 的共用 AcpSdkBackend 也不表示所有 agent 都安裝 Cursor 的 post-done rule。
 
-Independent review checked the Cursor CLI builds dated 2026-11-19 and 2026-11-22.
-The backend can dispatch `backgroundTaskCompletionAction` before the original
-`session/prompt` returns `end_turn`. Both ordinary and background-completion
-text and thought updates use the same presenter without a source or completion
-ID. A local presenter test produced identical ACP events for identical content
-from the two paths. The incident's raw ACP stream was unavailable.
-
-For reliable deduplication, the adapter needs a source signal and a stable
-completion event identity. ACP `_meta` is one possible way to carry that
-information if Cursor adds it. Keep first success and failure notifications,
-new results for the same task, and replies to a soft-steer. Prompt state,
-shell-exit timing, and text similarity alone can suppress real replies.
-
-## Foreground observation and the notification queue
-
-In the incident, a foreground Read of the managed terminal transcript returned
-the shell's successful terminal state and exit code. The assistant then checked
-the artifact and reported completion. The visible tool sequence in that turn
-used Read and shell commands. An Await-only fix would miss this path.
-
-In the 2026-11-22 Cursor bundle, the interactive CLI calls the background work
-registry's suppress method when a completed Await names a task. The ACP
-interaction-update callback routes the tool call to the presenter without the
-same TUI check. Shell progress and terminal completion have separate wakeup IDs.
-Both inspected builds batch queued completions into a single follow-up and
-acknowledge its IDs after it returns. Isolated probes of the packaged drain
-with a simulated registry verified the batch and failure/requeue paths on
-both builds. Queue acknowledgement does not establish Hub message persistence.
-
-A proposed upstream fix can associate a foreground Await or a read of a
-managed terminal's confirmed final state with the exact execution and terminal
-event. Keep the completion pending until a user-visible report explicitly
-covers it or a structured terminal result is committed to the transcript.
-An arbitrary file path, terminal-like output, or an unrelated successful
-assistant reply cannot establish this relationship.
-
-## Which Cursor clients share this behavior
-
-In CLI build 2026.11.22-e9042b2, interactive, print and ACP modes share the
-background registry implementation and completion payload format. Each entry
-point drains notifications separately. Interactive handles a terminal Await
-in its UI, and print mode with stream-json writes a structured
-`system/task_notification` before the follow-up. ACP uses its own drain and
-presenter. A change confined to ACP affects clients running that Cursor ACP
-version. Moving result accounting into shared Cursor code can cover all three
-entry points while preserving their output contracts.
-
-Ordinary CLI processes and individual ACP sessions construct separate
-in-memory registry instances. A probe using the packaged registry confirmed
-that suppressing a pending shell ID in one instance left the same ID in another
-instance available. It also left a pending item with that ID in a different
-conversation available in the same registry. This test concerns pending items.
-On the HAPI side several agents share AcpSdkBackend, while the post-done
-suppression rule is installed by the Cursor launcher.
+[完整原始紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/tools/hapi/cursor-background-completion-reasoning.md)

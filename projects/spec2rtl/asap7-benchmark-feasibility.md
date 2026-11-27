@@ -5,92 +5,10 @@ status: subset-timing-verified-full-mamba-and-sram-pending
 updated: 2026-10-09
 ---
 
-# ASAP7 benchmark 可行性
+- **七個 40nm 設計被當成既有 ASAP7／CI 涵蓋。** upstream snapshot 的七個完成項是 Keccak、LBP、BCH、Ed25519、Mamba in-proj、Conv、RLE；現有 CI 固定較舊 benchmark 與 Conv/BCH。隔離 ASAP7 實測是 Keccak 三組、LBP 一組、Mamba Exp 單 lane，非完整 Mamba。ASAP7 predictive PDK 的 RVT TT 0.7 V／25 C 與 foundry 40nm SS 0.81 V／125 C 不能視為等條件 PPA。
+- **Gate 功能通過卻漏 timing arcs 或標錯頻率。** 鎖同一套 DB/LIB、Verilog/UDP 和 SDF；定 `current_design` 後用 `report_units` 查 ns／pF。VCS 明確編譯原始 UDP，使用 `-override_timescale=1ns/1fs +maxdelays -negdelay +neg_tchk`，不關 timing check。固定版 FAx1／HAxp5 的 IOPATH 不匹配以排除 cell 處理（DC `set_dont_use [get_lib_cells */FAx1_ASAP7_75t_R]` 不帶 true），會改 cell-policy 基準。DFFASRHQN 改 `$recrem` 並保留負限值；NTCDNC 只有相同 Liberty table 證據時沿已驗證 converter 補回冗餘 constraints。保留 reset-held safe、release 恰違規、data setup 真違規等正負控制。校準後 Exp 69,640 gate checks 在 **4 ns**，2 ns 是 synthesis constraint，不是該頻率 gate qualification。
+- **Mamba Exp RTL 對、netlist 卻漏 ROM 值。** DC Y-2026.03 `VER-281` 忽略 `initial/$readmemh`，無 SDF 也會 mismatch。HW-Benchmark PR #7 已改等值 128 個常數（兩張 64×16 table），merged main `00d21352739089b72d192508148f8fcdb2fc68ff`；舊 branch 才需要搬 patch，勿重複編同一 module。驗原係數及 bit-exact PASS／無 Fatal/MISMATCH，VCS `$fatal` 曾 exit 0。每 lane 的 table 不能算全晶片面積；有限掃描的 1 LSB 不外推整體模型。其餘 in-proj TB 的 readmemh 不構成 DUT ROM；小固定 LUT 可由標準元件實作。
+- **全 Mamba 合成省略 simulation DRAM 後留下 unresolved module。** `aoc_dram_model.sv` string 使 DC VER-700；直接省略檔案會少硬體 DRAM ports/boundary。之後 local-buffer elaboration 的 exit 137 未證 kernel OOM。需要真正拆硬體界面、做 gate harness、提供合格同製程多 port／masked SRAM。Conv／RLE 的新模型為 512×8／512×45、active-low whole-word，最新版 RLE 無 BWEB，低 36 bit wrapper 仍待驗。詳見 [SRAM qualification](sram-compiler-feasibility.md)。
+- **共用套件可讀或對照 bench 綠了，被升成預設。** `/apps/cad/cell_library/ASAP7_EDK/memory-20261009/README.md` 為研究整合入口，含 ROM、校準模型、驗證程序及 RAM 的明確資格；`orfs-platform/` 是固定 ORFS v1.7 副本。從共用唯讀處複製到 scratch 重跑 ROM RTL／SDF、converter 比對和 RAM 反例，依登入帳號檢查讀取及 `verification/SHA256SUMS`，不能以 mazu 可讀替代其他主機。全晶片 P&R／corner coverage、完整 Mamba、SRAM qualification 和 performance baseline 均未就緒；維持既有 production CI/goldens。
 
-研究追蹤：DVLab-NTU/spec2rtl issue #22；SRAM compiler 詳細研究接續 #18 與 `sram-compiler-feasibility.md`。使用者明確把 performance baseline 留待後續；未遷移 production CI 或變更 golden。2026-10-09 後續已依要求部署共用研究套件，位置與資格界線見末節。
-
-## 來源與七個設計
-
-HW-Benchmark 固定 `ed2c429f5cd8a36876081fb0b0b9769935994c3f`，狀態表顯示七個 TSMC 40nm RTL→SYN→SDF gate 完成：Keccak、LBP、BCH decoder、Ed25519、Mamba in-proj、Conv、RLE。這是 upstream snapshot 的完成表，本輪不是重跑所有七個 40nm 流程。
-
-Spec2RTL main `7fc60137674ed02f3b11c2300dce38638b51d7d6`；develop 在研究途中更新為 `25bc7f4b614ab7a11a13845bd337c118c743a82a`（passive CI monitoring）。該版 `scripts/ci/common.py` 仍固定 benchmark `ad97739f1bad6ad78fb7ec5fe12da4ce437718c2`、SDK 1.0.36、Conv/BCH；不能把七個新版 40nm designs 當成既有 CI coverage。
-
-## RAM 與 ROM
-
-- Conv：8×512×8 single-port macro；RLE：12×512×45 single-port macro。最新使用 active-low CEN/WEN、whole-word write，test/EMA/RET/STOV pins；behavioral model initial zero、posedge read/write、write holds Q。原 fixed CI 的 SRAM 契約另論，不能只改 library path。
-- 最新 RLE 沒有舊版 per-bit BWEB mask。`top.v` 寫入 `{9'b0, sram_datain}`，只讀低 36 bits；512×36 wrapper 或 512×46 padding 可研究以避開 OpenFinRAM 偶數 width 限制。尚未生成或驗證這個 wrapper，不能宣稱已相容。
-- 其餘五個沒有 hard SRAM macro，但有 runtime RTL arrays，仍可能合成成標準元件暫存器。
-- 七個均未實例化 hard ROM macro。Keccak `permute.sv` round constants/rho offsets，Ed25519 `constant.vh` 32×16 LUT 是小常數查表，可用標準元件邏輯；並非沒有唯讀資料需求。Mamba in-proj 權重由介面送入，TB readmemh 不等於 DUT ROM。
-- 完整 Mamba 不在七個內：`exp_pwl_q4_12_pipelined.sv` 另有兩個 64×16 PWL ROM arrays，還有 unsupported SRAM size blocker。QConv gate timeout、ResAcc reference model、AXI 多 tops 尚未納入。
-
-## ASAP7 真實試跑
-
-Mazu 隔離研究，DC Y-2026.03／VCS 2026.03。OpenFinRAM repaired source `d7e66ff0b20e48498a9c8295ba39a0d8c533185f` 內五個 RVT TT standard-cell DB/LIB，0.7 V／25 C；DC report_units 實測 ns／pF。沿用原 physical clocks與 IO constraints，未找最大頻率。Gate 模型來自固定 ORFS image `sha256:b879915e0ec547a7111e4e765f95b8896b3876d2ee36cf48d139355252678711` 的 ASAP7 stdcell models。202 個 Liberty cell types 均有模型；netlist 無 unresolved references，Keccak 61 種／LBP 33 種 cells。
-
-| Design | RTL checks | ASAP7 synthesis | SDF gate 功能 checks | RTL/gate 相同時間 ns |
-| --- | --- | --- | --- | --- |
-| Keccak | m00/m01/m11 3/3 | 完成；最小 max-path slack +0.16 ns | 3/3 | 6181／11959／1377 |
-| LBP | pat0 1/1 | 完成；最小 max-path slack +5.69 ns | 1/1 | 807071 |
-
-18 個 RTL/TB/pattern 檔案 SHA-256 與 source snapshot 相同。第一輪模型 -v search 沒載入 UDP，失敗；從原始檔取出 14 個相同 UDP definitions 明確 compile 後重跑成功，沒有 stub 或 function 修改。原模型 1ns/10ps 有 delay roundoff，最後用 VCS `-override_timescale=1ns/1fs` 重跑，roundoff warning 消失；保留 `+maxdelays -negdelay +neg_tchk`，沒有 `+notimingcheck`。
-
-**SDF 功能 checks passed，不是完整 timing annotation 或 signoff passed。**
-
-- HAxp5 的 Liberty unconditional A/B→SN IOPATH 對不上模型 conditional specify：Keccak 394／LBP 8 條 `SDFCOM_INF`，對應 arcs 未 annotation。Boolean function 相同，不應因功能通過忽略 delay coverage。
-- DFFASRHQN 的 `$recovery/$removal` 無法接受 negative limits：Keccak 6732／LBP 648 條 `SDFCOM_NL`；VCS 建議 `$recrem`。必須校準 model/Liberty timing contract後才可宣稱完整 reset timing checks。
-- Keccak 1591 條 `SDFCOM_SWC`：階層 path 非 simple wire，VCS 明確表示 delay still annotated；最終未觀察 runtime timing violation 輸出。
-- Ubuntu native工具有 unsupported-kernel、bootstrap缺 csh 警告，但實際 DC 合成與 VCS 執行完成。初始 report_units 放在 current_design 前報 UID-4，後以最終 DDC 重讀、link、report_units 確認單位；保留原始 logs。後續 scripts 已調整 report 位置。
-
-後續應先固定同 release 的 DB/LIB/Verilog／timing model 並嚴格確認 annotation coverage，再接 Conv/RLE wrapper、完整 macro connectivity/DRC/LVS/PEX/characterization，最後補其餘五個 ASAP7 designs。沒有新增 performance baseline、PR threshold 或正式 CI。
-
-ASAP7 是 predictive PDK，優勢是先進節點研究的公開可重現性，不代表比 foundry TSMC 40nm characterization 更準。40nm SS 0.81 V／125 C 與本輪 ASAP7 TT 0.7 V／25 C 不可直接比較 PR PPA。ASAP7 官方 README 與 ORFS stdcell README 為來源。
-
-## 完整 Mamba 的 exp ROM 後續實測
-
-2026-10-09 以相同 HW-Benchmark snapshot 測 `exp_pwl_q12_20_to_q4_12_pipelined`。discretization 算 `A_bar=exp(delta*A)`，此實作用 base/delta PWL 表與線性內插；單 lane 兩張 64×16，共 2,048 bits，預設 tile producer 64 lanes，不能當成整顆 accelerator 總面積。固定 lookup 可合成成標準元件邏輯，不要求 OpenRAM ROM compiler；Mamba 數學需要 exponential，不要求所有實作都用 ROM。
-
-發現原 `initial/$readmemh` 被 DC Y-2026.03 `VER-281` 忽略。原 RTL 69,640 checks passed，原 netlist 在 vector 4096/input `ff7aea43` expected `0001` 得 `0000`，with/without SDF 均重現。這輪 `vcs -R` 的 `$fatal` 仍 return 0，驗證必須要求 PASS marker 並拒絕 Fatal/MISMATCH，不能只信 RC。
-
-改為 128 個原係數的 `localparam` 常數；數值與 `.mem` reference copies 完全相同，arithmetic、pipeline、ports、goldens 未改。HW-Benchmark PR #7 已 merged，patch `e0f608a9cb18d50bf5c985559c7efd473c7b28eb`，main merge `00d21352739089b72d192508148f8fcdb2fc68ff`；讀回 main RTL 與實測 source 相同。最新 head 的 Cursor Bugbot terminal success/no issues found；repo 未配置 GitHub CI workflow，本地 EDA checks 為驗證證據。
-
-- 原與修後 RTL 各 69,640 checks passed：64 segments×64 offsets×16 integer branches，加 8 boundaries 與 4,096 deterministic full-width random。全寬 random 是 preservation，不是對整個 Q12.20 domain 的 exp mathematical accuracy 保證。
-- base coefficients 等於 rounded `4096*2^(i/64)`，delta 等於相鄰 quantized base 差分。在被掃描 `[-9,0]` domain 對 rounded float exp 最大 absolute error 1 LSB，未評估整體模型 accuracy。
-- 修後 ASAP7：865 standard cells、74 sequential、0 macros/blackboxes；2 ns synthesis constraint report minimum max-path slack +0.04 ns。
-- SDF gate：69,640 passed、0 observed runtime timing violations、36 model types resolved；gate bench 4 ns，因 stimuli 在 falling edge 切換，不能當成 2 ns gate qualification。
-- 完整六層 Mamba 原始 RTL `pat0` passed、757407 ns、final output bit-exact；未用 report-only demo mode。首輪 Mac tar AppleDouble metadata 阻擋編譯，移除確認為 metadata 的單檔後重跑，未改 design/TB/goldens。
-
-FAx1 有 3,906 missing IOPATH warnings、DFFASRHQN 441 negative recovery/removal warnings，仍非完整 timing annotation/signoff。整顆 Mamba ASAP7 ASIC synthesis/gate simulation、SRAM integration、P&R/signoff/baseline 未完成。研究回報於 issue #22 comment `6067602499`；證據 `<research-root>/outputs/mamba-rom-research-20261009/` 與 Mazu `/var/tmp/mamba-rom-research-20261009`，未部署 NAS。
-
-本機研究證據 `<research-root>/outputs/asap7-benchmark-research-20261009/` 含 source SHA、18-file hash check、commands/results、2.4 MB evidence.tar.gz 及 issue body/readback；Mazu `/var/tmp/asap7-benchmark-research-20261009` 保留完整 models、reports/netlists、失敗與重跑 logs。這是研究 scratch，沒有部署 NAS。
-
-## ASAP7 default readiness 續查（2026-10-09）
-
-使用者期望所有阻礙排除後才能切 ASAP7 default；本輪未改 production/default、baseline、goldens 或共享 PDK/NAS。HW-Benchmark source 固定 merged main `00d21352739089b72d192508148f8fcdb2fc68ff`。
-
-隔離實測排除 FAx1/HAxp5（DC `set_dont_use [get_lib_cells */FAx1_ASAP7_75t_R]`，不接受尾隨 `true`），三份新 netlist 都沒有這兩種 cells。DFFASRHQN 四組 recovery/hold checks 換 `$recrem`，derived SDF 3.0 將 RECOVERY/HOLD 配對，原始三元組/負值保留。
-
-僅改 `$recrem` 後 Exp 有 NTCDNC：DC constant propagation 省略四項 redundant constraints，而 HDL 未 annotation 的零值 check 與負值 checks 共用 delayed wires。核對此固定 SEQ Liberty：RESETN/SETN conditional/default recovery/removal tables 完全 byte-identical；校準只補回相同 tables 的四項 checks，NTCDNC 消失。這是固定 library 的實測，不能泛化成任意 SDF 複製 fallback。DC/LC Y-2026.03 `write_lib -format verilog` 回 UIL-23，不能依賴它自動輸出正確 cell model。
-
-DFFASRHQN unconditional D setuphold 的 `timecheck_condition` 加 `adacond0`；reset/set active 時不誤檢查 data setuphold，原事件/ports/function primitives 不變。原 Keccak 三組各有八次 reset-held startup violation，修後無 violation。Controls：reset release 後 5ps/20ps safe，13.5ps 真正觸發 −13ps/14ps `$recrem`；active 狀態 D 提前 5ps 改變觸發 11ps setup，reset-held 同樣變化 safe。沒有關 timing checks或歸零 limits。
-
-最終 Keccak m00/m01/m11 3/3、LBP pat0 1/1、Exp 69,640 gate checks 都 passed；missing paths/negative-limit/convergence warnings 及 observed runtime violations 均 0。Keccak SWC1591 明示 delay still annotated，LBP AOUP3 是 TB override 無 gate parameters；native unsupported-kernel warning 仍在。Exp gate仍4ns；不能當2ns qualification。排除 adder cell會改PPA：Exp865→1240cells，新2ns minimum max-path slack+0.52ns，不是相同 cell-policy baseline。
-
-完整六層 ASAP7 synthesis 真正試跑：原 analyze 包含 `aoc_dram_model.sv`，string 參數/變數導致 VER-700，未到 compile。診斷只省略 simulation DRAM 檔案則 top 仍實例化該 module、缺 external DRAM AXI top ports，留下 unresolved reference；這不是合格修法。後續 elaboration 在 `aoc_local_buffers_reg` process exit137/Killed；觀察RSS達約46 million KiB，未取得 kernel OOM proof，確切 kill 根因未定。無完整 mapped netlist、未跑整顆 gate。
-
-需要正確拆硬體 DRAM boundary/TB model、診斷 local-buffer elaboration、提供合格 ASAP7 multi-port/mask SRAM、改用硬體介面載入/比對的 gate harness（現有 golden TB white-box memories不能直接用）。官方 ASAP7 single-port whole-word SRAM 的 concurrent/mask 兩個替換反例與 OpenFinRAM **實際 LVS INCORRECT** 見 `sram-compiler-feasibility.md`。
-
-ASAP7整體default仍不qualified：其餘五個 benchmark 未重跑、完整 macro DRC/LVS/PEX/characterization、全晶片 P&R/STA/corner coverage與Mambagate均未完成。將校準與 controls 固定成可重跑流程後再考慮CI；performance baseline繼續按使用者要求延後。
-
-本輪 `<research-root>/outputs/asap7-default-readiness-20261009/` 保存 summary、audits、原始/校準 models、失敗與重跑 archives、SHA-256 manifest、完整 LVS comparison evidence。Mazu research root `/var/tmp/asap7-default-readiness-20261009`；不是部署位置。
-
-## 共用 ROM / RAM 套件部署（2026-10-09）
-
-使用者要求先停止擴大研究，將 ROM/RAM 放入共用 ASAP7 套組並標示整合方式。已部署 `/apps/cad/cell_library/ASAP7_EDK`：`orfs-platform/` 為原 ORFS v1.7 固定 commit `5ebf29b3897b2b5a3d3a5b2b60b0d3721405a874` 的185-file byte-for-byte副本，保留原開發者目錄；不是完整foundry signoff PDK。
-
-`memory-20261009/README.md` 是整合入口，附Exp修正版RTL/係數/69,640 vectors、netlist/raw與derived SDF/reports、五份RVT TT DB/LIB、calibrated Verilog/UDP/converter及controls。原DB/LIB/model version分開保存，未替換原platform標準元件。ROM不是hard macro，HW-Benchmark PR#7已merged，舊分支才需更新RTL，勿重複編譯同名module。
-
-RAM同包：官方ASAP7 SRAM固定 `9f5af0939e8dd3cc1a9693a50b23441691dd7d25` 完整source/views；OpenFinRAM512×8 GDS/LEF/estimatedLiberty/攤平完整SPICE與STATUS=LVS_FAILED/修補patch；OpenRAM FreePDK45三組views/config僅參考，不可混進ASAP7。OpenFincompiler本體未vendor。官方root verilog同名256×64 candidate其實宣告1024×64，實測使用generated/verilog的256×64版本；必須配同depth/width/scale的generated LIB/LEF，原始bank GDS不等於任意generated macro的同名physical view。
-
-從新共享位置複製到可寫scratch重跑：ROM RTL與4ns SDF gate各69,640 checks PASS，0 runtime timing violation/INF/NL/CFTC/NTCDNC；converter輸出與既有validated derived SDF byte-identical。Mamba128×64對官方single-port的兩個反例重現（counterexamples PASS不代表RAM integration PASS）。部署proof在 `verification/relocated-rom-proof.json`；每檔hash在 `memory-20261009/verification/SHA256SUMS`（234files）及 `verification/orfs-platform-sha256.json`（185files）。
-
-`/apps/eda/README.md`已新增入口。套件沿既有共用library採directory755/file644唯讀；Zeus的swear02帳號未加入student群組，原750/640會permission denied，不能把Mazu可讀當成全fleet可讀。Mazu/Cthulhu/Valkyrie/Zeus均以各自登入帳號讀回全部185+234檔hash一致，無symlink；Athena仍在維修，未驗證。部署研究套件不等於RAM qualified、完整Mamba/gate/signoff或ASAP7 default完成；baseline與production CI維持既有設定。
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/projects/spec2rtl/asap7-benchmark-feasibility.md)

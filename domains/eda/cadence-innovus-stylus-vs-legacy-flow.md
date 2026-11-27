@@ -1,119 +1,20 @@
 ---
-title: "Cadence Innovus 25.10 Stylus Common UI 與 Legacy UI 實作與 UMC 0.18µm 整合規範"
+title: Innovus 25.10：Stylus／Legacy 命令與 GUI 回呼的差異
 scope: "domains/eda"
 status: active
 updated: 2026-11-04
 ---
 
-# Cadence Innovus 25.10 Stylus Common UI 與 Legacy UI 實作與 UMC 0.18µm 整合規範
+## TCL、PDK 與畫面
 
-## 背景與版本定位
+- **舊教案命令在 Innovus 25.10 報 unknown。** 先核啟動模式 `innovus -legacy_ui`／`innovus -stylus`。Stylus 依序 `read_mmmc`、`read_physical -lef`、`read_netlist -top`、`init_design`；`floorPlan` 對應 `create_floorplan`、`addRing` 對應 `add_rings`、`sroute` 對應 `route_special`、`routeDesign` 對應 `route_design`。Legacy 的 verifyConnectivity／verify_drc、saveDesign／restoreDesign 在 Stylus 對應 check_connectivity／check_drc、write_db／read_db。CTS script 為 `clock_opt_design`，不要因 GUI 命令名稱相似就替代。下方原文保留完整參數對照。
+- **UMC/Faraday 0.18 µm 的 PG 或 floorplan 無法接上。** FSA0M_A 是 VCC/GND、site `core_5040`、金屬 `metal1` 到 `metal6` 為小寫。先讀 `header6_V55_20ka_cic.lef`，再 core／antenna LEF。Stylus `create_floorplan -site core_5040 -core_density_size {aspect density margin1 margin2 margin3 margin4}` 保留 aspect/density/四邊 margin；PG 用 `connect_global_net` 並核 power pins、tie、core ring 和 special route。Lab5 不同技術的 placement grid 見 [CVSD Lab 陷阱](../../projects/ntu-cvsd-adfp/lab-execution-pitfalls.md)。
+- **macOS X11 顯示 `IMPSYT-1507` 並掉到 no window mode。** 先用 XQuartz 確認本地顯示，檢查 SSH X11 forwarding 與 `XAuthLocation /opt/X11/bin/xauth` 是否用到目標 host；診斷不要先改所有 host 的 SSH 設定。教學的 RTL→網表→版圖可用 `get_db` 查暫存器的 `.base_cell.name`／`.location`，用 `select_obj` 高亮，再以 `report_timing` 讀實際違例。
 
-1. **版本命名與釋出週期**：
-   - Cadence EDA 工具採用「年份.版本」格式（例如 20.10、21.10、24.10、**25.10**）。
-   - TSRI 提供的 `DDI_25.10.000`（Innovus v25.10-p002_1，建置於 2025 年 4 月）為 2025–2026 學年度最新的正式發布版本。
-   - 工具目錄通常以軟連結維護（如 `<cad-root>/cadence/DDI/cur -> DDI_25.10.000`），更新新版或 ISR 時可透過抽換軟連結達成無縫升級。
+## 25.10-p002_1 Qt GUI 驗證
 
-2. **Legacy UI vs. Stylus Common UI**：
-   - **Legacy UI**：相容 20 年前 First Encounter 指令架構（駝峰式如 `floorPlan`, `addRing`, `sroute`, `placeDesign`, `routeDesign`）。IC 競賽（教育部 IC Contest）考古題與臺灣多數高校舊講義仍以此為主。
-   - **Stylus Common UI**：Cadence 現代統一架構，與前端合成（Genus）、靜態時序簽核（Tempus）及電源分析（Voltus）共用同一套指令結構與資料庫存取模型（底線小寫 snake_case、物件導向 `get_db` / `set_db`）。
-   - Innovus 25.10 啟動時已發布官方 Deprecation 宣告：未來大版本將預設為 Stylus Common UI，Legacy UI 即將退役。
+- **GUI 表單欄位查到空值，或同名 action 執行別的事。** CUI 與 GUI legacy Tcl interpreter 分開，用 `eval_legacy {uiVar::Get RdaPG pins}` 讀實際欄位、`qtfForm::getactiveform` 驗 active form；menu 以完整 labels、唯一 ID、callback 核對。先開表單、讀回再觸發原生按鈕；`gui_replay_*` 是版本特定驗證介面，直接跑 APR 指令不能算原生操作證據。真實 menu 的 Add Ring 為單數，GUI form 為 Add Rings。
+- **從 GUI 做出類似結果，被報成精確重現 script。** Place Standard Cell 執行 `place_design`，legacy Synthesize Clock Tree 是 `clockDesign`；嚴格重現走同一 graphical session 的 launch terminal，CTS 讀實際 report 及 CCOpt debugger。當時 Windows menu 沒有 Console／History／Log Viewer；`view_log <existing-log-file>` 開的是唯讀 viewer。
+- **NanoRoute 的 Global Detail Route 和 Global＋Detail 看似同選項。** 同勾 Global/Detail 才會有 `routeDesign -globalDetail`，另名 Global Detail Route 是 `routeWithEco`。表單預設 End Iteration=1、Fix Antenna=true、Auto Stop=false，跟 script 的 auto／auto／true 不同；通過 DRC／connectivity／antenna 仍標 GUI variant。精確重現取消表單並從原 CTS checkpoint 的 fresh session 跑 `route_design`。SRoute 的 Follow Pins 對應 corePin，`noCorePins=1` 是開；Basic layer change 與 Via Generation 的 crossover／target range 分開核對。
 
----
-
-## 關鍵流程指令對照表
-
-| 階段 | Legacy UI 指令 | Stylus Common UI 指令 | 注意事項與細節 |
-| :--- | :--- | :--- | :--- |
-| **啟動模式** | `innovus -legacy_ui` | `innovus -stylus` | Stylus 圖形介面採用 Qt5，支援深淺色主題與現代儀表板。 |
-| **MMMC 設定** | `init_design -setup ... -hold ...` | `read_mmmc <mmmc_file>` | Stylus 中 MMMC 建議獨立為專用檔案，透過 `read_mmmc` 讀入。 |
-| **實體庫與網表** | `set init_lef_file ...; init_design` | `read_physical -lef <lef_list>`<br>`read_netlist -top <top> <v_file>`<br>`init_design` | 實體與邏輯分開讀取，最後呼叫 `init_design`。 |
-| **全域電源** | `globalNetConnect VCC -type pgpin ...` | `connect_global_net VCC -type pg_pin ...` | 包含 `pg_pin`、`tie_hi`、`tie_lo`。 |
-| **Floorplan** | `floorPlan -r 1.0 0.7 15 15 15 15` | `create_floorplan -site core_5040 -core_density_size {1.0 0.7 15 15 15 15}` | Stylus 的 `-core_density_size` 參數需傳入陣列包含 aspect_ratio、density 與四邊 margin。 |
-| **Power Ring** | `addRing -type core_rings ...` | `add_rings -type core_rings ...` | 鋪設外圍 VCC/GND 核心電源環。 |
-| **Special Route** | `sroute -connect {blockPin corePin ...}` | `route_special -connect [list core_pin] ...` | 連結標準單元列內部電源軌至 Core Ring。 |
-| **Placement** | `setPlaceMode ...; place_opt_design` | `set_db place_opt_run_global_place full`<br>`place_opt_design` | 擺放邏輯閘並進行 Pre-CTS 延遲最佳化。 |
-| **CTS** | `clock_opt_design` | `clock_opt_design` | 時脈樹合成與 Skew 平衡。 |
-| **NanoRoute** | `setNanoRouteMode ...; routeDesign` | `route_design` | 詳細金屬層繞線。 |
-| **Filler 單元** | `addFiller -cell {...}` | `set_db add_fillers_cells {...}`<br>`add_fillers` | 填補空白列以符合 N-well 與微影連續性。 |
-| **實體驗證** | `verifyConnectivity`<br>`verify_drc` | `check_connectivity`<br>`check_drc` | 檢查開短路與幾何 DRC。 |
-| **資料庫儲存** | `saveDesign <name>.enc` | `write_db <name>.enc` | 儲存版圖狀態。 |
-| **資料庫載入** | `restoreDesign <name>.enc.dat <top>` | `read_db <name>.enc` | Stylus 中以 `read_db` 載入資料庫。 |
-
----
-
-## Faraday UMC 0.18µm（FSA0M_A）整合注意事項
-
-1. **電源端點命名**：
-   - Faraday FSA0M_A 標準單元庫嚴格採用 **`VCC`** 與 **`GND`**（非 TSMC 慣用的 VDD/VSS）。
-2. **Site 名稱**：
-   - Tech LEF（`header6_V55_20ka_cic.lef`）內定義的 Core Site 名稱為 **`core_5040`**。
-3. **LEF 載入順序**：
-   - 第一個必須是 Tech LEF（`header6_V55_20ka_cic.lef`），後續接 Core LEF（`fsa0m_a_generic_core.lef`）與 Antenna LEF（`FSA0M_A_GENERIC_CORE_ANT_V55.lef`）。
-4. **金屬層名稱**：
-   - 必須全小寫：`metal1` ~ `metal6`。
-5. **Filler 單元名稱**：
-   - `FILLER1` ~ `FILLER64`（包含 `FILLERBC`, `FILLERAC`, `FILLER8C` 等）。
-
----
-
-## macOS XQuartz 與 X11 Forwarding 設定要點
-
-在 macOS Terminal 透過 SSH 轉發 X11 執行 Innovus GUI 時，若遇到 `IMPSYT-1507: The display is invalid and will start in no window mode`：
-1. **原因**：macOS Terminal 預設未設定 `$DISPLAY` 環境變數，且 `/usr/bin/ssh` 未指定 `XAuthLocation`。
-2. **解法**：
-   - 本地 `~/.ssh/config` 需加入：
-     ```sshconfig
-     Host *
-       ForwardX11 yes
-       ForwardX11Trusted yes
-       XAuthLocation /opt/X11/bin/xauth
-       ForwardX11Timeout 0
-     ```
-   - 在啟動 SSH 前確保本地環境變數帶入：
-     ```bash
-     [ -z "$DISPLAY" ] && export DISPLAY=:0
-     ```
-   - XQuartz 偏好設定中需確認 `enable_iglx=true` 與 `nolisten_tcp=false`。
-
----
-
-## 數位 IC 教學設計與邊界規範（從 RTL 做到 APR）
-
-1. **數位 IC（Digital APR）與類比 IC（Analog Full-Custom）之教學界線**：
-   - **數位 IC**：Innovus 專門處理標準單元（Standard Cell）的自動佈局與繞線（APR），所有單元與訊號線進到物理層後雖呈現幾何版圖，但本質仍為數位邏輯與二元切換。
-   - **類比 IC**：使用 Cadence Virtuoso 繪製微觀電晶體 Schematic、跑 Spectre SPICE 模擬並手工拉版圖。教學時需先向初學者釐清兩者工具與範疇差異，避免學生看見版圖幾何就誤認為是類比電路。
-
-2. **教學核心脈絡：RTL $\to$ Synthesis $\to$ APR**：
-   - 學生最熟悉的是高階行為描述（Verilog RTL，如 15 行的 `always @(posedge clk) count <= count + 1`）。
-   - 切忌在初學實驗一開始就引入深層實體簽核（CTS 時脈樹延遲、Fanout 負載、金屬層繞線分佈、寄生 RC），這會讓學生覺得太偏後端且脫離電路邏輯本質。
-   - 應將重點放在**「行為 RTL $\to$ 閘級網表 $\to$ 晶片版圖」的直觀對應**：
-     - **RTL**：描述計數器行為。
-     - **邏輯合成**：將加法行為轉譯為 8 顆 D 型正反器（`DFFRBN`）與進位鏈（`AN2` + `XOR2H`）。
-     - **APR**：將這 23 個邏輯單元吸附排入 row、繞上金屬線並通電。
-
-3. **Stylus CLI 互動任務設計準則**：
-   - **連結 RTL 與版圖實體**：
-     - 查詢暫存器：`get_db [get_db insts u_ff*] .name`（確認 RTL 的 `count[7:0]` 變成 8 顆正反器實體）。
-     - 查詢單元型號與座標：`get_db [get_db insts u_ff0] .base_cell.name` 與 `.location`。
-     - 版圖即時高亮：`select_obj [get_db insts u_ff*]`（在 GUI 上把 8 顆正反器亮起黃色框，直觀看見擺放位置）。
-   - **時序驗證**：
-     - 執行 `report_timing`，讓學生檢查最長進位鏈路徑在目標時脈下是否達標（Setup Slack $> 0$），並透過緊縮時脈週期觀察時序違規。
-
-
-
-## 25.10 Qt GUI 實測：interpreter 與 menu callback 的界線
-
-2026-11-04 在 Innovus `25.10-p002_1` 的實際 Stylus GUI 驗證 Import、Global Net Connections、Floorplan、Add Rings 與 SRoute 表單；透過原生按鈕執行設計操作，並比對執行時表單狀態與 callback。以下是驗證工具的內部介面，不是建議學生依賴的穩定公開 API。
-
-- Stylus command interpreter 與 GUI 的 legacy Tcl interpreter 分開。直接在 CUI 呼叫 `uiVar::Get` 可能讀到空值；讀實際 GUI 欄位應使用 `eval_legacy {uiVar::Get RdaPG pins}`。`qtfForm::getactiveform` 能取得實際 active form 名稱，大小寫必須一致。舊 `uiForm::win`／`uiForm::subWin` 不適用這個 Qt GUI。
-- `gui_replay_menu_cmd`、`gui_replay_set_var`、`gui_replay_button_cmd` 可操作真正的 menu、欄位與按鈕。例如 `gui_replay_menu_cmd {Power,Connect Global Nets...}` 與 `gui_replay_set_var RdaPG pins VCC`。先開表單，再讀回欄位與 active form，最後才觸發會改設計的按鈕；不要把直接執行 APR command 當成操作 GUI 的證據。舊錄製 wrapper 在主 CUI interpreter 未提供可靠的操作紀錄，不能據此宣稱已取得 GUI echo。
-- `gui_get_ui` 的 generic item 名稱可能重複；同名查詢可能回傳另一個 action。應連同完整 menu labels、唯一 action ID 與執行時 callback 驗證，不能只依內部短名稱猜功能。
-- 安裝的 Common UI Menu Reference 與實際 menu 有差異。實際為 `Power > Power Planning > Add Ring...`（menu 單數，form 是 `Add Rings`），Global Net Connections 的 Connect 選項為 `Pin`（單數）。Runtime inventory／replay 能找到並開啟 legacy `Synthesize Clock Tree` 表單，但這不等於目前原生 menu 可點擊。Post-route 狀態的原生 Clock menu 實測僅有 CCOpt debugger；pre-CTS 原生可見性未驗證，教學不能要求學生一定點得到該 legacy 選項。
-- `Place > Place Standard Cell...` 的 callback 執行 `place_design`，不等於 `place_opt_design`；透過 replay 檢查的 legacy `Synthesize Clock Tree` 表單 callback 執行 `clockDesign`，不等於 `clock_opt_design`。要重現 integrated script，應在同一 graphical session 的啟動 terminal command prompt 執行精確命令；CTS 證據使用實際執行／report 與 `Clock > CCOpt Clock Tree Debugger...` 的樹狀圖。Legacy CTS 表單只有在該版本／狀態實際可見時才選擇性查看並 Cancel，不列為必要操作。
-- 目前原生 Windows menu 實測只有 Workspaces、Menus、Toolbars、Active Forms，沒有 Console／History／Log Viewer；不要虛構 `Windows > Console`。安裝的 `TCRcom/view_log.html` 與 `help view_log` 確認語法 `view_log [<file_name>]`；實際執行 `view_log <existing-log-file>` 已開出獨立 log viewer，可檢視既有 log／report。文件提到的 `Tools > Log Viewer` 在目前原生 Tools menu 也未出現，應用命令開 viewer，並把 launch terminal 的互動 prompt 與唯讀 log viewer 分開說明。
-- NanoRoute 表單同時勾 `Global Route` 與 `Detail Route` 時，實際 callback 建立 `routeDesign -globalDetail`。另有名為 `Global Detail Route` 的 checkbox，內部是 `routeWithEco`；不能因名稱相似而替代前兩個選項。後續原生 OK 實測捕捉到單次 routing invocation；通過 DRC／connectivity／antenna 檢查仍不能證明與 script 設定完全相等。
-- NanoRoute stock form 還會把 End Iteration 初始化為 `1`、Fix Antenna 為 true、Auto Stop 為 false；原始 roots 實測是 `auto`、`auto`、true。可在 form 保留 End Iteration=auto、開啟 Auto Stop，並顯式開 Timing Driven／SI Driven 以對應 supercommand 的 SMART 行為；但強制 Fix Antenna=true 仍不是 script 的 `route_detail_fix_antenna=auto`。安裝的 `TCRcom/route_Category_Attributes.html` 說明：有 LEF antenna 資料時，auto 在 `route_design` 中只修 data nets。原生 form run 已通過實體檢查，但應標為 GUI variant；嚴格重現時先 Cancel，再從原始 CTS checkpoint 的 fresh session 執行 console `route_design`。
-- SRoute 的 `Follow Pins` 對應 `corePin`；變數 `noCorePins=1` 實際代表 checkbox 開啟，不能從 `no` 前綴推斷反向。Basic 的 Layer Change Control 與 Via Generation 的 crossover／target layer range 是不同設定；不要把前者的上限錯套到後者。
-
-證據來源為相同安裝的 `doc/MRcom`、`doc/TCRcom`、`etc/innovus/uiReplay.tcl`、執行時 callback 與實際表單 readback。GUI callback 可能印出展開 defaults 的 legacy 命令；與 normalized Stylus equivalent 分開標示，不能把後者冒充原始 console echo。
+[完整原文與實測紀錄](https://github.com/swear01/agent-memory/blob/93786b66aa982bda81d4c1ebe6cfceaa832b5d32/domains/eda/cadence-innovus-stylus-vs-legacy-flow.md)
