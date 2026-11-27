@@ -4,7 +4,7 @@ scope: machines/gaia
 machine: gaia
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-11-28
 tags:
   - synology
   - dsm
@@ -13,10 +13,16 @@ tags:
   - webapi
 ---
 
+## DSM 更新與 NFS 復原
+
+2026-11-28 在 Gaia（DS1821+）控制台手動升級，實際開機版本依序為 7.2.1-69057 Update 13 → Update 14 → 7.3.2-86009 Update 6 → **7.4.1-90080 Update 2**。日後依機型與當時的 build 重查官方路徑。完整 PAT 安裝後的 Update 編號可能高於下載檔標示；每次重新登入 Info Center 核對版本，已達指定版本即可結束安裝。[官方升級路徑](https://www.synology.com/api/support/findUpgradeSteps?from_ver=69057&to_ver=90080&product=DS1821%2B)
+
+DSM 管理頁可登入時，Linux 客戶端可能仍在恢復 NFS。每階段從 Storage Manager 核對集區、Volume 和各硬碟，再從每台用戶端實讀兩個 export，檢查此次開機前後的 NFS I/O 與鎖回收錯誤。DSM 更新過程中曾有硬碟回報系統分割區異常；下次開機後重查八顆硬碟與 SMART 均正常。NFSv4.1 風暴的辨識與驗證見 [[machines/cthulhu/nfs-test-stateid-storm]]。
+
 # 結果
 
-- Gaia（Synology DS1821+，DSM 7.2.1）管理面是 DSM Web API，不是 SSH。LAN `192.168.1.200` 的 22/23 與常見替代 SSH port 皆為 connection refused；`:5000` / `:5001` 可連。
-- 登入用 `SYNO.API.Auth` version 6、`account=dvlab`、`session=Core`、`format=sid`。密碼只存在 353 network setup manual，不寫進 memory。
+- 2026-09 在 DSM 7.2.1 測得的 Gaia 管理面是 DSM Web API，不是 SSH。LAN `192.168.1.200` 的 22/23 與常見替代 SSH port 皆為 connection refused；`:5000` / `:5001` 可連。
+- 登入用 `SYNO.API.Auth` version 6、`account=dvlab`、`session=Core`、`format=sid`。自動登入從憑證庫注入帳密。
 - 瀏覽器 cookie `_SSID` 不是已登入 SID；`SYNO.Core.Desktop.Initdata` 會回 `isLogined=false`。必須重新 login。
 - 2026-09-11 已建立獨立 share `apps`，File Station `real_path` 為 `/volume1/apps`。隱藏網路芳鄰、關閉資源回收筒。NFS 規則只加在這個 share：五台 LAN `.201` `.202` `.203` `.204` `.207`，`rw`、`root_squash=root`（DSM「No mapping」）、`sys`、`crossmnt=true`。客戶端路徑：`192.168.1.200:/volume1/apps`。
 - 沒有改全域 NFS 服務，也沒有寫 `nfs-home` 規則。`showmount -e` 同時列出 `/volume1/apps`（五台）與 `/volume1/nfs-home`（原六台，含既有 `.206`）。
