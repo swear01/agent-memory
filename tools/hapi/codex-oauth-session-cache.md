@@ -22,8 +22,8 @@ Codex CLI 會拒絕缺少 id token 欄位的 auth 檔（`invalid credential JSON
 
 已啟動的 app-server 不會重讀檔案。對 app-server 子程序送 TERM，HAPI parent 會跟著退出（runner 記 `app-server exited`），session 變 inactive。用同一筆 hub session resume，不要另開一筆。2026-11-27 resume 後，該 Codex session 回覆了確認句，沒有再報 refresh 失敗。
 
-Pi 與 Codex 若同時握有同一組 refresh，下一次輪替會再讓其中一邊失效。這次只讓 Codex 載入 Pi 當時的有效組合，沒有再主動刷新。
+這次讓 Codex 載入 Pi 當時的有效組合，沒有再主動刷新。兩個 client 共用 refresh credential 會有憑證分歧風險，適合各自登入。OpenAI 維護者說明服務端曾提供有限的重用寬限期，因此檔案相同只能證明共用，無法倒推出原始失敗的刷新順序。[Codex #10332 維護者說明](https://github.com/openai/codex/issues/10332#issuecomment-3831635259)
 
-2026-11-27 10:15 在 swever 用上述複製後的憑證實跑一次 `codex exec`，回 `ok`（約 2.4 萬 tokens），代表這筆組合當下確實可用；`~/.pi/agent/auth.json` 與 `~/.codex/auth.json` 的 refresh／access／accountId 三欄仍是同一份字串，兩邊任一邊先輪替，另一邊就會再壞。
+2026-11-27 10:15 在 swever 用複製後的憑證實跑一次 `codex exec`，回 `ok`（約 2.4 萬 tokens）。後續只比較欄位是否相等，確認兩邊仍共用 refresh credential。
 
 重開 Codex peer 前，可先用一次真實請求確認 CLI 認證可用：`cd /tmp && codex exec --skip-git-repo-check "Reply with exactly: ok"`，回 `ok` 才算通過（約 1.6 萬 tokens）。啟動即失敗的 peer 直接用 hapi-session-control 的 `archive-peer.py` 歸檔，修好認證後再開新的。
