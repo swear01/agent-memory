@@ -35,3 +35,9 @@ CLI ack 只證明命令收到了。宣告一輪完成前，依序查原生結果
 - **花掉通訊器預算，或把等級當成結局。** 採水晶時先保留通訊器的 10,000 水晶，購買規劃讀原生已解鎖節點。通關目標是取得五個分支終點各一級、支付 10Q 貝殼買 Hammock Repair，最後核對原版 `has_played_hammock_cutscene` 已寫入存檔。
 
 [完整原始紀錄、命令與各深度實測](https://github.com/swear01/agent-memory/blob/d1e08b2dad393fd2ecf9dbbee4f69d53bd6d8755/projects/shelldiver/native-cli.md) · [1100m 原始量測](https://github.com/swear01/agent-memory/blob/c3368747fbc1fdde4c15d8fc3c82217500cf2286/projects/shelldiver/native-cli.md)
+
+## 動態路線與加速驗收
+
+使用原版地形、當前原生角色位置、實際礦點、可達射擊與拾取位置、水母移動和倒數、剩餘氧氣，當場求去回兩條路。角色有慣性，輸入結束後仍會漂移。一次西向直游實測用了約 42 個輸入 Step，實際西移 87.4 px 並向北漂移 12 px。為長脈衝校正速度，記錄送出至確認、輸入結束至最新快照、實際出圈和原生資源入帳。
+
+這個 PID 曾同時顯示 OpenSpeedy 啟用、共用倍率 25，實測島上 66.1 Step／牆鐘秒。重新套用 25 倍後，1100m 三次仍只有約 69–72 Step／秒。用原生 CLI 把該次測試的目標 FPS 從 60 暫升到 240，在 1000m 三次仍約 65–66 Step／秒。倍率與目標 FPS 讀回都成功，遊戲推進吞吐量需要再驗證。全程只用背景的遊戲 CLI。
