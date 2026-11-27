@@ -24,4 +24,6 @@ Codex CLI 會拒絕缺少 id token 欄位的 auth 檔（`invalid credential JSON
 
 Pi 與 Codex 若同時握有同一組 refresh，下一次輪替會再讓其中一邊失效。這次只讓 Codex 載入 Pi 當時的有效組合，沒有再主動刷新。
 
+2026-11-27 10:15 在 swever 用上述複製後的憑證實跑一次 `codex exec`，回 `ok`（約 2.4 萬 tokens），代表這筆組合當下確實可用；`~/.pi/agent/auth.json` 與 `~/.codex/auth.json` 的 refresh／access／accountId 三欄仍是同一份字串，兩邊任一邊先輪替，另一邊就會再壞。
+
 重開 Codex peer 前，可先用一次真實請求確認 CLI 認證可用：`cd /tmp && codex exec --skip-git-repo-check "Reply with exactly: ok"`，回 `ok` 才算通過（約 1.6 萬 tokens）。啟動即失敗的 peer 直接用 hapi-session-control 的 `archive-peer.py` 歸檔，修好認證後再開新的。
