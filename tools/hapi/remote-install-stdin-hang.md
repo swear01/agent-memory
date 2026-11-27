@@ -32,11 +32,12 @@ tags:
   不要把腳本本體當 `bash -s` 的 stdin 再跑 `--version`。
 - 只殺卡住的本機 `hapi-ctl`／`ssh`，不要對 `--started-by runner` children 發 TERM。
 
-截至 2026-09-15，skill 的 `hapi-ctl.sh` / `install-github-release.sh` 仍是這個寫法，尚未修。
-`EXPECTED_HAPI_VERSION` 預設仍是 `0.29.0.6`；部署 `0.30.4.1` 必須顯式覆寫。gist／skill 的 expected baseline 也還停在舊版，與 live Unix 7 機不一致。這不擋 `v0.30.4.1` 結案，但下次 `update all` 還會再踩。
+原始案例為 v0.30.4.1，當時的 `EXPECTED_HAPI_VERSION` 預設過時。升級時按使用中的 release 核對目標與 live binary，別沿用這個舊預設或把中斷 SSH 當成安裝失敗。
 
 # 核 checksum
 
 `grep darwin-arm64 checksums.txt` 會同時命中 `hapi-darwin-arm64.tar.gz` 與
 `hapi-desktop-darwin-arm64.zip`。應對單一檔名，或 `sha256sum -c` 前先過濾精確檔名。
 此次 tarball 本身的 SHA-256 是通過的。
+
+舊部署記錄見 `git show 2505b5e:tools/hapi/remote-install-stdin-hang.md`。

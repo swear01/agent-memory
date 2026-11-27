@@ -27,57 +27,8 @@ source_refs:
 redaction: passed
 ---
 
-# Verified lesson
+- **Active 的 RGB 總量較高，F11 看起來還是分不出狀態。** 先選已接受的 Auto Storage chassis／palette；不要分開生成兩張全 tile。以固定 `core_mask` 外保留原 chassis bytes，再在較小 `core_visual_mask` 裡從同一 inactive 成品派生 active role 色。Fusion connected sheet 必須從最終兩種 native states 各自生成。
+- **只以亮度大於另一張就判 PASS。** 將 normalized sRGB channel 在 ≤0.04045 時除 12.92，其餘 `((c+0.055)/1.055)^2.4`，以 `Y=0.2126R+0.7152G+0.0722B` 計 visual-core mean。Flux Station gate 為 inactive ≤0.10、active ≥0.35、比值 ≥3.0，且 core 外每個 pixel 都與 chassis 和另一狀態一致。實機若仍難分，數值通過也要退回。
+- **只有 native PNG 通過，連接圖或實機仍用舊素材。** 保存 model/seed/prompt/reference/strength、source hashes、masks、role map、state 派生關係、亮度門檻與 native/connected hashes 到 `state_manifest.json`。先跑 focused texture tests，再全套 Python、`./gradlew runData`、`./gradlew build`、Flux Networks GameTest 與最新成品的 F11 目視。
 
-The first Flux Station state pair used a raw RGB channel-sum check and a
-`1.2x` active brightness mapping. Automation reported `active > inactive`, but
-the first F11 review found the state difference too weak to identify. The
-measured raw-sum difference was only about `1.24x`. A greater-than assertion is
-not a sufficient visual-state contract.
-
-## Required generation boundary
-
-Generate candidates with the approved `retro-diffusion/rd-fast` workflow, but
-never generate active and inactive as independent full-tile predictions. Select
-the existing Auto Storage family chassis and palette as the source of truth.
-Declare a fixed central `core_mask`; copy the chassis byte-for-byte outside it.
-Declare a smaller `core_visual_mask` for the actual emissive pixels. Compose the
-inactive state with a deterministic dark role palette, then copy that completed
-image to derive active and replace only the same visual-mask pixels with bright
-role colors. Generate Fusion connected sheets only from those final native
-state images.
-
-## Objective brightness gate
-
-Use sRGB relative luminance, not raw channel sums:
-
-```text
-channel = sRGB / 12.92                         if sRGB <= 0.04045
-        = ((sRGB + 0.055) / 1.055) ^ 2.4      otherwise
-Y = 0.2126R + 0.7152G + 0.0722B
-```
-
-The current Flux Station gate is:
-
-- inactive visual-core mean `Y <= 0.10`;
-- active visual-core mean `Y >= 0.35`;
-- active/inactive ratio `>= 3.0`;
-- every pixel outside `core_mask` is identical between states and identical to
-  the selected chassis.
-
-The corrected verified measurements are inactive `0.021387`, active `0.377104`,
-and ratio `17.632298`. The numeric gate is necessary but does not replace the
-human F11 verdict: if the state still looks ambiguous, the asset fails.
-
-## Provenance and verification
-
-Persist model, seed, prompt, reference, strength, source hashes, both masks,
-role color mapping, luminance method/thresholds/measurements, parent-state
-relationship, output paths, and native/connected hashes in the generation
-metadata and `state_manifest.json`. Run the focused texture test first, then
-the full Python suite, `./gradlew runData`, `./gradlew build`, the relevant
-GameTest fixture, and a fresh exact-artifact F11 review.
-
-The correction was verified with 201 focused texture/static tests, 642 total
-Python tests, datagen with zero written drift, a successful Gradle build, and
-Flux Networks GameTest `20/20`.
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/Auto_Storage/texture-generation-workflow.md)

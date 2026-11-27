@@ -8,84 +8,9 @@ created: 2026-08-20
 updated: 2026-09-23
 ---
 
-# VGuide 實驗 transport 邊界
+- **同 prompt 用其他 HTTP client 出現 403 或得到另一種回答。** Production 路徑是 CPAchecker → `PredicateProposalClient`（Java HttpClient）→ router/provider。探針可加極薄 Java CLI／JShell；完整 context、validation、injection 用 CPAchecker replay。Python urllib probe 的初次 403 來自 upstream，換 user agent 或 production Java 才 200；它不能用來判斷 prompt 品質。
+- **HTTP 200 或 SSE DONE 被當成完整 JSON。** 分開保存 transport status、DONE/EOF/error、nullable finish reason/usage、content UTF-8 bytes/hash 和 parse reason。Stream close 失敗時仍保留先前 parse 證據，記 `stream_close_failure`，不提前記 success。`recordsStreamCloseFailureBeforeSuccess` fixture 覆蓋 second close。重播保留缺的終局欄位為 unknown；沒有 finish_reason 不歸因 token cap。Meta wire 固定 `loop-head-candidate-v1` response_format 時，prompt 自由文字仍受 schema 限制，先核實 request。
+- **HTTP events 只剩 start 或計數被重複累加。** `vguide-http-attempt-v1` 對每次 attempt 記 start 和 observed terminal，每組 logical request 另有一個 outcome；process 突停的 start 保留未知。用 `line.split("VGuide LLM HTTP evidence: ", 1)[1].lstrip()` 取事件，再用 `json.JSONDecoder().raw_decode` 去除 LogManager 後綴。按 log/run id 與 logical request id 分組，驗連續實際 attempt indices；`max_attempts` 是 cap。各階段累計依唯一 slot，勿把已包含 first pair 的總帳再相加。reasoning_tokens 是 completion 的細分；未回 usage 不記零。
+- **Round 裡的 response hash 對不上整份 cache JSON。** 比對同 task/request/ordinal 的 `llm_rounds.jsonl` 和 cache 裡 `result.content()` 的 UTF-8 hash。外層 JSON 檔案 hash 另計。telemetry 不落 payload、憑證、headers 或原始 provider error body。細節見 [實驗 provenance](vguided-experiment-provenance.md)，整體結果與 transport 驗證分開。
 
-VGuide production 是單一 Java 路徑：CPAchecker → `PredicateProposalClient`（Java
-`HttpClient`）→ OpenAI-compatible endpoint/router → provider/model。
-
-Prompt probe、A/B 與 replay 實驗必須直接重用 `PredicateProposalClient`，可加極薄的
-Java CLI/JShell 入口；需要完整 context/validation/injection 時則直接跑 CPAchecker
-replay。不要另寫 Python/curl HTTP client，因為 headers、request construction、retry、
-response cache 與 error handling 不同，結果不能代表 production。
-
-已驗證案例：Issue #124 的臨時 Python `urllib` probe 對
-`http://127.0.0.1:35001/v1/chat/completions` 收到上游 `api.commandcode.ai` Cloudflare
-HTTP 403；同一 Python request 只把 User-Agent 改成 curl 即回 200，而正式 Java
-`PredicateProposalClient` 單獨呼叫也回 200（`{"ok": true}`）。因此該 Python probe
-兩次嘗試均無效且沒有模型 inference，不能拿來判斷 prompt 品質或 provider 狀態。
-
-## HTTP attempt evidence（PR211）
-
-`PredicateProposalClient` 在既有 CPA log 寫入 `vguide-http-attempt-v1`：send 前
-記錄 start，transport、HTTP status、parse 與 resource close 的共同邊界記錄 observed
-terminal，另記一次 logical outcome。success 必須在 stream close 成功後才寫；
-InterruptedException、error-body read failure 及 close failure 均不可遺漏或誤記成功。
-Replay 不產生虛構 HTTP attempts；程序突然退出可能只留下 start，不能補成成功。
-這是可觀察性修正，不是 scheduler 失敗重試的硬預算修正。
-
-CPA LogManager 在分開的 message arguments 之間加空白，末尾也會附 source/level。
-擷取時用 `line.split("VGuide LLM HTTP evidence: ", 1)[1].lstrip()`，再用
-`json.JSONDecoder().raw_decode`；不能對整段尾字串 `json.loads`，也不能假設只有一個
-空白。以 `(CPA log/run identity, logical_request_id)` 分組；request hash 加 ordinal
-只在 client instance 內唯一。事件不得包含 payload、headers、憑證或 provider error body。
-
-14 個 client tests 與 root 獨立重跑通過；最新 head 的 Gemini review5130800874
-無待修意見。Merge `7159acae251afbac2e5f907bde01e41a8e0eb17c`。完整 native/Ant gate
-並未全綠，不能將 scoped HTTP test PASS 擴張成完整 gate PASS。
-
-## Attempt cap 與分階段計數
-
-`max_attempts` 是上限，不是實際次數；第 1/3 或 2/3 次成功都有效。每個 logical
-request 的 observed attempt index 必須連續，且每次各有 start 與 terminal，再有一次
-logical outcome。只比對最後一次 terminal 會漏掉中間缺失；不能要求一定耗盡 cap。
-
-分階段續跑時，以唯一 slot ID 的已保存紀錄建立同一份 cumulative ledger。
-若完整 slot-result 清單已包含 first pair，就不能再加 first-pair 的摘要數字。
-Issue #218 的 slot15 曾因此被 checker 誤判超額；保留失敗 receipt，重新核對原始
-execution 與 HTTP events 後只修正衍生計數，沒有重跑或替換有效結果。必須區分
-checker accounting failure 和 provider/solver failure，避免為修正統計而再付費執行。
-
-Provider usage 的 `completion_tokens_details.reasoning_tokens` 是 `completion_tokens`
-內的細分，不能再加到 completion 或 total。失敗 attempt 未回傳 usage 時保留 unknown，
-不可補成零或從其他 attempt 推估。
-
-## SSE 終止證據與內容解析分開（PR228）
-
-HTTP 200、SSE `[DONE]` 與 candidate JSON 可解析是三個不同結果。已收到 DONE 的
-content 仍可能是不完整 JSON；缺少 observed `finish_reason` 時，不可把截斷直接歸因於
-token cap。保留 HTTP status、DONE/EOF/error、nullable finish reason/usage、UTF-8
-content byte length/SHA-256 與 parser reason 即可，不需增加原始 headers 或完整 wire log。
-Replay cache 沒有保存的 terminal evidence 維持 unknown，不從成功 replay 推造 HTTP 事件。
-
-`PredicateProposalClient.proposeWithUsage()` 的外層 try-with-resources 可能在 parser 已成功
-後才因 `bodyStream.close()` 丟出普通 IOException。只從 `StreamParseException` 取 evidence
-會漏掉已知 DONE、content hash/length、finish reason 與 usage；應保留成功解析得到的 evidence
-作為 close-failure fallback，仍記 `stream_close_failure`，不可提前記 success。
-既有 `recordsStreamCloseFailureBeforeSuccess` 的 second-close fixture 可直接驗證此邊界，
-不必增加另一套 HTTP 模擬。PR228 的 client/dumper 21 個 focused tests 通過；這不是 live
-provider 或完整 verifier 的驗證。
-
-## Response hash 的原始來源（#229 packet 核對）
-
-`VGuideAnalysisDumper` 的 `response_hash` 是 `hashUtf8(api.content())`；
-`LlmResponseCache.record` 保存同一個 `result.content()`，replay 直接讀出該字串。
-因此應以相同 task/request/ordinal 的實際 `llm_rounds.jsonl` 和 cache content 核對；
-cache 整份 JSON 檔案的 SHA 另計。不能把跨案例抄錯的 response hash 解釋成未證實的
-「正規化差異」。#229 準備曾誤填 token_ring.06 的 hash 到 token_ring.11；直接讀取
-原始 token_ring.11 round 後，其 response hash 與該 cache content SHA 完全相同。
-
-## Research prompt 與 wire schema 必須一致（2026-09-23）
-
-目前 Meta 的 `PredicateProposalClient.addMetaResponseFormat` 在 wire request 固定加入 `loop-head-candidate-v1` json_schema。研究 prompt 即使要求開放文字／更高 token cap，也不會取消這項 response_format。一次8-call研究批次因此得到候選／空列表，不能拿來判斷模型是否會做架構推理。先檢查實際 request，不只看 system/user text。
-
-研究專用 memo 可明示用自由文字欄位承載而永不注入；這不是 production predicate 能力測試。該研究的後12個回答只有4份完整JSON、8份不完整；HTTP/client返回成功不等於內容完整，usage缺失照記unknown，不能猜補JSON或以重播補造原始回答。沒有證據將截斷原因確定歸於token cap／timeout。完整來源：`cpachecker-experiments/reports/representation-breakthrough-20260923/ACCOUNTING.json`。production A/B仍重用本client；一般研究意見與production效果必須分別標示。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/cpachecker/vguide-experiment-transport.md)

@@ -6,8 +6,7 @@ updated: 2026-09-16
 evidence_digest: 37119240624b0d0d5aa12b9f0c47dd879c54ca7625e990b62f281c9903bdb204
 ---
 
-# Java generator 不能直接使用 JVM binary class name
+- **Scanner 能識別 class，產生的 Java 卻無法引用。** 保留 JVM binary identity 和獨立 `source_class`，沿 `InnerClasses` 的完整 owner chain 正規化 Java source。合法 top-level 名稱可含 `$`；末端類名看似具名也可能有 anonymous／local／synthetic owner，整條 chain 有不可定址成員就排除。
+- **修 owner 規則後仍重用舊分類。** 讓語意變更使 classifier cache 失效（歷史修補 2→3），用負例核對 scanner/audit、contract 對應和所有 generator shapes。歷史 owner 修補回報 RED→GREEN 及全套測試；未證實 ATM10／IE 實際掃描、完整 generator migration 或發布。
 
-歷史審查指出 scanner 與 contract 保留 JVM binary name，generator 卻直接當 Java source type 使用；建議另存 source_class，依 InnerClasses owner metadata 推導具名巢狀型別。
-
-保留 binary 身份與 source 名稱兩者，驗證 audit／contract 對應，再涵蓋所有生成 shape。不能全域把美元符號換成點，合法 top-level 名稱仍可能含美元符號。來源只跑兩個 scanner 測試，沒有 generator regression 或 migration 完成證據；anonymous owner 的可定址性也需另行處理。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/jvm-binary-versus-source-class.md) · [完整 owner chain 與快取](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/nested-class-source-addressability.md)

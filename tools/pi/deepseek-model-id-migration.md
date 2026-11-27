@@ -26,7 +26,7 @@ tags: [pi, deepseek, gateway, model-filter, fleet, swop]
 
 2026-09 改名將 Pi ID 換成 `opencode-go/deepseek-flash`、`opencode-go/deepseek-pro`。保留 gateway 的舊別名，讓既有 client 可以遷移。CLI 設定仍需依實際 endpoint 的 model ID 配置，尤其不要把本機別名套到官方或 OpenRouter endpoint。
 
-- 在 `config.yaml` 更新 `models.allow`，在 `routing.yaml` 為每個 upstream 設實際可用的 `upstream_model`，例如當時 Command Code 的 `deepseek/deepseek-v4.1-flash` 與 `deepseek/deepseek-v4-pro`。現行 route 與 failback 見 [gateway 維運筆記](../../projects/deepseek-latch-gateway/fleet-routing-and-failback.md)。
+- 在 `config.yaml` 更新 `models.allow`，在 `routing.yaml` 為每個 upstream 設實際可用的 `upstream_model`，例如當時 Command Code 的 `deepseek/deepseek-v4.1-flash` 與 `deepseek/deepseek-v4-pro`。舊 Bun gateway 的 route 和 failback 見 [封存操作筆記](../../archive/projects/deepseek-latch-gateway/fleet-routing-and-failback.txt)。
 - 共用 NFS 設定檔只改一次，gateway 在程序啟動時讀取設定，所以每台都要重啟及驗證 `POST /v1/chat/completions` 的回應 `model` 與實際 upstream。單看 `/health` 無法確認路由。
 - Pi 會以 `Model "..." is blocked by strict-model-allowlist` 拒絕新啟動時明確指定的舊 ID。已啟動的 session 持有 model 物件，續跑前不用換。重新 resume 如果無法 resolve 舊 ID，可能選用 `currentModel`、預設或第一個可用模型。
 - 讀回備份的 mtime、`enabledModels` 與 filter rules，再決定是否還原。當時 `~/.config/deepseek-gateway/backup-<timestamp>-pre-deepseek-rename/` 的部分 `agent__*.json` 雖然名稱寫 pre-rename，實際已含被砍成兩筆的 allowlist。Mac 上確認有效的副本是 Pi 原檔旁的 `.backup-deepseek-rename-20260911-113603`，還原時仍須逐機核對。

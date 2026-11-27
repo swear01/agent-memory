@@ -24,7 +24,7 @@ updated: 2026-10-18
 - Badgers Straight Structures 0.6.0 只內附私人包，保留作者 `Warp Amount = 0.004`，會一起調整石材、木牆、樑柱與門的視覺扭曲，沒有石材限定設定。作者禁止重新上傳，DLL／私人 ZIP 不進公開 repo、模組站或 Actions。
 - PerfectPlacement 自 v53 移除，F1 精確建築不再使用；PlanBuild 自 v47 移除。保留 Infinity Hammer、World Edit Commands、MovingDay。ComfortTweaks 3.3.11 判定範圍 50、清單開關 J；Home 會衝突 MovingDay 高度重設。
 - AzuCraftyBoxes 取料半徑 50、單箱切換 RightShift；PlantEasily 範圍修飾鍵 RightShift、採收 LeftShift。Infinity Hammer 左右排列 RightAlt＋滾輪，前後排列 RightShift＋滾輪，縮放 None；對著箱子按 RightShift 可能一起切換取料。ValheimTerrainTools Removal 與 Brush 上限 10，Remove builds 沒有材料返還或復原。
-- 營火沿用 v32 RGB 解法：`FirePitIntensityLow = 1.5`、`FirePitIntensityHigh = 2`、`FirePitColorLow = 35211AFF`、`FirePitColorHigh = 402014FF`。舊 1.0.1 的隔離四營火實測不能當成 1.0.2 的畫面驗證。
+- 營火強度降低卻沒變暗時，TorchMod 1.0.1 會在 Fireplace.Start 寫入 `m_baseIntensity`，後續 LightFlicker.Awake 又以 Light.intensity 覆蓋。沿用 `BepInEx/config/aedenthorn.TorchMod.cfg` 的 RGB 解法：`FirePitIntensityLow = 1.5`、`FirePitIntensityHigh = 2`、`FirePitColorLow = 35211AFF`、`FirePitColorHigh = 402014FF`。RGB 調的是周圍燈光，火焰核心仍可能亮。LightTweaks 0.1.6 會同時解開木地板上的放置限制，其他曝光／bloom 修正也不是專用光源控制。舊 1.0.1 隔離四營火驗證不能外推 1.0.2、多人或長時間。[V32 原始營火證據與交付](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/valheim/duo-qol-v32-campfire-lighting.md)
 
 - v59 起 Server devcommands 設 `Automatic debug mode = false`、`Automatic fly mode = false`、`Automatic no cost mode = false`、`Disable debug mode keys = true`。原版 Z／B 是除錯模式寫死的飛行／免材料鍵，不能真設成 None，透過關閉自動除錯及除錯鍵防誤按；手動指令保留，更新封包不會重設目前已開啟的遊戲狀態。
 - v60 加入 Super Configurable Pickup Radius 1.1.2：`Insanely Configurable / Enable Pickup Range = true`、`Pickup Range = 10`，需完全重啟遊戲才套用 Player.Awake 的拾取半徑。

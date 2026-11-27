@@ -67,3 +67,7 @@ The retained source reports this repair and includes raw output showing 57 launc
 `spawnPeer` 使用 `validateStatus: () => true`，所以 gateway 502/504 會走一般 response 分支，而非 transport catch；此時 Hub 可能已經建立 child。只有明確的 Hub 結構化失敗（`type: error` 且有字串 `code`）能排除一般 ambiguous response；其他錯誤、格式不完整的 success、回傳 remit ID 不符都需保留原請求的 `remitId`。清理未確認時也保留原 ID，不能信任錯誤回應中的另一個 ID。JSON、一般 CLI 文字與 MCP 錯誤皆需提供同一 ID，讓呼叫者用相同參數重試。
 
 PR #1771 新增回歸先紅後綠：模擬 HTTP 回應遺失／異常後，以錯誤帶回的 ID 重送，檢查 request body 相同且模擬 Hub 僅有一個 spawn key；另驗證結構化失敗與兩種 CLI 輸出。這是 HTTP mock 與 CLI 單元驗證，不是實際 gateway 整合測試。
+
+## Claude 消費訊息前的 flush
+
+若 Claude `nextMessage` 即將取走下一筆，而送出佇列以其他 callback 延後排程，應在共同消費入口等待 `messageQueue.flush()`。驗證真實 callback 與 await 順序，不用微任務／宏任務的一般規則推定交付。這份歷史證據只確認程式 diff，未證明端到端或 PR 合併。見 `git show 2505b5e:tools/hapi/queued-message-flush-order.md`。

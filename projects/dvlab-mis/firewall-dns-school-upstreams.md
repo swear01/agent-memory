@@ -33,7 +33,7 @@ LAN1／LAN2 DHCP 的 DNS 配置未變：第一個為 `8.8.8.8`，第二個為 `Z
 
 ## 與 Wi-Fi 事件的區別
 
-9/11 的 R9000 無線瓶頸與 9/15 的手機開頁慢是不同事件，不能沿用前一次根因。現行 `DVLab353` 在 ASUS；NETGEAR 三個無線電仍關閉，僅供有線設備使用。參見 [R9000 Wi-Fi 與 ASUS 切換](netgear-r9000-wifi-slow.md)。
+9/11 的 R9000 無線瓶頸與 9/15 的手機開頁慢是不同事件，不能沿用前一次根因。現行 `DVLab353` 在 ASUS；NETGEAR 三個無線電仍關閉，僅供有線設備使用。參見 [R9000 Wi-Fi 與 ASUS 切換](netgear-r9000-network-recovery.md)。
 
 ASUS 日誌另有 DFS/CAC 暫停發送紀錄，但其 NTP 未同步，且部分紀錄位於無線初始化附近，無法與抱怨時間建立因果；本次沒有因此修改 DFS 或頻寬。
 

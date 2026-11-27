@@ -9,9 +9,11 @@ updated: 2026-11-12
 
 使用者規則（2026-10-26）：在實驗室主機上，給大家共用的工具（toolkit、compiler、CLI、系統套件，例如 CUDA/nvcc）一律用管理員帳號在系統層級裝一份。不要在 swear01 的 conda、`~/.local` 或 home 目錄裡另外裝一份，這樣才不會產生重複的檔案。
 
-- 管理員帳號是 `ssh su_<host>`（User `swear02`）。2026-10-26 確認過 `su_zeus`、`su_valkyrie`、`su_cthulhu`、`su_mazu` 都可以 `sudo -n`。`su_athena` 沒有測，因為送修中，見 [[machines/athena/repair-status]]。
+- 管理員帳號是 `ssh su_<host>`（User `swear02`）。2026-10-26 確認過 `su_zeus`、`su_valkyrie`、`su_cthulhu`、`su_mazu` 都可以 `sudo -n`。`su_athena` 在返修後另有 sudo 實測，見 [[machines/athena/repair-status]]。每次變更前核對目前權限。
 - 一般帳號 `ssh <host>`（swear01）在這四台都沒有 sudo。swear01 沒有 sudo 不是在使用者層安裝的理由，應改用 `su_<host>`。
-- 安裝前先看 [[machines/hapi-fleet/ubuntu-gpu-maintenance-plan]] 這類既有的維護計畫，裡面可能已經定好版本和安裝來源；NVIDIA、CUDA、container toolkit 有 apt-mark hold。
+- 安裝前先看 [[machines/hapi-fleet/ubuntu-gpu-maintenance-plan]] 這類既有的維護計畫，裡面可能已經定好版本和安裝來源；NVIDIA、CUDA、container toolkit 的 hold 曾依維護窗口調整，查 live `apt-mark showhold`。
 - 不只安裝：任何需要 root 的維運（殺別的 process、`nvidia-smi` reset、看 `/proc/<pid>/stack`、`journalctl -k`、重開機）也用 `su_<host>`。實例：[[machines/hapi-fleet/gpu-wedge-unkillable-process]]。
 - 單一專案自己的相依套件（專案的 venv、conda env）不在這條規則的範圍內。
 - 實例：[[machines/zeus/cuda-toolkit-system-install]]、[[machines/hapi-fleet/earlyoom-nis-dynamicuser]]（2026-11-04 再次確認四台 `su_` 都能 `sudo -n`）。
+
+- Mazu 的 `su_mazu` 是管理帳號，`mazu` 是一般帳號。看到 `sudo: I'm sorry swear01. I'm afraid I can't do that` 表示此帳號未獲 sudo，改走原授權管理入口而非嘗試密碼或 TTY。管理帳號未經 sudo 也可能讀不到系統 journal；用 `sudo -n journalctl -k -b --no-pager` 取得證據。[Mazu 管理與日誌權限原始驗證](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/mazu/admin-access.md)

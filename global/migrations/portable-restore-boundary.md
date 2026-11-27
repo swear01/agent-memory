@@ -1,49 +1,14 @@
 ---
-title: Mac migration separates portable artifacts, auth state, and runtime verification
-scope: global
+title: Mac 還原區分可搬資料、認證與實際可用
+scope: global/migrations
 status: active
-confidence: high
-evidence: Direct security instructions, selective preference checks, and explicit separation of artifact creation from unexecuted network installs.
 created: 2026-08-18
-updated: 2026-08-18
-tags:
-  - migrations
-  - macos
-  - secrets
-  - restore
-  - verification
-source_refs:
-  - pilot-cursor:cursor.jsonl:5
-  - pilot-cursor:cursor.jsonl:9
-  - pilot-cursor:cursor.jsonl:14-21
-  - pilot-codex:events [1], [152]-[175]
-  - pilot-hapi-export:seq=57
-generated_by: openai-codex/gpt-5.6-luna
-redaction: passed
+updated: 2026-11-28
+tags: [migrations, macos, secrets, restore, verification]
 ---
 
-# Boundary
+- **整份 profile 或備份看起來可移植。** 只恢復核准的 scripts、templates 和非機密偏好；不搬 SSH 私鑰、OAuth/browser cache、Keychain 或登入狀態。曾進入明文備份的秘密依曝露處理，輪替或撤銷；`0600` 只用來保護新值。
+- **重建覆蓋了目的端的設定或 symlink。** 逐個 preflight，保留目的端原來的檔案、目錄及 symlink，再複製允許清單。讀回偏好檔只驗該項恢復。
+- **產物已生成，卻尚未安裝或啟動。** 分開回報 `artifact_ready`、`syntax_checked`、`runtime_verified`。保留安裝器 nonzero，實際操作安裝後的應用程式才算可用。Homebrew 一次只跑一波，結束再並行獨立的非 Homebrew 任務。
 
-Portable backups may contain scripts, templates, and allowlisted non-secret preferences. Do not copy SSH private keys, API keys, OAuth caches, browser cookies, Keychain data, or login state.
-
-If a secret existed in a plaintext backup, treat it as exposed: store live values only in a permission-restricted file such as `~/.secrets` with mode `0600`, and rotate or revoke the old credential. File permissions do not replace rotation.
-
-# Restore method
-
-Preflight each destination. Back up an existing file, directory, or symlink before replacing it, then copy only the allowlisted small preference data. Do not restore an entire application profile merely because a backup exists.
-
-The pilot verified missing preference files before selectively copying them and confirmed their presence afterward; this does not validate a full application-state restore.
-
-# Verification boundary
-
-Track these states separately:
-
-- `artifact_ready`: files or templates exist.
-- `syntax_checked`: scripts parse or tests pass.
-- `runtime_verified`: the installed application or service was exercised successfully.
-
-Do not report network installation as successful from artifact existence alone, and preserve non-zero installer failures.
-
-# Sequencing
-
-Keep Homebrew in a single-flight installation wave. Parallelize only independent, non-Homebrew post-install tasks after that wave completes.
+[原始遷移試作與證據界線](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/global/migrations/portable-restore-boundary.md)

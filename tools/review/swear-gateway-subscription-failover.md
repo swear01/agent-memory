@@ -47,3 +47,7 @@ Gateway 原本沒有辨識此訂閱錯誤，會直接轉送帳號 2 的 403，�
   曾造成候選 hash 不符與 `Text file busy`；這不是候選邏輯失敗。
 - 只在相關 review queue 與 Gateway established 連線清空後原子替換，重啟 Gateway
   即可；保留設定、憑證、其他服務和使用者工作階段。
+
+## 全部 upstream 不可用
+
+若 review check 顯示 `5 of 5 selected item(s) failed` 且分類為 provider，先讀 Gateway `/status` 的 endpoint `circuitState`，再以實際請求核對 `X-Gateway-Active-Endpoint` 與錯誤內文。2026-10-22 案例同時有 Go 401 `api_key_expired`、monthly quota 和 Command Code 400 `insufficient credits`；程序都在線，當時 failover 正常但沒有健康上游。受撤銷的 key 要依 [舊 Bun gateway 記錄](../../archive/projects/deepseek-latch-gateway/fleet-routing-and-failback.txt) 的認證和授權流程處理，不要把重啟當成恢復額度或確認已修好。當時平台 slot 和 PR 部署明細見 `git show 2505b5e:tools/review/swear-opencode-breach-key-expiry.md`。

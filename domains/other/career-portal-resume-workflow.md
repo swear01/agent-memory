@@ -12,50 +12,10 @@ tags:
   - evidence-boundary
 ---
 
-# Canonical artifact and versioning
+# Career portal application verification
 
-Keep the current exported resume in the Google Drive internship folder
-`document/工作紀錄/碩一/實習` and preserve older versions beside it. The verified
-current artifact is `fv26-2.pdf`, a one-page A4 PDF; the prior `fv26.pdf` remains
-unchanged. Downloads and generated-output folders are working or historical
-copies, not the canonical source. The separate `證書成績單` folder contains
-supporting documents and should not be treated as a resume folder.
+- Keep canonical exports and prior versions in the Drive internship folder. Work from an actual exported file, checking PDF page count and hash when copies differ. Downloads and resume-builder previews are not canonical; the certificates/transcripts folder is separate.
+- MediaTek accepts a resume under Attachments as Others when there is no specific type. A 100%-complete resume page can coexist with a separate timezone warning. Verify profile, formal submission via `Application Submitted!`, and the matching My Jobs notification separately.
+- If the hidden file input times out, listen for the chooser while clicking the visible Upload new file control. Work Authorization and applicant facts come from the user or authorized source documents; do not infer from location or profile status. For Google Careers, use Applications for the submitted role.
 
-# Verification boundary
-
-A resume-builder preview is not proof that a local file was exported. After an
-explicit export/download, verify the actual file exists, inspect its PDF page
-count, and record a content hash when duplicate copies need to be distinguished.
-For a portal, distinguish three states: profile fields visually verified,
-profile marked complete, and application formally submitted.
-
-# MediaTek workflow
-
-For the MediaTek profile, add the exported PDF under Attachments and classify it
-as `Others` when the portal does not expose a more specific resume choice. A
-100%-complete resume page can still coexist with a separate account-level
-timezone reminder, so recheck both pages when closing the task.
-
-The reliable proof of application submission is the portal's `Application
-Submitted!` result followed by the matching `My Jobs` notification. In the
-verified run, explicit authorization was given and two Taipei Algorithm &
-Architecture internships were submitted: `Engineering Intern` and `Deep
-Learning Internship`. This supersedes earlier notes that only recorded profile
-completion and no submission.
-
-# Safety and browser behavior
-
-Work Authorization is a user-owned legal statement. Never infer or fill it from
-the user's location, profile completeness, or a successful application.
-
-In the in-app browser's attachment flow, clicking the visible `Upload new file`
-control while listening for the file chooser worked when clicking the hidden
-file input directly timed out.
-
-# Applicant facts source (Google TW 2027)
-
-Form-filling facts (role, phone, M.S. GPA 3.68/4.30, expected grad Jun 2028,
-program name) live in `~/Documents/google-intern-2027/resume-facts.md`; the
-submitted role is visible at Google Careers → Applications dashboard. The
-Google TW 2027 Tech+ information form (Silicon Engineering Intern) was
-submitted 2026-11-04 with explicit user approval.
+[Dated resume versions, application receipts and private reference locations](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/other/career-portal-resume-workflow.md)

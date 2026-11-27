@@ -5,70 +5,11 @@ status: active
 updated: 2026-10-30
 ---
 
-# TSRI 製程名單範本（.xls）填寫規範與 Excel BIFF8 自動化
+# TSRI 製程使用者名單：BIFF8 與年度授權
 
-## 背景與情境
+- 使用該期官方 `auditscoreimport` 工作表，與 EDA 軟體續用表分開。電話須保留 `09xxxxxxxx` 前導 0，電話、ID/UI No.、FAB ID 先設文字格式 `@`。外籍交換生未有 ARC 時，該次可用台灣停留／居留簽證號；新案件查官方當期接受格式。語言和機構地址用一致的課程／單位資料，避免把私人住址任意匯入。
+- 保存 BIFF8/OLE `.xls`。用原生 Excel 直接編輯官方範本副本；`xlwt`／`xlutils.copy` 重寫曾剝掉 drawings、樣式和 metadata，不能以 Excel 可開判定 TSRI 匯入可用。Mac Excel 正常重存也可能因 Windows printer PLS record 被替換而減少約 8 KB，從原內容和匯入欄位驗證，勿只比大小。AppleScript 用 `open (POSIX file "<file_path>")` 開實檔，先 `set number format of range … to "@"` 再寫 cell，避免用路徑字串彈出文件選擇阻塞。
+- 製程申請代理人可用本人登入進案件協助行政。PDK/CBDK 的 NDA 下載資格仍需列於當年度核准使用者名單，代理權不會代為取得，介面也沒有切換教授身分按鈕。年度法治測驗須本人作答；上一年度通過不沿用，先核對目前製程年度及本人完成狀態。
+- 學生看到「查詢製程授權名單」No Permission 不足以判斷個人資格，請看「檢視下線資格」中的「您的製程授權」（英文預設可能收合）。當次 116 年度測驗完成後 U18 已顯示，並非所有案件都保證立即匯入。若被導回 SSO 請走正常登入，憑證異常需先驗官方端點。
 
-申請 TSRI（國家實驗研究院台灣半導體研究中心）EDA 軟體與製程（如 U18、C18、T18 等）權限時，需填寫 TSRI 官方提供的 process namelist 匯入名單（工作表名稱：`auditscoreimport`），完成後寄交審核以開通學生帳號權限。
-
-## 核心規則與填寫規範
-
-1. **外籍交換生身分證號（ID/UI No.）**：
-   - 交換生在台期間若尚未取得居留證（ARC / UI No.），可使用中華民國停留/居留簽證號碼（Visa Number，格式如 `115KULxxxxxx`、`115SINxxxxxx`）填寫。
-
-2. **電話格式（Mobile）**：
-   - 所有在台聯絡電話統一為 `09xxxxxxxx` 十碼格式，去掉國際碼（如 `+886`），並保留前導 `0`。
-
-3. **儲存格型別要求（文字格式 `@`）**：
-   - 電話、身分證號、FAB ID 欄位必須在 Excel 中指定為文字格式（`@`），避免 Excel 將開頭為 `0` 的電話自動轉為數值導致 `0` 遺失，或將英數字號誤判。
-
-4. **學校（School）與地址（Address）語言與慣例**：
-   - 整張工作表語系須保持一致（建議統一為繁體中文）。
-   - **地址統一慣例**：TSRI 官方範本中的所有範例列皆統一填寫同一個單位地址（如竹科園區地址）。在學期課程名單中，實務上全班統一填寫開課教授之實驗室/研究室地址（例如學校系館/教學館），既符合 TSRI 以學校機構為存檔單位的審核慣例，亦避免學生個別填寫戶籍、租屋處所造成的格式混亂或缺漏。
-
-## Excel BIFF8 檔案處理與自動化陷阱
-
-1. **避免 Python `xlwt`/`xlutils` 重新寫入**：
-   - TSRI 範本為舊版 OLE 複合二進位檔案（BIFF8 `.xls`）。
-   - 使用 Python `xlutils.copy` 或 `xlwt` 重新寫入時，只會產生最陽春的 BIFF 結構，會自動剝離原檔中的 Drawing 圖層、樣式表、列印配置與 metadata，導致 39 KB 的範本縮減至 ~10 KB，易觸發 TSRI 自動化匯入系統報錯。
-   - **正確解法**：在 macOS 上應透過 AppleScript 自動化調用原生 Microsoft Excel 直接以原範本進行原地編輯並儲存。
-
-2. **檔案大小從 39 KB 變為 32.8 KB 的成因**：
-   - 原版 TSRI 範本內含一筆 8,224 bytes 的 `0x004D`（`PLS`, Print Environment）二進位記錄，係當初製作範本的 Windows 電腦殘留的 HP 網路印表機驅動暫存。
-   - 在 Mac Microsoft Excel 開啟並存檔時，Excel 自動清除無效的 Windows 印表機驅動暫存，並替換為 30-byte 標準通用列印設定（減少約 8.2 KB）；扣除後加上新增學生的列資料、SST（Shared String Table）與儲存格參照，在 OLE 512-byte Sector 對齊下淨減少 12 個 Sector（6,144 bytes），產出標準大小為 32,768 bytes（約 32.8 KB），為正常二進位最佳化而非資料缺失。
-
-3. **AppleScript 操作 Excel 指令要點**：
-   - 開啟檔案路徑必須使用 `POSIX file` 轉換：`open (POSIX file "<posix_path>")`；若誤用字串直接傳入 `workbook file name` 會彈出 Finder 檔案對話框導致腳本阻塞。
-   - 範圍格式設定與儲存：
-     ```applescript
-     tell application "Microsoft Excel"
-         open (POSIX file "<file_path>")
-         tell active sheet of active workbook
-             set number format of range "A21:G33" to "@"
-             set value of range "..." to "..."
-         end tell
-         save active workbook
-         close active workbook
-     end tell
-     ```
-
-## 代理人機制與製程技術文件下載權限
-
-1. **代理人身分不等於製程下載權限**：
-   - TSRI 系統的「製程申請代理人」（每位教授上限 2 名）僅具備行政協助功能（代填申請、代為聯繫、管理 EDA Cloud 帳號等）。
-   - 製程技術文件（PDK / CBDK）受晶圓廠嚴格 NDA 具名授權約束，不適用代理人權限自動繼承。
-   - 即使具備代理人身分，其帳號、身分證號與 Email 仍必須獨立出現在當年度核准的「製程使用者名單 Excel」（`auditscoreimport`）並由 TSRI 人工審核匯入，技術資料下載專區（`ncms.tsri.niar.org.tw`）才會解鎖。
-
-2. **法治素養宣導測驗前置要求**：
-   - 自 113 年度起，申請人及被授權使用者皆須每年通過線上「法治素養宣導測驗」（直達選單：`menu=16`）。未通過測驗者，系統即使收到名單也會鎖定下載權限。
-
-3. **無獨立切換身分按鈕**：
-   - TSRI 系統無「切換為教授身分」按鈕。代理權限係於代理人登入個人帳號後，進入「晶片製作 → 製程/矽智財申請」時由後台權限自動帶入教授名下案件。
-
-## 年度法治測驗與 U18 授權實測（2026-10-30 驗證）
-
-1. **測驗成績不跨年度沿用**：115 年度通過（2026-09-07，100 分）不算 116 年度。TSRI 會寄信通知「尚未完成法治素養測驗」，此時須在 `https://ncms.tsri.niar.org.tw/fab/irp/main.action` →「法治素養宣導測驗」→ 關閉「115 已通過、需重新通過 116」提示 →「開始測驗」重考。
-2. **測驗形式**：10 題單選、同一頁作答、無計時、及格 90 分，底部按「完成作答」交卷，完成後頁面顯示製程年度 116、成績與測驗日期。測驗須由本人作答，agent 只能協助開啟頁面並把桌面交給使用者。
-3. **授權立即生效**：通過後無需再送件；「檢視下線資格」（`/cbs/chipapply/chippetition/showInfo.action`）的「一.您的製程授權如下」由「您無任何製程授權」變為列出 `U18`（英文介面該區塊預設收合，要展開才看得到）。
-4. **「查詢製程授權名單」學生帳號無權限**（`/fab/fabGrantUserList/init.action` 顯示 No Permission），不代表沒授權；以「檢視下線資格」為準。
-5. **連線注意**：`ncms.tsri.niar.org.tw` 偶爾出現 `ERR_CERT_AUTHORITY_INVALID`，可點進階繼續；session 很快過期，會導回會員服務平台 SSO，重新登入需帳密加文字驗證碼。
+[原範本結構、年度測驗及 U18 驗收紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/eda/tsri-process-application.md)

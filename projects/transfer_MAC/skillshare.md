@@ -25,64 +25,9 @@ generated_by: openai-codex/gpt-5.6-luna
 redaction: passed
 ---
 
-# Ownership
+- **同名 skill 在不同 agents 載入不同版本。** transfer_MAC 的正式來源是 `.skillshare/skills/`，設定由 `stow/config/.config/skillshare/config.yaml` 管理。用 `skillshare status --json` 查各台 source/target，核對 link 與內容；`local` 項先比對備份，現有 canonical 的重複副本才改 link，獨有項審查後再導入。Nested skills 用 `target_naming: flat`；`skillshare doctor` 只能確認所有權，外部 skills 另做行為及憑證檢查，不移 manifest 或 plugin 自有檔。
+- **Mac detached skill submodule 出現 unpushable merge commit。** 別在此跑 `skillshare pull`。先保留未推 commits 至分支，在新 upstream worktree cherry-pick／正常驗證及 PR。上游合併後在 Mac fetch、detach-checkout exact merge SHA、核對 clean 再 `skillshare sync`；父 gitlink 分開更新。Git 即使 deinit 仍可能拒絕移除有 submodule 的乾淨工作樹，保留並報原因。
+- **Gemini CLI 清理把 Antigravity 或 MCP 也移了。** AGY 的 `~/.gemini/skills` 可以是現行 target；`GEMINI.md` 是指令連結，MCP 由 canonical manifest 和 `scripts/sync-ai-agent-configs.py` 另渲染。HAPI transcript 恢復與本機 AGY 登入狀態相互獨立。Grok 已讀 Claude/universal targets；加 Grok target 造成 overlap。移除 target 可能把連結實體化留舊副本，須確認歸屬再處理。
+- **HAPI 說 skill 是新版，但 agent 仍讀舊 copy。** `hapi-session-control` 0.35 起從 shared-skills / Skillshare 發布，舊 `.hapi-managed` 副本可能遮住。先核 app runtime、共享 commit、每台實際 link 與 file content，不能以 PR 文件更新推定已部署。接口改動以 [0.35 peer 指令](../../tools/hapi/peer-cli-0-35-command-changes.md) 為準。
 
-Use `.skillshare/skills/` as the repository skill source and manage its configuration through `stow/config/.config/skillshare/config.yaml`.
-
-`skillshare` owns skill targets such as:
-
-- `~/.agents/skills`
-- `~/.claude/skills`
-- `~/.cursor/skills`
-- `~/.config/opencode/skills`
-- `~/.gemini/skills`
-
-Do not use GNU Stow or the MCP renderer to manage those skill directories.
-
-# Nested skills
-
-Use `target_naming: flat` when a source contains nested skills. Standard naming skipped nested `socv-ln-crawler` skills; flat naming exposed them as distinct target names and produced a complete merged sync.
-
-# Migration precedence
-
-During the explicit migration, the live machine skill source won over divergent older Stow/repository copies. Keep one canonical source rather than merging two same-named versions indefinitely.
-
-# Submodule update boundary
-
-The active Mac source is the detached `.skillshare/skills` submodule. Running `skillshare pull` there merges `origin/main` into detached HEAD and can create local, unpushable merge commits even when the resulting tree equals upstream. After a shared-skills PR merges, fetch and detach-checkout the exact upstream merge SHA, verify a clean source, then run `skillshare sync`; update the parent gitlink separately. Do not use `skillshare pull` for this detached submodule checkout.
-
-## Unpushed local commits handling before fleet sync
-
-當 Mac 端的 `.skillshare/skills` submodule 存在未推送至上游的本機 commit（例如政策補充或調整）時，不要在 fleet sync 時直接覆寫或丟棄。應先將未推送提交建立分支保留，在 `<agent-worktrees-root>` 建立以 `origin/main` 為底的獨立工作區 cherry-pick 並跑完整驗證，循 `personal-pr-workflow` 開 PR、待 CI 與審查通過後自動合入。合入後再以 detached HEAD checkout 新 merge SHA、執行 `skillshare sync`、更新父儲存庫 gitlink，最後對其餘 fleet 機器執行 `skillshare pull`。
-
-# Worktree cleanup boundary
-
-On the installed Git version, `git worktree remove` refuses a clean worktree whose tree contains the tracked `.skillshare/skills` submodule, even after `git submodule deinit`. The workflow policy forbids `git worktree remove --force`, so keep and report that worktree rather than bypassing the safety guard. This does not indicate dirty task files.
-
-# MCP separation
-
-skillshare handles skills only. MCP remains in the canonical MCP configuration and is rendered separately by `scripts/sync-ai-agent-configs.py`.
-
-# Import and audit boundary
-
-Review external and plugin-managed skill candidates before importing them. A skillshare behavioral-risk audit is not the same as a credential scan: run both, and do not copy machine-local configuration containing secrets into the skill source.
-
-The pilot still showed legacy target-overlap warnings; do not claim ownership is clean until `skillshare doctor` confirms that legacy writers no longer manage skill targets.
-
-# Gemini CLI scope correction and Antigravity restoration
-
-On 2026-08-22, a cleanup that was intended for Gemini CLI was corrected so Antigravity/AGY remained managed. The shared-skills source was restored and fleet verification confirmed `agy 1.1.18`, the `antigravity` target at `~/.gemini/skills`, six active skillshare targets, and no sync drift. The target-overlap warning is expected for this multi-runtime layout.
-
-`AGENTS.md` is not a Skillshare skill: the canonical file remains under the agent configuration source, and `GEMINI.md`, Codex, Claude, OpenCode, and Pi instruction files are targeted links to it. Do not interpret `GEMINI.md` or the Antigravity target as Gemini CLI residue. The four shared MCP servers remain separate from Skillshare and are rendered from the canonical MCP manifest.
-
-HAPI AGY session rows and transcripts are independent of local AGY authentication state. Restoring HAPI history does not restore local login credentials; after reinstalling or rebuilding Antigravity, AGY may require a fresh login. An operator intentionally closing an AGY process does not mean its preserved HAPI session data was deleted.
-
-## Canonical links and HAPI session-control alignment
-
-所有已由 Skillshare 管理的 Agent 技能都應連到正式來源；不能只修 Claude，也不能保留同名的獨立舊副本。先以 `skillshare status --json` 找出每台 active source 與 targets，逐一檢查連結及內容。`sync` 的 `local` 計數代表仍有獨立項目；先比對、備份，再將正式來源已有的同名副本改為符號連結。沒有正式來源的獨有技能要先審查導入，不能直接刪除。不要移動 Skillshare manifest 或 plugin 自有技能。
-
-`hapi-session-control` 自 2026-11-18 起由 Skillshare（shared-skills）發布，HAPI fork 不再安裝（見 [[peer-cli-0-35-command-changes]]）；在那之前它由 HAPI 寫進各 Agent 技能目錄（帶 `.hapi-managed`），所以舊紀錄說不要放進 Skillshare。0.35 版改用 MCP `spawn_peer`／`ping_peer`／`inspect_peer`；`wait-peer`、`archive-peer`、`stop-peer`、`abort-peer`、`delete-peer` 已移除，見 [[peer-cli-0-35-command-changes]]。父 Agent 仍要在收完結果後清理自建子 session，等待失敗時也要清理。（舊紀錄：0.30 fork 時以 PR #1771 的 skill 為準，流程是 `spawn-peer` → `wait-peer` → `archive-peer`。）
-
-Grok 不需要 Skillshare target：Grok 本身就讀 `~/.claude/skills` 和 `~/.agents/skills`（claude 與 universal target 已寫入）。2026-11-18 試加 `grok` target 後，`skillshare doctor` 立刻警告重複路徑並建議移除。`skillshare target remove` 會把原本的連結轉成實體複本留在 `~/.grok/skills`，這些複本會遮住共用版本、之後變舊；移除 target 後要比對內容並移走。`~/.grok/skills` 應該是空的；在含安裝器的 fork 版本退役前，開 Grok session 可能會被寫回一份 `.hapi-managed` 副本（見 [[peer-cli-0-35-command-changes]]）。
-
-PR 文件、共享來源、Agent target 及已安裝 HAPI 版本是四個不同層次。文件同步不能當作 binary 已升級；發布 shared-skills 也不能當作每台機器已 pull。遠端無法連線時明確列出未驗證範圍。更新記憶後刷新本機 QMD 並查詢驗證。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/transfer_MAC/skillshare.md)

@@ -20,6 +20,8 @@ updated: 2026-09-29
 - Athena 的 `/` 與 `/mnt/md0` 曾是同一 ext4 NVMe，NFS `/home` 遮住的是本機舊 Home。先查同 UUID、子掛載與程序引用，避免把本機熱緩存發現成第二套備份。Hugging Face Arrow 處理 cache 與下載原料、解壓、模型分開盤點；只在逐項授權與可重建來源確認後清明確範圍。[Athena 2026-09-30 清理證據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/athena/storage-2026.md)
 - NFS 單一 retired EDA 樹清理時，先核對帳號、舊路徑、現行共享庫和原有專案樹。已核准清掉 `jack0716/tsri.retired-20260914`，同帳號 `3dic` 研究樹保留。代表 VCS/cell-library 檔的 SHA 和 inode 驗證不足以宣稱整棵樹完全相同；比較部署與刪除前後作用域。[退休 EDA 來源核對與刪除收據](https://github.com/swear01/agent-memory/blob/06f50e3a42e850b37cffb6b6a4a446ef670e9625/machines/hapi-fleet/nfs-jack0716-home.md)
 
+- Cthulhu 和 Valkyrie 的 `<remote-home>` 是同一份 NFS。清理只做一次；另一個 client 短暫看見舊名稱時先重讀再操作。已核准的可恢復清理進使用者自己的 Trash，移入垃圾桶不等同已釋放容量。別將釋放容量的需求當成清空整個 Trash 的授權。[Cthulhu 原先的清理筆記](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/machines/cthulhu/shared-nfs-home.md)
+
 ## 搬移、故障碟與刪除閘門
 
 1. 分批保存清單、容量、mtime、owner、SHA-256，查程序引用、special files、巢狀 mount、目的衝突和磁碟空間。NFS 可用 `rsync -aHAXS --numeric-ids` 建 incoming，讀回做帶 checksum 的 dry-run，核對 metadata，從第二個入口確認可讀。Docker 另查 container/builder 引用。SHA manifest 用相對路徑時從指定根目錄驗。

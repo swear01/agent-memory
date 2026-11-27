@@ -39,3 +39,10 @@ The issue's closed state only establishes its lifecycle.
 
 This note remains `needs-review` until the released adapters and their
 operator-approval paths are verified together.
+
+A synthetic Claude mapping case dropped a selected answer when the adapter
+skipped entries with empty question text. The fixture isolates data loss in
+the mapper, but does not establish whether live Claude emits empty text or
+how often it hangs. Verify actual provider identity and handle missing fields
+explicitly, including multi-question partial answers. See
+`git show 2505b5e:tools/hapi/question-answer-provider-contract.md`.

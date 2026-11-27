@@ -1,37 +1,14 @@
 ---
-title: DVLab353 NETGEAR R9000 recovery and diagnostic limits
+title: DVLab353 R9000 管理面故障、Wi-Fi 瓶頸與 ASUS 上聯
 scope: projects/dvlab-mis
 project: dvlab-mis
 status: active
 updated: 2026-09-11
 ---
 
-# DVLab353 NETGEAR R9000 網路恢復
+- **重開後無改善，或看到 ASUS WAN 紅燈。** 先核對品牌、機身與管理入口；R9000 是有線交換，ASUS 用 LAN 上聯與 `DVLab353` SSID，WAN 燈不能單獨判斷。R9000 設定內可能保留同名 SSID，但 2.4／5／60 GHz radio 須維持關閉，否則撞名。不要 factory reset，會改 DHCP。地址、綁定和 Wi-Fi 現況以私人網路文件與現場讀回為準。
+- **R9000 不回 ARP／管理頁，但下接伺服器仍通。** 分開量 L2/有線轉送、管理面和 Zyxel `ipmac-binding`。舊事件補入 LAN1 靜態 binding 後管理面仍不通，真正斷電重開 R9000 才恢復。故障不等於整機斷電／CPU 過熱；舊備份沒有該 binding，不能推定有人刪除。復發先保存當前 ARP、logs、診斷包及設定；重開後的 `panic_log.txt` 全 0xFF 代表無有效 panic，有限循環日誌和未啟用的 syslog 不能證明過去沒事。
+- **有線正常，手機或 Wi-Fi 卻慢。** 同時量有線 WAN、無線 LAN/WAN、RSSI、實際協定、channel/width，而非只看管理頁設定。09-11 的 LAN/WAN 無線速度接近，實際只關聯 802.11n/40 MHz，即使管理頁顯示 1733 Mbps。當時切到 ASUS 802.11ax；09-15 手機慢另見 [校級 DNS 上游](firewall-dns-school-upstreams.md)，不能沿用同根因。
+- **R9000 韌體 CGI 回錯或永遠等不到 finish.txt。** 有線端只留單一 admin 操作；`multi_login.html` 先依既有管理流程接手。multipart 順序先 `mtenFWUpload` 映像再 `upfile`，預檢看 `UPG_version.htm` 與 `new_version`，不是 finish.txt。確認同型號官方映像與備份後，授權 flash 才送 `upload_firmware`／`upgrade_yes_no=1`；變更後讀回三個 radio off 及有線正常。配置備份含機密，權限 0600、不進 Git；安全韌體更新不等於修了 channel width。
 
-## 設備辨識
-
-- NETGEAR R9000：管理 IP `192.168.1.11`。2026-09-11 起 **Wi-Fi 關閉**，只當有線交換（zeus / athena / mazu / printer）。設定裡 SSID 名稱仍可能叫 `DVLab353`，但 Radio 是關的；不要再開回來。
-- ASUS TUF AX6000：SSID **`DVLab353`**（2026-09-11 從 `DVLab353-2` 改名），管理 IP `192.168.1.10`。這才是實驗室 Wi-Fi。
-- Zyxel 防火牆：LAN `192.168.1.1`，管理 HTTPS 埠 `4433`。
-- ASUS 最左側為 WAN 燈、最右側為電源燈。實驗室文件採 LAN 接上游、停用 router DHCP；WAN 紅燈不能單獨證明故障。不要把 ASUS 照片套用 NETGEAR 燈號說明。
-- 這次使用者起初重開的是 ASUS；照片確認設備後，才真正重開 NETGEAR。下次先核對品牌、機身與 IP，再判斷重啟效果。
-
-## 已驗證事件與修正
-
-- 故障時 Mac、Zeus、Athena 無法取得 NETGEAR ARP 回應，管理入口不通；下接伺服器仍可通訊。擷取到 NETGEAR MAC 的底層封包，不代表管理系統正常，也不能直接斷言整機斷電或 CPU 當機。
-- Zyxel 曾記錄 NETGEAR 的 `ipmac-binding` 丟包。2026-09-09 新增並持久儲存 LAN1 靜態綁定：`192.168.1.11` / `78:D2:94:58:6A:D8`，pool `netgear_dvlab353`，description `NETGEAR_DVLab353`。
-- 回讀確認原九筆靜態設定保留，新增綁定進入有效表，日誌出現 `Insert hash item`。
-- 2026-07-17 autobackup 與 2026-08-23 lastgood 都沒有 NETGEAR 固定綁定。新增後 startup-config 與 8/23 備份只差本次綁定及存檔時間：沒有近期刪除該綁定的證據。不得將「目前缺漏」敘述為「被人改掉」。
-- 補綁定後仍無法登入；真正斷電重開 NETGEAR 後，ping、HTTP Basic 登入與 Logs 頁恢復。當時韌體為 `V1.0.5.42`。
-- 根因未確認。不能把綁定缺漏、過熱、資源耗盡或韌體問題當作已證實原因；一次恢復也不等於長期穩定。
-
-## 日誌與後續界線
-
-- 重開後 Logs 僅見本次初始化、裝置連入及管理員登入。
-- 已從診斷頁匯出 debug-log.zip；內含設定檔及 `panic_log.txt`。後者為 262144 bytes、全部 `0xFF`，沒有有效 panic 記錄。
-- 當時開機自動 Debug Log Capture、Email 通知均未啟用，診斷儲存位置預設 System Memory。未取得重開前可判定原因的紀錄。
-- Zyxel 當時可讀 1024 筆循環日誌，僅涵蓋約數分鐘；遠端 syslog 與 USB 日誌未啟用，不能期待完整變更歷史。
-- 使用者決定暫緩 USB 持久日誌與 Zeus 監測；本次未啟用這些功能、未升級韌體、未恢復原廠設定。
-- 下次復發先保存現有 log、診斷包與連線證據；不要先清除日誌或按 Reset。讀取診斷頁不等於已啟用持久收集。
-- 重新處理時必須現場重驗連線、綁定及設備狀態。本筆是 2026-09-09 的歷史結果。
-- 2026-09-11：同學反映變慢時，R9000 管理面仍通、有線 WAN 正常；瓶頸是當時的 `DVLab353` 無線落到 802.11n/40 MHz。當日稍後已把 ASUS SSID 改成 `DVLab353` 並關掉 R9000 無線。見 `netgear-r9000-wifi-slow.md`。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/dvlab-mis/netgear-r9000-network-recovery.md) · [Wi-Fi 切換與韌體原始驗證](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/dvlab-mis/netgear-r9000-wifi-slow.md)

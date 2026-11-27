@@ -6,44 +6,12 @@ updated: 2026-10-08
 tags: [tsri, eda, contracts, pdf]
 ---
 
-# EDA 申請與製程申請分開處理
+# TSRI EDA 合約：抓到正確底稿，再驗實際送審狀態
 
-eTAS 的 Software Application 與製程／矽智財名單案件有不同流程。不能把製程的年度測驗、代理人規則或名單表單直接套到 EDA 軟體續用；以實際頁面、Application Guidelines、合約列表與所選項目為準。
+- eTAS Software Application 與製程／矽智財申請各有入口。不要套用製程名單、年度測驗或代理人規則。比較當年度 guidelines、實際項目清單和合約狀態。Pending、Download Contract、送出審核、軟體可 checkout 各別核對。
+- 以原始 ZIP 的 readme／sample 核對待簽檔，Sample 只作示例，Complete 是完整條款。2026 年度 Siemens 三頁的正式順序是首頁、原合約第 9 頁、End-Use Certification；頁碼跳號不表示頁面遺失。Cadence、Synopsys 與 TSRI 各一頁是當年快照，新年度重新驗。網頁預覽不代表本機已下載，核對正式四份 PDF 的內容和頁數。
+- 申請單位只填己方欄位。Printed/Typed Name 可預填，實際簽名和簽署日期交本人。該次三家英文合約退件是要求英文親筆簽名，個人章與系所章沒有取代；新年度核對正式文件和承辦。Siemens 的產品、用途和限制身分要實證，不能沿用 sample 的用途或勾選值。Synopsys Site No.、Agreement No.、effective date 與簽署日各有意義，缺正式資料留白。
+- PDF 沒有 AcroForm 可保留底稿做文字 overlay。核對原件 hash、輸出頁數、欄位位置、字型和留白。收到掃描後依實際內容拆件並核對簽名/日期位置，保留影像，不宣稱自行驗過真偽。
+- eTAS 解析錯誤時先重載查已否受理，避免重送。上一次操作造成重繪時，下個檔案要等 upload-success 和有效送審按鈕。掃描 PDF 上傳、合約送審、合約核准、軟體核准以及 license checkout 分開驗。Drive 本機同步與雲端檔案存在、實際下載 hash 也分開。
 
-成功建立申請後的 Pending 不等於授權核准。Contract Status 若仍顯示 Download Contract、沒有上傳或審查結果，只能回報申請已建立、合約尚待處理。不能從套件申請成功推論「所有可申請項目已申請滿」。
-
-# 正式待簽檔與範本
-
-2026-10-01 取得的廠商包以 readme 和 Sample 核實：Cadence 的 `Cadence_Legal_agreement_to_Sign.pdf` 為 1 頁，Siemens 的 `Siemens_EDA_HEP-Agreement_to_Sign.pdf` 為 3 頁，Synopsys 的 `synopsys_agreement_to_Sign.pdf` 為 1 頁。`Sample` 僅供填寫參考；`Complete` 是完整條款。Siemens 待簽包的三頁包含完整合約第 1、9 頁及 End-Use Certification，不能因頁碼跳號誤認原檔缺頁。
-
-三家的範本要求英文填寫。左側 School／University／Licensee 為申請端，右側 TSRI、SISW 或 Synopsys 欄不由申請端代填。Printed Name／Typed Name 可預填；Signature 應留給實際簽署人本人。日期按實際簽署日，勿把下一授權年度直接當成當天年份。
-
-當日 TSRI 的正式 PDF 為「EDA 軟體暨矽智財授權合約」，TSRI-Q4-ES01 版本 1.8，生效日期 2026-10-01，共 1 頁。中文姓名欄明列簽名或蓋章，製作預填件時留白供本人簽署。以上版本與頁數為查核快照；新年度應重新讀系統檔案。
-
-# Siemens 與 Synopsys 的留白邊界
-
-Siemens End-Use Certification 除基本資料，另需實際產品清單、最終用途及用途說明、限制身分聲明。範本上的 Yes／No 是填寫示例，不能據此宣稱個案用途或身分已核實。缺少事實時先完成基本資料，把待確認欄位列在交付說明，由實際簽署人確認；不猜测學術研究以外用途是否全部為 No。
-
-Synopsys 的 Site No.、Agreement No. 與合約 effective date 不是教授簽署欄 Date 的同義欄位。沒有正式值時保留空白，不自動把預計簽署日期填入生效日。
-
-# PDF 預填與下載核實
-
-無 AcroForm 的原始檔可保留完整底稿，再合併文字 overlay；不要重排正式條款或將姓名畫進 Signature 欄。以來源檔雜湊核對原件未改，重新開啟輸出 PDF 核對頁數與預填值，再逐頁 render 檢查欄位溢出、字型及簽署空間。
-
-下載按鈕可能只開 PDF 預覽，不會立即寫入 Downloads。等到實際 PDF 內容出現，再透過瀏覽器儲存／下載；檢查本機檔案存在、PDF 格式、頁數與可見內容，才能宣稱下載完成。對照檔案系統確認四份正式待簽件，不要把清單 TXT 或三個 ZIP 當成全部合約已齊。
-
-各廠商 readme 及上述 TSRI 合約均要求掃描 PDF 上傳，不需要寄回紙本。下載、預填、簽署、上傳、送審、核准是不同狀態；只回報已完成且有證據的步驟。
-
-# 英文親筆簽名與重新送審的確認
-
-2026-10-06 的承辦答覆確認，本次三家英文合約退件原因為要求英文親筆簽名；英文合約需全英文填寫並由實際簽署人用英文親筆簽名，所有合約皆不用蓋系所章。個人章或系所章不能取代這次要求的英文親筆簽名。這是該次申請的確認，未來年度仍應核對正式待簽文件與承辦要求。
-
-收到新的五頁掃描後，按實際頁面內容拆成 Cadence 1頁、Siemens 3頁、Synopsys 1頁；Siemens 應按合約首頁、簽署第9頁、End-Use Certification 排序。先逐頁檢查必須簽署的位置，再核對拆分頁的內容與影像和原掃描一致；不修改簽名、日期或章，也不以可見簽名宣稱真偽已鑑定。
-
-eTAS 送審可能回傳解析錯誤，但後端已受理。先重新載入讀回實際狀態，避免盲目重送。上一份送審造成畫面重繪時，下一份檔案選擇可能未完成；逐份等到 upload-success 且送審按鈕可用，再送出。重新載入後合約顯示「送出審核」才確認受理，軟體列仍「申請中」則尚未授權。
-
-Drive 同步資料夾的副本一致只證明本機保存；另讀取雲端網頁並確認目標資料夾內各檔存在，才回報雲端保存已確認。這仍不等於從雲端重新下載做雜湊驗證。私人申請狀態與簽名文件留在原私有紀錄，不放入公開記憶庫。
-
-# 2026-10-08 核准完成
-
-重新載入 eTAS 申請軟體頁面確認：TSRI、Cadence、Siemens、Synopsys 四份合約皆審核通過；ARM T18、ARM EDA、Cadence EDA、Siemens EDA、Synopsys EDA、TSRI FreePDK45 六項申請皆已核准。此狀態取代先前送出審核／申請中的個案快照；不代表所有工具或 PDK 的實際授權 checkout 與功能均驗證。
+[歷史待簽檔規格、退件和 2026 核准證據](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/domains/eda/tsri-eda-contract-preparation.md)

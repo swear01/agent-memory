@@ -1,25 +1,12 @@
 ---
-title: "GUI 驗證須遵守當次全螢幕、離線與交接約定"
+title: "Magic Storage GUI 驗收：版本、場景物料、離線與目視交接"
 scope: "projects/magic-storage"
 status: active
 updated: 2026-09-07
 evidence_digest: 1d1a3cbf44445dda6ef776c22fcecc7e5adb04b87607038eab837af35367421d
 ---
 
-# GUI 驗證須遵守當次全螢幕、離線與交接約定
+- **請使用者驗收後才發現版本落後、遊戲未啟動，或測試項目沒有元件。** 交接前核對實際部署版本、啟動狀態和當次畫面模式。把必要材料預放機器與儲存區，逐項核對操作元件、連線與狀態。Fixture 曾只放 T1–T6，沒有 `creative_storage_unit`，所以無法驗 Creative Unit 貼圖與終端無限容量。補 fixture 與對應自動檢查後，仍須確認實景可操作。
+- **場景標 READY 卻出現登入，或留著多開終端。** 按當次獲准的全螢幕、離線與交接約定，觀察實際畫面與登入流程；結束後只關本次建立且不再使用的視窗。把目視檢查項目列給使用者，數值、精確計時交給自動測試。自動驗通過與使用者的目視批准分開；若本次只授權改 fixture，保留未做的手動驗收狀態。
 
-## Problem
-
-使用者多次糾正未按全螢幕測試、要求離線後仍出現登入畫面、以及測試後遺留終端視窗。
-
-## Durable rule
-
-按當次同意的場景與畫面模式交接；以實際畫面和登入流程檢查離線要求。完成後只關閉本次建立且不再使用的視窗。自動測試不能代替目視核准；批次目視核准前不可提前宣稱完成。
-
-## Boundary
-
-限此歷史案例及相同條件；不能覆蓋目前任務授權或最新專案規則。
-
-## Verification
-
-控制者核對了保留的歷史來源片段。上述現象、使用者糾正或負面結果來自該記錄；本次未重新執行當時的測試或修復。來源未證明的原因與修復成功不予採用。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/gui-run-contract.md) · [部署與啟動](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/gui-ready-handoff.md) · [驗收元件](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/acceptance-fixture-membership.md) · [預填物料](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/magic-storage/prefilled-gui-acceptance.md)

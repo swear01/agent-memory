@@ -5,18 +5,8 @@ status: active
 updated: 2026-11-12
 ---
 
-# Agentic-IC3 實驗在哪裡
+- **找研究進度只查 Pono 或 NeuroAbs。** Agentic-IC3 是「LLM 在 IC3 迴圈提 lemma」的重現與 kernel 主線。接手先讀 mazu `<remote-home>/agentic-ic3-repro/STATUS.md`、`results/gate-p*.md`、`results/analysis-*.md` 和 `issues/0xx-*.md`，查目前負責 session 再傳使用者決策；本機舊 HTML 不是原始 runs。
+- **逐條 induction 都不過，就把問題歸因模型。** 同時檢驗互相支援的 lemma 集合；pool 已有完整 invariant 時另量 Houdini／kernel 損失。演算法允許固定寬度算術，要驗不會把 wrap 的候選錯當數學整數；量化 family 支援是不同表達能力。SAFE 由 pool 證出時要測去 IC3 的消融和等預算外部對照，才可歸因 IC3 kernel 或模型。
+- **四題 gate 進步當 31 題全量。** 核 repository 當批 manifest、相同 cores／時間預算和完整公開 evidence；凍結 query/solver/source，分開 p15 全套與 p26 起短 gate。不同 kernel 的 Opus／DeepSeek 快照不適合作單變量比較；NeuroAbs 的 split 進度不可代替 Agentic-IC3 效果。受委任紅隊時依 [審查角色](red-team-review-role.md) 回報。
 
-**誰是主 session（2026-11-12 起）**：Mazu hapi session「aic3 future-work 指揮」（`0222d37e-760c-469a-9788-dd071fa57c2c`，cwd `<remote-home>/agentic-ic3-repro`）負責所有實驗排程、驗收、merge。desktop 端 session 只負責跟使用者溝通與發佈 artifact（報告 claude.ai/artifact/UJLVBPjVpgencGTWmWjjKn、主簡報 claude.ai/artifact/9jwij31TVrFFEDu2r7sQF7、論文介紹簡報 claude.ai/artifact/QDcbxUBss9A6cyS3PvtHKM），隨時可換。接手時先讀 repo 根目錄 `STATUS.md`（現況／新結果／待使用者決定／artifact 待更新），使用者的答案用 `hapi ping-peer` 轉給主 session。
-
-使用者的「LLM 在 IC3 迴圈裡提 lemma」主線是 Agentic-IC3（arXiv:2609.27162）的重現與 kernel 改良，不在 NeuroAbs 或 pono-llm。回答「跟我的研究有什麼關係」這類問題前，要先讀這裡；只讀 pono-llm／NeuroAbs 會低估進度。
-
-- repo 與結果：mazu `<remote-home>/agentic-ic3-repro`（`results/gate-p*.md`、`results/analysis-*.md`、`issues/0xx-*.md`、`AGENTS.md`）；run 紀錄在 `/var/tmp/agentic-ic3-runtime/runs/`。本機 `<home>/Documents/agentic-ic3-repro/reports/` 只有 10/28、10/31 兩份 HTML 報告。
-- 2026-11-09 時的重點（細節以 repo 為準）：
-  - 同一個 DeepSeek Flash，31 題從 p3 的 4 題提高到 p15 的 17 題（每 run 30/62）；p15 的關鍵是 UNSAT 回覆整組檢查（unsat-set，c933e9a）和 effort medium。逐條檢查會擋掉要一起才 inductive 的 lemma（lrg pairwise、fifo per-slot）。issue 008（候選池 Houdini）在 p15 之後；p26 起的 gate 只跑 fifo_vis_48、lrg_48、fifo_ref_48、fifo_ref_64 四題，目前 main 沒有 31 題全集數字。
-  - 對 rIC3（`results/ric3-baseline-2026-10-31.md`）：rIC3 1 h 解 10/31，但只給 1 E-core portfolio，很多是 600 s screen；p26 起每個 SAFE 都由 pool Houdini 證出，沒有「不用 IC3」的 baseline。2026-11-09 review（`results/review-clover-2026-11-09.md`）把這些缺口拆成 issues 017-024（全集重跑、預算對等 rIC3、IC3 貢獻消融、控制狀態列舉、提案逐條回饋、SAT reply 未檢查 lemma、gate 檢定力、opq 名稱依賴）。issues 025-029（2026-11-09，commit 981bcd7）補上對大型不規則 design 目標的缺口：kernel IC3 弱於 rIC3（IC3Bits 級、無 CTG）、沒有大型 design 題組、整份 RTL 塞進第一則訊息、CIll syn/opq 變體結構指紋不符且只有 BMC 20 層、lemma 語言沒有有界量詞。
-  - lemma 語言沒有量詞／index 變數；issue 001 加了 `X[e]`，issue 010 family expansion（模板＋實例化＋Houdini）在 p27a benches 從 6/16 提高到 12/16。
-  - 離線分析：13 個未解 run 中有 6 個的候選池其實已含完整 invariant（kernel 損失，不是模型失敗）；wrap 的位寬算術 lemma 在低 frame 會被默默接受（issue 016 width lint）。
-  - 2026-11-09 Opus 5.5 medium pilot：single_adder_ws_miter、nerv-pc-bwd 首次 SAFE（rIC3 3600 s TO），但比較對象是舊 kernel 的 DeepSeek run，還不能歸功於模型。
-- 對照文獻 IC3Syn（arXiv:2605.24619，TLA+，2026-11-09 讀原文）：admission 逐條（`Init ⇒ c`、`F_{k-1} ∧ c ∧ Next ⇒ c'`），沒有整組 Houdini；可以逐條成立是因為 LLM 直接寫帶量詞的 TLA+ clause，一條 ∀ 就涵蓋整個 index family。TLC 在有限實例上用全部可達狀態篩候選；clause memory 會重用；prompt 帶 known-true/known-false 清單與批次 bad states。評估：每題 600 s（兩題 2 h）、看不出有重複跑、沒報 token 成本、沒有污染對照（Endive 題目公開）。TLAPS 的無界證明主要由 LLM agent 寫，不是全自動。
-- NeuroAbs `develop`（到 PR #33）另有 adaptive split flow：LLM 選 index 拆分、timeout 時看 rIC3 lemma 摘要決定 resplit/abstract；結論是 split 有效、abstraction 至今沒有可測收益。
+[原始紀錄](https://github.com/swear01/agent-memory/blob/2505b5e7b1170ecc3a61858e10894b2af847b5b7/projects/agentic-ic3/where-results-live.md)

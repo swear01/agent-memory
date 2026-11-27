@@ -30,16 +30,8 @@ Heavy DOM fixture 連續 20 次／秒 ingest 曾使 Linux CI 超過 90 秒。導
 - **Context 屬性可選化防 Mock 污染**：`HappyChatContextValue`（`web/src/components/AssistantChat/context.tsx`）擴充導航狀態（如 `conversationStartStatus`、`promptNavigationStatus`、`jumpToMessage`、`abortNavigation`）時，必須設為可選（`?:`）。若宣告為必填，會引發 shotgun mock 污染，逼迫超過 8 個與導航完全無關的元件測試（例如 `CodexPlanFooter.test.tsx`、`ToolGroupCard.test.tsx`、`markdown-a.test.tsx`、`ToolMessage.generatedMedia.test.tsx` 等）補寫 mock，導致 PR 觸碰檔案暴增且製造無謂 diff。保持可選能讓改動集中在真正的導航元件上。
 - **E2E outline `viewport ratio 0`（已更正）**：根因不是 `aside` 退場競態——單純加 `toHaveCount(0)` 反而每次失敗，因為導航本身超過 5 秒。真因是約 4 萬 px 的 smooth scroll 被串流 layout shift 取消，重試燒光 4s deadline 才 instant fallback。修法：`scrollTargetIntoView` 距離 > 3 個 viewport 時用 `behavior:'instant'`（HappyThread.tsx）。Playwright webServer 60s 在此主機會逾時，先手動啟 `bun run --cwd web dev -- --port 5179 --strictPort`。
 
-2026-09-14 證據：#1597 `17972547` 整合 #1542 `f8953d24`；root typecheck、3,187 web tests、最新 head CI／review 通過。Store handoff regression 已先重現失敗，再驗證修復；21 項 browser gate 與擴充後的 retained-tail regression 有實測。當時 PR 仍未合併／部署；之後須重查 live head，整合順序為 #1542 再 #1597。
+## 取消、回查與 prompt 定義
 
-2026-10-30 證據：#1597 在 `upstream/main`（`f8e55fb93`）基礎上壓合為單一 commit `ade45ad36`；移除 6 個無關 mock 檔後觸碰檔案收斂至 32 檔。修復 E2E `aside` 退場等待後，`bun run typecheck:web` 通過（0 errors），151 個 web 測試與 Playwright E2E 全綠。Codex PR Review 與 GitHub Actions CI 觸發驗證中。
-
-2026-10-30 更新：#1597 `3c33ad013`（rebase/pr-1597-20261029 → fix/issue-1587-upstream）導航 props 改 optional、還原 6 個 fixture 檔、長距離改 instant；typecheck:web、web 單測（修 2 個過時 scrollIntoView mock）、e2e 4/4 通過，CI 綠。已貼 `/swear-review incremental`；Codex PR Review 兩次因 codex proxy Cloudflare 530/1033 失敗（infra，非程式碼），待重觸發。
-
-2026-10-31 更新：#1597 `6d3950319` 把 token、in-flight、lease set、scroll AbortController 收斂成單一 navigation 物件（start/end/cancel 三個函式擁有所有清理，`signal.aborted` 是唯一所有權判斷），解決 bot 每輪冒一個「取消路徑漏清 X」的 Minor。prompt 回退查找在沒有後繼卡時回傳 null，不再從尾端猜。jump-navigation e2e 的 lease 輪詢需 15s（retry 4000 + settle 2500 ms）；HEAD 舊版在 5s 也會失敗。typecheck、686 單測、e2e 4/4 ×3 通過。
-
-2026-11-01 更新：#1597 `c5795ed7a`–`370cb0281`。re-key 的 prompt 改用資料查：`buildAssistantReplyTargets` 的 replyTargets 經 `replyTargetsRef` 傳給 HappyThread 的 `findPromptTarget`，DOM 回退只作備援。Navigation trim 保留 tail 起點所在 turn 的 prompt（600 head + prompt + 400 tail），之後 bot 連續四輪各提一個 Minor，都出在這段 trim：(1) 被略過的同 turn 列要標 `~turn` gap（不重設 reply 關聯）；(2) gap 判斷要照顯示順序走整個 messages，不能用 seq 相鄰；(3) 重新 trim 要保留既有 gap marker；(4) 往回找 prompt 要跳過 `status === 'failed'`（與 reply targets 規則一致）。每項都有先在舊碼失敗的 regression test。
-第五輪（長 turn 跨 gap）找到根因：store 用 raw `content.role === 'user'` 判斷 prompt，runtime 用 normalize 後的 user lane（含 agent 包裝的終端機輸入），兩套定義不一致，bot 才會一直冒 tail case。`8ac25491d` 把兩處統一：prompt = `normalizeDecryptedMessage(m)?.role === 'user'` 且非 failed；被略過的列裡沒有 prompt 時，gap 就是 `~turn`（不再用「前一列是保留的 prompt」這種特例）。bot 在這個 head 回報沒有問題。
-**How to apply:** store 與 runtime 只能用同一個 prompt 定義，gap 的語意要直接從被略過的資料推得（裡面有沒有 prompt）。不要再為單一 case 補位置性的特例。
-
-2026-11-09 狀態：#1597 head `178a601c2`（2026-11-08 合併 upstream/main）。drift-gate、test、integration、windows-codex-mcp、pr-review 全綠，bot 回報沒有問題，GitHub 顯示 MERGEABLE/CLEAN，等 maintainer 合併。這個 merge head 沒有在本機重跑測試。
+- Start/end/cancel 由單一 navigation 物件管理 token、in-flight、lease 與 scroll AbortController，以 `signal.aborted` 判斷所有權。找不到回覆所屬 prompt 時回 null，不往尾端猜。跨主動取消與串流更新驗最新目標，不用固定 sleep。
+- 優先從 `buildAssistantReplyTargets`／`replyTargetsRef` 找 re-key 的 prompt，DOM 僅備援。Trim 保留 tail 起點所在 turn 的 prompt；store 與 runtime 都用 `normalizeDecryptedMessage(m)?.role === 'user'` 並排除 failed。以顯示順序和被略過列判斷：略過區段沒有 prompt 才標同 turn 的 `~turn` gap。重新 trim 時保留既存 gaps，避免錯配或跨 turn 分享。
+- 這些修正以 #1542 再 #1597 的整合測試與歷史 PR head 為證據。當時 CI 的 pass 只屬固定 head，後續合併／部署另查實際狀態。歷史 raw 驗證和變更進度見 `git show 2505b5e:tools/hapi/history-navigation-protection.md`。

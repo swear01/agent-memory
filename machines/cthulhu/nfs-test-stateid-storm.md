@@ -24,7 +24,7 @@ tags: [nfs, nfsv4.1, delegation, test_stateid, kernel-module, synology]
 
 狀態：cthulhu、zeus、valkyrie、mazu、athena、utux都用 `shutdown -r` 排在 2026-11-19 09:30 重開（不等使用者的工作；原本 08:00 的 reboot-when-idle timer 已移除）。重開後用 `/proc/self/mountstats` 確認 TEST_STATEID 降到接近 0。
 
-相關：[[machines/cthulhu/shared-nfs-home]]、[[machines/hapi-fleet/system-install-via-admin]]
+相關：[[machines/hapi-fleet/storage-migration-2026]]、[[machines/hapi-fleet/system-install-via-admin]]
 
 **2026-11-19 重開後驗證**：cthulhu、mazu、zeus、valkyrie、athena 全部跑 `7.0.0-43-generic`。`/proc/self/mountstats`（用 `su_<host>`／swear02 才有 sudo，swear01 沒有）的 TEST_STATEID 五台都是 0，10 秒取樣也是 0/s；DELEGRETURN 不是 0，代表 delegation 仍在正常使用。cthulhu 開機 2.5 小時內 OPEN 約 20 萬次也沒有風暴。D state 只剩使用者 `cp` 正常等 I/O；dmesg 只有一筆 `fileid changed`，不是這個 bug。
 
