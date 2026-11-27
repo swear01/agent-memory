@@ -1,8 +1,8 @@
 ---
-title: HAPI 0.35 Codex 機群：子 session 回覆自動回送、mazu 啟動逾時、改模型 API
+title: HAPI Codex 機群：子 session 回覆、mazu NFS 啟動入口、改模型 API
 scope: tools/hapi
 status: active
-updated: 2026-11-27
+updated: 2026-11-28
 tags: [hapi, codex, spawn-peer, ping-peer, waitForReply, model-switch, mazu, nfs]
 ---
 
@@ -19,9 +19,13 @@ tags: [hapi, codex, spawn-peer, ping-peer, waitForReply, model-switch, mazu, nfs
   - 長報告推進 git；
   - 主控自己維護一份 ledger，子 session 的自我回報要自己核對過才算數。
 
-# mazu 上 Codex 起不來（`engine.sock ENOENT`／`startup is still unconfirmed`）
+# mazu 的正式 HAPI Codex 啟動入口
 
-HAPI 0.35.0.1 的 engine 初始化與 app-server RPC（`thread/start`）各有 20 秒期限。mazu 的 NFS `/home` 當時每秒有約 1,131 次 `TEST_STATEID`，`GETATTR` 平均排隊 18 ms，啟動因此超過期限；同一個 worktree 在 valkyrie 上 1.4 秒就收到 webhook。換句話說，**kernel 7.0.0-43 之後 mazu 又出現了 TEST_STATEID 風暴**，見 [[machines/cthulhu/nfs-test-stateid-storm]]。在 NFS 恢復正常前，Codex peer 先開在 valkyrie。失敗的 session 無法 resume，只能封存。
+mazu 再出現 `engine.sock ENOENT` 或 `startup is still unconfirmed` 時，先依回報的 PID 確認原 session 是否仍在啟動，再檢查正式 Runner 的 launcher 與 `hapi-mazu-codex.socket`。修復後用 `spawn-peer --machine mazu --agent codex --permission-mode autoReview` 新建測試 session，等第一則模型回覆。HAPI v0.36.7.1 的 `thread/start` RPC 等 20 秒，NFSv4.1 大量發出 `TEST_STATEID` 時，技能和外掛目錄掃描可超過此期限。底層診斷見 [[machines/cthulhu/nfs-test-stateid-storm]]。
+
+- 主機的 `/home` 繼續使用 NFSv4.1。只有 HAPI 新開的 Codex app-server 在私有 mount namespace 以 NFSv4.0 存取同一個 NAS home，保留原使用者與群組。共享的設定、外掛及 session 歷史仍在原處。使用預設 profile 時，worker 在別名 `/var/lib/hapi-codex/profile` 下用 tmpfs 放目前 Codex 版本的內建 `skills/.system`。原本的 Skillshare 與 Codex 目錄沒有額外的掛載點，因此 Skillshare 仍可更換整個目標目錄。
+- 2026-11-28 在原有的正式 user Runner 和 Codex 0.172.0 驗證。重啟 Runner 前後，新 session 的 webhook 分別在 7.677、15.998 秒收到，兩次都收到了第一則模型回覆。既有執行中 session 跨過 Runner 重啟，封存的測試 session 也能 resume 並回覆 `MAZU-RESUME-OK`。system mount 與 socket 已啟用開機啟動，尚未實際重開 mazu 驗證。
+- 回滾時先撤除 Runner 的 launcher drop-in，確認新啟動已走原 CLI，等既有 worker 和連線排空，再停止 socket 與 NFSv4.0 掛載。保留主機上的 `/var/lib/hapi-codex/profile` symlink，本機 SQLite 記錄的 rollout 絕對路徑仍可能經此別名讀回。部署與回滾指令見 transfer_MAC PR #109 的 README，這次驗證時程式仍在審查中。[操作文件與驗證](https://github.com/swear01/transfer_MAC/pull/109)
 
 # 改 Codex session 的模型
 
