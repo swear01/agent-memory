@@ -6,7 +6,7 @@ status: active
 confidence: high
 evidence: Repeated audited rebuilds, rehearsal gates, and explicit issue/fix/PR permission boundaries.
 created: 2026-08-18
-updated: 2026-11-18
+updated: 2026-11-27
 tags:
   - hapi
   - fork
@@ -314,3 +314,7 @@ PR #1771 在 upstream `99cd3d417` 上的 iOS job `113507830463`，於 `ToolTrans
 - 在 mazu 換掉 NFS binary 會讓 cthulhu／valkyrie（以及 athena）的 runner 自己 handoff 到 systemd 外的新 runner，unit 一直重啟（Runner already running with matching version）。確認沒有 `--started-by runner` 子程序後：`systemctl --user stop hapi-runner.service; HAPI_HOME=/var/tmp/hapi-<m> hapi runner stop; systemctl --user start hapi-runner.service`。
 - 2026-11-18：skill 安裝器 overlay（`134047b63`，來自 `fork/session-control-skill`）已由 swear01/hapi#34 從 `main` 移除，`hapi-session-control` 改由 Skillshare 發布。下次 release rebuild 不要再 carry 這個 overlay；`origin/fork/session-control-skill` 與 `release/v0.35.0.1` 仍含它。`516201770`（spawn_peer／reply forwarding）照常 carry。
 - 0.35 CLI 沒有 `stop-peer`、`archive-peer`；舊 session 在換 hub 前用 0.30 CLI 做 idle-wait＋`stop-peer` 遷移成功。Hub `POST /api/sessions/:id/archive` 拒絕 inactive session（`Session is inactive`），spawn 失敗留下的空白 row 只能 `DELETE /api/sessions/:id`。
+
+## 2026-11-27 維護版 patch 歸檔
+
+- 產生新版 patch 時排除 `tools/maintenance/releases/`，並在 manifest 加上 `previous_release_records=inherit`。rehearsal 會從已釘住的 `previous_origin_main` 還原舊版記錄，再比對 canonical source tree。早期 patch 把舊版 patch 再包進自身，`v0.35.0.1` 的單一歸檔 patch 已超過 73 MB。`v0.36.7.1` 候選版用新流程重播成功，仍保留逐字相同的舊版記錄。細節見 [fork PR #35](https://github.com/swear01/hapi/pull/35)。
