@@ -17,7 +17,7 @@ tags:
 ## 2026-11-27 確認
 
 - [HAPI #2259](https://github.com/tiann/hapi/pull/2259) 已替 Claude remote session 加入手動 Steer。[HAPI v0.36.7 的一般 Send](https://github.com/tiann/hapi/blob/v0.36.7/web/src/lib/messageDelivery.ts#L43-L63) 仍一律先排隊，忙碌時等本輪結束。Claude 和 Codex 的逐則 Steer 走既有 RPC。直接把 Send 的 `deliveryMode` 改成 `steer`，在這版 Hub 對兩者都會正規化為 `queue`。
-- Claude Code CLI 的一般 Enter 先收下訊息，工具呼叫結束後可在同一輪讀到。Codex CLI 的 Enter 走 Steer，Tab 才排到下一輪。對 HAPI 而言，Hub 收到訊息、Steer 已轉送、agent 已讀入是不同事件。UI 的 `Steered` 以 agent 確認為準，未確認的送出避免自動重播。[Claude Code](https://code.claude.com/docs/en/interactive-mode#when-claude-code-sends-what-you-queued) [Codex CLI](https://learn.chatgpt.com/docs/developer-commands?surface=cli#interactive-shortcuts)
+- Claude Code CLI 的一般 Enter 先收下訊息，工具呼叫結束後可在同一輪讀到。Codex CLI 的 Enter 走 Steer，Tab 排到下一輪。Hub 收到訊息、Steer 已轉送、agent 已讀入是不同事件。Claude remote 在讀入的 UUID 回音後回報 `Steered`。Codex 目前在 RPC 接受後即回報，早於原生 user message 開始事件。未確認的送出避免自動重播。[Claude Code](https://code.claude.com/docs/en/interactive-mode#when-claude-code-sends-what-you-queued) [Codex CLI](https://learn.chatgpt.com/docs/developer-commands?surface=cli#interactive-shortcuts) [HAPI Codex 回執](https://github.com/tiann/hapi/blob/6f7420aa6/cli/src/codex/shared/queue.ts#L710-L725)
 
 ## 2026-10 歷史紀錄
 
