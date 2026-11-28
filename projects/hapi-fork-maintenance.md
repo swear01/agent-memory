@@ -41,6 +41,8 @@ tags: [hapi, fork, upstream, release, permissions, rehearsal]
 - 舊版 fork schema 29 到官方 35 是單向遷移。當時真實 DB 副本 rehearsal 與正式升級均通過；正式約 6 分 20 秒，健康輪詢會先 timeout。此次需補 `idx_messages_future_scheduled_queued`，回滾用升級前 DB 備份；未來版本先對副本重驗 migration、index 和 session count。官方 v0.35.0 已移除舊 `stop-peer`／`/sessions/:id/stop`；必須用舊 CLI 和舊 Hub 先做 idle-wait＋非封存的遷移，再切 Hub。Runner `stop-session` 的 SIGTERM cleanup 會封存，不能當成等價操作。新 Hub archive endpoint 曾拒絕 inactive session；空白 row 的刪除屬另行授權。
 - Process-only stop 要先送 `archive:false` RPC，取得 acknowledgment 並用所回報的 raw PID 觀察退出。Hub lease 過期、`active:false`、CLI 不可達、PID identity 不明或只看到 session ID 不能證明程序已退出；不確定時 fail closed。Terminal 已 active 的 fast path 需有 ack 之後的新 session-end。不要為了觀察而發送 SIGTERM。Reference: [session lifecycle exit confirmation](../tools/hapi/session-lifecycle-exit-confirmation.md)。
 
+- 遷移有待送佇列的 HAPI session 時，先保全佇列及附件，再讓同一 HAPI session 和原生對話由新版 runtime 接手，最後按原順序恢復確定尚未執行的項目。不要為了清空佇列而先在舊 runtime 啟動工作；已被取走或投遞結果不明的項目，先核對 Hub 與原生執行紀錄，避免重複送出。
+
 ## 容易重現的實作陷阱
 
 - Project Delete Group 的 Bun SQLite `changes` 包含 cascade，會誤觸 direct row 數量檢查。用 `DELETE … RETURNING id` 數 direct sessions；transaction 前同時檢查 DB archive／namespace 和 live SessionCache，重連狀態可能已更新在 cache 而 DB 尚未知。任一不符即整筆拒絕。Sidebar 搜尋、pinned/hidden rows 不能截斷群組成員；header keyboard handler 只處理自己，避免吞掉 Copy Path／New Session。
