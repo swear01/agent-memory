@@ -41,3 +41,5 @@ Innovus 25.10-p002_1 的 SCE-61 在已有手工跨層接點的 routed DB 上，�
 ## 區域時鐘的低脈寬與資料 setup
 
 在同一 fresh DEF/GDS 與保存的 RCDB 上，先用 `set_global report_timing_format {instance arc cell net slew load delay arrival required}` 取低脈寬的 early rise／late fall，以及資料 setup 的 late rise。用原生每級 slew、load 與延遲校準 Liberty 的變更量。SCE 的實例中，單純加速分支源級雖修正低脈寬，卻把最緊 SRAM 輸入 setup 的估算壓到零附近；同時加可受控的獨立主幹負載，實測讓脈寬與 Q setup 一起轉正。幾何模型曾把原候選的低脈寬預估為正，原生結果仍約負 20 ps。最後驗收用新抽取、原約束、完整 setup/hold 及雙角 SDF，而非沿用模型數字。
+
+在選 filler 位置時，對新元件全高、完整 M1 的真 GDS 和原 LEF PG pin 都驗間距，包含同邊零面積接觸。SCE-123 的 CLKINVX4 VDD LEF 右邊正好碰原信號 VIA12 M1 左邊。連通與正面積交集檢查都未發現，fresh Innovus 則記為 Metal Short。換位時讓背景窗涵蓋完整 cell 與周邊間距，不可只掃 A/Y 落孔高度。比較 DEF/GDS 的精確差分，需把 top PATH 和 stock via SREF 內的 enclosure 合併，單驗 PATH 會誤報增減。見 SCE 專案帳本 SCE-123／123B。
