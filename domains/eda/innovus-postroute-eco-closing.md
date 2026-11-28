@@ -37,3 +37,7 @@ CVSD 2026 期末 SCE（tsmc13，28 顆 SRAM macro，1.80 ns，margin-0 floorplan
 Innovus 25.10-p002_1 的 SCE-61 在已有手工跨層接點的 routed DB 上，指定 5 條 nets，使用 `setNanoRouteMode -route_selected_net_only true` 及 `ecoRoute -target -modifyOnlyLayers 1:4`。Router 日誌實為 13 條 selected。Fresh GDS 確認 3 條窗外 SRAM 網的 M2/M4 landing stubs 消失，7 個 layer-specific 端點脫離原根。DEF 邏輯負載、top comparator、antenna 和正式 DRC 都未報異常。
 
 需保護既有手工修線時，將 router scope 輸出視為診斷。驗收 fresh-restore 的全網 DEF ROUTED delta、路窗外 GDS XOR 和原名 ICV 的全 raw endpoint partitions，包含同一 macro pin 的分層接點。用離線 pin-access 證明時，須把鄰近 via instance 內的 metal 和 cut 一起展開。 [SCE-61 實測](https://github.com/swear01/cvsd-final-sce/blob/d5755adc98b60a6f05628100f552a8111ff6604a/exp/area/safe-fp/sce61-cone-fold.md)
+
+## 區域時鐘的低脈寬與資料 setup
+
+在同一 fresh DEF/GDS 與保存的 RCDB 上，先用 `set_global report_timing_format {instance arc cell net slew load delay arrival required}` 取低脈寬的 early rise／late fall，以及資料 setup 的 late rise。用原生每級 slew、load 與延遲校準 Liberty 的變更量。SCE 的實例中，單純加速分支源級雖修正低脈寬，卻把最緊 SRAM 輸入 setup 的估算壓到零附近；同時加可受控的獨立主幹負載，實測讓脈寬與 Q setup 一起轉正。幾何模型曾把原候選的低脈寬預估為正，原生結果仍約負 20 ps。最後驗收用新抽取、原約束、完整 setup/hold 及雙角 SDF，而非沿用模型數字。
